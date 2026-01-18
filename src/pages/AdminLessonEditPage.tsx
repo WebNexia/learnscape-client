@@ -187,6 +187,7 @@ const AdminLessonEditPage = () => {
 	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
+	const [isSaving, setIsSaving] = useState<boolean>(false);
 
 	const [isPublishAllowedMsgOpen, setIsPublishAllowedMsgOpen] = useState<boolean>(false);
 	const [isAiContentGeneratedMsgOpen, setIsAiContentGeneratedMsgOpen] = useState<boolean>(false);
@@ -543,6 +544,8 @@ const AdminLessonEditPage = () => {
 			}));
 			return;
 		}
+
+		setIsSaving(true);
 
 		// Validate scores if grading is enabled
 		if (singleLessonBeforeSave.isGraded && singleLessonBeforeSave.type === LessonType.QUIZ) {
@@ -911,6 +914,8 @@ const AdminLessonEditPage = () => {
 			setErrorMessage(error.response?.data?.message || error.message || 'An error occurred');
 			setIsErrorMessageOpen(true);
 			setIsEditMode(true);
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -1018,6 +1023,7 @@ const AdminLessonEditPage = () => {
 					hasUnsavedChanges={hasUnsavedChanges}
 					setHasUnsavedChanges={setHasUnsavedChanges}
 					setErrorMessage={setErrorMessage}
+					isSaving={isSaving}
 				/>
 			</Box>
 

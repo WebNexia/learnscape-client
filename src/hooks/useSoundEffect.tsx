@@ -4,12 +4,14 @@ interface UseSoundEffectReturn {
 	playSuccessSound: () => void;
 	playErrorSound: () => void;
 	playFlipSound: () => void;
+	playSubmitSound: () => void;
 }
 
 export const useSoundEffect = (enabled: boolean = true, isMuted: boolean = false): UseSoundEffectReturn => {
 	const successAudioRef = useRef<HTMLAudioElement | null>(null);
 	const errorAudioRef = useRef<HTMLAudioElement | null>(null);
 	const flipAudioRef = useRef<HTMLAudioElement | null>(null);
+	const submitAudioRef = useRef<HTMLAudioElement | null>(null);
 
 	// Initialize audio elements
 	if (typeof window !== 'undefined') {
@@ -29,6 +31,12 @@ export const useSoundEffect = (enabled: boolean = true, isMuted: boolean = false
 			flipAudioRef.current = new Audio('/assets/sounds/flip.wav');
 			flipAudioRef.current.preload = 'auto';
 			flipAudioRef.current.volume = 0.25;
+		}
+
+		if (!submitAudioRef.current) {
+			submitAudioRef.current = new Audio('/assets/sounds/submit.mp3');
+			submitAudioRef.current.preload = 'auto';
+			submitAudioRef.current.volume = 0.25;
 		}
 	}
 
@@ -77,9 +85,25 @@ export const useSoundEffect = (enabled: boolean = true, isMuted: boolean = false
 		}
 	}, [enabled, isMuted]);
 
+	const playSubmitSound = useCallback(() => {
+		if (!enabled || isMuted || !submitAudioRef.current) return;
+
+		try {
+			// Reset audio to beginning in case it's already playing
+			submitAudioRef.current.currentTime = 0;
+			submitAudioRef.current.play().catch((error) => {
+				// Silently handle autoplay restrictions
+				console.warn('Could not play submit sound:', error);
+			});
+		} catch (error) {
+			console.warn('Error playing submit sound:', error);
+		}
+	}, [enabled, isMuted]);
+
 	return {
 		playSuccessSound,
 		playErrorSound,
 		playFlipSound,
+		playSubmitSound,
 	};
 };

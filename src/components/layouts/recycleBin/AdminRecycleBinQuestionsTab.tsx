@@ -147,6 +147,8 @@ const AdminRecycleBinQuestionsTab = () => {
 	const [deleteModalOpen, setDeleteModalOpen] = useState<boolean[]>([]);
 	const [isBulkRestoreModalOpen, setIsBulkRestoreModalOpen] = useState<boolean>(false);
 	const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState<boolean>(false);
+	const [deletingQuestionIds, setDeletingQuestionIds] = useState<Set<string>>(new Set());
+	const [isBulkDeleting, setIsBulkDeleting] = useState<boolean>(false);
 
 	// Selection states
 	const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -165,11 +167,24 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	// Keep track of previous length to avoid unnecessary resets
 	useEffect(() => {
-		if (displayQuestions && displayQuestions.length !== 0) {
-			setRestoreModalOpen(Array(displayQuestions.length).fill(false));
-			setDeleteModalOpen(Array(displayQuestions.length).fill(false));
+		if (paginatedQuestions && paginatedQuestions.length !== 0) {
+			const newLength = paginatedQuestions.length;
+			setRestoreModalOpen((prev) => {
+				const newState = [...prev];
+				while (newState.length < newLength) {
+					newState.push(false);
+				}
+				return newState.slice(0, newLength);
+			});
+			setDeleteModalOpen((prev) => {
+				const newState = [...prev];
+				while (newState.length < newLength) {
+					newState.push(false);
+				}
+				return newState.slice(0, newLength);
+			});
 		}
-	}, [displayQuestions]);
+	}, [paginatedQuestions]);
 
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
@@ -201,6 +216,10 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	const openRestoreModal = (index: number) => {
 		const newModalState = [...restoreModalOpen];
+		// Ensure array is large enough for the index
+		while (newModalState.length <= index) {
+			newModalState.push(false);
+		}
 		newModalState[index] = true;
 		setRestoreModalOpen(newModalState);
 	};
@@ -213,6 +232,10 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	const openDeleteModal = (index: number) => {
 		const newModalState = [...deleteModalOpen];
+		// Ensure array is large enough for the index
+		while (newModalState.length <= index) {
+			newModalState.push(false);
+		}
 		newModalState[index] = true;
 		setDeleteModalOpen(newModalState);
 	};
@@ -258,6 +281,7 @@ const AdminRecycleBinQuestionsTab = () => {
 	};
 
 	const hardDeleteQuestion = async (questionId: string) => {
+		setDeletingQuestionIds((prev) => new Set(prev).add(questionId));
 		try {
 			const response = await axios.delete(`${base_url}/questions/${questionId}/hard`);
 
@@ -283,6 +307,12 @@ const AdminRecycleBinQuestionsTab = () => {
 			setSnackbarMessage('Failed to delete question');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+		} finally {
+			setDeletingQuestionIds((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(questionId);
+				return newSet;
+			});
 		}
 	};
 
@@ -329,6 +359,7 @@ const AdminRecycleBinQuestionsTab = () => {
 	};
 
 	const handleBulkDelete = async () => {
+		setIsBulkDeleting(true);
 		try {
 			await Promise.all(selectedItems?.map((questionId) => axios.delete(`${base_url}/questions/${questionId}/hard`)) || []);
 
@@ -356,6 +387,8 @@ const AdminRecycleBinQuestionsTab = () => {
 			setSnackbarMessage('Failed to delete questions');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+		} finally {
+			setIsBulkDeleting(false);
 		}
 	};
 
@@ -657,13 +690,19 @@ const AdminRecycleBinQuestionsTab = () => {
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
-						onCancel={() => closeDeleteModal(index)}
-						onDelete={() => {
-							hardDeleteQuestion(question._id);
+						onCancel={() => {
+							if (!deletingQuestionIds.has(question._id)) {
+								closeDeleteModal(index);
+							}
+						}}
+						onDelete={async () => {
+							await hardDeleteQuestion(question._id);
 							closeDeleteModal(index);
 						}}
 						deleteBtn={true}
 						deleteBtnText='Delete Permanently'
+						isDeleting={deletingQuestionIds.has(question._id)}
+						disableCancelBtn={deletingQuestionIds.has(question._id)}
 						actionSx={{ marginBottom: '0.5rem' }}
 					/>
 				</CustomDialog>
@@ -706,10 +745,16 @@ const AdminRecycleBinQuestionsTab = () => {
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
-					onCancel={() => setIsBulkDeleteModalOpen(false)}
+					onCancel={() => {
+						if (!isBulkDeleting) {
+							setIsBulkDeleteModalOpen(false);
+						}
+					}}
 					onDelete={handleBulkDelete}
 					deleteBtn={true}
 					deleteBtnText='Delete All Permanently'
+					isDeleting={isBulkDeleting}
+					disableCancelBtn={isBulkDeleting}
 					actionSx={{ marginBottom: '0.5rem' }}
 				/>
 			</CustomDialog>

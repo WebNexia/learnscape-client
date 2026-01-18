@@ -6,6 +6,7 @@ import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import { LoadingButton } from '@mui/lab';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import axios from '@utils/axiosInstance';
@@ -36,6 +37,7 @@ interface CoursePaperProps {
 	hasUnsavedChanges: boolean;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	setSingleCourseBeforeSave: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
+	isSaving: boolean;
 }
 
 const CoursePaper = ({
@@ -58,6 +60,7 @@ const CoursePaper = ({
 	hasUnsavedChanges,
 	setHasUnsavedChanges,
 	setSingleCourseBeforeSave,
+	isSaving,
 }: CoursePaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -340,28 +343,48 @@ const CoursePaper = ({
 								</Snackbar>
 								{isEditMode ? (
 									<Box>
-										<CustomSubmitButton
-											unsaved={hasUnsavedChanges}
-											sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
-											onClick={(e) => {
-												if (
-													singleCourseBeforeSave?.title.trim() !== '' &&
-													singleCourseBeforeSave?.description.trim() !== '' &&
-													(isFree || !singleCourseBeforeSave?.prices?.some((price) => price.amount === '')) &&
-													!chapterLessonDataBeforeSave?.some((chapter) => chapter.title === '')
-												) {
-													handleCourseUpdate(e as FormEvent<Element>);
-													setHasUnsavedChanges(false);
-												} else {
-													setIsMissingField(true);
-													setIsMissingFieldMsgOpen(true);
-												}
-												window.scrollTo({ top: 0, behavior: 'smooth' });
-											}}>
-											Save
-										</CustomSubmitButton>
+										{isSaving ? (
+											<LoadingButton
+												loading={isSaving}
+												disabled={true}
+												variant='contained'
+												sx={{
+													backgroundColor: 'white !important',
+													textTransform: 'capitalize',
+													height: isMobileSize ? '1.5rem' : '1.75rem',
+													fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : (isMobileSize ? '0.7rem' : '0.85rem'),
+													mt: '0.2rem',
+													'&.Mui-disabled': {
+														backgroundColor: 'white !important',
+													},
+												}}>
+												Save
+											</LoadingButton>
+										) : (
+											<CustomSubmitButton
+												unsaved={hasUnsavedChanges}
+												sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
+												onClick={(e) => {
+													if (
+														singleCourseBeforeSave?.title.trim() !== '' &&
+														singleCourseBeforeSave?.description.trim() !== '' &&
+														(isFree || !singleCourseBeforeSave?.prices?.some((price) => price.amount === '')) &&
+														!chapterLessonDataBeforeSave?.some((chapter) => chapter.title === '')
+													) {
+														handleCourseUpdate(e as FormEvent<Element>);
+														setHasUnsavedChanges(false);
+													} else {
+														setIsMissingField(true);
+														setIsMissingFieldMsgOpen(true);
+													}
+													window.scrollTo({ top: 0, behavior: 'smooth' });
+												}}>
+												Save
+											</CustomSubmitButton>
+										)}
 										<CustomCancelButton
 											onClick={handleCancel}
+											disabled={isSaving}
 											sx={{
 												color: theme.textColor?.common.main,
 												borderColor: theme.textColor?.common.main,
