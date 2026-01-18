@@ -42,14 +42,15 @@ const Questions: React.FC<QuestionsProps> = ({
 	const numberOfQuestions = questions?.length;
 	const { lessonId } = useParams();
 
-	// Reset to question 1 when lesson is completed
-	useEffect(() => {
-		if (isLessonCompleted && displayedQuestionNumber !== 1) {
-			setDisplayedQuestionNumber(1);
-		}
-	}, [isLessonCompleted]);
 
-	// Notify parent component when displayed question changes
+	useEffect(() => {
+		if (isLessonCompleted) {
+			setDisplayedQuestionNumber(1);
+		} else {
+			setDisplayedQuestionNumber(getLastQuestion);
+		}
+	}, [lessonId]); 
+
 	useEffect(() => {
 		if (onQuestionChange) {
 			onQuestionChange(displayedQuestionNumber);

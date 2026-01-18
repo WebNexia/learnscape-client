@@ -122,6 +122,7 @@ const LessonPage = () => {
 
 	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+	const [wasLessonCompletedOnMount, setWasLessonCompletedOnMount] = useState<boolean>(isLessonCompleted);
 	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
 	const [lessonType, setLessonType] = useState<string>('');
 	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
@@ -273,6 +274,15 @@ const LessonPage = () => {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
 		};
 	}, [isQuiz, isQuizInProgress]);
+
+	// Show completion dialog when lesson is completed (for practice lessons and quizzes)
+	useEffect(() => {
+		// Only show dialog if lesson just became completed (not if it was already completed on mount)
+		if (isLessonCompleted && !wasLessonCompletedOnMount && (lessonType === LessonType.PRACTICE_LESSON || lessonType === LessonType.QUIZ)) {
+			setIsLessonCourseCompletedModalOpen(true);
+		}
+		setWasLessonCompletedOnMount(isLessonCompleted);
+	}, [isLessonCompleted, wasLessonCompletedOnMount, lessonType]);
 
 	const updateUserLessonNotes = async () => {
 		if (!userLessonId) {
@@ -835,7 +845,7 @@ const LessonPage = () => {
 										? 'Start Quiz'
 										: 'Review Quiz'}
 					</CustomSubmitButton>
-					<Box>
+				{isLessonCompleted && <Box>
 						{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
 							<CustomSubmitButton
 								onClick={() => {
@@ -863,7 +873,7 @@ const LessonPage = () => {
 								</CustomCancelButton>
 							</DialogActions>
 						</CustomDialog>
-					</Box>
+					</Box>}
 				</Box>
 			)}
 			{isQuestionsVisible && (
@@ -959,11 +969,15 @@ const LessonPage = () => {
 							onSubmit={async () => {
 								setIsNavigatingToNextLesson(true);
 								try {
-									await handleNextLesson();
+									// Only call handleNextLesson if not already completed
+									if (!isLessonCompleted) {
+										await handleNextLesson();
+									}
+									// Navigate to course home page
 									navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								} catch (error) {
-									console.error('Error navigating to next lesson:', error);
+									console.error('Error navigating to course home:', error);
 									setIsNavigatingToNextLesson(false);
 								}
 							}}

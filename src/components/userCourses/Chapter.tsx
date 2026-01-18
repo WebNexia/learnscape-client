@@ -1,4 +1,4 @@
-import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox } from '@mui/material';
+import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox, DialogActions } from '@mui/material';
 import { ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
 import Lesson from './Lesson';
 import { LessonById } from '../../interfaces/lessons';
@@ -17,6 +17,7 @@ import { useQueryClient } from 'react-query';
 import { SingleCourse } from '../../interfaces/course';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import CustomCancelButton from '../../components/forms/customButtons/CustomCancelButton';
 
 interface ChapterProps {
 	chapter:
@@ -735,6 +736,11 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
 						/>
 					)}
+					{!isEnrolledStatus && <DialogActions>
+						<CustomCancelButton onClick={handleCloseChecklistDialog} sx={{ margin: '0rem 1rem 0.5rem 0' }}>
+							Close
+						</CustomCancelButton>
+					</DialogActions>}
 				</CustomDialog>
 			)}
 		</Box>
