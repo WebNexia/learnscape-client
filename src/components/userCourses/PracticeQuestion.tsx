@@ -134,7 +134,7 @@ const PracticeQuestion = ({
 	const { fetchQuestionTypeName, questionTypes } = useQuestionTypes();
 
 	// Sound effects - enabled even when lesson is completed
-	const { playSuccessSound, playErrorSound } = useSoundEffect(true, isSoundMuted);
+	const { playSuccessSound, playErrorSound, playSubmitSound } = useSoundEffect(true, isSoundMuted);
 	const prevIsAnswerCorrectRef = useRef<boolean>(false);
 	const prevErrorRef = useRef<boolean>(false);
 
@@ -355,6 +355,7 @@ const PracticeQuestion = ({
 
 					setIsOpenEndedAnswerSubmitted(true);
 					setValue(userAnswer);
+					playSubmitSound();
 				}
 
 				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {

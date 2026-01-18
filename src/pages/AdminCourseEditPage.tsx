@@ -124,6 +124,7 @@ const AdminCourseEditPage = () => {
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+	const [isSaving, setIsSaving] = useState<boolean>(false);
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -716,15 +717,25 @@ const AdminCourseEditPage = () => {
 			validUntil = new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000);
 			if (validUntil < new Date()) {
 				setIsExpiredDialogOpen(true);
-				setPendingCourseUpdate(() => () => {
-					actuallyUpdateCourse();
+				setPendingCourseUpdate(() => async () => {
+					setIsSaving(true);
+					try {
+						await actuallyUpdateCourse();
+					} finally {
+						setIsSaving(false);
+					}
 				});
 				return;
 			}
 		}
 
 		// If not expired, proceed as normal
-		await actuallyUpdateCourse();
+		setIsSaving(true);
+		try {
+			await actuallyUpdateCourse();
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	const y = useMotionValue(0);
@@ -753,6 +764,7 @@ const AdminCourseEditPage = () => {
 					hasUnsavedChanges={hasUnsavedChanges}
 					setHasUnsavedChanges={setHasUnsavedChanges}
 					setSingleCourseBeforeSave={setSingleCourseBeforeSave}
+					isSaving={isSaving}
 				/>
 			</Box>
 

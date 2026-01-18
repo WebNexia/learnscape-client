@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import { LoadingButton } from '@mui/lab';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
@@ -37,6 +38,7 @@ interface LessonPaperProps {
 	hasUnsavedChanges: boolean;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	setErrorMessage: React.Dispatch<React.SetStateAction<string>>;
+	isSaving: boolean;
 }
 
 const LessonPaper = ({
@@ -61,6 +63,7 @@ const LessonPaper = ({
 	hasUnsavedChanges,
 	setHasUnsavedChanges,
 	setErrorMessage,
+	isSaving,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -208,28 +211,47 @@ const LessonPaper = ({
 								</Snackbar>
 								{isEditMode ? (
 									<Box sx={{ width: '100%' }}>
-										<CustomSubmitButton
-											unsaved={hasUnsavedChanges}
-											sx={{ backgroundColor: theme.bgColor?.greenPrimary, fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
-											onClick={(e) => {
-												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
-													handleLessonUpdate(e as FormEvent<Element>);
-													resetImageUpload();
-													resetVideoUpload();
-													resetEnterImageVideoUrl();
-													setHasUnsavedChanges(false);
-												} else {
-													setIsMissingFieldMsgOpen(true);
-													if (!singleLessonBeforeSave?.title.trim()) {
-														setTitleError(true);
+										{isSaving ? (
+											<LoadingButton
+												loading={isSaving}
+												disabled={true}
+												variant='contained'
+												sx={{
+													backgroundColor: 'white !important',
+													textTransform: 'capitalize',
+													height: isMobileSize ? '1.5rem' : '1.75rem',
+													fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : (isMobileSize ? '0.7rem' : '0.85rem'),
+													mt: '0.2rem',
+													'&.Mui-disabled': {
+														backgroundColor: 'white !important',
+													},
+												}}>
+												Save
+											</LoadingButton>
+										) : (
+											<CustomSubmitButton
+												unsaved={hasUnsavedChanges}
+												sx={{ backgroundColor: theme.bgColor?.greenPrimary, fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
+												onClick={(e) => {
+													if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
+														handleLessonUpdate(e as FormEvent<Element>);
+														resetImageUpload();
+														resetVideoUpload();
+														resetEnterImageVideoUrl();
+														setHasUnsavedChanges(false);
 													} else {
-														setTitleError(false);
+														setIsMissingFieldMsgOpen(true);
+														if (!singleLessonBeforeSave?.title.trim()) {
+															setTitleError(true);
+														} else {
+															setTitleError(false);
+														}
 													}
-												}
-												window.scrollTo({ top: 0, behavior: 'smooth' });
-											}}>
-											Save
-										</CustomSubmitButton>
+													window.scrollTo({ top: 0, behavior: 'smooth' });
+												}}>
+												Save
+											</CustomSubmitButton>
+										)}
 										<CustomCancelButton
 											onClick={() => {
 												setIsEditMode(false);
@@ -250,6 +272,7 @@ const LessonPaper = ({
 												setHasUnsavedChanges(false);
 												setErrorMessage('');
 											}}
+											disabled={isSaving}
 											sx={{
 												color: theme.textColor?.common.main,
 												borderColor: theme.textColor?.common.main,

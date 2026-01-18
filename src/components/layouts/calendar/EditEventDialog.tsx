@@ -100,6 +100,7 @@ const EditEventDialog = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [deleteEventModalOpen, setDeleteEventModalOpen] = useState<boolean>(false);
+	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [isStartingMeeting, setIsStartingMeeting] = useState<boolean>(false);
 
@@ -582,6 +583,7 @@ const EditEventDialog = ({
 	};
 
 	const deleteEvent = async () => {
+		setIsDeleting(true);
 		try {
 			// Use instructor route if user is instructor
 			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
@@ -596,6 +598,8 @@ const EditEventDialog = ({
 			setDeleteEventModalOpen(false);
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setIsDeleting(false);
 		}
 	};
 
@@ -1626,7 +1630,7 @@ const EditEventDialog = ({
 					</Box>
 					<CustomDialogActions
 						onCancel={() => {
-							if (!isProcessing) {
+							if (!isProcessing && !isDeleting) {
 								setEditEventModalOpen(false);
 								setSearchLearnerValue('');
 								setSearchCourseValue('');
@@ -1635,8 +1639,8 @@ const EditEventDialog = ({
 							}
 						}}
 						submitBtnText='Update'
-						disableBtn={isProcessing || !canManageEvent}
-						disableCancelBtn={isProcessing}
+						disableBtn={isProcessing || isDeleting || !canManageEvent}
+						disableCancelBtn={isProcessing || isDeleting}
 						actionSx={{ marginBottom: '0rem', marginRight: '-0.25rem' }}
 					/>
 				</Box>
@@ -1651,8 +1655,14 @@ const EditEventDialog = ({
 					</DialogContent>
 					<CustomDialogActions
 						deleteBtn
-						onCancel={() => setDeleteEventModalOpen(false)}
+						onCancel={() => {
+							if (!isDeleting) {
+								setDeleteEventModalOpen(false);
+							}
+						}}
 						onDelete={deleteEvent}
+						disableCancelBtn={isDeleting}
+						isDeleting={isDeleting}
 						actionSx={{ marginBottom: '0.5rem' }}
 					/>
 				</CustomDialog>

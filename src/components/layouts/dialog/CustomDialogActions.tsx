@@ -24,6 +24,7 @@ interface CustomDialogActionsProps {
 	disableCancelBtn?: boolean;
 	showCancelBtn?: boolean;
 	isSubmitting?: boolean;
+	isDeleting?: boolean;
 }
 
 const CustomDialogActions = ({
@@ -43,6 +44,7 @@ const CustomDialogActions = ({
 	disableCancelBtn = false,
 	showCancelBtn = true,
 	isSubmitting = false,
+	isDeleting = false,
 }: CustomDialogActionsProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -57,12 +59,13 @@ const CustomDialogActions = ({
 			{showCancelBtn && (
 				<CustomCancelButton
 					onClick={onCancel}
+					disabled={disableCancelBtn || isSubmitting || isDeleting}
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
 						height: isMobileSize ? '1.5rem' : '2.15rem',
 						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-						cursor: disableCancelBtn || isSubmitting ? 'not-allowed' : 'pointer',
-						pointerEvents: disableCancelBtn || isSubmitting ? 'none' : 'auto',
+						cursor: disableCancelBtn || isSubmitting || isDeleting ? 'not-allowed' : 'pointer',
+						pointerEvents: disableCancelBtn || isSubmitting || isDeleting ? 'none' : 'auto',
 						...cancelBtnSx,
 					}}>
 					{cancelBtnText}
@@ -100,6 +103,24 @@ const CustomDialogActions = ({
 						{submitBtnText}
 					</CustomSubmitButton>
 				)
+			) : isDeleting ? (
+				<LoadingButton
+					disabled={true}
+					loading={true}
+					variant='contained'
+					sx={{
+						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						backgroundColor: 'white !important',
+						textTransform: 'capitalize',
+						'&.Mui-disabled': {
+							backgroundColor: 'white !important',
+						},
+					}}
+					size='small'>
+					{deleteBtnText}
+				</LoadingButton>
 			) : (
 				<CustomDeleteButton
 					sx={{

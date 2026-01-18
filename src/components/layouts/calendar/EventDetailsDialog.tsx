@@ -26,7 +26,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
 	const navigate = useNavigate();
@@ -73,11 +73,13 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 		}
 	}, [eventDetailsModalOpen, selectedEvent?._id, user, selectedEvent?.isPublic, base_url]);
 
-	// Fetch recordings for the event
+	// Fetch recordings for the event (only if Zoom is configured)
 	useEffect(() => {
 		const fetchRecordings = async () => {
-			if (!selectedEvent?._id || !selectedEvent?.zoomMeetingId) {
+			// Only fetch if Zoom is configured and event has zoomMeetingId
+			if (!organisation?.hasZoomConfigured || !selectedEvent?._id || !selectedEvent?.zoomMeetingId) {
 				setRecordings([]);
+				setIsLoadingRecordings(false);
 				return;
 			}
 
@@ -102,8 +104,9 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 			fetchRecordings();
 		} else {
 			setRecordings([]);
+			setIsLoadingRecordings(false);
 		}
-	}, [eventDetailsModalOpen, selectedEvent?._id, selectedEvent?.zoomMeetingId, base_url]);
+	}, [eventDetailsModalOpen, selectedEvent?._id, selectedEvent?.zoomMeetingId, organisation?.hasZoomConfigured, base_url]);
 
 	// Helper function to check if event has ended
 	const isEventEnded = (event: Event | null): boolean => {
@@ -271,76 +274,106 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						</Box>
 					)}
 
-					{/* Show all available recordings (YouTube, Zoom, or manual) */}
-					{(selectedEvent?.youtubeVideoId || recordings.length > 0 || selectedEvent?.sessionRecordingUrl) && (
-						<Box sx={{ mb: '0.75rem' }}>
-							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
-								Recording{selectedEvent?.youtubeVideoId && (recordings.length > 0 || selectedEvent?.sessionRecordingUrl) ? 's' : ''}:
-							</Typography>
-							
-							{/* Automatically uploaded YouTube video from Zoom */}
-							{selectedEvent?.youtubeVideoId && (
-								<Link
-									onClick={() => navigate(`/event-recording/${selectedEvent?._id}`)}
-									sx={{
-										'display': 'block',
-										'cursor': 'pointer',
-										'color': theme.palette.primary.main,
-										'textDecoration': 'none',
-										'mb': recordings.length > 0 || selectedEvent?.sessionRecordingUrl ? '0.5rem' : '0',
-										'&:hover': {
-											textDecoration: 'underline',
-										},
-									}}>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Watch Recording (YouTube)
-									</Typography>
-								</Link>
-							)}
+					{/* Show recordings based on Zoom configuration */}
+					{(() => {
+						const hasZoomConfigured = organisation?.hasZoomConfigured;
+						const hasYouTube = !!selectedEvent?.youtubeVideoId;
+						const hasZoomRecordings = recordings.length > 0;
+						const hasSessionRecordingUrl = !!selectedEvent?.sessionRecordingUrl;
 
-							{/* Zoom recordings from API */}
-							{recordings.length > 0 && (
-								<Link
-									onClick={() => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`)}
-									sx={{
-										'display': 'block',
-										'cursor': 'pointer',
-										'color': theme.palette.primary.main,
-										'textDecoration': 'none',
-										'mb': selectedEvent?.sessionRecordingUrl ? '0.5rem' : '0',
-										'&:hover': {
-											textDecoration: 'underline',
-										},
-									}}>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Watch Recording ({new Date(recordings[0].recordingStart).toLocaleString()})
-									</Typography>
-								</Link>
-							)}
+						const recordingsToShow: Array<{ type: 'youtube' | 'zoom' | 'manual'; label: string; onClick?: () => void; href?: string }> = [];
 
-							{/* Manually provided session recording URL */}
-							{selectedEvent?.sessionRecordingUrl && (
-								<Link
-									href={selectedEvent.sessionRecordingUrl}
-									target='_blank'
-									rel='noopener noreferrer'
-									sx={{
-										'display': 'block',
-										'cursor': 'pointer',
-										'color': theme.palette.primary.main,
-										'textDecoration': 'none',
-										'&:hover': {
-											textDecoration: 'underline',
-										},
-									}}>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Watch Recording {selectedEvent?.youtubeVideoId || recordings.length > 0 ? '(Additional)' : ''}
-									</Typography>
-								</Link>
-							)}
-						</Box>
-					)}
-					{isLoadingRecordings && (
+						// If Zoom is configured for auto upload to YT:
+						if (hasZoomConfigured) {
+							// If YT video is available, show YT
+							if (hasYouTube) {
+								recordingsToShow.push({
+									type: 'youtube',
+									label: 'Watch Recording (YouTube)',
+									onClick: () => navigate(`/event-recording/${selectedEvent?._id}`),
+								});
+							}
+							// If YT is not ready but Zoom recordings exist, show Zoom
+							else if (hasZoomRecordings) {
+								recordingsToShow.push({
+									type: 'zoom',
+									label: `Watch Recording (Zoom - ${new Date(recordings[0].recordingStart).toLocaleString()})`,
+									onClick: () => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`),
+								});
+							}
+
+							// Always show sessionRecordingUrl if it exists (alongside auto-generated recording)
+							if (hasSessionRecordingUrl) {
+								recordingsToShow.push({
+									type: 'manual',
+									label: 'Watch Recording',
+									href: selectedEvent.sessionRecordingUrl,
+								});
+							}
+						}
+						// If Zoom is not configured, show only sessionRecordingUrl
+						else if (hasSessionRecordingUrl) {
+							recordingsToShow.push({
+								type: 'manual',
+								label: 'Watch Recording',
+								href: selectedEvent.sessionRecordingUrl,
+							});
+						}
+
+						if (recordingsToShow.length === 0) {
+							return null;
+						}
+
+						return (
+							<Box sx={{ mb: '0.75rem' }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
+									{recordingsToShow.length > 1 ? 'Recordings:' : 'Recording:'}
+								</Typography>
+								{recordingsToShow.map((recording, index) =>
+									recording.onClick ? (
+										<Link
+											key={index}
+											onClick={recording.onClick}
+											sx={{
+												'display': 'block',
+												'cursor': 'pointer',
+												'color': theme.palette.primary.main,
+												'textDecoration': 'none',
+												'mb': index < recordingsToShow.length - 1 ? '0.5rem' : '0',
+												'&:hover': {
+													textDecoration: 'underline',
+												},
+											}}>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												{recording.label}
+											</Typography>
+										</Link>
+									) : (
+										<Link
+											key={index}
+											href={recording.href}
+											target='_blank'
+											rel='noopener noreferrer'
+											sx={{
+												'display': 'block',
+												'cursor': 'pointer',
+												'color': theme.palette.primary.main,
+												'textDecoration': 'none',
+												'mb': index < recordingsToShow.length - 1 ? '0.5rem' : '0',
+												'&:hover': {
+													textDecoration: 'underline',
+												},
+											}}>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												{recording.label}
+											</Typography>
+										</Link>
+									)
+								)}
+							</Box>
+						);
+					})()}
+					{isLoadingRecordings && organisation?.hasZoomConfigured && (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', mb: '0.75rem' }}>
 							Checking for recordings...
 						</Typography>
