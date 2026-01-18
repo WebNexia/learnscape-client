@@ -1,10 +1,10 @@
-import { Box, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
@@ -133,6 +133,10 @@ const AdminUsers = () => {
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
 	const [isUserEditModalOpen, setIsUserEditModalOpen] = useState<boolean[]>([]);
 	const [isZoomHostModalOpen, setIsZoomHostModalOpen] = useState<boolean[]>([]);
+	const [isDeleteLearningDataModalOpen, setIsDeleteLearningDataModalOpen] = useState<boolean[]>([]);
+	const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState<boolean[]>([]);
+	const [isDeletingLearningData, setIsDeletingLearningData] = useState<boolean>(false);
+	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
@@ -143,6 +147,8 @@ const AdminUsers = () => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
+		setIsDeleteLearningDataModalOpen(Array(paginatedUsers.length).fill(false));
+		setIsDeleteUserModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
 
 	const toggleStatusUpdateEditModal = (index: number) => {
@@ -280,6 +286,65 @@ const AdminUsers = () => {
 			closeUserEditModal(index);
 		} catch (error) {
 			console.error('Update user role error:', error);
+		}
+	};
+
+	const openDeleteLearningDataModal = (index: number) => {
+		const userToEdit: User = paginatedUsers[index];
+		setSingleUser(userToEdit);
+		const newModalState = [...isDeleteLearningDataModalOpen];
+		newModalState[index] = true;
+		setIsDeleteLearningDataModalOpen(newModalState);
+	};
+
+	const closeDeleteLearningDataModal = (index: number) => {
+		const newModalState = [...isDeleteLearningDataModalOpen];
+		newModalState[index] = false;
+		setIsDeleteLearningDataModalOpen(newModalState);
+	};
+
+	const handleDeleteUserLearningData = async (index: number) => {
+		if (!singleUser?._id) return;
+
+		setIsDeletingLearningData(true);
+		try {
+			await axios.delete(`${base_url}/users/${singleUser._id}/learning-data`);
+			closeDeleteLearningDataModal(index);
+			// Optionally refresh users or show success message
+		} catch (error) {
+			console.error('Error deleting user learning data:', error);
+		} finally {
+			setIsDeletingLearningData(false);
+		}
+	};
+
+	const openDeleteUserModal = (index: number) => {
+		const userToEdit: User = paginatedUsers[index];
+		setSingleUser(userToEdit);
+		const newModalState = [...isDeleteUserModalOpen];
+		newModalState[index] = true;
+		setIsDeleteUserModalOpen(newModalState);
+	};
+
+	const closeDeleteUserModal = (index: number) => {
+		const newModalState = [...isDeleteUserModalOpen];
+		newModalState[index] = false;
+		setIsDeleteUserModalOpen(newModalState);
+	};
+
+	const handleDeleteUser = async (index: number) => {
+		if (!singleUser?._id) return;
+
+		setIsDeletingUser(true);
+		try {
+			await axios.delete(`${base_url}/users/${singleUser._id}`);
+			closeDeleteUserModal(index);
+			// Refresh users list after deletion
+			enableUsersFetch();
+		} catch (error) {
+			console.error('Error deleting user:', error);
+		} finally {
+			setIsDeletingUser(false);
 		}
 	};
 
@@ -588,6 +653,23 @@ const AdminUsers = () => {
 														</>
 													)}
 
+													{loggedInUser?.role === Roles.OWNER && (
+														<>
+															<CustomActionBtn
+																title='Delete Learning Data'
+																onClick={() => openDeleteLearningDataModal(index)}
+																icon={<DeleteForever fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+																disabled={user._id === userId}
+															/>
+															<CustomActionBtn
+																title='Delete User Account'
+																onClick={() => openDeleteUserModal(index)}
+																icon={<DeleteForever fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, color: 'error.main' }} />}
+																disabled={user._id === userId}
+															/>
+														</>
+													)}
+
 													<CustomActionBtn
 														title={user?.isActive ? 'Deactivate' : 'Activate'}
 														onClick={() => {
@@ -602,6 +684,112 @@ const AdminUsers = () => {
 														}
 														disabled={user._id === userId}
 													/>
+
+													{loggedInUser?.role === Roles.OWNER && isDeleteLearningDataModalOpen[index] !== undefined && (
+														<CustomDialog
+															openModal={isDeleteLearningDataModalOpen[index]}
+															closeModal={() => {
+																if (!isDeletingLearningData) {
+																	closeDeleteLearningDataModal(index);
+																}
+															}}
+															title='Delete User Learning Data'
+															maxWidth='xs'>
+															<DialogContent>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+																	Are you sure you want to delete all learning data for {singleUser?.firstName} {singleUser?.lastName} ({singleUser?.username})?
+																</Typography>
+																<Typography
+																	variant='body2'
+																	sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.75rem', fontWeight: 600 }}>
+																	This will permanently delete:
+																</Typography>
+																<Box component='ul' sx={{ pl: '1.5rem', mt: '0.5rem', mb: '0.5rem' }}>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All course enrollments
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All lesson progress
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All question answers
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All quiz submissions
+																	</Typography>
+																</Box>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.75rem' }}>
+																	This action cannot be undone.
+																</Typography>
+															</DialogContent>
+															<CustomDialogActions
+																onCancel={() => {
+																	if (!isDeletingLearningData) {
+																		closeDeleteLearningDataModal(index);
+																	}
+																}}
+																onDelete={() => handleDeleteUserLearningData(index)}
+																deleteBtn={true}
+																deleteBtnText='Delete All Data'
+																isDeleting={isDeletingLearningData}
+																disableCancelBtn={isDeletingLearningData}
+																actionSx={{ marginBottom: '0.5rem' }}
+															/>
+															</CustomDialog>
+													)}
+
+													{loggedInUser?.role === Roles.OWNER && isDeleteUserModalOpen[index] !== undefined && (
+														<CustomDialog
+															openModal={isDeleteUserModalOpen[index]}
+															closeModal={() => {
+																if (!isDeletingUser) {
+																	closeDeleteUserModal(index);
+																}
+															}}
+															title='Delete User Account'
+															maxWidth='xs'>
+															<DialogContent>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+																	Are you sure you want to permanently delete {singleUser?.firstName} {singleUser?.lastName} ({singleUser?.username})?
+																</Typography>
+																<Typography
+																	variant='body2'
+																	sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.75rem', fontWeight: 600 }}>
+																	This will permanently delete:
+																</Typography>
+																<Box component='ul' sx={{ pl: '1.5rem', mt: '0.5rem', mb: '0.5rem' }}>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		User account from MongoDB
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		User account from Firebase Authentication
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All Firestore data (users, notifications, chats)
+																	</Typography>
+																	<Typography component='li' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		All learning data (course enrollments, lesson progress, question answers, quiz submissions)
+																	</Typography>
+																</Box>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.75rem' }}>
+																	This action cannot be undone. The user will no longer be able to access the system.
+																</Typography>
+															</DialogContent>
+															<CustomDialogActions
+																onCancel={() => {
+																	if (!isDeletingUser) {
+																		closeDeleteUserModal(index);
+																	}
+																}}
+																onDelete={() => handleDeleteUser(index)}
+																deleteBtn={true}
+																deleteBtnText='Delete User'
+																isDeleting={isDeletingUser}
+																disableCancelBtn={isDeletingUser}
+																actionSx={{ marginBottom: '0.5rem' }}
+															/>
+														</CustomDialog>
+													)}
 
 													{isUserStatusUpdateModalOpen[index] !== undefined && (
 														<CustomDialog
