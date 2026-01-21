@@ -1,4 +1,4 @@
-import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -29,11 +29,13 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 const getColumns = (isVerySmallScreen: boolean) => {
 	return isVerySmallScreen
 		? [
+				{ key: 'avatar', label: '' },
 				{ key: 'username', label: 'Username' },
 				{ key: 'email', label: 'Email Address' },
 				{ key: 'actions', label: 'Actions' },
 			]
 		: [
+				{ key: 'avatar', label: '' },
 				{ key: 'fullName', label: 'Full Name' },
 				{ key: 'username', label: 'Username' },
 				{ key: 'email', label: 'Email Address' },
@@ -451,53 +453,61 @@ const AdminUsers = () => {
 								},
 								// Column widths for header cells
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isVerySmallScreen ? '35px' : '50px',
+									width: isVerySmallScreen ? '7%' : '3%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 									minWidth: isVerySmallScreen ? '80px' : '100px',
 									width: isVerySmallScreen ? '30%' : '18%',
 								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
-									minWidth: isVerySmallScreen ? '200px' : '100px',
-									width: isVerySmallScreen ? '35%' : '12%',
-								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
-									minWidth: isVerySmallScreen ? '100px' : '120px',
-									width: isVerySmallScreen ? '35%' : '28%',
+									minWidth: isVerySmallScreen ? '200px' : '100px',
+									width: isVerySmallScreen ? '30%' : '12%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
-									minWidth: isVerySmallScreen ? '0px' : '150px',
-									width: isVerySmallScreen ? '0%' : '10%',
+									minWidth: isVerySmallScreen ? '100px' : '120px',
+									width: isVerySmallScreen ? '33%' : '28%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
-									minWidth: isVerySmallScreen ? '0px' : '80px',
+									minWidth: isVerySmallScreen ? '0px' : '150px',
 									width: isVerySmallScreen ? '0%' : '10%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
-									minWidth: isVerySmallScreen ? '0px' : '120px',
-									width: isVerySmallScreen ? '0%' : '22%',
-								},
-								// Column widths for body cells - exact same as header
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
-									minWidth: isVerySmallScreen ? '80px' : '100px',
-									width: isVerySmallScreen ? '30%' : '18%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
-									minWidth: isVerySmallScreen ? '200px' : '100px',
-									width: isVerySmallScreen ? '35%' : '12%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
-									minWidth: isVerySmallScreen ? '100px' : '120px',
-									width: isVerySmallScreen ? '35%' : '28%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
-									minWidth: isVerySmallScreen ? '0px' : '150px',
-									width: isVerySmallScreen ? '0%' : '10%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 									minWidth: isVerySmallScreen ? '0px' : '80px',
 									width: isVerySmallScreen ? '0%' : '10%',
 								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
 									minWidth: isVerySmallScreen ? '0px' : '120px',
-									width: isVerySmallScreen ? '0%' : '22%',
+									width: isVerySmallScreen ? '0%' : '20%',
+								},
+								// Column widths for body cells - exact same as header
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isVerySmallScreen ? '35px' : '50px',
+									width: isVerySmallScreen ? '7%' : '3%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isVerySmallScreen ? '80px' : '100px',
+									width: isVerySmallScreen ? '30%' : '18%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isVerySmallScreen ? '200px' : '100px',
+									width: isVerySmallScreen ? '30%' : '12%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isVerySmallScreen ? '100px' : '120px',
+									width: isVerySmallScreen ? '33%' : '28%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isVerySmallScreen ? '0px' : '150px',
+									width: isVerySmallScreen ? '0%' : '10%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '10%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(7)': {
+									minWidth: isVerySmallScreen ? '0px' : '120px',
+									width: isVerySmallScreen ? '0%' : '20%',
 								},
 							}}
 							size='small'
@@ -505,12 +515,13 @@ const AdminUsers = () => {
 							{/* Spacer row to ensure header alignment */}
 							<TableBody>
 								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+									<TableCell sx={{ width: isVerySmallScreen ? '10%' : '5%', padding: 0, border: 'none' }} />
 									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '18%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '35%' : '12%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '35%' : '28%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '28%', padding: 0, border: 'none' }} />
 									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
 									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '22%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '17%', padding: 0, border: 'none' }} />
 								</TableRow>
 							</TableBody>
 							<CustomTableHead<User>
@@ -522,9 +533,19 @@ const AdminUsers = () => {
 							<TableBody>
 								{paginatedUsers &&
 									paginatedUsers?.map((user: User, index) => {
+										const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
 										return (
 											<TableRow key={user._id} hover>
-												{!isVerySmallScreen && <CustomTableCell value={`${user.firstName || ''} ${user.lastName || ''}`.trim()} />}
+												<TableCell>
+													<Avatar
+														src={user.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+														sx={{
+															width: isVerySmallScreen ? 30 : 38,
+															height: isVerySmallScreen ? 30 : 38,
+														}}>
+													</Avatar>
+												</TableCell>
+												{!isVerySmallScreen && <CustomTableCell value={fullName} />}
 												<CustomTableCell value={user.username} />
 												<CustomTableCell value={user.email} />
 												{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}

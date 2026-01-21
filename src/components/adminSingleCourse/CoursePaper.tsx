@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview, Insights } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview, Insights, Person } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -198,7 +198,7 @@ const CoursePaper = ({
 								paddingLeft: isSticky ? '0' : '0.5rem',
 								gap: 1,
 							}}>
-							<Typography
+							{/* <Typography
 								variant='body2'
 								sx={{
 									color: theme.textColor?.common.main,
@@ -208,7 +208,7 @@ const CoursePaper = ({
 								{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
 								{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
 								{isSticky ? ')' : ''}
-							</Typography>
+							</Typography> */}
 
 							{/* Analytics icon next to status info */}
 							{!singleCourseBeforeSave?.courseManagement?.isExternal && (
@@ -225,6 +225,19 @@ const CoursePaper = ({
 									</IconButton>
 								</Tooltip>
 							)}
+							{/* Roster icon next to Analytics */}
+							<Tooltip title='Course Roster' placement='top' arrow>
+								<IconButton
+									size='small'
+									sx={{ color: theme.textColor?.common.main }}
+									onClick={() => {
+										if (!courseId) return;
+										const basePath = hasAdminAccess ? '/admin' : '/instructor';
+										navigate(`${basePath}/course-roster/course/${courseId}`);
+									}}>
+									<Person fontSize='small' />
+								</IconButton>
+							</Tooltip>
 						</Box>
 					)}
 					{isMobileSize && (
@@ -248,6 +261,19 @@ const CoursePaper = ({
 									</IconButton>
 								</Tooltip>
 							)}
+							{/* Roster icon next to Analytics */}
+							<Tooltip title='Course Roster' placement='top' arrow>
+								<IconButton
+									size='small'
+									sx={{ color: theme.textColor?.common.main }}
+									onClick={() => {
+										if (!courseId) return;
+										const basePath = hasAdminAccess ? '/admin' : '/instructor';
+										window.open(`${basePath}/course-roster/course/${courseId}`, '_blank');
+									}}>
+									<Person fontSize='small' />
+								</IconButton>
+							</Tooltip>
 						</Box>
 					)}
 				</Box>

@@ -92,7 +92,7 @@ const AdminCourseEditPage = () => {
 
 	const { isSticky } = useStickyPaper(isMobileSize);
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(false);
+	const [isEditMode, setIsEditMode] = useState<boolean>(true);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
 	const [singleCourseBeforeSave, setSingleCourseBeforeSave] = useState<SingleCourse>();
 	const [isFree, setIsFree] = useState<boolean>(false);
@@ -327,6 +327,7 @@ const AdminCourseEditPage = () => {
 				documents: [],
 				documentIds: [],
 				isExpired: extValidUntil ? extValidUntil < new Date() : false,
+				groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
 			};
 
 			try {
@@ -530,6 +531,7 @@ const AdminCourseEditPage = () => {
 					documentIds: updatedDocumentIds,
 					documents: updatedDocuments,
 					isExpired: validUntil ? validUntil < new Date() : false,
+					groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
 				};
 
 				try {
@@ -683,6 +685,17 @@ const AdminCourseEditPage = () => {
 		if (!hasUnsavedChanges) {
 			setIsEditMode(false);
 			return;
+		}
+
+		// Validate for duplicate group names (case-insensitive)
+		if (singleCourseBeforeSave?.groups && singleCourseBeforeSave.groups.length > 0) {
+			const groupNames = singleCourseBeforeSave.groups.map((g) => g.name?.toLowerCase().trim()).filter(Boolean);
+			const duplicateNames = groupNames.filter((name, index) => groupNames.indexOf(name) !== index);
+			if (duplicateNames.length > 0) {
+				setUrlErrorMessage('Duplicate group names are not allowed. Each group must have a unique name.');
+				setIsUrlErrorOpen(true);
+				return;
+			}
 		}
 
 		// Validate image URL before proceeding

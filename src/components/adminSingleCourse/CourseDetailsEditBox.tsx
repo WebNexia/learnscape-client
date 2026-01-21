@@ -1,15 +1,16 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, Button, DialogContent } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { SingleCourse } from '../../interfaces/course';
+import { SingleCourse, CourseGroup } from '../../interfaces/course';
 import theme from '../../themes';
 import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
-import { Roles } from '../../interfaces/enums';
-import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
+import { Add, Edit, Delete } from '@mui/icons-material';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -32,7 +33,6 @@ const CourseDetailsEditBox = ({
 }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
-	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -43,6 +43,17 @@ const CourseDetailsEditBox = ({
 	const [USD, setUSD] = useState<string>('');
 	const [EUR, setEUR] = useState<string>('');
 	const [TRY, setTRY] = useState<string>('');
+
+	// Group management state
+	const [isGroupDialogOpen, setIsGroupDialogOpen] = useState<boolean>(false);
+	const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
+	const [groupFormData, setGroupFormData] = useState<{ name: string; schedule: string; capacity: string; description: string }>({
+		name: '',
+		schedule: '',
+		capacity: '',
+		description: '',
+	});
+	const [groupNameError, setGroupNameError] = useState<string>('');
 
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
@@ -87,6 +98,98 @@ const CourseDetailsEditBox = ({
 	const parseDate = (dateString: string) => {
 		const [year, month, day] = dateString.split('-');
 		return new Date(`${year}-${month}-${day}`);
+	};
+
+	// Group management handlers
+	const openAddGroupDialog = () => {
+		setGroupFormData({ name: '', schedule: '', capacity: '', description: '' });
+		setEditingGroupIndex(null);
+		setIsGroupDialogOpen(true);
+	};
+
+	const openEditGroupDialog = (index: number) => {
+		const group = singleCourseBeforeSave?.groups?.[index];
+		if (group) {
+			setGroupFormData({
+				name: group.name,
+				schedule: group.schedule,
+				capacity: group.capacity?.toString() || '',
+				description: group.description || '',
+			});
+			setEditingGroupIndex(index);
+			setIsGroupDialogOpen(true);
+		}
+	};
+
+	const closeGroupDialog = () => {
+		setIsGroupDialogOpen(false);
+		setEditingGroupIndex(null);
+		setGroupFormData({ name: '', schedule: '', capacity: '', description: '' });
+	};
+
+	// Check for duplicate group names (case-insensitive)
+	const checkDuplicateGroupName = (name: string, excludeIndex: number | null = null): boolean => {
+		if (!singleCourseBeforeSave || !name.trim()) return false;
+		const groups = singleCourseBeforeSave.groups || [];
+		const nameLower = name.trim().toLowerCase();
+		
+		return groups.some((group, index) => {
+			if (excludeIndex !== null && index === excludeIndex) return false;
+			return group.name?.toLowerCase() === nameLower;
+		});
+	};
+
+	const handleSaveGroup = () => {
+		if (!singleCourseBeforeSave || !groupFormData.name.trim() || !groupFormData.schedule.trim()) {
+			return;
+		}
+
+		// Check for duplicate names
+		if (checkDuplicateGroupName(groupFormData.name.trim(), editingGroupIndex)) {
+			setGroupNameError('A group with this name already exists. Group names must be unique.');
+			return;
+		}
+
+		// Clear error if validation passes
+		setGroupNameError('');
+
+		const newGroup: CourseGroup = {
+			name: groupFormData.name.trim(),
+			schedule: groupFormData.schedule.trim(),
+			capacity: groupFormData.capacity ? parseInt(groupFormData.capacity, 10) : undefined,
+			description: groupFormData.description.trim() || undefined,
+		};
+
+		setSingleCourseBeforeSave((prevCourse) => {
+			if (!prevCourse) return prevCourse;
+
+			const groups = prevCourse.groups || [];
+			if (editingGroupIndex !== null) {
+				// Edit existing group (keep _id if exists)
+				const existingGroup = groups[editingGroupIndex];
+				const updatedGroups = [...groups];
+				updatedGroups[editingGroupIndex] = { ...existingGroup, ...newGroup };
+				return { ...prevCourse, groups: updatedGroups };
+			} else {
+				// Add new group
+				return { ...prevCourse, groups: [...groups, newGroup] };
+			}
+		});
+
+		setHasUnsavedChanges(true);
+		closeGroupDialog();
+	};
+
+	const handleDeleteGroup = (index: number) => {
+		if (!singleCourseBeforeSave) return;
+
+		setSingleCourseBeforeSave((prevCourse) => {
+			if (!prevCourse) return prevCourse;
+			const groups = prevCourse.groups || [];
+			return { ...prevCourse, groups: groups.filter((_, i) => i !== index) };
+		});
+
+		setHasUnsavedChanges(true);
 	};
 	return (
 		<>
@@ -513,6 +616,170 @@ const CourseDetailsEditBox = ({
 					</Box>
 				</Box>
 			</Box>
+
+			{/* Groups Management Section */}
+			{hasAdminAccess && (
+				<Box sx={{ mt: '2rem', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Groups (Optional)
+						</Typography>
+						<Button
+							variant='outlined'
+							startIcon={<Add sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />}
+							onClick={openAddGroupDialog}
+							sx={{
+								textTransform: 'capitalize',
+								fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+								py: isMobileSize ? '0.25rem' : '0.5rem',
+							}}>
+							Add Group
+						</Button>
+					</Box>
+
+					{/* Groups List */}
+					{singleCourseBeforeSave?.groups && singleCourseBeforeSave.groups.length > 0 ? (
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+							{singleCourseBeforeSave.groups.map((group, index) => (
+								<Box
+									key={index}
+									sx={{
+										border: `1px solid ${theme.palette.divider}`,
+										borderRadius: '0.25rem',
+										padding: '1rem',
+										backgroundColor: theme.bgColor?.common,
+									}}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', fontWeight: 600, mb: '0.5rem' }}>
+												{group.name}
+											</Typography>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem' }}>
+												Schedule: {group.schedule}
+											</Typography>
+											{group.capacity && (
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem' }}>
+													Capacity: {group.capacity} learners
+												</Typography>
+											)}
+											{group.description && (
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem' }}>
+													{group.description}
+												</Typography>
+											)}
+										</Box>
+										<Box sx={{ display: 'flex', gap: '0.5rem', ml: '1rem' }}>
+											<Tooltip title='Edit Group' placement='top' arrow>
+												<IconButton
+													size='small'
+													onClick={() => {openEditGroupDialog(index); setGroupNameError('');}}
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
+													<Edit fontSize='small' />
+												</IconButton>
+											</Tooltip>
+											<Tooltip title='Delete Group' placement='top' arrow>
+												<IconButton
+													size='small'
+													onClick={() => handleDeleteGroup(index)}
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
+													<Delete fontSize='small' />
+												</IconButton>
+											</Tooltip>
+										</Box>
+									</Box>
+								</Box>
+							))}
+						</Box>
+					) : (
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+							No groups added. Groups are optional and allow you to organize learners into different batches with separate schedules.
+						</Typography>
+					)}
+
+					{/* Add/Edit Group Dialog */}
+					<CustomDialog
+						openModal={isGroupDialogOpen}
+						closeModal={closeGroupDialog}
+						title={editingGroupIndex !== null ? 'Edit Group' : 'Add Group'}
+						maxWidth='sm'>
+						<DialogContent>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', mt: '0.5rem' }}>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Group Name*
+									</Typography>
+									<CustomTextField
+										value={groupFormData.name}
+										onChange={(e) => {
+											setGroupFormData({ ...groupFormData, name: e.target.value });
+											// Clear error when user starts typing
+											if (groupNameError) {
+												setGroupNameError('');
+											}
+											// Check for duplicates in real-time
+											if (e.target.value.trim() && checkDuplicateGroupName(e.target.value.trim(), editingGroupIndex)) {
+												setGroupNameError('A group with this name already exists. Group names must be unique.');
+											}
+										}}
+										placeholder='e.g., Group A'
+										InputProps={{ inputProps: { maxLength: 50 } }}
+										fullWidth
+										error={!!groupNameError}
+									/>
+									{groupNameError && <CustomErrorMessage>{groupNameError}</CustomErrorMessage>}
+								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Schedule*
+									</Typography>
+									<CustomTextField
+										value={groupFormData.schedule}
+										onChange={(e) => setGroupFormData({ ...groupFormData, schedule: e.target.value })}
+										placeholder='e.g., Monday-Tuesday (8-10PM)'
+										InputProps={{ inputProps: { maxLength: 100 } }}
+										fullWidth
+									/>
+								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Capacity (Optional)
+									</Typography>
+									<CustomTextField
+										value={groupFormData.capacity}
+										onChange={(e) => setGroupFormData({ ...groupFormData, capacity: e.target.value })}
+										placeholder='e.g., 20'
+										type='number'
+										fullWidth
+									/>
+								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Description (Optional)
+									</Typography>
+									<CustomTextField
+										multiline
+										rows={3}
+										value={groupFormData.description}
+										onChange={(e) => setGroupFormData({ ...groupFormData, description: e.target.value })}
+										placeholder='Optional group description'
+										InputProps={{ inputProps: { maxLength: 250 } }}
+										fullWidth
+									/>
+									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
+										{groupFormData.description.length}/250 Characters
+									</Typography>
+								</Box>
+							</Box>
+						</DialogContent>
+						<CustomDialogActions
+							onCancel={closeGroupDialog}
+							onSubmit={handleSaveGroup}
+							submitBtnText={editingGroupIndex !== null ? 'Update' : 'Add'}
+							disableBtn={!groupFormData.name.trim() || !groupFormData.schedule.trim() || !!groupNameError}
+						/>
+					</CustomDialog>
+				</Box>
+			)}
 		</>
 	);
 };

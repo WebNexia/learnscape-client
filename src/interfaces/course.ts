@@ -42,6 +42,14 @@ export interface UserCourseByUserId extends BaseCourse {
 	chapterIds: string[];
 }
 
+export interface CourseGroup {
+	_id?: string;
+	name: string;
+	schedule: string;
+	capacity?: number;
+	description?: string;
+}
+
 export interface SingleCourse extends BaseCourse {
 	startingDate: Date | null;
 	format: string;
@@ -53,6 +61,7 @@ export interface SingleCourse extends BaseCourse {
 	documentIds: string[];
 	documents: Document[];
 	firstLessonId: string;
+	groups?: CourseGroup[];
 }
 
 export interface Price {

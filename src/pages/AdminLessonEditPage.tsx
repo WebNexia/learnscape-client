@@ -168,7 +168,7 @@ const AdminLessonEditPage = () => {
 		updatedByRole: '',
 	};
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(false);
+	const [isEditMode, setIsEditMode] = useState<boolean>(true);
 	const [singleLesson, setSingleLesson] = useState<Lesson>(defaultLesson);
 	const [singleLessonBeforeSave, setSingleLessonBeforeSave] = useState<Lesson>(defaultLesson);
 

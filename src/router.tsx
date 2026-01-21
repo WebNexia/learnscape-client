@@ -17,6 +17,7 @@ import UsersContextProvider from './contexts/UsersContextProvider';
 import LessonsContextProvider from './contexts/LessonsContextProvider';
 import QuestionsContextProvider from './contexts/QuestionsContextProvider';
 import DocumentsContextProvider from './contexts/DocumentsContextProvider';
+import CoursesContextProvider from './contexts/CoursesContextProvider';
 import { RecycleBinQuestionsProvider } from './contexts/RecycleBinQuestionsContextProvider';
 import { RecycleBinDocumentsProvider } from './contexts/RecycleBinDocumentsContextProvider';
 import FeedbackFormsContextProvider from './contexts/FeedbackFormsContextProvider';
@@ -54,6 +55,7 @@ const LessonPage = React.lazy(() => import('./pages/LessonPage'));
 const AdminCourseEditPage = React.lazy(() => import('./pages/AdminCourseEditPage'));
 const AdminCourseAnalytics = React.lazy(() => import('./pages/AdminCourseAnalytics'));
 const AdminCourses = React.lazy(() => import('./pages/AdminCourses'));
+const CourseRoster = React.lazy(() => import('./pages/CourseRoster'));
 const AdminLessons = React.lazy(() => import('./pages/AdminLessons'));
 const AdminLessonEditPage = React.lazy(() => import('./pages/AdminLessonEditPage'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
@@ -175,6 +177,16 @@ export const router = createBrowserRouter([
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-roster/course/:courseId',
+				element: (
+					<AdminRouteGuard>
+						<CoursesContextProvider>
+							<CourseRoster />
+						</CoursesContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -460,6 +472,16 @@ export const router = createBrowserRouter([
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course-roster/course/:courseId',
+				element: (
+					<InstructorRouteGuard>
+						<CoursesContextProvider>
+							<CourseRoster />
+						</CoursesContextProvider>
 					</InstructorRouteGuard>
 				),
 			},
