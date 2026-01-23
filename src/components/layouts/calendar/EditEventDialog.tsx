@@ -107,6 +107,7 @@ const EditEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
+	const [selectedCourseGroups, setSelectedCourseGroups] = useState<{ courseId: string; groupName: string | null }[]>([]);
 
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
@@ -214,21 +215,31 @@ const EditEventDialog = ({
 		setSearchInstructorValue('');
 	};
 
-	const handleCourseSelect = (selectedCourse: SearchCourse) => {
-		// For event editing, we only need the course ID
-		// Check if course is already selected
-		const isAlreadySelected = selectedEvent?.coursesIds?.includes(selectedCourse._id);
-		if (!isAlreadySelected && selectedEvent) {
-			setSelectedEvent((prevData) => {
-				if (prevData) {
-					return {
-						...prevData,
-						coursesIds: [...prevData.coursesIds, selectedCourse._id],
-					};
+	const handleCourseSelect = (selectedCourse: SearchCourse, groupName: string | null) => {
+		// groupName: null = main course (all groups), string = specific group
+		setSelectedCourseGroups((prev) => {
+			// Remove existing selections for this course
+			const otherCourses = prev.filter((item) => item.courseId !== selectedCourse._id);
+			
+			if (groupName === null) {
+				// Main course selected - remove all groups for this course, add main course
+				return [...otherCourses, { courseId: selectedCourse._id, groupName: null }];
+			} else {
+				// Group selected - remove main course selection if exists, add/update group
+				const existingGroups = prev.filter(
+					(item) => item.courseId === selectedCourse._id && item.groupName !== null
+				);
+				// Check if this group is already selected
+				const isGroupAlreadySelected = existingGroups.some((item) => item.groupName === groupName);
+				if (isGroupAlreadySelected) {
+					// Remove this group if already selected (toggle off)
+					return [...otherCourses, ...existingGroups.filter((item) => item.groupName !== groupName)];
+				} else {
+					// Add this group
+					return [...otherCourses, ...existingGroups, { courseId: selectedCourse._id, groupName }];
 				}
-				return prevData;
-			});
-		}
+			}
+		});
 		setSearchCourseValue('');
 	};
 
@@ -244,6 +255,27 @@ const EditEventDialog = ({
 			originalIsPublic.current = selectedEvent.isPublic;
 		}
 	}, [editEventModalOpen]);
+
+	// Initialize selectedCourseGroups from selectedEvent.courseGroupNames
+	useEffect(() => {
+		if (selectedEvent?.courseGroupNames && selectedEvent.courseGroupNames.length > 0) {
+			const initialCourseGroups: { courseId: string; groupName: string | null }[] = [];
+			selectedEvent.courseGroupNames.forEach((item) => {
+				if (item.groupNames.length === 0) {
+					// Empty array = main course (all groups)
+					initialCourseGroups.push({ courseId: item.courseId, groupName: null });
+				} else {
+					// Specific groups
+					item.groupNames.forEach((groupName) => {
+						initialCourseGroups.push({ courseId: item.courseId, groupName });
+					});
+				}
+			});
+			setSelectedCourseGroups(initialCourseGroups);
+		} else {
+			setSelectedCourseGroups([]);
+		}
+	}, [selectedEvent]);
 
 	useEffect(() => {
 		let locale = navigator.language;
@@ -439,19 +471,46 @@ const EditEventDialog = ({
 			} catch (error) {
 				console.log(error);
 			}
-		} else if (selectedEvent?.coursesIds && selectedEvent?.coursesIds && selectedEvent?.coursesIds.length > 0) {
-			// Handle specific courses selection
+		} else if (selectedCourseGroups && selectedCourseGroups.length > 0) {
+			// Handle specific courses/groups selection
+			// Group by courseId
+			const coursesMap = new Map<string, (string | null)[]>();
+			selectedCourseGroups.forEach(({ courseId, groupName }) => {
+				if (!coursesMap.has(courseId)) {
+					coursesMap.set(courseId, []);
+				}
+				coursesMap.get(courseId)!.push(groupName);
+			});
+
+			// Fetch participants for each course
 			await Promise.all(
-				selectedEvent?.coursesIds?.map((courseId) => {
-					return (async () => {
+				Array.from(coursesMap.entries()).map(async ([courseId, groupNames]) => {
+					// If groupNames includes null, it means main course is selected (all groups)
+					const hasMainCourse = groupNames.includes(null);
+					
+					if (hasMainCourse) {
+						// Main course selected → all course (no groupNames parameter)
 						try {
-							const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
+							const res = await axios.get(`${base_url}/usercourses/course/${courseId}`);
 							courseParticipants.push(...res.data.users);
 						} catch (error) {
 							console.log(error);
 						}
-					})();
-				}) || []
+					} else {
+						// Only specific groups selected → use groupNames parameter
+						const validGroupNames = groupNames.filter((name): name is string => name !== null);
+						if (validGroupNames.length > 0) {
+							try {
+								const res = await axios.get(
+									`${base_url}/usercourses/course/${courseId}?groupNames=${validGroupNames.join(',')}`
+								);
+								courseParticipants.push(...res.data.users);
+							} catch (error) {
+								console.log(error);
+							}
+						}
+					}
+				})
 			);
 		}
 
@@ -477,23 +536,41 @@ const EditEventDialog = ({
 
 		try {
 			const uniqueAllAttendeesIds = [...new Set(allParticipantsIds)];
+			
+			// Convert selectedCourseGroups to courseGroupNames format
+			const courseGroupNames = selectedCourseGroups.reduce((acc, item) => {
+				const existing = acc.find((c) => c.courseId === item.courseId);
+				if (existing) {
+					if (item.groupName !== null) {
+						existing.groupNames.push(item.groupName);
+					}
+				} else {
+					acc.push({
+						courseId: item.courseId,
+						groupNames: item.groupName === null ? [] : [item.groupName],
+					});
+				}
+				return acc;
+			}, [] as { courseId: string; groupNames: string[] }[]);
+
 			// Only update the event if there are changes
 			let updateResponse = null;
 			if (isEventUpdated) {
 				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 
-				updateResponse = await axios.patch(endpoint, {
-					...selectedEvent,
-					attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
-					allAttendeesIds: uniqueAllAttendeesIds,
-					isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
-					isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
-					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
-					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
-					// Clear eventLinkUrl if Zoom is selected
-					eventLinkUrl: selectedEvent?.isZoomMeeting ? '' : selectedEvent?.eventLinkUrl,
-					isZoomMeeting: selectedEvent?.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
-				});
+			updateResponse = await axios.patch(endpoint, {
+				...selectedEvent,
+				attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
+				allAttendeesIds: uniqueAllAttendeesIds,
+				isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
+				isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
+				courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
+				type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+				coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+				// Clear eventLinkUrl if Zoom is selected
+				eventLinkUrl: selectedEvent?.isZoomMeeting ? '' : selectedEvent?.eventLinkUrl,
+				isZoomMeeting: selectedEvent?.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
+			});
 
 				// Backend now creates Zoom meeting automatically if isZoomMeeting is true
 				// Update local state with Zoom data from response if it exists
@@ -518,9 +595,15 @@ const EditEventDialog = ({
 				// Get updated event data from response (includes Zoom meeting data if created)
 				const updatedEventData = isEventUpdated && updateResponse?.data?.data ? updateResponse.data.data : selectedEvent;
 
+				// Use courseGroupNames from backend response if available, otherwise use local one
+				const finalCourseGroupNames = updatedEventData?.courseGroupNames !== undefined 
+					? updatedEventData.courseGroupNames 
+					: (courseGroupNames.length > 0 ? courseGroupNames : undefined);
+
 				updateEvent({
 					...selectedEvent,
 					allAttendeesIds: uniqueAllAttendeesIds,
+					courseGroupNames: finalCourseGroupNames,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
 					// Include Zoom data from backend response if it exists
@@ -666,7 +749,7 @@ const EditEventDialog = ({
 														return {
 															...prevData,
 															attendees: [],
-															coursesIds: [],
+															courseGroupNames: [],
 															allAttendeesIds: [],
 															isAllCoursesSelected: false,
 															isAllLearnersSelected: false,
@@ -1035,12 +1118,13 @@ const EditEventDialog = ({
 																	return {
 																		...prevData,
 																		attendees: [],
-																		coursesIds: [],
+																		courseGroupNames: [],
 																		allAttendeesIds: [],
 																	};
 																}
 																return prevData;
 															});
+															setSelectedCourseGroups([]);
 														}
 													}}
 													sx={{
@@ -1178,7 +1262,8 @@ const EditEventDialog = ({
 
 																setSelectedEvent((prevData) => {
 																	if (prevData) {
-																		return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [] };
+																		return { ...prevData, attendees: [], courseGroupNames: [], allAttendeesIds: [] };
+																		setSelectedCourseGroups([]);
 																	}
 																	return prevData;
 																});
@@ -1256,12 +1341,13 @@ const EditEventDialog = ({
 																	return {
 																		...prevData,
 																		attendees: [],
-																		coursesIds: [],
+																		courseGroupNames: [],
 																		allAttendeesIds: [],
 																	};
 																}
 																return prevData;
 															});
+															setSelectedCourseGroups([]);
 														}
 													}}
 													sx={{
@@ -1285,13 +1371,16 @@ const EditEventDialog = ({
 						</>
 					)}
 
-					{selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 && (
+					{selectedCourseGroups && selectedCourseGroups.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{selectedEvent.coursesIds?.map((id) => {
-								const course = courses?.find((course) => course._id === id);
+							{selectedCourseGroups.map((item, index) => {
+								const course = courses?.find((course) => course._id === item.courseId);
+								const displayText = item.groupName === null 
+									? course?.title || 'Unknown Course'
+									: `${truncateText(course?.title || 'Unknown Course', 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
 								return (
 									<Box
-										key={course?._id}
+										key={`${item.courseId}-${item.groupName || 'main'}-${index}`}
 										sx={{
 											display: 'flex',
 											alignItems: 'center',
@@ -1301,19 +1390,14 @@ const EditEventDialog = ({
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(displayText, 45)}</Typography>
 										<IconButton
 											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
-												const updatedCoursesIds = selectedEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
-
-												setSelectedEvent((prevData) => {
-													if (prevData) {
-														return { ...prevData, coursesIds: updatedCoursesIds };
-													}
-													return prevData;
-												});
+												setSelectedCourseGroups((prev) => 
+													prev.filter((p, i) => !(p.courseId === item.courseId && p.groupName === item.groupName && i === index))
+												);
 											}}>
 											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
 										</IconButton>
@@ -1330,7 +1414,7 @@ const EditEventDialog = ({
 								flexDirection: 'column',
 								alignItems: 'center',
 								position: 'relative',
-								mt: selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+								mt: selectedCourseGroups && selectedCourseGroups.length > 0 ? '0.5rem' : '-1.25rem',
 							}}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
@@ -1341,7 +1425,10 @@ const EditEventDialog = ({
 											setSearchCourseValue(value);
 											setIsEventUpdated(true);
 										}}
-										onSelect={handleCourseSelect}
+										onSelect={(course, groupName) => {
+											handleCourseSelect(course, groupName);
+											setIsEventUpdated(true);
+										}}
 										placeholder={
 											selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic ? '' : 'Search Course'
 										}
@@ -1351,7 +1438,7 @@ const EditEventDialog = ({
 											selectedEvent?.isPublic ||
 											selectedEvent?.createdBy !== user?._id
 										}
-										selectedCourseIds={selectedEvent?.coursesIds || []}
+										selectedCourseGroups={selectedCourseGroups}
 										sx={{
 											backgroundColor:
 												selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic
@@ -1413,7 +1500,7 @@ const EditEventDialog = ({
 																if (prevData) {
 																	return {
 																		...prevData,
-																		coursesIds: [],
+																		courseGroupNames: [],
 																		attendees: [],
 																		allAttendeesIds: [],
 																	};

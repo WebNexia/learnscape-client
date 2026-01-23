@@ -70,7 +70,7 @@ const EventCalendar = () => {
 		createdBy: user?._id || '',
 		createdAt: '',
 		updatedAt: '',
-		coursesIds: [],
+		courseGroupNames: [],
 		allAttendeesIds: [],
 		isAllLearnersSelected: false,
 		isAllCoursesSelected: false,

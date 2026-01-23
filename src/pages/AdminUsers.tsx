@@ -146,6 +146,7 @@ const AdminUsers = () => {
 				courseId: string;
 				courseTitle: string;
 				registrationDate: string;
+				groupName: string | null;
 				progressPercentage: number;
 				completedLessons: number;
 				totalLessons: number;
@@ -1046,6 +1047,18 @@ const AdminUsers = () => {
 																		{course.registrationDate ? dateFormatter(course.registrationDate) : 'N/A'}
 																	</Typography>
 																</Box>
+
+																{/* Group Name */}
+																{course.groupName && (
+																	<Box>
+																		<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																			Group:
+																		</Typography>
+																		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																			{course.groupName}
+																		</Typography>
+																	</Box>
+																)}
 
 																{/* Progress */}
 																<Box>

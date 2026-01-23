@@ -1,11 +1,11 @@
-import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography, DialogContent } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
 import { Info, KeyboardBackspaceOutlined, Insights } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { useQueryClient } from 'react-query';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
@@ -15,6 +15,9 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
+import CustomDialog from '../dialog/CustomDialog';
+import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
+import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -47,9 +50,12 @@ const CoursePageBanner = ({
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
+	const [isGroupInfoDialogOpen, setIsGroupInfoDialogOpen] = useState<boolean>(false);
+	const [userGroup, setUserGroup] = useState<{ name: string; description: string } | null>(null);
 
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -141,6 +147,28 @@ const CoursePageBanner = ({
 			setIsPaymentDialogOpen(true);
 		}
 	};
+
+	// Get user's group information from context data
+	useEffect(() => {
+		if (!isEnrolledStatus || !courseId || !course?.groups || course.groups.length === 0) {
+			setUserGroup(null);
+			return;
+		}
+
+		// Find userCourse data from context
+		const userCourseData = userCoursesData?.find((data) => data.courseId === courseId);
+		const groupName = userCourseData?.groupName;
+		const groupDescription = userCourseData?.groupDescription;
+
+		if (groupName) {
+			setUserGroup({ 
+				name: groupName, 
+				description: groupDescription || '' 
+			});
+		} else {
+			setUserGroup(null);
+		}
+	}, [isEnrolledStatus, courseId, course?.groups, userCoursesData]);
 
 	return (
 		<Paper
@@ -297,6 +325,7 @@ const CoursePageBanner = ({
 							alignItems: 'center',
 							gap: 1,
 						}}>
+					{course.documentIds.length > 0 && (
 						<Typography
 							onClick={() => {
 								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -309,8 +338,9 @@ const CoursePageBanner = ({
 								textDecoration: 'underline',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
+							{fromHomePage ? 'Kurs Materyalleri' : 'Course Materials'}
 						</Typography>
+					)}
 
 						{/* Analytics icon - visible for enrolled courses; disabled until course is completed */}
 						{!fromHomePage && userCourseId && !course.courseManagement?.isExternal && (
@@ -330,9 +360,24 @@ const CoursePageBanner = ({
 												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}
 										}}>
-										<Insights fontSize={isMobileSize ? 'small' : 'medium'} sx={{ color: '#ffffff' }} />
+										<Insights fontSize='small' sx={{ color: '#ffffff' }} />
 									</IconButton>
 								</span>
+							</Tooltip>
+						)}
+
+						{/* Group Info icon - visible for enrolled courses with groups */}
+						{!fromHomePage && userCourseId && userGroup && (
+							<Tooltip title='Group Information' placement='top' arrow>
+								<IconButton
+									aria-label='Group information'
+									size={isVerySmallScreen ? 'small' : 'medium'}
+									sx={{
+										color: theme.textColor?.common.main,
+									}}
+									onClick={() => setIsGroupInfoDialogOpen(true)}>
+									<Info fontSize='small' sx={{ color: '#ffffff' }} />
+								</IconButton>
 							</Tooltip>
 						)}
 					</Box>
@@ -420,6 +465,41 @@ const CoursePageBanner = ({
 					setIsEnrolledStatus={setIsEnrolledStatus}
 				/>
 			</Box>
+
+			{/* Group Info Dialog */}
+			<CustomDialog
+				openModal={isGroupInfoDialogOpen}
+				closeModal={() => setIsGroupInfoDialogOpen(false)}
+				title='Group Information'
+				maxWidth='xs'>
+				<DialogContent sx={{ p: '2rem' }}>
+					{userGroup && (
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+							<Box>
+								<Typography variant='body1' sx={{  fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem',color: theme.textColor?.primary.main }}>
+									Group Name:
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									{userGroup.name}
+								</Typography>
+							</Box>
+							{userGroup.description && (
+								<Box>
+									<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem',color: theme.textColor?.primary.main }}>
+										Description:
+									</Typography>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+										{userGroup.description}
+									</Typography>
+								</Box>
+							)}
+						</Box>
+					)}
+				</DialogContent>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
+					<CustomCancelButton onClick={() => setIsGroupInfoDialogOpen(false)}>Close</CustomCancelButton>
+				</Box>
+			</CustomDialog>
 		</Paper>
 	);
 };

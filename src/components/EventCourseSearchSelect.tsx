@@ -15,16 +15,16 @@ import { useAuth } from '../hooks/useAuth';
 interface EventCourseSearchSelectProps {
 	value: string;
 	onChange: (value: string) => void;
-	onSelect: (course: SearchCourse) => void;
+	onSelect: (course: SearchCourse, groupName: string | null) => void;
 	placeholder?: string;
 	sx?: object;
 	listSx?: object;
 	disabled?: boolean;
-	selectedCourseIds?: string[]; // Array of selected course IDs to exclude from search results
+	selectedCourseGroups?: { courseId: string; groupName: string | null }[]; // Array of selected course/groups to exclude from search results
 }
 
 const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
-	({ value, onChange, onSelect, placeholder = 'Search courses...', sx = {}, listSx = {}, disabled = false, selectedCourseIds = [] }, ref) => {
+	({ value, onChange, onSelect, placeholder = 'Search courses...', sx = {}, listSx = {}, disabled = false, selectedCourseGroups = [] }, ref) => {
 		const { hasAdminAccess, isInstructor } = useAuth();
 
 		const {
@@ -53,15 +53,23 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 		}, [value, search]);
 
 		const handleCourseSelect = useCallback(
-			(course: SearchCourse) => {
-				onSelect(course);
+			(course: SearchCourse, groupName: string | null) => {
+				onSelect(course, groupName);
 			},
 			[onSelect]
 		);
 
 		const filteredCourses = useMemo(() => {
-			return filtered?.filter((course) => !selectedCourseIds?.includes(course._id)) || [];
-		}, [filtered, selectedCourseIds]);
+			// Filter out courses/groups that are already selected
+			return filtered?.filter((course) => {
+				const selectedForCourse = selectedCourseGroups.filter((item) => item.courseId === course._id);
+				// If main course is selected, exclude it
+				if (selectedForCourse.some((item) => item.groupName === null)) {
+					return false;
+				}
+				return true;
+			}) || [];
+		}, [filtered, selectedCourseGroups]);
 
 		const hasResults = filteredCourses && filteredCourses.length > 0;
 		const showLoadMore = pagination?.hasNextPage && hasResults;
@@ -159,45 +167,92 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 							flexDirection: 'column',
 							justifyContent: 'flex-start',
 							alignItems: 'flex-start',
-							width: isMobileSize ? '60%' : '70%',
+							width: '100%',
 							maxHeight: '15rem',
 							overflow: 'auto',
-							margin: '-0.8rem 0 1.5rem -8rem',
+							margin: '-0.8rem 0 1.5rem 0rem',
 							border: 'solid 0.05rem lightgray',
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,
 						}}>
-						{filteredCourses?.map((course) => (
-							<Box
-								key={course._id}
-								sx={{
-									'display': 'flex',
-									'justifyContent': 'flex-start',
-									'alignItems': 'center',
-									'width': '100%',
-									'padding': '0.5rem',
-									'transition': '0.5s',
-									'borderRadius': '0.25rem',
-									':hover': {
-										'backgroundColor': theme.bgColor?.primary,
-										'color': '#fff',
-										'cursor': 'pointer',
-										'& .course-title': {
-											color: '#fff',
-										},
-										'& .course-description': {
-											color: '#fff',
-										},
-									},
-								}}
-								onClick={() => handleCourseSelect(course)}>
-								<Box>
-									<Typography className='course-title' variant='body2' sx={{ fontSize: '0.8rem' }}>
-										{truncateText(course.title, 30)}
-									</Typography>
-								</Box>
-							</Box>
-						))}
+						{filteredCourses?.flatMap((course) => {
+							const items = [];
+							// Main course option
+							const isMainCourseSelected = selectedCourseGroups.some(
+								(item) => item.courseId === course._id && item.groupName === null
+							);
+							if (!isMainCourseSelected) {
+								items.push(
+									<Box
+										key={`${course._id}-main`}
+										sx={{
+											'display': 'flex',
+											'justifyContent': 'flex-start',
+											'alignItems': 'center',
+											'width': '100%',
+											'padding': '0.5rem',
+											'transition': '0.5s',
+											'borderRadius': '0.25rem',
+											':hover': {
+												'backgroundColor': theme.bgColor?.primary,
+												'color': '#fff',
+												'cursor': 'pointer',
+												'& .course-title': {
+													color: '#fff',
+												},
+											},
+										}}
+										onClick={() => handleCourseSelect(course, null)}>
+										<Box>
+											<Typography className='course-title' variant='body2' sx={{ fontSize: '0.8rem' }}>
+												{truncateText(course.title, 50)}
+											</Typography>
+										</Box>
+									</Box>
+								);
+							}
+							
+							// Group options
+							if (course.groups && course.groups.length > 0) {
+								course.groups.forEach((group) => {
+									const isGroupSelected = selectedCourseGroups.some(
+										(item) => item.courseId === course._id && item.groupName === group.name
+									);
+									if (!isGroupSelected) {
+										items.push(
+											<Box
+												key={`${course._id}-${group.name}`}
+												sx={{
+													'display': 'flex',
+													'justifyContent': 'flex-start',
+													'alignItems': 'center',
+													'width': '100%',
+													'padding': '0.5rem',
+													'paddingLeft': '1.5rem',
+													'transition': '0.5s',
+													'borderRadius': '0.25rem',
+													':hover': {
+														'backgroundColor': theme.bgColor?.primary,
+														'color': '#fff',
+														'cursor': 'pointer',
+														'& .course-title': {
+															color: '#fff',
+														},
+													},
+												}}
+												onClick={() => handleCourseSelect(course, group.name)}>
+												<Box>
+													<Typography className='course-title' variant='body2' sx={{ fontSize: '0.8rem' }}>
+														{truncateText(`${course.title} - ${group.name}`, 50)}
+													</Typography>
+												</Box>
+											</Box>
+										);
+									}
+								});
+							}
+							return items;
+						})}
 					</Box>
 				) : (
 					// Show "No courses found" message when there are no results

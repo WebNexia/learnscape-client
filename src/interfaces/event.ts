@@ -12,7 +12,10 @@ export interface Event {
 	isActive: boolean;
 	eventLinkUrl: string;
 	isAllDay: boolean;
-	coursesIds: string[];
+	courseGroupNames?: {
+		courseId: string;
+		groupNames: string[];
+	}[];
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;
 	isAllInstructorsSelected?: boolean;

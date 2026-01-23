@@ -53,4 +53,5 @@ export interface SearchCourse {
 	_id: string;
 	title: string;
 	description: string;
+	groups?: { name: string; description?: string }[];
 }

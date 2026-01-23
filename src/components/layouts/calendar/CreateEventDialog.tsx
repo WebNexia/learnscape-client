@@ -89,6 +89,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
+	const [selectedCourseGroups, setSelectedCourseGroups] = useState<{ courseId: string; groupName: string | null }[]>([]);
 
 	const [instructorSearchInfoOpen, setInstructorSearchInfoOpen] = useState<boolean>(false);
 	const [learnerSearchInfoOpen, setLearnerSearchInfoOpen] = useState<boolean>(false);
@@ -184,16 +185,31 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		setSearchInstructorValue('');
 	};
 
-	const handleCourseSelect = (selectedCourse: SearchCourse) => {
-		// For event creation, we only need the course ID
-		// Check if course is already selected
-		const isAlreadySelected = newEvent.coursesIds?.includes(selectedCourse._id);
-		if (!isAlreadySelected) {
-			setNewEvent((prevData) => ({
-				...prevData,
-				coursesIds: [...prevData.coursesIds, selectedCourse._id],
-			}));
-		}
+	const handleCourseSelect = (selectedCourse: SearchCourse, groupName: string | null) => {
+		// groupName: null = main course (all groups), string = specific group
+		setSelectedCourseGroups((prev) => {
+			// Remove existing selections for this course
+			const otherCourses = prev.filter((item) => item.courseId !== selectedCourse._id);
+			
+			if (groupName === null) {
+				// Main course selected - remove all groups for this course, add main course
+				return [...otherCourses, { courseId: selectedCourse._id, groupName: null }];
+			} else {
+				// Group selected - remove main course selection if exists, add/update group
+				const existingGroups = prev.filter(
+					(item) => item.courseId === selectedCourse._id && item.groupName !== null
+				);
+				// Check if this group is already selected
+				const isGroupAlreadySelected = existingGroups.some((item) => item.groupName === groupName);
+				if (isGroupAlreadySelected) {
+					// Remove this group if already selected (toggle off)
+					return [...otherCourses, ...existingGroups.filter((item) => item.groupName !== groupName)];
+				} else {
+					// Add this group
+					return [...otherCourses, ...existingGroups, { courseId: selectedCourse._id, groupName }];
+				}
+			}
+		});
 		setSearchCourseValue('');
 	};
 
@@ -337,19 +353,46 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			} catch (error) {
 				console.log(error);
 			}
-		} else if (newEvent.coursesIds && newEvent.coursesIds.length > 0) {
-			// Handle specific courses selection
+		} else if (selectedCourseGroups && selectedCourseGroups.length > 0) {
+			// Handle specific courses/groups selection
+			// Group by courseId
+			const coursesMap = new Map<string, (string | null)[]>();
+			selectedCourseGroups.forEach(({ courseId, groupName }) => {
+				if (!coursesMap.has(courseId)) {
+					coursesMap.set(courseId, []);
+				}
+				coursesMap.get(courseId)!.push(groupName);
+			});
+
+			// Fetch participants for each course
 			await Promise.all(
-				newEvent.coursesIds?.map((courseId) => {
-					return (async () => {
+				Array.from(coursesMap.entries()).map(async ([courseId, groupNames]) => {
+					// If groupNames includes null, it means main course is selected (all groups)
+					const hasMainCourse = groupNames.includes(null);
+					
+					if (hasMainCourse) {
+						// Main course selected → all course (no groupNames parameter)
 						try {
 							const res = await axios.get(`${base_url}/usercourses/course/${courseId}`);
 							courseParticipants.push(...res.data.users);
 						} catch (error) {
 							console.log(error);
 						}
-					})();
-				}) || []
+					} else {
+						// Only specific groups selected → use groupNames parameter
+						const validGroupNames = groupNames.filter((name): name is string => name !== null);
+						if (validGroupNames.length > 0) {
+							try {
+								const res = await axios.get(
+									`${base_url}/usercourses/course/${courseId}?groupNames=${validGroupNames.join(',')}`
+								);
+								courseParticipants.push(...res.data.users);
+							} catch (error) {
+								console.log(error);
+							}
+						}
+					}
+				})
 			);
 		}
 
@@ -368,6 +411,22 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		// Update event state with final participant list
 		setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: allParticipantsIds }));
 
+		// Convert selectedCourseGroups to courseGroupNames format
+		const courseGroupNames = selectedCourseGroups.reduce((acc, item) => {
+			const existing = acc.find((c) => c.courseId === item.courseId);
+			if (existing) {
+				if (item.groupName !== null) {
+					existing.groupNames.push(item.groupName);
+				}
+			} else {
+				acc.push({
+					courseId: item.courseId,
+					groupNames: item.groupName === null ? [] : [item.groupName],
+				});
+			}
+			return acc;
+		}, [] as { courseId: string; groupNames: string[] }[]);
+
 		const event = {
 			title: newEvent.title,
 			description: newEvent.description,
@@ -384,7 +443,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			isAllInstructorsSelected: newEvent.isAllInstructorsSelected,
 			isAllSubscribersSelected: newEvent.isAllSubscribersSelected,
 			isAllCoursesSelected: newEvent.isAllCoursesSelected,
-			coursesIds: newEvent.coursesIds,
+			courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
 			createdBy: user?._id!,
 			isPublic: newEvent.isPublic,
 			coverImageUrl: newEvent.isPublic ? newEvent.coverImageUrl : '',
@@ -475,7 +534,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			createdBy: '',
 			createdAt: '',
 			updatedAt: '',
-			coursesIds: [],
+			courseGroupNames: [],
 			allAttendeesIds: [],
 			isAllLearnersSelected: false,
 			isAllSubscribersSelected: false,
@@ -495,6 +554,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		setSearchLearnerValue('');
 		setSearchInstructorValue('');
 		setSearchCourseValue('');
+		setSelectedCourseGroups([]);
 	};
 
 	return (
@@ -537,11 +597,12 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 												setNewEvent((prevData) => ({
 													...prevData,
 													attendees: [],
-													coursesIds: [],
+													courseGroupNames: [],
 													allAttendeesIds: [],
 													isAllCoursesSelected: false,
 													isAllLearnersSelected: false,
 												}));
+												setSelectedCourseGroups([]);
 											}
 										}}
 										sx={{
@@ -855,9 +916,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 															setNewEvent((prevData) => ({
 																...prevData,
 																attendees: [],
-																coursesIds: [],
+																courseGroupNames: [],
 																allAttendeesIds: [],
 															}));
+															setSelectedCourseGroups([]);
 														}
 													}}
 													sx={{
@@ -985,9 +1047,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 																setNewEvent((prevData) => ({
 																	...prevData,
 																	attendees: [],
-																	coursesIds: [],
+																	courseGroupNames: [],
 																	allAttendeesIds: [],
 																}));
+																setSelectedCourseGroups([]);
 															}
 														}}
 														sx={{
@@ -1051,9 +1114,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 															setNewEvent((prevData) => ({
 																...prevData,
 																attendees: [],
-																coursesIds: [],
+																courseGroupNames: [],
 																allAttendeesIds: [],
 															}));
+															setSelectedCourseGroups([]);
 														}
 													}}
 													sx={{
@@ -1076,13 +1140,16 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</>
 					)}
 
-					{newEvent.coursesIds && newEvent.coursesIds.length > 0 && (
+					{selectedCourseGroups && selectedCourseGroups.length > 0 && (
 						<Box sx={{ display: 'flex', margin: hasAdminAccess ? '-2rem 0 0.75rem 0' : '0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{newEvent.coursesIds?.map((id) => {
-								const course = courses?.find((course) => course._id === id);
+							{selectedCourseGroups.map((item, index) => {
+								const course = courses?.find((course) => course._id === item.courseId);
+								const displayText = item.groupName === null 
+									? course?.title || 'Unknown Course'
+									: `${truncateText(course?.title || 'Unknown Course', 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
 								return (
 									<Box
-										key={course?._id}
+										key={`${item.courseId}-${item.groupName || 'main'}-${index}`}
 										sx={{
 											display: 'flex',
 											alignItems: 'center',
@@ -1092,12 +1159,12 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{truncateText(course?.title!, 20)}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{truncateText(displayText, 45)}</Typography>
 										<IconButton
 											onClick={() => {
-												const updatedCourses = newEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
-
-												setNewEvent((prevData) => ({ ...prevData, coursesIds: updatedCourses }));
+												setSelectedCourseGroups((prev) => 
+													prev.filter((p, i) => !(p.courseId === item.courseId && p.groupName === item.groupName && i === index))
+												);
 											}}>
 											<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
 										</IconButton>
@@ -1114,7 +1181,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 								flexDirection: 'column',
 								alignItems: 'center',
 								position: 'relative',
-								mt: newEvent.coursesIds && newEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+								mt: selectedCourseGroups && selectedCourseGroups.length > 0 ? '0.5rem' : '-1.25rem',
 							}}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start', mt: '1rem' }}>
 								<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
@@ -1122,10 +1189,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										ref={courseSearchRef}
 										value={searchCourseValue}
 										onChange={setSearchCourseValue}
-										onSelect={handleCourseSelect}
+										onSelect={(course, groupName) => handleCourseSelect(course, groupName)}
 										placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? '' : 'Search Course'}
 										disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic}
-										selectedCourseIds={newEvent.coursesIds}
+										selectedCourseGroups={selectedCourseGroups}
 										sx={{
 											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'transparent' : '#fff',
 										}}
@@ -1176,10 +1243,11 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 															setNewEvent((prevData) => ({
 																...prevData,
-																coursesIds: [],
+																courseGroupNames: [],
 																attendees: [],
 																allAttendeesIds: [],
 															}));
+															setSelectedCourseGroups([]);
 														}
 													}}
 													sx={{

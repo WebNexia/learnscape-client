@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, Button, DialogContent } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton,  DialogContent } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse, CourseGroup } from '../../interfaces/course';
@@ -11,6 +11,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -53,6 +54,7 @@ const CourseDetailsEditBox = ({
 		description: '',
 	});
 	const [groupNameError, setGroupNameError] = useState<string>('');
+	const [capacityError, setCapacityError] = useState<string>('');
 
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
@@ -103,6 +105,8 @@ const CourseDetailsEditBox = ({
 	const openAddGroupDialog = () => {
 		setGroupFormData({ name: '', capacity: '', description: '' });
 		setEditingGroupIndex(null);
+		setGroupNameError('');
+		setCapacityError('');
 		setIsGroupDialogOpen(true);
 	};
 
@@ -114,6 +118,8 @@ const CourseDetailsEditBox = ({
 				capacity: group.capacity?.toString() || '',
 				description: group.description || '',
 			});
+			setGroupNameError('');
+			setCapacityError('');
 			setEditingGroupIndex(index);
 			setIsGroupDialogOpen(true);
 		}
@@ -123,6 +129,8 @@ const CourseDetailsEditBox = ({
 		setIsGroupDialogOpen(false);
 		setEditingGroupIndex(null);
 		setGroupFormData({ name: '', capacity: '', description: '' });
+		setGroupNameError('');
+		setCapacityError('');
 	};
 
 	// Check for duplicate group names (case-insensitive)
@@ -154,16 +162,19 @@ const CourseDetailsEditBox = ({
 		// Validate capacity: must be a positive integer if provided
 		let validatedCapacity: number | undefined = undefined;
 		if (groupFormData.capacity && groupFormData.capacity.trim()) {
-			const capacityNum = parseInt(groupFormData.capacity.trim(), 10);
+			// Remove leading zeros before parsing
+			const trimmedCapacity = groupFormData.capacity.trim().replace(/^0+/, '') || '0';
+			const capacityNum = parseInt(trimmedCapacity, 10);
 			if (isNaN(capacityNum) || !Number.isInteger(capacityNum) || capacityNum <= 0) {
-				setGroupNameError('Capacity must be a positive integer');
+				setCapacityError('Capacity must be a positive integer');
 				return;
 			}
 			validatedCapacity = capacityNum;
 		}
 
-		// Clear error if validation passes
+		// Clear errors if validation passes
 		setGroupNameError('');
+		setCapacityError('');
 
 		const newGroup: CourseGroup = {
 			name: trimmedName,
@@ -635,8 +646,7 @@ const CourseDetailsEditBox = ({
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 							Groups (Optional)
 						</Typography>
-						<Button
-							variant='outlined'
+						<CustomSubmitButton
 							startIcon={<Add sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />}
 							onClick={openAddGroupDialog}
 							sx={{
@@ -645,7 +655,7 @@ const CourseDetailsEditBox = ({
 								py: isMobileSize ? '0.25rem' : '0.5rem',
 							}}>
 							Add Group
-						</Button>
+						</CustomSubmitButton>
 					</Box>
 
 					{/* Groups List */}
@@ -694,7 +704,7 @@ const CourseDetailsEditBox = ({
 											<Tooltip title='Edit Group' placement='top' arrow>
 												<IconButton
 													size='small'
-													onClick={() => {openEditGroupDialog(index); setGroupNameError('');}}
+													onClick={() => {openEditGroupDialog(index); setGroupNameError(''); setCapacityError('');}}
 													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
 													<Edit fontSize='small' />
 												</IconButton>
@@ -744,11 +754,14 @@ const CourseDetailsEditBox = ({
 											}
 										}}
 										placeholder='e.g., Group A'
-										InputProps={{ inputProps: { maxLength: 50 } }}
+										InputProps={{ inputProps: { maxLength: 15 } }}
 										fullWidth
-										error={!!groupNameError}
+										error={!!groupNameError && !groupNameError.includes('Capacity')}
 									/>
-									{groupNameError && <CustomErrorMessage>{groupNameError}</CustomErrorMessage>}
+									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
+										{groupFormData.name.length}/15 Characters
+									</Typography>
+									{groupNameError && !groupNameError.includes('Capacity') && <CustomErrorMessage>{groupNameError}</CustomErrorMessage>}
 								</Box>
 								<Box>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
@@ -774,23 +787,23 @@ const CourseDetailsEditBox = ({
 									</Typography>
 									<CustomTextField
 										value={groupFormData.capacity}
-										onChange={(e) => {
-											const value = e.target.value;
-											// Allow empty string or positive integers only
-											if (value === '' || /^\d+$/.test(value)) {
-												setGroupFormData({ ...groupFormData, capacity: value });
-												// Clear capacity error if user starts typing valid input
-												if (groupNameError && groupNameError.includes('Capacity')) {
-													setGroupNameError('');
+											onChange={(e) => {
+												const value = e.target.value;
+												// Allow empty string or positive integers only
+												if (value === '' || /^\d+$/.test(value)) {
+													setGroupFormData({ ...groupFormData, capacity: value });
+													// Clear capacity error if user starts typing valid input
+													if (capacityError) {
+														setCapacityError('');
+													}
 												}
-											}
-										}}
+											}}
 										placeholder='e.g., 20'
 										type='text'
 										fullWidth
-										error={!!groupNameError && groupNameError.includes('Capacity')}
-										helperText={groupNameError && groupNameError.includes('Capacity') ? groupNameError : 'Must be a positive integer (e.g., 20)'}
+										error={!!capacityError}
 									/>
+									{capacityError && <CustomErrorMessage>{capacityError}</CustomErrorMessage>}
 								</Box>
 							
 							</Box>
@@ -799,7 +812,7 @@ const CourseDetailsEditBox = ({
 							onCancel={closeGroupDialog}
 							onSubmit={handleSaveGroup}
 							submitBtnText={editingGroupIndex !== null ? 'Update' : 'Add'}
-							disableBtn={!groupFormData.name.trim() || !groupFormData.description.trim() || !!groupNameError}
+							disableBtn={!groupFormData.name.trim() || !groupFormData.description.trim() || !!groupNameError || !!capacityError}
 							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
 						/>
 					</CustomDialog>
