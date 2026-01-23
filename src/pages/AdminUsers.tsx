@@ -1,10 +1,10 @@
-import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar } from '@mui/material';
+import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
@@ -24,6 +24,8 @@ import { Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { dateFormatter } from '../utils/dateFormatter';
 
 // Responsive column configuration
 const getColumns = (isVerySmallScreen: boolean) => {
@@ -137,6 +139,25 @@ const AdminUsers = () => {
 	const [isZoomHostModalOpen, setIsZoomHostModalOpen] = useState<boolean[]>([]);
 	const [isDeleteLearningDataModalOpen, setIsDeleteLearningDataModalOpen] = useState<boolean[]>([]);
 	const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState<boolean[]>([]);
+	const [isUserCoursesModalOpen, setIsUserCoursesModalOpen] = useState<boolean[]>([]);
+	const [userCoursesData, setUserCoursesData] = useState<{
+		[key: string]: {
+			courses: Array<{
+				courseId: string;
+				courseTitle: string;
+				registrationDate: string;
+				progressPercentage: number;
+				completedLessons: number;
+				totalLessons: number;
+				totalEarnedScore: number;
+				totalPossibleScore: number;
+				rank: number | null;
+				totalStudents: number;
+			}>;
+			loading: boolean;
+		};
+	}>({});
+	const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
 	const [isDeletingLearningData, setIsDeletingLearningData] = useState<boolean>(false);
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
@@ -151,6 +172,7 @@ const AdminUsers = () => {
 		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsDeleteLearningDataModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsDeleteUserModalOpen(Array(paginatedUsers.length).fill(false));
+		setIsUserCoursesModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
 
 	const toggleStatusUpdateEditModal = (index: number) => {
@@ -332,6 +354,57 @@ const AdminUsers = () => {
 		const newModalState = [...isDeleteUserModalOpen];
 		newModalState[index] = false;
 		setIsDeleteUserModalOpen(newModalState);
+	};
+
+	const openUserCoursesModal = async (index: number) => {
+		const user: User = paginatedUsers[index];
+		if (!user._id) return;
+
+		const newModalState = [...isUserCoursesModalOpen];
+		newModalState[index] = true;
+		setIsUserCoursesModalOpen(newModalState);
+
+		// Set loading state
+		setUserCoursesData((prev) => ({
+			...prev,
+			[user._id!]: { ...prev[user._id!], loading: true },
+		}));
+
+		try {
+			const response = await axios.get(`${base_url}/userCourses/user/${user._id}/courses`);
+			const data = response.data.data;
+			setUserCoursesData((prev) => ({
+				...prev,
+				[user._id!]: {
+					courses: data.courses || [],
+					loading: false,
+				},
+			}));
+		} catch (err: any) {
+			console.error('Error fetching user courses:', err);
+			setUserCoursesData((prev) => ({
+				...prev,
+				[user._id!]: { ...prev[user._id!], loading: false },
+			}));
+		}
+	};
+
+	const closeUserCoursesModal = (index: number) => {
+		const newModalState = [...isUserCoursesModalOpen];
+		newModalState[index] = false;
+		setIsUserCoursesModalOpen(newModalState);
+	};
+
+	const toggleCourseExpanded = (courseId: string) => {
+		setExpandedCourses((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(courseId)) {
+				newSet.delete(courseId);
+			} else {
+				newSet.add(courseId);
+			}
+			return newSet;
+		});
 	};
 
 	const handleDeleteUser = async (index: number) => {
@@ -565,6 +638,19 @@ const AdminUsers = () => {
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														disabled={user._id === userId}
 													/>
+
+													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
+														<CustomActionBtn
+															title='User Courses'
+															disabled={user?.role !== Roles.USER}
+															onClick={() => {
+																openUserCoursesModal(index);
+															}}
+															icon={<Visibility
+																fontSize='small' 
+																sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													)}
 
 													<CustomDialog
 														openModal={isUserEditModalOpen[index]}
@@ -854,6 +940,181 @@ const AdminUsers = () => {
 						<CustomTablePagination count={usersNumberOfPages} page={usersCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
+
+				{/* User Courses Dialogs */}
+				{paginatedUsers &&
+					paginatedUsers.map((user: User, index) => {
+						const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
+						const coursesData = user._id ? userCoursesData[user._id] : undefined;
+						return (
+							<CustomDialog
+								key={`user-courses-${user._id || index}`}
+								openModal={isUserCoursesModalOpen[index] || false}
+								closeModal={() => closeUserCoursesModal(index)}
+								title={`Courses - ${fullName}`}
+								maxWidth='sm'>
+								<DialogContent sx={{ p: '2rem' }}>
+									{coursesData?.loading ? (
+										<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+											<CircularProgress size={40} />
+										</Box>
+									) : coursesData?.courses && coursesData.courses.length > 0 ? (
+										<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+											{coursesData.courses.map((course) => {
+												const isExpanded = expandedCourses.has(course.courseId);
+												return (
+													<Box
+														key={course.courseId}
+														sx={{
+															margin: '0.35rem 0 0rem 0',
+															width: '100%',
+															padding: '0.75rem 0.75rem 0.25rem 0.75rem',
+															boxShadow: '0 0.3rem 0.5rem 0 rgba(0,0,0,0.25)',
+															transition: '0.3s',
+															borderRadius: '0.3rem',
+															'&:hover': {
+																boxShadow: '0 0.3rem 0.5rem 0.2rem rgba(0,0,0,0.35)',
+															},
+														}}>
+														{/* Course Header - Clickable */}
+														<Box
+															onClick={() => toggleCourseExpanded(course.courseId)}
+															sx={{
+																display: 'flex',
+																justifyContent: 'space-between',
+																alignItems: 'center',
+																backgroundColor: theme.bgColor?.adminHeader,
+																padding: isMobileSize ? '0.25rem 0.25rem' : '0.25rem 0.5rem',
+																borderRadius: '0.35rem',
+																marginBottom: '0.5rem',
+																transition: 'background-color 0.2s ease',
+																cursor: 'pointer',
+																gap: '1rem',
+																'&:hover': {
+																	backgroundColor: theme.bgColor?.adminPaper,
+																},
+															}}>
+															<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+																<IconButton
+																	size='small'
+																	sx={{
+																		color: 'white',
+																		marginRight: isMobileSize ? '0.5rem' : '1rem',
+																		padding: '0rem',
+																		transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+																		transition: 'transform 0.3s ease',
+																		cursor: 'pointer',
+																		border: 'solid 0.5px white',
+																	}}>
+																	{isExpanded ? (
+																		<ExpandLess fontSize='small' />
+																	) : (
+																		<ExpandMore fontSize='small' />
+																	)}
+																</IconButton>
+																<Typography
+																	variant='subtitle1'
+																	sx={{
+																		fontWeight: 'bold',
+																		fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																		color: 'white',
+																		flex: 1,
+																		textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+																	}}>
+																	{course.courseTitle}
+																</Typography>
+															</Box>
+														</Box>
+
+														{/* Course Details - Collapsible */}
+														<Collapse in={isExpanded}>
+															<Box
+																sx={{
+																	padding: isMobileSize ? '1rem' : '1.5rem',
+																	display: 'flex',
+																	flexDirection: 'column',
+																	gap: '1rem',
+																	backgroundColor: theme.bgColor?.common,
+																	borderRadius: '0 0 0.35rem 0.35rem',
+																}}>
+																{/* Registration Date */}
+																<Box>
+																	<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																		Registration Date:
+																	</Typography>
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		{course.registrationDate ? dateFormatter(course.registrationDate) : 'N/A'}
+																	</Typography>
+																</Box>
+
+																{/* Progress */}
+																<Box>
+																	<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																		Progress:
+																	</Typography>
+																	<Box sx={{ mb: '0.5rem' }}>
+																		<LinearProgress
+																			variant='determinate'
+																			value={course.progressPercentage || 0}
+																			sx={{
+																				height: 8,
+																				borderRadius: 4,
+																				backgroundColor: theme.bgColor?.primary,
+																				'& .MuiLinearProgress-bar': {
+																					backgroundColor: theme.bgColor?.greenSecondary,
+																				},
+																			}}
+																		/>
+																	</Box>
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		{course.completedLessons || 0} of {course.totalLessons || 0} lessons completed ({course.progressPercentage || 0}%)
+																	</Typography>
+																</Box>
+
+																{/* Total Score */}
+																<Box>
+																	<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																		Total Score:
+																	</Typography>
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		{course.totalEarnedScore || 0} / {course.totalPossibleScore || 0} points
+																		{course.totalPossibleScore && course.totalPossibleScore > 0
+																			? ` (${Math.round(((course.totalEarnedScore || 0) / course.totalPossibleScore) * 100)}%)`
+																			: ''}
+																	</Typography>
+																</Box>
+
+																{/* Rank */}
+																<Box>
+																	<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																		Rank:
+																	</Typography>
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		{course.rank !== null && course.rank !== undefined
+																			? `#${course.rank}${course.totalStudents ? ` out of ${course.totalStudents} students` : ''}`
+																			: 'N/A'}
+																	</Typography>
+																</Box>
+															</Box>
+														</Collapse>
+													</Box>
+												);
+											})}
+										</Box>
+									) : (
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', textAlign: 'center', py: '2rem' }}>
+											No courses found
+										</Typography>
+									)}
+								</DialogContent>
+								<DialogActions>
+									<CustomCancelButton sx={{ margin: '0 1.35rem 0.5rem 0' }} onClick={() => closeUserCoursesModal(index)}>
+										Close
+									</CustomCancelButton>
+								</DialogActions>
+							</CustomDialog>
+						);
+					})}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

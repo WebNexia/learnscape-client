@@ -45,9 +45,11 @@ export interface UserCourseByUserId extends BaseCourse {
 export interface CourseGroup {
 	_id?: string;
 	name: string;
-	schedule: string;
 	capacity?: number;
-	description?: string;
+	description: string;
+	enrolledCount?: number;
+	remainingSeats?: number | null;
+	isFull?: boolean;
 }
 
 export interface SingleCourse extends BaseCourse {

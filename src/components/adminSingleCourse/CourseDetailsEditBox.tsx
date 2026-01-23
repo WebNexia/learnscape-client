@@ -47,9 +47,8 @@ const CourseDetailsEditBox = ({
 	// Group management state
 	const [isGroupDialogOpen, setIsGroupDialogOpen] = useState<boolean>(false);
 	const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
-	const [groupFormData, setGroupFormData] = useState<{ name: string; schedule: string; capacity: string; description: string }>({
+	const [groupFormData, setGroupFormData] = useState<{ name: string; capacity: string; description: string }>({
 		name: '',
-		schedule: '',
 		capacity: '',
 		description: '',
 	});
@@ -102,7 +101,7 @@ const CourseDetailsEditBox = ({
 
 	// Group management handlers
 	const openAddGroupDialog = () => {
-		setGroupFormData({ name: '', schedule: '', capacity: '', description: '' });
+		setGroupFormData({ name: '', capacity: '', description: '' });
 		setEditingGroupIndex(null);
 		setIsGroupDialogOpen(true);
 	};
@@ -112,7 +111,6 @@ const CourseDetailsEditBox = ({
 		if (group) {
 			setGroupFormData({
 				name: group.name,
-				schedule: group.schedule,
 				capacity: group.capacity?.toString() || '',
 				description: group.description || '',
 			});
@@ -124,7 +122,7 @@ const CourseDetailsEditBox = ({
 	const closeGroupDialog = () => {
 		setIsGroupDialogOpen(false);
 		setEditingGroupIndex(null);
-		setGroupFormData({ name: '', schedule: '', capacity: '', description: '' });
+		setGroupFormData({ name: '', capacity: '', description: '' });
 	};
 
 	// Check for duplicate group names (case-insensitive)
@@ -140,24 +138,37 @@ const CourseDetailsEditBox = ({
 	};
 
 	const handleSaveGroup = () => {
-		if (!singleCourseBeforeSave || !groupFormData.name.trim() || !groupFormData.schedule.trim()) {
+		const trimmedName = groupFormData.name.trim();
+		const trimmedDescription = groupFormData.description.trim();
+		
+		if (!singleCourseBeforeSave || !trimmedName || trimmedName.length === 0 || !trimmedDescription || trimmedDescription.length === 0) {
 			return;
 		}
 
-		// Check for duplicate names
-		if (checkDuplicateGroupName(groupFormData.name.trim(), editingGroupIndex)) {
+		// Check for duplicate names (case-insensitive)
+		if (checkDuplicateGroupName(trimmedName, editingGroupIndex)) {
 			setGroupNameError('A group with this name already exists. Group names must be unique.');
 			return;
+		}
+
+		// Validate capacity: must be a positive integer if provided
+		let validatedCapacity: number | undefined = undefined;
+		if (groupFormData.capacity && groupFormData.capacity.trim()) {
+			const capacityNum = parseInt(groupFormData.capacity.trim(), 10);
+			if (isNaN(capacityNum) || !Number.isInteger(capacityNum) || capacityNum <= 0) {
+				setGroupNameError('Capacity must be a positive integer');
+				return;
+			}
+			validatedCapacity = capacityNum;
 		}
 
 		// Clear error if validation passes
 		setGroupNameError('');
 
 		const newGroup: CourseGroup = {
-			name: groupFormData.name.trim(),
-			schedule: groupFormData.schedule.trim(),
-			capacity: groupFormData.capacity ? parseInt(groupFormData.capacity, 10) : undefined,
-			description: groupFormData.description.trim() || undefined,
+			name: trimmedName,
+			description: trimmedDescription,
+			capacity: validatedCapacity,
 		};
 
 		setSingleCourseBeforeSave((prevCourse) => {
@@ -651,22 +662,33 @@ const CourseDetailsEditBox = ({
 									}}>
 									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
 										<Box sx={{ flex: 1 }}>
-											<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', fontWeight: 600, mb: '0.5rem' }}>
-												{group.name}
-											</Typography>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem' }}>
-												Schedule: {group.schedule}
-											</Typography>
-											{group.capacity && (
-												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem' }}>
-													Capacity: {group.capacity} learners
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: '0.5rem' }}>
+												<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', fontWeight: 600 }}>
+													{group.name}
 												</Typography>
-											)}
-											{group.description && (
-												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem' }}>
-													{group.description}
-												</Typography>
-											)}
+												{group.isFull && (
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', color: 'error.main', fontWeight: 600 }}>
+														(Full)
+													</Typography>
+												)}
+											</Box>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem', mb: '0.5rem' }}>
+												{group.description}
+											</Typography>
+											<Typography 
+												variant='body2' 
+												sx={{ 
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem', 
+													mb: '0.25rem',
+													color: group.capacity !== undefined 
+														? (group.isFull ? 'error.main' : group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 'warning.main' : 'text.secondary')
+														: 'text.secondary',
+													fontWeight: group.capacity !== undefined && group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 600 : 400,
+												}}>
+												{group.capacity !== undefined 
+													? `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? ` (${group.remainingSeats} remaining)` : ''}`
+													: `Enrolled: ${group.enrolledCount || 0} learners`}
+											</Typography>
 										</Box>
 										<Box sx={{ display: 'flex', gap: '0.5rem', ml: '1rem' }}>
 											<Tooltip title='Edit Group' placement='top' arrow>
@@ -730,52 +752,55 @@ const CourseDetailsEditBox = ({
 								</Box>
 								<Box>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-										Schedule*
-									</Typography>
-									<CustomTextField
-										value={groupFormData.schedule}
-										onChange={(e) => setGroupFormData({ ...groupFormData, schedule: e.target.value })}
-										placeholder='e.g., Monday-Tuesday (8-10PM)'
-										InputProps={{ inputProps: { maxLength: 100 } }}
-										fullWidth
-									/>
-								</Box>
-								<Box>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-										Capacity (Optional)
-									</Typography>
-									<CustomTextField
-										value={groupFormData.capacity}
-										onChange={(e) => setGroupFormData({ ...groupFormData, capacity: e.target.value })}
-										placeholder='e.g., 20'
-										type='number'
-										fullWidth
-									/>
-								</Box>
-								<Box>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-										Description (Optional)
+										Description*
 									</Typography>
 									<CustomTextField
 										multiline
 										rows={3}
 										value={groupFormData.description}
 										onChange={(e) => setGroupFormData({ ...groupFormData, description: e.target.value })}
-										placeholder='Optional group description'
+										placeholder='Enter group description'
 										InputProps={{ inputProps: { maxLength: 250 } }}
 										fullWidth
+										required
 									/>
 									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
 										{groupFormData.description.length}/250 Characters
 									</Typography>
 								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Max Seats (Optional)
+									</Typography>
+									<CustomTextField
+										value={groupFormData.capacity}
+										onChange={(e) => {
+											const value = e.target.value;
+											// Allow empty string or positive integers only
+											if (value === '' || /^\d+$/.test(value)) {
+												setGroupFormData({ ...groupFormData, capacity: value });
+												// Clear capacity error if user starts typing valid input
+												if (groupNameError && groupNameError.includes('Capacity')) {
+													setGroupNameError('');
+												}
+											}
+										}}
+										placeholder='e.g., 20'
+										type='text'
+										fullWidth
+										error={!!groupNameError && groupNameError.includes('Capacity')}
+										helperText={groupNameError && groupNameError.includes('Capacity') ? groupNameError : 'Must be a positive integer (e.g., 20)'}
+									/>
+								</Box>
+							
 							</Box>
 						</DialogContent>
 						<CustomDialogActions
 							onCancel={closeGroupDialog}
 							onSubmit={handleSaveGroup}
 							submitBtnText={editingGroupIndex !== null ? 'Update' : 'Add'}
-							disableBtn={!groupFormData.name.trim() || !groupFormData.schedule.trim() || !!groupNameError}
+							disableBtn={!groupFormData.name.trim() || !groupFormData.description.trim() || !!groupNameError}
+							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
 						/>
 					</CustomDialog>
 				</Box>

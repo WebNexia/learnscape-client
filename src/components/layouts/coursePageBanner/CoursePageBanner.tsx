@@ -34,7 +34,6 @@ const CoursePageBanner = ({
 	documentsRef,
 	fromHomePage,
 	userCourseId,
-	isCourseCompleted,
 }: CoursePageBannerProps) => {
 	const firstLessonId: string = course && course?.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
@@ -66,7 +65,7 @@ const CoursePageBanner = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string): Promise<string> => {
+	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string, groupName?: string): Promise<string> => {
 		try {
 			if (!courseId || !resolvedUserId || !resolvedOrgId) {
 				throw new Error('Missing required data for course registration');
@@ -78,6 +77,7 @@ const CoursePageBanner = ({
 				isCompleted: false,
 				isInProgress: true,
 				orgId: resolvedOrgId,
+				...(groupName && { groupName }),
 			});
 
 			if (!response.data?._id) {
@@ -122,9 +122,16 @@ const CoursePageBanner = ({
 		if (isCourseFree && !fromHomePage) {
 			setIsProcessing(true);
 			try {
-				await courseRegistration(user?._id!, course?.orgId!);
-				setDisplayEnrollmentMsg(true);
-				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+				// For free courses, check if groups exist and require selection
+				// If groups exist, user should go through payment dialog to select group
+				if (course?.groups && course.groups.length > 0) {
+					setIsPaymentDialogOpen(true);
+					setIsProcessing(false);
+				} else {
+					await courseRegistration(user?._id!, course?.orgId!);
+					setDisplayEnrollmentMsg(true);
+					if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+				}
 			} catch (error) {
 				console.error('Course registration failed:', error);
 			} finally {
@@ -346,13 +353,13 @@ const CoursePageBanner = ({
 					)
 				)}
 				{fromHomePage && isCourseFree && (
-					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'absolute', bottom: isRotated ? 60 : '1.5rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'absolute', bottom: isRotated ? 60 : '1.5rem', width: '60%' }}>
 						<Info fontSize='small' sx={{ color: 'lightgray' }} />
 						<Typography
 							variant='body2'
 							sx={{
 								color: 'lightgray',
-								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								fontSize: isMobileSize ? '0.65rem' : '0.8rem',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
 							Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
