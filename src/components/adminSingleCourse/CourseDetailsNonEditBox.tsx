@@ -60,6 +60,14 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	const cardShadow = '0 10px 30px rgba(15, 23, 42, 0.08)';
+	const cardSx = {
+		backgroundColor: theme.bgColor?.common,
+		borderRadius: '0.75rem',
+		border: `1px solid ${theme.palette.divider}`,
+		boxShadow: cardShadow,
+	};
+
 	// Check if description is long enough to show "View Full" button
 	const description = singleCourse?.description || '';
 	const isDescriptionLong = description.length > (isMobileSize ? 85 : 200);
@@ -143,9 +151,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							mt: '1rem',
 							padding: isMobileSize ? '0.75rem' : '1rem',
 							height: '7.25rem',
-							boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+							...cardSx,
 							flex: 1,
-							borderRadius: '0.35rem',
 						}}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 							Instructor
@@ -182,9 +189,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							mt: '1rem',
 							padding: isMobileSize ? '0.75rem' : '1rem',
 							height: '7.25rem',
-							boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+							...cardSx,
 							flex: 3,
-							borderRadius: '0.35rem',
 							position: 'relative',
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -229,7 +235,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							height='115rem'
 							style={{
 								borderRadius: '0.2rem',
-								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+								boxShadow: cardShadow,
 							}}
 						/>
 						<Box>
@@ -247,8 +253,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					padding: isMobileSize ? '1rem' : '2rem',
-					boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-					borderRadius: '0.35rem',
+					...cardSx,
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '1rem' }}>
@@ -601,7 +606,17 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 			)}
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '2.5rem', mt: '2rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'flex-start',
+						width: '100%',
+						mb: '2.5rem',
+						mt: '2rem',
+						padding: isMobileSize ? '1rem' : '1.25rem',
+						...cardSx,
+					}}>
 					<Box sx={{ mb: '1rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
 							Course Materials
@@ -631,7 +646,16 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			)}
 
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem', }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'flex-start',
+						width: '100%',
+						mb: '4rem',
+						padding: isMobileSize ? '1rem' : '1.25rem',
+						...cardSx,
+					}}>
 					<Box sx={{ mb: '1rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
 							Course Videos

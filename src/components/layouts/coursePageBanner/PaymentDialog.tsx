@@ -855,7 +855,7 @@ const PaymentDialog = ({
 																		fontWeight: 600,
 																		fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 																	}}>
-																	{fromHomePage ? '(Dolu)' : '(Full)'}
+																	{fromHomePage ? '(Kontenjan Doldu)' : '(No seats available)'}
 																</Typography>
 															)}
 														</Box>

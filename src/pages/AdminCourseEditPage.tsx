@@ -380,6 +380,18 @@ const AdminCourseEditPage = () => {
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
 
+		// Validate capacity constraints before attempting to save
+		const cap = singleCourseBeforeSave?.capacity !== undefined && singleCourseBeforeSave?.capacity !== null ? Number(singleCourseBeforeSave.capacity) : null;
+		const totalGroupCap = (singleCourseBeforeSave?.groups || []).reduce((sum, g) => {
+			const c = g?.capacity !== undefined && g?.capacity !== null ? Number(g.capacity) : 0;
+			return sum + (Number.isFinite(c) ? c : 0);
+		}, 0);
+		if (cap !== null && totalGroupCap > cap) {
+			setUrlErrorMessage(`Course capacity (${cap}) cannot be less than total group capacity (${totalGroupCap}).`);
+			setIsUrlErrorOpen(true);
+			return;
+		}
+
 		// If course is external, skip all chapter/lesson/document creation/updating
 		if (singleCourseBeforeSave?.courseManagement?.isExternal) {
 			const extStartingDate = new Date(singleCourseBeforeSave?.startingDate || '');
@@ -844,6 +856,13 @@ const AdminCourseEditPage = () => {
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
+	const sectionSx = {
+		backgroundColor: theme.bgColor?.common,
+		borderRadius: '0.75rem',
+		padding: isMobileSize ? '1rem' : '1.25rem',
+		border: `1px solid ${theme.palette.divider}`,
+		boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+	};
 
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -1016,8 +1035,9 @@ const AdminCourseEditPage = () => {
 								</Box>
 							)}
 
+							{/* 5) Course Materials */}
 							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ margin: '3rem 0 1rem 0' }}>
+								<Box sx={{ ...sectionSx, mt: '2rem' }}>
 									<HandleDocUploadURL
 										label='Course Materials'
 										onDocUploadLogic={(url, docName) => {
@@ -1084,70 +1104,70 @@ const AdminCourseEditPage = () => {
 										fromAdminCourses={true}
 										setHasUnsavedChanges={setHasUnsavedChanges}
 									/>
+									<Box sx={{ mt: '1rem' }}>
+										<DocumentsListEditBox
+											documentsSource={singleCourseBeforeSave?.documents?.filter((doc) => doc && doc._id && doc.name && doc.name.trim() !== '')}
+											toggleDocRenameModal={toggleDocRenameModal}
+											closeDocRenameModal={closeDocRenameModal}
+											isDocRenameModalOpen={isDocRenameModalOpen}
+											saveDocRename={saveDocRename}
+											setIsDocumentUpdated={setIsDocumentUpdated}
+											setHasUnsavedChanges={setHasUnsavedChanges}
+											removeDocOnClick={(document: Document) => {
+												setSingleCourseBeforeSave((prevData) => {
+													if (prevData) {
+														const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+														const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
+
+														// Update document's usedInCourses in the documents context
+														const updatedDocument = {
+															...document,
+															usedInCourses: document.usedInCourses?.filter((id) => id !== courseId),
+															createdByName: document.createdByName,
+															createdByImageUrl: document.createdByImageUrl,
+															createdByRole: document.createdByRole,
+															updatedByName: document.updatedByName,
+															updatedByImageUrl: document.updatedByImageUrl,
+															updatedByRole: document.updatedByRole,
+															createdAt: document.createdAt,
+															updatedAt: new Date().toISOString(),
+														};
+														updateDocument(updatedDocument);
+														setHasUnsavedChanges(true);
+														return {
+															...prevData,
+															documents: filteredDocuments,
+															documentIds: filteredDocumentIds,
+														};
+													}
+													return prevData;
+												});
+											}}
+											renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
+												setSingleCourseBeforeSave((prevData) => {
+													if (prevData) {
+														const updatedDocuments = prevData?.documents
+															?.filter((document) => document !== null)
+															?.map((thisDoc) => {
+																if (thisDoc._id === document._id) {
+																	return { ...thisDoc, name: e.target.value };
+																} else {
+																	return thisDoc;
+																}
+															});
+														return { ...prevData, documents: updatedDocuments };
+													}
+													return prevData;
+												});
+											}}
+										/>
+									</Box>
 								</Box>
 							)}
 
+							{/* 5) Course Videos */}
 							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<DocumentsListEditBox
-									documentsSource={singleCourseBeforeSave?.documents?.filter((doc) => doc && doc._id && doc.name && doc.name.trim() !== '')}
-									toggleDocRenameModal={toggleDocRenameModal}
-									closeDocRenameModal={closeDocRenameModal}
-									isDocRenameModalOpen={isDocRenameModalOpen}
-									saveDocRename={saveDocRename}
-									setIsDocumentUpdated={setIsDocumentUpdated}
-									setHasUnsavedChanges={setHasUnsavedChanges}
-									removeDocOnClick={(document: Document) => {
-										setSingleCourseBeforeSave((prevData) => {
-											if (prevData) {
-												const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
-												const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
-
-												// Update document's usedInCourses in the documents context
-												const updatedDocument = {
-													...document,
-													usedInCourses: document.usedInCourses?.filter((id) => id !== courseId),
-													createdByName: document.createdByName,
-													createdByImageUrl: document.createdByImageUrl,
-													createdByRole: document.createdByRole,
-													updatedByName: document.updatedByName,
-													updatedByImageUrl: document.updatedByImageUrl,
-													updatedByRole: document.updatedByRole,
-													createdAt: document.createdAt,
-													updatedAt: new Date().toISOString(),
-												};
-												updateDocument(updatedDocument);
-												setHasUnsavedChanges(true);
-												return {
-													...prevData,
-													documents: filteredDocuments,
-													documentIds: filteredDocumentIds,
-												};
-											}
-											return prevData;
-										});
-									}}
-									renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
-										setSingleCourseBeforeSave((prevData) => {
-											if (prevData) {
-												const updatedDocuments = prevData?.documents
-													?.filter((document) => document !== null)
-													?.map((thisDoc) => {
-														if (thisDoc._id === document._id) {
-															return { ...thisDoc, name: e.target.value };
-														} else {
-															return thisDoc;
-														}
-													});
-												return { ...prevData, documents: updatedDocuments };
-											}
-											return prevData;
-										});
-									}}
-								/>
-							)}
-
-							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ margin: '3rem 0 1rem 0' }}>
+								<Box sx={{ ...sectionSx, mt: '2rem', mb: '4rem' }}>
 									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '0.5rem' }}>
 										<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '1rem' : '0.75rem' }}>
 											Course Videos
@@ -1261,131 +1281,130 @@ const AdminCourseEditPage = () => {
 											{videoTitleError && <CustomErrorMessage sx={{ mt: '0.25rem', fontSize: '0.7rem' }}>{videoTitleError}</CustomErrorMessage>}
 										</Box>
 									</Box>
-								</Box>
-							)}
 
-							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
-									{singleCourseBeforeSave?.videoURLs &&
-										singleCourseBeforeSave.videoURLs.length > 0 &&
-										singleCourseBeforeSave.videoURLs
-											?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
-											?.map((videoURL, index) => (
-												<Box
-													key={index}
-													sx={{
-														display: 'flex',
-														flexDirection: 'column',
-														justifyContent: 'space-between',
-														alignItems: 'flex-start',
-														mb: '1rem',
-														width: '100%',
-													}}>
-													<Box sx={{ mb: '0.25rem' }}>
-														<Link
-															href={videoURL.url}
-															target='_blank'
-															rel='noopener noreferrer'
-															variant='body2'
-															sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-															{videoURL.title}
-														</Link>
-													</Box>
-													<Box sx={{ display: 'flex', alignItems: 'center' }}>
-														<Typography
-															variant='body2'
-															sx={{
-																'mr': '0.5rem',
-																':hover': {
-																	textDecoration: 'underline',
-																	cursor: 'pointer',
-																},
-																'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
-															}}
-															onClick={() => {
-																setSingleCourseBeforeSave((prevData) => {
-																	if (prevData) {
-																		const filteredVideoURLs = prevData?.videoURLs?.filter((_, i) => i !== index);
-																		return {
-																			...prevData,
-																			videoURLs: filteredVideoURLs || [],
-																		};
-																	}
-																	return prevData;
-																});
-																setHasUnsavedChanges(true);
-															}}>
-															Remove
-														</Typography>
-														<Typography
-															variant='body2'
-															onClick={() => toggleVideoRenameModal(index, videoURL)}
-															sx={{
-																':hover': {
-																	textDecoration: 'underline',
-																	cursor: 'pointer',
-																},
-																'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
-															}}>
-															Rename
-														</Typography>
-														<CustomDialog
-															openModal={isVideoRenameModalOpen[index] || false}
-															closeModal={() => closeVideoRenameModal(index)}
-															title='Rename Video Title'
-															maxWidth='xs'>
-															<form
-																style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
-																onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-																	e.preventDefault();
+									{/* Existing videos list */}
+									<Box sx={{ mt: '1.5rem', mb:isMobileSize ? '1rem' : '1.5rem', }}>
+										{singleCourseBeforeSave?.videoURLs &&
+											singleCourseBeforeSave.videoURLs.length > 0 &&
+											singleCourseBeforeSave.videoURLs
+												?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
+												?.map((videoURL, index) => (
+													<Box
+														key={index}
+														sx={{
+															display: 'flex',
+															flexDirection: 'column',
+															justifyContent: 'space-between',
+															alignItems: 'flex-start',
+															mb: '1rem',
+															width: '100%',
+														}}>
+														<Box sx={{ mb: '0.25rem' }}>
+															<Link
+																href={videoURL.url}
+																target='_blank'
+																rel='noopener noreferrer'
+																variant='body2'
+																sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																{videoURL.title}
+															</Link>
+														</Box>
+														<Box sx={{ display: 'flex', alignItems: 'center' }}>
+															<Typography
+																variant='body2'
+																sx={{
+																	'mr': '0.5rem',
+																	':hover': {
+																		textDecoration: 'underline',
+																		cursor: 'pointer',
+																	},
+																	'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+																}}
+																onClick={() => {
+																	setSingleCourseBeforeSave((prevData) => {
+																		if (prevData) {
+																			const filteredVideoURLs = prevData?.videoURLs?.filter((_, i) => i !== index);
+																			return {
+																				...prevData,
+																				videoURLs: filteredVideoURLs || [],
+																			};
+																		}
+																		return prevData;
+																	});
+																	setHasUnsavedChanges(true);
 																}}>
-																<CustomTextField
-																	fullWidth={false}
-																	required={true}
-																	label='Video Title'
-																	value={videoURL.title}
-																	sx={{ margin: '1rem' }}
-																	onChange={(e) => {
-																		setSingleCourseBeforeSave((prevData) => {
-																			if (prevData) {
-																				const updatedVideoURLs = prevData?.videoURLs?.map((video, idx) => {
-																					if (idx === index) {
-																						return { ...video, title: e.target.value };
-																					}
-																					return video;
-																				});
-																				return { ...prevData, videoURLs: updatedVideoURLs || [] };
-																			}
-																			return prevData;
-																		});
-																	}}
-																	InputProps={{
-																		inputProps: {
-																			maxLength: 100,
-																		},
-																	}}
-																	error={videoURL.title.trim().length > 100}
-																/>
-																{videoURL.title.trim().length > 100 && (
-																	<CustomErrorMessage sx={{ mx: '1rem', mt: '-0.5rem', mb: '0.5rem' }}>
-																		Title must not exceed 100 characters
-																	</CustomErrorMessage>
-																)}
-																<CustomDialogActions
-																	onCancel={() => closeVideoRenameModal(index)}
-																	submitBtnText='Save'
-																	submitBtnType='button'
-																	actionSx={{ mt: '0.5rem', mb: '0.5rem' }}
-																	onSubmit={() => {
-																		saveVideoRename(index);
-																	}}
-																	disableBtn={!videoURL.title || videoURL.title.trim() === '' || videoURL.title.trim().length > 100}
-																/>
-															</form>
-														</CustomDialog>
+																Remove
+															</Typography>
+															<Typography
+																variant='body2'
+																onClick={() => toggleVideoRenameModal(index, videoURL)}
+																sx={{
+																	':hover': {
+																		textDecoration: 'underline',
+																		cursor: 'pointer',
+																	},
+																	'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+																}}>
+																Rename
+															</Typography>
+															<CustomDialog
+																openModal={isVideoRenameModalOpen[index] || false}
+																closeModal={() => closeVideoRenameModal(index)}
+																title='Rename Video Title'
+																maxWidth='xs'>
+																<form
+																	style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
+																	onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+																		e.preventDefault();
+																	}}>
+																	<CustomTextField
+																		fullWidth={false}
+																		required={true}
+																		label='Video Title'
+																		value={videoURL.title}
+																		sx={{ margin: '1rem' }}
+																		onChange={(e) => {
+																			setSingleCourseBeforeSave((prevData) => {
+																				if (prevData) {
+																					const updatedVideoURLs = prevData?.videoURLs?.map((video, idx) => {
+																						if (idx === index) {
+																							return { ...video, title: e.target.value };
+																						}
+																						return video;
+																					});
+																					return { ...prevData, videoURLs: updatedVideoURLs || [] };
+																				}
+																				return prevData;
+																			});
+																		}}
+																		InputProps={{
+																			inputProps: {
+																				maxLength: 100,
+																			},
+																		}}
+																		error={videoURL.title.trim().length > 100}
+																	/>
+																	{videoURL.title.trim().length > 100 && (
+																		<CustomErrorMessage sx={{ mx: '1rem', mt: '-0.5rem', mb: '0.5rem' }}>
+																			Title must not exceed 100 characters
+																		</CustomErrorMessage>
+																	)}
+																	<CustomDialogActions
+																		onCancel={() => closeVideoRenameModal(index)}
+																		submitBtnText='Save'
+																		submitBtnType='button'
+																		actionSx={{ mt: '0.5rem', mb: '0.5rem' }}
+																		onSubmit={() => {
+																			saveVideoRename(index);
+																		}}
+																		disableBtn={!videoURL.title || videoURL.title.trim() === '' || videoURL.title.trim().length > 100}
+																	/>
+																</form>
+															</CustomDialog>
+														</Box>
 													</Box>
-												</Box>
-											))}
+												))}
+									</Box>
 								</Box>
 							)}
 						</form>

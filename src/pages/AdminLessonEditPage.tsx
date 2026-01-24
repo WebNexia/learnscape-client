@@ -137,6 +137,13 @@ const AdminLessonEditPage = () => {
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
+	const sectionSx = {
+		backgroundColor: theme.bgColor?.common,
+		borderRadius: '0.75rem',
+		padding: isMobileSize ? '1rem' : '1.25rem',
+		border: `1px solid ${theme.palette.divider}`,
+		boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+	};
 
 	const defaultLesson: Lesson = {
 		_id: '',
@@ -1122,7 +1129,7 @@ const AdminLessonEditPage = () => {
 						<LessonImageCourseDisplay singleLesson={singleLesson} />
 
 						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: isMobileSize ? '4rem' : '5rem' }}>
-							<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1.25rem' }}>
+							<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1.25rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 							</Typography>
 							{singleLesson.text ? (
@@ -1130,9 +1137,11 @@ const AdminLessonEditPage = () => {
 									variant='body2'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
 									sx={{
-										'boxShadow': singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none',
-										'padding': isMobileSize ? '1rem' : '2rem',
-										'borderRadius': '0.35rem',
+										'backgroundColor': theme.bgColor?.common,
+										'border': `1px solid ${theme.palette.divider}`,
+										'boxShadow': '0 10px 30px rgba(15, 23, 42, 0.08)',
+										'padding': isMobileSize ? '1rem' : '1.25rem',
+										'borderRadius': '0.75rem',
 										'lineHeight': 1.7,
 										'& strong, & b': {
 											fontWeight: 'bolder',
@@ -1140,7 +1149,7 @@ const AdminLessonEditPage = () => {
 										'& img': {
 											maxWidth: '100%',
 											height: 'auto',
-											borderRadius: '0.35rem',
+											borderRadius: '0.75rem',
 											margin: isMobileSize ? '0.5rem 0' : '1rem 0',
 											boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
 										},
@@ -1167,9 +1176,10 @@ const AdminLessonEditPage = () => {
 								justifyContent: 'flex-start',
 								width: '90%',
 								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '0rem 0 4rem 0',
+								...sectionSx,
 							}}>
 							<Box>
-								<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: isMobileSize ? '0.75rem' : '1.25rem' }}>
+								<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: isMobileSize ? '0.75rem' : '1.25rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 									{singleLesson.type} Materials
 								</Typography>
 							</Box>
@@ -1217,6 +1227,10 @@ const AdminLessonEditPage = () => {
 							mt: '3rem',
 						}}>
 						<form onSubmit={(e) => handleLessonUpdate(e)}>
+							<Box sx={{ ...sectionSx, mt: '1rem' }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
+									Lesson Details
+								</Typography>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
 								<Box sx={{ flex: 1, mr: isMobileSize ? '0rem' : '2rem' }}>
 									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
@@ -1324,11 +1338,17 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							<Box sx={{ mt: isMobileSize ? '2.5rem' : '4.5rem', mb: isMobileSize ? '0.5rem' : '1rem' }}>
+							</Box>
+
+							{/* Instructions */}
+							<Box sx={{ ...sectionSx, mt: '2rem' }}>
+
+							<Box sx={{ mt: 0, mb: isMobileSize ? '0.5rem' : '1rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Typography variant='h6' sx={{ mb: '1rem' }}>
-										{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
-									</Typography>
+
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
+									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
+								</Typography>
 									<Tooltip title='Create instruction with AI' placement='top' arrow>
 										<IconButton
 											sx={{ 'mb': '1rem', '&:hover': { backgroundColor: 'transparent' } }}
@@ -1381,8 +1401,13 @@ const AdminLessonEditPage = () => {
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>
 
+							</Box>
+
+							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
+							<Box sx={{ ...sectionSx, mt: '2rem' }}>
+
 							{singleLessonBeforeSave.type === LessonType.QUIZ && (
-								<Box sx={{ mt: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb:'2.5rem' }}>
 									<Box sx={{ flex: 1 }}>
 										<FormControlLabel
 											control={
@@ -1456,10 +1481,9 @@ const AdminLessonEditPage = () => {
 											justifyContent: 'space-between',
 											alignItems: 'center',
 											width: '100%',
-											margin: isMobileSize ? '2rem 0 1rem 0' : '3rem 0 1rem 0',
 										}}>
 										<Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-											<Typography variant={isMobileSize ? 'h6' : 'h5'}>Questions</Typography>
+											<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>Questions</Typography>
 											{(() => {
 												const totalScore = calculateQuizTotalScore({
 													lesson: singleLessonBeforeSave,
@@ -1486,11 +1510,11 @@ const AdminLessonEditPage = () => {
 											message='Drag the questions to reorder'
 											sx={{ justifyContent: 'flex-end', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
 										/>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 5 }}>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end',alignItems: 'center', flex: 5 }}>
 											<CustomSubmitButton
 												type='button'
 												size='small'
-												sx={{ margin: 'auto 0.5rem auto 0' }}
+												sx={{ margin: 'auto 0.5rem 0 0' }}
 												onClick={() => {
 													setAddNewQuestionModalOpen(true);
 												}}>
@@ -1524,7 +1548,7 @@ const AdminLessonEditPage = () => {
 											</CustomSubmitButton>
 											<Tooltip title='Create questions with AI' placement='top' arrow>
 												<IconButton
-													sx={{ 'mb': '1rem', '&:hover': { backgroundColor: 'transparent' } }}
+													sx={{  '&:hover': { backgroundColor: 'transparent' } }}
 													onClick={() => setIsAiQuestionModalOpen(true)}>
 													<AiIcon
 														sx={{
@@ -1634,7 +1658,7 @@ const AdminLessonEditPage = () => {
 									singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
 										<NoContentBoxAdmin content='No question for this lesson' />
 									) : (
-										<Box sx={{ mb: isMobileSize ? '3.5rem' : '5rem' }}>
+										<Box sx={{ mb: isMobileSize ? '1rem' : '1.5rem' }}>
 											<Reorder.Group
 												axis='y'
 												values={singleLessonBeforeSave?.questions || []}
@@ -2050,7 +2074,10 @@ const AdminLessonEditPage = () => {
 									<Box sx={{ margin: '1rem 0' }}>{questionError && <CustomErrorMessage>Add at least one question</CustomErrorMessage>}</Box>
 								</>
 							)}
-							<Box sx={{ margin: '2rem 0 1rem 0' }}>
+							</Box>
+							)}
+							<Box sx={{ ...sectionSx, mt: '2rem', mb: '4rem' }}>
+								<Box sx={{ margin: '0 0 1rem 0' }}>
 								<HandleDocUploadURL
 									label={singleLessonBeforeSave.type === 'Quiz' ? 'Quiz Materials' : 'Lesson Materials'}
 									onDocUploadLogic={(url, docName) => {
@@ -2184,6 +2211,7 @@ const AdminLessonEditPage = () => {
 									});
 								}}
 							/>
+							</Box>
 						</form>
 					</Box>
 				)}

@@ -34,7 +34,7 @@ const DocumentsListEditBox = ({
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
-		<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
+		<Box sx={{ marginBottom: isMobileSize ? '1rem' : '1.5rem' }}>
 			{documentsSource &&
 				documentsSource?.length > 0 &&
 				documentsSource

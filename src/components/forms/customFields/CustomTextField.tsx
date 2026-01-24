@@ -9,6 +9,7 @@ interface CustomTextFieldProps {
 	value?: string | number;
 	type?: string;
 	onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+	onBlur?: TextFieldProps['onBlur'];
 	onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 	variant?: TextFieldProps['variant'];
 	size?: TextFieldProps['size'];

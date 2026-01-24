@@ -38,6 +38,14 @@ const CourseDetailsEditBox = ({
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	const sectionSx = {
+		backgroundColor: theme.bgColor?.common,
+		borderRadius: '0.75rem',
+		padding: isMobileSize ? '1rem' : '1.25rem',
+		border: `1px solid ${theme.palette.divider}`,
+		boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+	};
+
 	const { resetImageUpload } = useImageUpload();
 
 	const [GBP, setGBP] = useState<string>('');
@@ -56,6 +64,18 @@ const CourseDetailsEditBox = ({
 	const [groupNameError, setGroupNameError] = useState<string>('');
 	const [capacityError, setCapacityError] = useState<string>('');
 
+	// Course capacity + manual registration close (owner/admin only)
+	const [courseCapacityInput, setCourseCapacityInput] = useState<string>('');
+	const [courseCapacityError, setCourseCapacityError] = useState<string>('');
+
+	const getTotalGroupCapacity = (course?: SingleCourse) => {
+		const groups = course?.groups || [];
+		return groups.reduce((sum, g) => {
+			const c = g.capacity !== undefined && g.capacity !== null ? Number(g.capacity) : 0;
+			return sum + (Number.isFinite(c) ? c : 0);
+		}, 0);
+	};
+
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
 		if (singleCourseBeforeSave) {
@@ -65,6 +85,13 @@ const CourseDetailsEditBox = ({
 			setTRY(singleCourseBeforeSave.prices?.find((price) => price.currency === 'try')?.amount || '');
 		}
 	}, [singleCourseBeforeSave]);
+
+	useEffect(() => {
+		if (singleCourseBeforeSave) {
+			const cap = singleCourseBeforeSave.capacity;
+			setCourseCapacityInput(cap === null || cap === undefined ? '' : String(cap));
+		}
+	}, [singleCourseBeforeSave?.capacity]);
 
 	const updatePriceInSingleCourse = (currency: 'gbp' | 'usd' | 'eur' | 'try', amount: string) => {
 		setSingleCourseBeforeSave((prevCourse) => {
@@ -172,6 +199,22 @@ const CourseDetailsEditBox = ({
 			validatedCapacity = capacityNum;
 		}
 
+		const courseCap =
+			singleCourseBeforeSave.capacity !== undefined && singleCourseBeforeSave.capacity !== null ? Number(singleCourseBeforeSave.capacity) : null;
+		if (courseCap !== null) {
+			const groups = singleCourseBeforeSave.groups || [];
+			const totalOtherGroups = groups.reduce((sum, g, idx) => {
+				if (editingGroupIndex !== null && idx === editingGroupIndex) return sum;
+				const c = g.capacity !== undefined && g.capacity !== null ? Number(g.capacity) : 0;
+				return sum + (Number.isFinite(c) ? c : 0);
+			}, 0);
+			const newTotal = totalOtherGroups + (validatedCapacity ?? 0);
+			if (newTotal > courseCap) {
+				setCapacityError(`Total group capacity (${newTotal}) cannot exceed course capacity (${courseCap}).`);
+				return;
+			}
+		}
+
 		// Clear errors if validation passes
 		setGroupNameError('');
 		setCapacityError('');
@@ -215,88 +258,98 @@ const CourseDetailsEditBox = ({
 	};
 	return (
 		<>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-				<Box sx={{ flex: 3 }}>
-					<HandleImageUploadURL
-						label='Cover Image'
-						onImageUploadLogic={(url) => {
-							if (singleCourseBeforeSave) {
-								setSingleCourseBeforeSave({
-									...singleCourseBeforeSave,
-									imageUrl: url,
-								});
-								setHasUnsavedChanges(true);
-							}
-						}}
-						onChangeImgUrl={(e) => {
-							if (singleCourseBeforeSave) {
-								setSingleCourseBeforeSave({
-									...singleCourseBeforeSave,
-									imageUrl: e.target.value,
-								});
-								setHasUnsavedChanges(true);
-							}
-						}}
-						imageUrlValue={singleCourseBeforeSave?.imageUrl || ''}
-						imageFolderName='CourseImages'
-						enterImageUrl={enterImageUrl}
-						setEnterImageUrl={setEnterImageUrl}
-					/>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'flex-end',
-						mt: '1.5rem',
-						padding: '0 0 2rem 2rem',
-						flex: 1,
-					}}>
-					<Box sx={{ textAlign: 'center' }}>
-						<img
-							src={singleCourseBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
-							alt='course_img'
-							height={isMobileSize ? '85rem' : '115rem'}
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+			{/* 1) Cover Image */}
+			<Box sx={{ ...sectionSx, mb: '2rem' }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
+					Cover Image
+				</Typography>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+					<Box sx={{ flex: 3 }}>
+						<HandleImageUploadURL
+							label=''
+							onImageUploadLogic={(url) => {
+								if (singleCourseBeforeSave) {
+									setSingleCourseBeforeSave({
+										...singleCourseBeforeSave,
+										imageUrl: url,
+									});
+									setHasUnsavedChanges(true);
+								}
 							}}
+							onChangeImgUrl={(e) => {
+								if (singleCourseBeforeSave) {
+									setSingleCourseBeforeSave({
+										...singleCourseBeforeSave,
+										imageUrl: e.target.value,
+									});
+									setHasUnsavedChanges(true);
+								}
+							}}
+							imageUrlValue={singleCourseBeforeSave?.imageUrl || ''}
+							imageFolderName='CourseImages'
+							enterImageUrl={enterImageUrl}
+							setEnterImageUrl={setEnterImageUrl}
 						/>
-						<Box>
-							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Cover Image
-							</Typography>
-							{singleCourseBeforeSave?.imageUrl && (
-								<Typography
-									variant='body2'
-									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
-									onClick={() => {
-										setSingleCourseBeforeSave((prevData) => {
-											if (prevData !== undefined) {
-												return {
-													...prevData,
-													imageUrl: '',
-												};
-											}
-										});
-
-										resetImageUpload();
-									}}>
-									Remove
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'flex-end',
+							mt: '1.5rem',
+							padding: '0 0 0 2rem',
+							flex: 1,
+						}}>
+						<Box sx={{ textAlign: 'center' }}>
+							<img
+								src={singleCourseBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
+								alt='course_img'
+								height={isMobileSize ? '85rem' : '115rem'}
+								style={{
+									borderRadius: '0.2rem',
+									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								}}
+							/>
+							<Box>
+								<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+									Cover Image
 								</Typography>
-							)}
+								{singleCourseBeforeSave?.imageUrl && (
+									<Typography
+										variant='body2'
+										sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+										onClick={() => {
+											setSingleCourseBeforeSave((prevData) => {
+												if (prevData !== undefined) {
+													return {
+														...prevData,
+														imageUrl: '',
+													};
+												}
+											});
+
+											resetImageUpload();
+										}}>
+										Remove
+									</Typography>
+								)}
+							</Box>
 						</Box>
 					</Box>
 				</Box>
 			</Box>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: isMobileSize ? 'column' : 'row',
-					justifyContent: 'space-between',
-					mt: isMobileSize ? '-1rem' : '-1.75rem',
-					width: '100%',
-				}}>
+			<Box sx={{ ...sectionSx, mb: '2rem' }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
+					Course Details
+				</Typography>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: isMobileSize ? 'column' : 'row',
+						justifyContent: 'space-between',
+						mt: 0,
+						width: '100%',
+					}}>
 				<Box sx={{ display: 'flex', width: isMobileSize ? '100%' : '80%' }}>
 					<Box sx={{ flex: 1 }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
@@ -638,13 +691,120 @@ const CourseDetailsEditBox = ({
 					</Box>
 				</Box>
 			</Box>
+			</Box>
+
+			{/* Registration Settings (owner/admin only) */}
+			{hasAdminAccess && (
+				<Box sx={{ ...sectionSx, mt: '2rem', width: '100%' }}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
+						Registration Settings
+					</Typography>
+					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', gap: '1rem', justifyContent: 'space-between', alignItems:isMobileSize ? 'flex-start' : 'center', width: '100%', }}>
+						<Box sx={{ flex: 1 }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+								Course Capacity
+								{typeof singleCourseBeforeSave?.activeEnrollmentCount === 'number' ? ` (${singleCourseBeforeSave.activeEnrollmentCount} Enrollments)` : ''}
+							</Typography>
+							<CustomTextField
+								value={courseCapacityInput}
+								onChange={(e) => {
+									const value = e.target.value;
+									// Allow empty string or positive integers only
+									if (value === '' || /^\d+$/.test(value)) {
+										setCourseCapacityInput(value);
+										if (courseCapacityError) setCourseCapacityError('');
+
+										setSingleCourseBeforeSave((prev) => {
+											if (!prev) return prev;
+											if (value === '') return { ...prev, capacity: null };
+											const num = parseInt(value, 10);
+											return { ...prev, capacity: Number.isFinite(num) ? num : null };
+										});
+
+										// Validate against existing group capacities (when capacity is set)
+										if (value !== '') {
+											const num = parseInt(value, 10);
+											if (Number.isFinite(num)) {
+												const totalGroupCap = getTotalGroupCapacity(singleCourseBeforeSave);
+												if (totalGroupCap > num) {
+													setCourseCapacityError(
+														`Course capacity (${num}) cannot be less than total group capacity (${totalGroupCap}).`
+													);
+												}
+											}
+										}
+										setHasUnsavedChanges(true);
+									}
+								}}
+								onBlur={() => {
+									// Validate on blur
+									if (courseCapacityInput.trim() === '') {
+										setCourseCapacityError('');
+										return;
+									}
+									const num = parseInt(courseCapacityInput, 10);
+									if (isNaN(num) || !Number.isInteger(num) || num <= 0) {
+										setCourseCapacityError('Capacity must be a positive integer');
+										return;
+									}
+									const totalGroupCap = getTotalGroupCapacity(singleCourseBeforeSave);
+									if (totalGroupCap > num) {
+										setCourseCapacityError(`Course capacity (${num}) cannot be less than total group capacity (${totalGroupCap}).`);
+										return;
+									}
+									setCourseCapacityError('');
+								}}
+								placeholder='e.g., 100'
+								type='text'
+								fullWidth
+								error={!!courseCapacityError}
+								sx={{ backgroundColor: theme.bgColor?.common, width:isMobileSize ? '100%' : '50%' }}
+							/>
+							{courseCapacityError && <CustomErrorMessage>{courseCapacityError}</CustomErrorMessage>}
+							{singleCourseBeforeSave?.isCapacityFull && (
+								<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'error.main', fontWeight: 600 }}>
+									Course is currently full.
+								</Typography>
+							)}
+						</Box>
+
+						<Box sx={{ flex: 1, display: 'flex',justifyContent: 'flex-end', alignItems: isMobileSize ? 'flex-start' : 'center' }}>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={Boolean(singleCourseBeforeSave?.isRegistrationClosedByAdmin)}
+										onChange={(e) => {
+											setSingleCourseBeforeSave((prev) => {
+												if (!prev) return prev;
+												return { ...prev, isRegistrationClosedByAdmin: e.target.checked };
+											});
+											setHasUnsavedChanges(true);
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '1rem' : '1.25rem',
+											},
+										}}
+									/>
+								}
+								label='Close Registration'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									},
+								}}
+							/>
+						</Box>
+					</Box>
+				</Box>
+			)}
 
 			{/* Groups Management Section */}
 			{hasAdminAccess && (
-				<Box sx={{ mt: '2rem', width: '100%' }}>
+				<Box sx={{ ...sectionSx, mt: '2rem', mb: '4rem', width: '100%' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-							Groups (Optional)
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							Groups
 						</Typography>
 						<CustomSubmitButton
 							startIcon={<Add sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />}
