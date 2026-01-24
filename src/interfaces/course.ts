@@ -64,6 +64,7 @@ export interface SingleCourse extends BaseCourse {
 	documents: Document[];
 	firstLessonId: string;
 	groups?: CourseGroup[];
+	videoURLs?: { url: string; title: string }[];
 }
 
 export interface Price {

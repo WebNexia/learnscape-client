@@ -818,6 +818,7 @@ const CourseDetailsEditBox = ({
 					</CustomDialog>
 				</Box>
 			)}
+
 		</>
 	);
 };
