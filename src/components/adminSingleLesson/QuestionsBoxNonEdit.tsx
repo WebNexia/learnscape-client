@@ -37,7 +37,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 			<Box sx={{ margin: isMobileSize ? '2rem 0' : '3rem 0' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-						<Typography variant={isMobileSize ? 'h6' : 'h5'}>Questions</Typography>
+						<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>Questions</Typography>
 						{(() => {
 							if (!singleLesson) return null;
 							const totalScore = calculateQuizTotalScore({

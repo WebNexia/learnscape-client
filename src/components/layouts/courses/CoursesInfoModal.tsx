@@ -149,6 +149,19 @@ const CoursesInfoModal = ({ singleCourse, isCourseInfoDialogOpen, setIsCourseInf
 								</Typography>
 							</Grid>
 						</>
+						<>
+							<Grid item xs={3}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Registration:
+								</Typography>
+							</Grid>
+
+							<Grid item xs={9}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{singleCourse?.isRegistrationClosedByAdmin ? 'Closed' : 'Open'}
+								</Typography>
+							</Grid>
+						</>
 					</Grid>
 				</Box>
 			</DialogContent>

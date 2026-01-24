@@ -68,6 +68,9 @@ const CoursePageBanner = ({
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '' ||
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0';
 
+	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
+	const isCapacityFull = Boolean(course?.isCapacityFull);
+
 	const vertical = 'top';
 	const horizontal = 'center';
 
@@ -114,6 +117,10 @@ const CoursePageBanner = ({
 
 			// Invalidate React Query cache to refresh context data
 			await queryClient.invalidateQueries(['userCourseData']);
+			// Invalidate single course data to refresh capacity status
+			if (courseId) {
+				await queryClient.invalidateQueries(['singleCourseDataUser', courseId]);
+			}
 
 			return userCourseId;
 		} catch (error) {
@@ -278,7 +285,11 @@ const CoursePageBanner = ({
 					</Box>
 				</Box>
 
-				{!isEnrolledStatus && !course.isExpired && (isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
+				{!isEnrolledStatus &&
+				!course.isExpired &&
+				!isManuallyClosed &&
+				!isCapacityFull &&
+				(isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
 					<CustomSubmitButton
 						variant='contained'
 						onClick={handleEnroll}
@@ -300,6 +311,20 @@ const CoursePageBanner = ({
 						}}>
 						{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
 					</CustomSubmitButton>
+				) : !isEnrolledStatus && !course.isExpired && (isManuallyClosed || isCapacityFull) ? (
+					<Alert
+						severity={isCapacityFull ? 'error' : 'warning'}
+						sx={{
+							position: 'absolute',
+							bottom: isRotated ? 60 : '1.5rem',
+							fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
+							backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+							color: theme.textColor?.common.main,
+							width: 'fit-content',
+							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+						}}>
+						{isCapacityFull ? (fromHomePage ? 'Kontenjan doldu' : 'No seats available') : fromHomePage ? 'Kayıtlar kapandı' : 'Registration is closed'}
+					</Alert>
 				) : !isEnrolledStatus && course.isExpired ? (
 					<Alert
 						severity='warning'

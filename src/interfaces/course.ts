@@ -12,6 +12,10 @@ export interface BaseCourse {
 	createdAt: string;
 	updatedAt: string;
 	isExpired: boolean;
+	capacity?: number | null;
+	isCapacityFull?: boolean;
+	isRegistrationClosedByAdmin?: boolean;
+	activeEnrollmentCount?: number;
 	clonedFromId: string;
 	clonedFromTitle: string;
 	versionNote: string;
