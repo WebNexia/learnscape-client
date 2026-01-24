@@ -381,9 +381,10 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 								ref={courseSearchRef}
 								value={searchCourseValue}
 								onChange={setSearchCourseValue}
-								onSelect={handleCourseSelect}
+								onSelect={(course) => handleCourseSelect(course)}
 								placeholder='Search courses to link this form...'
-								selectedCourseIds={[]}
+								// Feedback forms link to a course (not a specific group)
+								selectedCourseGroups={[]}
 							/>
 						)}
 					</Box>

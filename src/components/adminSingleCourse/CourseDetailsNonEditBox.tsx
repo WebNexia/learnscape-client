@@ -17,7 +17,7 @@ import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { ChecklistGroup } from '../../interfaces/chapter';
-import { EditTwoTone, Visibility, ExpandMore, PlayCircleOutline, Checklist, ExpandLess } from '@mui/icons-material';
+import { EditTwoTone, Visibility, ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
@@ -601,8 +601,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 			)}
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem', mt: '2rem' }}>
-					<Box sx={{ mb: '1.25rem' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '2.5rem', mt: '2rem' }}>
+					<Box sx={{ mb: '1rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
 							Course Materials
 						</Typography>
@@ -626,6 +626,36 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						</Box>
 					) : (
 						<NoContentBoxAdmin content='No material for this course' />
+					)}
+				</Box>
+			)}
+
+			{!singleCourse?.courseManagement.isExternal && (
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem', }}>
+					<Box sx={{ mb: '1rem' }}>
+						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
+							Course Videos
+						</Typography>
+					</Box>
+					{singleCourse?.videoURLs?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')?.length !== 0 ? (
+						<Box>
+							{singleCourse?.videoURLs
+								?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
+								?.map((videoURL, index) => (
+									<Box sx={{ mb: '0.5rem' }} key={index}>
+										<Link
+											href={videoURL.url}
+											target='_blank'
+											rel='noopener noreferrer'
+											variant='body2'
+											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{videoURL.title}
+										</Link>
+									</Box>
+								))}
+						</Box>
+					) : (
+						<NoContentBoxAdmin content='No video for this course' />
 					)}
 				</Box>
 			)}

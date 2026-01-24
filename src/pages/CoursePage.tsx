@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, Link, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
 import Chapters from '../components/userCourses/Chapters';
@@ -51,7 +51,7 @@ const CoursePage = () => {
 			{isEnrolledStatus && singleCourseUser?.documents && (
 				<Box
 					ref={documentsRef}
-					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0', width: isMobileSize ? '90%' : '85%' }}>
+					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0 0 0', width: isMobileSize ? '90%' : '85%' }}>
 					<DocumentViewer
 						documents={singleCourseUser?.documents || []}
 						title='Course Materials'
@@ -59,6 +59,30 @@ const CoursePage = () => {
 						showTitle={true}
 						inlinePDFs={true}
 					/>
+				</Box>
+			)}
+			{isEnrolledStatus && singleCourseUser?.videoURLs && singleCourseUser.videoURLs.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '').length > 0 && (
+				<Box
+					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0 4rem 0', width: isMobileSize ? '90%' : '85%' }}>
+					<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined, mb: '1rem' }}>
+						Course Videos
+					</Typography>
+					<Box>
+						{singleCourseUser.videoURLs
+							.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
+							.map((videoURL, index) => (
+								<Box sx={{ mb: '0.5rem' }} key={index}>
+									<Link
+										href={videoURL.url}
+										target='_blank'
+										rel='noopener noreferrer'
+										variant='body2'
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										{videoURL.title}
+									</Link>
+								</Box>
+							))}
+					</Box>
 				</Box>
 			)}
 		</DashboardPagesLayout>

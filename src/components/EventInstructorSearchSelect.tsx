@@ -193,10 +193,10 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'flex-start',
-							width: isMobileSize ? '60%' : '70%',
+							width: '100%',
 							maxHeight: '15rem',
 							overflow: 'auto',
-							margin: '-0.8rem 0 1.5rem -8rem',
+							margin: '-0.8rem 0 1.5rem 0rem',
 							border: 'solid 0.05rem lightgray',
 							mb: showLoadMore ? '1rem' : '2rem',
 							...listSx,
@@ -224,7 +224,10 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 								onClick={() => handleUserSelect(user)}>
 								<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
 									<img
-										src={user.imageUrl}
+										src={user.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+										onError={(e) => {
+											e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+										}}
 										alt='profile_img'
 										style={{
 											height: '2rem',

@@ -1,4 +1,5 @@
-import { Box, DialogContent, Typography } from '@mui/material';
+import { Box, DialogContent, Typography, Link, Button } from '@mui/material';
+import { CloudUpload } from '@mui/icons-material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
@@ -6,6 +7,7 @@ import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
+import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import AdminCourseEditChapter from '../components/adminSingleCourse/AdminCourseEditChapter';
 import { BaseChapter, ChecklistGroup } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
@@ -92,7 +94,7 @@ const AdminCourseEditPage = () => {
 
 	const { isSticky } = useStickyPaper(isMobileSize);
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(false);
+	const [isEditMode, setIsEditMode] = useState<boolean>(true);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
 	const [singleCourseBeforeSave, setSingleCourseBeforeSave] = useState<SingleCourse>();
 	const [isFree, setIsFree] = useState<boolean>(false);
@@ -110,6 +112,16 @@ const AdminCourseEditPage = () => {
 	const [isDocRenameModalOpen, setIsDocRenameModalOpen] = useState<Array<boolean>>([]);
 	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
+
+	// Video URL management state
+	const [videoFormData, setVideoFormData] = useState<{ url: string; title: string }>({
+		url: '',
+		title: '',
+	});
+	const [videoUrlError, setVideoUrlError] = useState<string>('');
+	const [videoTitleError, setVideoTitleError] = useState<string>('');
+	const [isVideoRenameModalOpen, setIsVideoRenameModalOpen] = useState<Array<boolean>>([]);
+	const [originalVideoTitles, setOriginalVideoTitles] = useState<Record<number, string>>({});
 
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
@@ -215,6 +227,63 @@ const AdminCourseEditPage = () => {
 		newRenameModalOpen[index] = false;
 
 		setIsDocRenameModalOpen(newRenameModalOpen);
+	};
+
+	// Video URL rename functions
+	const toggleVideoRenameModal = (index: number, videoURL: { url: string; title: string }) => {
+		const newRenameModalOpen = [...isVideoRenameModalOpen];
+		if (newRenameModalOpen.length <= index) {
+			// Extend array if needed
+			while (newRenameModalOpen.length <= index) {
+				newRenameModalOpen.push(false);
+			}
+		}
+
+		if (!newRenameModalOpen[index]) {
+			setOriginalVideoTitles((prevTitles) => ({
+				...prevTitles,
+				[index]: videoURL.title,
+			}));
+		}
+
+		newRenameModalOpen[index] = !newRenameModalOpen[index];
+		setIsVideoRenameModalOpen(newRenameModalOpen);
+	};
+
+	const closeVideoRenameModal = (index: number) => {
+		const newRenameModalOpen = [...isVideoRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		setSingleCourseBeforeSave((prevData) => {
+			if (prevData) {
+				const updatedVideoURLs = prevData?.videoURLs?.map((video, idx) => {
+					if (idx === index) {
+						return { ...video, title: originalVideoTitles[index] || video.title }; // Revert to original title
+					}
+					return video;
+				});
+				return { ...prevData, videoURLs: updatedVideoURLs || [] };
+			}
+			return prevData;
+		});
+
+		setIsVideoRenameModalOpen(newRenameModalOpen);
+	};
+
+	const saveVideoRename = (index: number) => {
+		const newRenameModalOpen = [...isVideoRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		// Validate title length
+		const videoURLs = singleCourseBeforeSave?.videoURLs || [];
+		const currentVideo = videoURLs[index];
+		if (currentVideo && currentVideo.title.trim().length > 100) {
+			setVideoTitleError('Title must not exceed 100 characters');
+			return;
+		}
+
+		setIsVideoRenameModalOpen(newRenameModalOpen);
+		setHasUnsavedChanges(true);
 	};
 
 	// Total possible score for the whole course (sum of all graded quizzes) - EDIT view
@@ -327,6 +396,8 @@ const AdminCourseEditPage = () => {
 				documents: [],
 				documentIds: [],
 				isExpired: extValidUntil ? extValidUntil < new Date() : false,
+				groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
+				videoURLs: singleCourseBeforeSave.videoURLs || [], // Explicitly include videoURLs
 			};
 
 			try {
@@ -530,6 +601,8 @@ const AdminCourseEditPage = () => {
 					documentIds: updatedDocumentIds,
 					documents: updatedDocuments,
 					isExpired: validUntil ? validUntil < new Date() : false,
+					groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
+					videoURLs: singleCourseBeforeSave.videoURLs || [], // Explicitly include videoURLs
 				};
 
 				try {
@@ -685,6 +758,17 @@ const AdminCourseEditPage = () => {
 			return;
 		}
 
+		// Validate for duplicate group names (case-insensitive)
+		if (singleCourseBeforeSave?.groups && singleCourseBeforeSave.groups.length > 0) {
+			const groupNames = singleCourseBeforeSave.groups.map((g) => g.name?.toLowerCase().trim()).filter(Boolean);
+			const duplicateNames = groupNames.filter((name, index) => groupNames.indexOf(name) !== index);
+			if (duplicateNames.length > 0) {
+				setUrlErrorMessage('Duplicate group names are not allowed. Each group must have a unique name.');
+				setIsUrlErrorOpen(true);
+				return;
+			}
+		}
+
 		// Validate image URL before proceeding
 		if (singleCourseBeforeSave?.imageUrl?.trim()) {
 			const imageValidation = await validateImageUrl(singleCourseBeforeSave.imageUrl.trim());
@@ -702,6 +786,26 @@ const AdminCourseEditPage = () => {
 					const docValidation = await validateDocumentUrl(document.documentUrl.trim());
 					if (!docValidation.isValid) {
 						setUrlErrorMessage('Invalid document URL format');
+						setIsUrlErrorOpen(true);
+						return;
+					}
+				}
+			}
+		}
+
+		// Validate video URLs before proceeding
+		if (singleCourseBeforeSave?.videoURLs) {
+			for (const videoURL of singleCourseBeforeSave.videoURLs) {
+				if (videoURL && videoURL.url?.trim()) {
+					try {
+						const urlObj = new URL(videoURL.url.trim());
+						if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+							setUrlErrorMessage('Invalid video URL format. URLs must use http or https protocol.');
+							setIsUrlErrorOpen(true);
+							return;
+						}
+					} catch {
+						setUrlErrorMessage('Invalid video URL format');
 						setIsUrlErrorOpen(true);
 						return;
 					}
@@ -1041,6 +1145,249 @@ const AdminCourseEditPage = () => {
 									}}
 								/>
 							)}
+
+							{!singleCourseBeforeSave?.courseManagement.isExternal && (
+								<Box sx={{ margin: '3rem 0 1rem 0' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '0.5rem' }}>
+										<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '1rem' : '0.75rem' }}>
+											Course Videos
+										</Typography>
+									</Box>
+									<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+										<CustomTextField
+											placeholder='Video Title'
+											required={false}
+											sx={{ width: '42.5%', marginTop: '0.5rem' }}
+											value={videoFormData.title}
+											onChange={(e) => {
+												setVideoFormData({ ...videoFormData, title: e.target.value });
+												if (videoTitleError) {
+													setVideoTitleError('');
+												}
+												if (e.target.value.length > 100) {
+													setVideoTitleError('Title must not exceed 100 characters');
+												}
+											}}
+											InputProps={{
+												inputProps: {
+													maxLength: 100,
+												},
+											}}
+											error={!!videoTitleError}
+										/>
+										<Box sx={{ display: 'flex', flexDirection: 'column', width: '55%' }}>
+											<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+												<CustomTextField
+													placeholder='Video URL'
+													required={false}
+													sx={{ width: '82.5%', marginTop: '0.5rem' }}
+													value={videoFormData.url}
+													onChange={(e) => {
+														const value = e.target.value;
+														setVideoFormData({ ...videoFormData, url: value });
+														if (videoUrlError) {
+															setVideoUrlError('');
+														}
+													}}
+												/>
+												<Button
+													onClick={() => {
+														const trimmedUrl = videoFormData.url.trim();
+														const trimmedTitle = videoFormData.title.trim();
+														
+														if (!trimmedUrl || trimmedTitle.length === 0) {
+															if (!trimmedUrl) setVideoUrlError('Video URL is required');
+															if (trimmedTitle.length === 0) setVideoTitleError('Video title is required');
+															return;
+														}
+
+														// Validate URL format
+														try {
+															const urlObj = new URL(trimmedUrl);
+															if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+																setVideoUrlError('Please enter a valid URL (http or https)');
+																return;
+															}
+														} catch {
+															setVideoUrlError('Please enter a valid URL (http or https)');
+															return;
+														}
+
+														// Check for duplicate URLs (case-insensitive)
+														const videoURLs = singleCourseBeforeSave?.videoURLs || [];
+														const urlLower = trimmedUrl.toLowerCase();
+														const isDuplicate = videoURLs.some((video) => {
+															return video.url?.toLowerCase() === urlLower;
+														});
+														if (isDuplicate) {
+															setVideoUrlError('A video with this URL already exists. URLs must be unique.');
+															return;
+														}
+
+														// Validate title length
+														if (trimmedTitle.length > 100) {
+															setVideoTitleError('Title must not exceed 100 characters');
+															return;
+														}
+
+														// Clear errors if validation passes
+														setVideoUrlError('');
+														setVideoTitleError('');
+
+														const newVideoURL = {
+															url: trimmedUrl,
+															title: trimmedTitle.substring(0, 100),
+														};
+
+														setSingleCourseBeforeSave((prevCourse) => {
+															if (!prevCourse) return prevCourse;
+															const videoURLs = prevCourse.videoURLs || [];
+															return { ...prevCourse, videoURLs: [...videoURLs, newVideoURL] };
+														});
+
+														setHasUnsavedChanges(true);
+														setVideoFormData({ url: '', title: '' });
+														setVideoUrlError('');
+														setVideoTitleError('');
+													}}
+													variant='outlined'
+													sx={{ textTransform: 'capitalize', height: '2rem', width: '15%', ml: '0.5rem', mb: '0.25rem' }}
+													disabled={!videoFormData.url.trim() || !videoFormData.title.trim()}
+													size='small'>
+													<CloudUpload />
+												</Button>
+											</Box>
+											{videoUrlError && <CustomErrorMessage sx={{ mt: '0.25rem', fontSize: '0.7rem' }}>{videoUrlError}</CustomErrorMessage>}
+											{videoTitleError && <CustomErrorMessage sx={{ mt: '0.25rem', fontSize: '0.7rem' }}>{videoTitleError}</CustomErrorMessage>}
+										</Box>
+									</Box>
+								</Box>
+							)}
+
+							{!singleCourseBeforeSave?.courseManagement.isExternal && (
+								<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
+									{singleCourseBeforeSave?.videoURLs &&
+										singleCourseBeforeSave.videoURLs.length > 0 &&
+										singleCourseBeforeSave.videoURLs
+											?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
+											?.map((videoURL, index) => (
+												<Box
+													key={index}
+													sx={{
+														display: 'flex',
+														flexDirection: 'column',
+														justifyContent: 'space-between',
+														alignItems: 'flex-start',
+														mb: '1rem',
+														width: '100%',
+													}}>
+													<Box sx={{ mb: '0.25rem' }}>
+														<Link
+															href={videoURL.url}
+															target='_blank'
+															rel='noopener noreferrer'
+															variant='body2'
+															sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+															{videoURL.title}
+														</Link>
+													</Box>
+													<Box sx={{ display: 'flex', alignItems: 'center' }}>
+														<Typography
+															variant='body2'
+															sx={{
+																'mr': '0.5rem',
+																':hover': {
+																	textDecoration: 'underline',
+																	cursor: 'pointer',
+																},
+																'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+															}}
+															onClick={() => {
+																setSingleCourseBeforeSave((prevData) => {
+																	if (prevData) {
+																		const filteredVideoURLs = prevData?.videoURLs?.filter((_, i) => i !== index);
+																		return {
+																			...prevData,
+																			videoURLs: filteredVideoURLs || [],
+																		};
+																	}
+																	return prevData;
+																});
+																setHasUnsavedChanges(true);
+															}}>
+															Remove
+														</Typography>
+														<Typography
+															variant='body2'
+															onClick={() => toggleVideoRenameModal(index, videoURL)}
+															sx={{
+																':hover': {
+																	textDecoration: 'underline',
+																	cursor: 'pointer',
+																},
+																'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+															}}>
+															Rename
+														</Typography>
+														<CustomDialog
+															openModal={isVideoRenameModalOpen[index] || false}
+															closeModal={() => closeVideoRenameModal(index)}
+															title='Rename Video Title'
+															maxWidth='xs'>
+															<form
+																style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
+																onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+																	e.preventDefault();
+																}}>
+																<CustomTextField
+																	fullWidth={false}
+																	required={true}
+																	label='Video Title'
+																	value={videoURL.title}
+																	sx={{ margin: '1rem' }}
+																	onChange={(e) => {
+																		setSingleCourseBeforeSave((prevData) => {
+																			if (prevData) {
+																				const updatedVideoURLs = prevData?.videoURLs?.map((video, idx) => {
+																					if (idx === index) {
+																						return { ...video, title: e.target.value };
+																					}
+																					return video;
+																				});
+																				return { ...prevData, videoURLs: updatedVideoURLs || [] };
+																			}
+																			return prevData;
+																		});
+																	}}
+																	InputProps={{
+																		inputProps: {
+																			maxLength: 100,
+																		},
+																	}}
+																	error={videoURL.title.trim().length > 100}
+																/>
+																{videoURL.title.trim().length > 100 && (
+																	<CustomErrorMessage sx={{ mx: '1rem', mt: '-0.5rem', mb: '0.5rem' }}>
+																		Title must not exceed 100 characters
+																	</CustomErrorMessage>
+																)}
+																<CustomDialogActions
+																	onCancel={() => closeVideoRenameModal(index)}
+																	submitBtnText='Save'
+																	submitBtnType='button'
+																	actionSx={{ mt: '0.5rem', mb: '0.5rem' }}
+																	onSubmit={() => {
+																		saveVideoRename(index);
+																	}}
+																	disableBtn={!videoURL.title || videoURL.title.trim() === '' || videoURL.title.trim().length > 100}
+																/>
+															</form>
+														</CustomDialog>
+													</Box>
+												</Box>
+											))}
+								</Box>
+							)}
 						</form>
 					</Box>
 				)}
@@ -1102,6 +1449,7 @@ const AdminCourseEditPage = () => {
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>
+
 		</DashboardPagesLayout>
 	);
 };

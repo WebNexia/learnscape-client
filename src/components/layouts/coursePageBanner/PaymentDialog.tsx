@@ -1,4 +1,5 @@
-import { Box, Checkbox, FormControlLabel, Typography, Button } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Typography, Button, Card, CardActionArea, CardContent, Collapse, IconButton } from '@mui/material';
+import { ExpandMore,  } from '@mui/icons-material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import TermsConditions from './TermsConditions';
@@ -37,7 +38,7 @@ interface PaymentDialogProps {
 	course: SingleCourse | undefined;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	courseRegistration: (resolvedUserId: string, resolvedOrgId: string) => Promise<string>;
+	courseRegistration: (resolvedUserId: string, resolvedOrgId: string, groupName?: string) => Promise<string>;
 	fromHomePage?: boolean;
 	setDisplayEnrollmentMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
@@ -117,6 +118,15 @@ const PaymentDialog = ({
 	const [verificationSent, setVerificationSent] = useState<boolean>(false);
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [selectedGroupName, setSelectedGroupName] = useState<string>('');
+	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState<boolean>(true);
+
+	// Collapse group selection when user interacts with other fields
+	useEffect(() => {
+		if (email || promoCode || cardNumberComplete || cardExpiryComplete || cardCvcComplete) {
+			setIsGroupSelectionExpanded(false);
+		}
+	}, [email, promoCode, cardNumberComplete, cardExpiryComplete, cardCvcComplete]);
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
@@ -156,6 +166,13 @@ const PaymentDialog = ({
 	let resolvedFirstName = user?.firstName || '';
 	let resolvedLastName = user?.lastName || '';
 
+	// Reset selected group when dialog closes
+	useEffect(() => {
+		if (!isPaymentDialogOpen) {
+			setSelectedGroupName('');
+		}
+	}, [isPaymentDialogOpen]);
+
 	// Add cleanup on unmount
 	useEffect(() => {
 		return () => {
@@ -175,10 +192,31 @@ const PaymentDialog = ({
 		// Lock the price during payment processing to prevent changes
 		const lockedAmount = discountedAmount;
 
-		if (!validateRecaptchaToken()) {
+		// Validate reCAPTCHA only for paid courses
+		if (!isCourseFree && !validateRecaptchaToken()) {
 			setIsProcessing(false);
 			setIsSubmitted(false);
 			return;
+		}
+
+		// Validate group selection if groups exist
+		if (course?.groups && course.groups.length > 0 && !selectedGroupName.trim()) {
+			setErrorMessage(fromHomePage ? 'Lütfen bir grup seçin.' : 'Please select a group.');
+			setIsProcessing(false);
+			setIsSubmitted(false);
+			return;
+		}
+
+		// Validate selected group is not full
+		if (selectedGroupName.trim()) {
+			const selectedGroup = course?.groups?.find((g) => g.name === selectedGroupName);
+			if (selectedGroup?.isFull) {
+				setErrorMessage(fromHomePage ? 'Seçilen grup dolu. Lütfen başka bir grup seçin.' : 'Selected group is full. Please select another group.');
+				setSelectedGroupName(''); // Clear selection if group is full
+				setIsProcessing(false);
+				setIsSubmitted(false);
+				return;
+			}
 		}
 
 		try {
@@ -241,7 +279,7 @@ const PaymentDialog = ({
 					// For free courses, proceed with registration
 					if (isCourseFree) {
 						try {
-							await courseRegistration(resolvedUserId, resolvedOrgId);
+							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
 
 							setIsPaymentDialogOpen(false);
 							resetForm();
@@ -285,6 +323,26 @@ const PaymentDialog = ({
 						setErrorMessage(fromHomePage ? 'Beklenmeyen bir hata oluştu.' : 'An unexpected error occurred.');
 						resetRecaptcha();
 					}
+					setIsProcessing(false);
+					return;
+				}
+			}
+
+			// For free courses (logged-in users, not from homepage), skip payment and register directly
+			if (isCourseFree && !fromHomePage) {
+				try {
+					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+					
+					setIsPaymentDialogOpen(false);
+					resetForm();
+					setIsProcessing(false);
+					setDisplayEnrollmentMsg(true);
+					if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+					return;
+				} catch (regErr) {
+					resetForm(true);
+					setErrorMessage(fromHomePage ? 'Kurs kaydı başarısız oldu.' : 'Course registration failed.');
+					resetRecaptcha();
 					setIsProcessing(false);
 					return;
 				}
@@ -378,7 +436,7 @@ const PaymentDialog = ({
 
 				// Step 4: Register the course
 				try {
-					const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId);
+					const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
 
 					// Step 5: Capture the authorized payment
 					try {
@@ -601,6 +659,7 @@ const PaymentDialog = ({
 	const resetForm = (preserveError = false) => {
 		setEmail('');
 		setPromoCode('');
+		setSelectedGroupName('');
 		if (!course) return;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 		setDiscountedAmount(isNaN(amount) ? 0 : amount);
@@ -677,7 +736,169 @@ const PaymentDialog = ({
 								}
 							: {}),
 					}}>
-					{fromHomePage && (
+					
+
+					{/* Group Selection */}
+					{course?.groups && course.groups.length > 0 && (
+						<Box sx={{ mb: 3 }}>
+							<Box
+								sx={{
+									backgroundColor: theme.bgColor?.primary,
+									padding: isMobileSize ? '0.5rem' : '0.75rem 1rem 0.75rem 0.5rem',
+									cursor: 'pointer',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									borderRadius: '0.35rem',
+									transition: 'background-color 0.2s ease',
+									mb: 1.5,
+									'&:hover': {
+										backgroundColor: theme.bgColor?.primary,
+									},
+								}}
+								onClick={() => setIsGroupSelectionExpanded(!isGroupSelectionExpanded)}>
+								<Typography
+									variant='h6'
+									sx={
+										fromHomePage
+											? {
+													fontFamily: 'Varela Round',
+													fontWeight: 500,
+													fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+													color: 'white',
+													textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+													ml: '0.5rem',
+												}
+											: { 
+													fontSize:isMobileSize ? '0.85rem' : '0.9rem', 
+													fontWeight: 500,
+													color: 'white',
+													textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+													ml: '0.5rem',
+												}
+									}>
+									{selectedGroupName
+										? `${fromHomePage ? 'Seçilen Grup: ' : 'Selected Group: '}${selectedGroupName}`
+										: fromHomePage
+											? 'Grup Seçin*'
+											: 'Select Group*'}
+								</Typography>
+								<IconButton
+									size='small'
+									sx={{
+										color: 'white',
+										padding: '0.25rem',
+										marginLeft: isMobileSize ? '0.5rem' : '1rem',
+										transform: isGroupSelectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+										transition: 'transform 0.3s ease',
+										'&:hover': {
+											border: 'solid 0.5px white',
+										},
+									}}>
+									<ExpandMore fontSize='small' />
+								</IconButton>
+							</Box>
+							<Collapse in={isGroupSelectionExpanded}>
+								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+								{course.groups.map((group) => (
+									<Card
+										key={group.name}
+										sx={{
+											border: selectedGroupName === group.name ? '2px solid' : '1px solid',
+											borderColor: selectedGroupName === group.name 
+												? theme.palette.primary.main 
+												: group.isFull 
+													? '#ef4444' 
+													: theme.palette.divider,
+											borderRadius: '0.75rem',
+											transition: 'all 0.2s ease',
+											backgroundColor: selectedGroupName === group.name 
+												? 'rgba(25, 118, 210, 0.04)' 
+												: group.isFull 
+													? 'rgba(239, 68, 68, 0.04)' 
+													: 'transparent',
+											opacity: group.isFull ? 0.7 : 1,
+											'&:hover': {
+												borderColor: group.isFull ? '#ef4444' : theme.palette.primary.main,
+												boxShadow: group.isFull ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+											},
+										}}>
+										<CardActionArea
+											onClick={() => {
+												if (!group.isFull) {
+													setSelectedGroupName(group.name);
+													setErrorMessage('');
+													setIsGroupSelectionExpanded(false); // Collapse after selection
+												}
+											}}
+											disabled={group.isFull}
+											sx={{ p: 0, cursor: group.isFull ? 'not-allowed' : 'pointer' }}>
+											<CardContent sx={{ p: '1rem !important', '&:last-child': { pb: '1rem' } }}>
+												<Box sx={{ flex: 1, minWidth: 0 }}>
+														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+															<Typography
+																variant='subtitle1'
+																sx={{
+																	fontWeight: 600,
+																	fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+																	color: group.isFull ? '#ef4444' : '#2C3E50',
+																	fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+																}}>
+																{group.name}
+															</Typography>
+															{group.isFull && (
+																<Typography
+																	variant='body2'
+																	sx={{
+																		fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+																		color: '#ef4444',
+																		fontWeight: 600,
+																		fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+																	}}>
+																	{fromHomePage ? '(Dolu)' : '(Full)'}
+																</Typography>
+															)}
+														</Box>
+														<Typography
+															variant='body2'
+															sx={{
+																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																color: group.isFull ? '#94a3b8' : '#475569',
+																lineHeight: 1.5,
+																fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+																mb: '0.5rem',
+															}}>
+															{group.description}
+														</Typography>
+														{group.capacity !== undefined && (
+															<Typography
+																variant='body2'
+																sx={{
+																	fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+																	color: group.isFull ? '#ef4444' : group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? '#f59e0b' : '#64748b',
+																	mb: 0.5,
+																	fontWeight: group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 600 : 400,
+																	fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+																}}>
+																{fromHomePage
+																	? typeof group.remainingSeats === 'number'
+																		? `Kalan: ${group.remainingSeats} (Toplam kontenjan: ${group.capacity})`
+																		: `${group.enrolledCount || 0}/${group.capacity} kontenjan`
+																	: `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? `  (${group.remainingSeats} remaining)` : ''}`}
+															</Typography>
+														)}
+														
+													</Box>
+											</CardContent>
+										</CardActionArea>
+									</Card>
+								))}
+								</Box>
+							</Collapse>
+						</Box>
+					)}
+
+{fromHomePage && (
 						<Box>
 							<CustomTextField
 								label={fromHomePage ? 'E-posta Adresi' : 'Email Address'}
@@ -687,6 +908,7 @@ const PaymentDialog = ({
 								onChange={(e) => {
 									setEmail(e.target.value);
 									setIsPromoCodeApplied(false);
+									setIsGroupSelectionExpanded(false);
 									if (!course) return;
 									const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
@@ -722,12 +944,13 @@ const PaymentDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-						<CustomTextField
-							label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
-							size='small'
-							required={false}
-							disabled={isCourseFree}
+					{!isCourseFree && (
+						<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+							<CustomTextField
+								label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
+								size='small'
+								required={false}
+								disabled={isCourseFree}
 							sx={
 								fromHomePage
 									? {
@@ -756,6 +979,7 @@ const PaymentDialog = ({
 							onChange={(e) => {
 								setPromoCode(e.target.value);
 								setErrorMessage('');
+								setIsGroupSelectionExpanded(false); 
 								setIsPromoCodeApplied(false);
 								if (!course) return;
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
@@ -797,105 +1021,109 @@ const PaymentDialog = ({
 							onClick={handleApplyPromoCode}>
 							{fromHomePage ? 'Uygula' : 'Apply'}
 						</CustomSubmitButton>
-					</Box>
-
-					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, mt: 2 }}>
-						<Typography
-							variant='h6'
-							sx={
-								fromHomePage
-									? {
-											fontFamily: 'Varela Round',
-											fontWeight: 500,
-											mb: '-1rem',
-											fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-											color: isCourseFree ? '#aab7c4' : '#2C3E50',
-										}
-									: { fontSize: '0.9rem', mb: '-1rem' }
-							}>
-							{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
-						</Typography>
-						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-							<Box
-								sx={
-									fromHomePage
-										? {
-												border:
-													isSubmitted &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													!cardNumberComplete &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '8px',
-												backgroundColor: '#fff',
-												width: '100%',
-												fontFamily: 'Varela Round',
-											}
-										: {
-												border:
-													isSubmitted &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													!cardNumberComplete &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '4px',
-												backgroundColor: '#fff',
-												width: '100%',
-											}
-								}>
-								<CardNumberElement
-									options={{
-										disabled: isCourseFree,
-										style: {
-											base: {
-												'fontSize': isMobileSize ? '11px' : '14px',
-												'color': '#223354',
-												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': { color: '#aab7c4' },
-											},
-											invalid: { color: '#9e2146' },
-										},
-									}}
-									onChange={(event) => {
-										setCardNumberComplete(event.complete);
-										setCardBrand(event.brand || 'unknown');
-										setErrorMessage('');
-									}}
-								/>
-							</Box>
-							<Box>
-								<img src={getCardIcon(cardBrand)} alt={`${cardBrand} icon`} style={{ marginLeft: '10px', width: '40px' }} />
-							</Box>
 						</Box>
-					</Box>
+					)}
 
-					<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-						<Box sx={{ width: '50%' }}>
-							<Typography
-								variant='h6'
-								sx={
-									fromHomePage
-										? {
-												fontFamily: 'Varela Round',
-												fontWeight: 500,
-												mb: 0.5,
-												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-												color: isCourseFree ? '#aab7c4' : '#2C3E50',
-											}
-										: { fontSize: '0.9rem', mb: 0.5 }
-								}>
-								{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
-							</Typography>
+					{!isCourseFree && (
+						<>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, mt: 2 }}>
+								<Typography
+									variant='h6'
+									sx={
+										fromHomePage
+											? {
+													fontFamily: 'Varela Round',
+													fontWeight: 500,
+													mb: '-1rem',
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+													color: '#2C3E50',
+												}
+											: { fontSize: '0.9rem', mb: '-1rem' }
+									}>
+									{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
+								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+									<Box
+										sx={
+											fromHomePage
+												? {
+														border:
+															isSubmitted &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															!cardNumberComplete &&
+															isEmailVerified &&
+															recaptchaToken
+																? '1px solid red'
+																: '1px solid #ccc',
+														padding: '0.6rem',
+														borderRadius: '8px',
+														backgroundColor: '#fff',
+														width: '100%',
+														fontFamily: 'Varela Round',
+													}
+												: {
+														border:
+															isSubmitted &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															!cardNumberComplete &&
+															isEmailVerified &&
+															recaptchaToken
+																? '1px solid red'
+																: '1px solid #ccc',
+														padding: '0.6rem',
+														borderRadius: '4px',
+														backgroundColor: '#fff',
+														width: '100%',
+													}
+										}>
+										<CardNumberElement
+											options={{
+												disabled: isCourseFree,
+												style: {
+													base: {
+														'fontSize': isMobileSize ? '11px' : '14px',
+														'color': '#223354',
+														'fontFamily': 'Arial, sans-serif',
+														'::placeholder': { color: '#aab7c4' },
+													},
+													invalid: { color: '#9e2146' },
+												},
+											}}
+											onChange={(event) => {
+												setCardNumberComplete(event.complete);
+												setCardBrand(event.brand || 'unknown');
+												setErrorMessage('');
+												setIsGroupSelectionExpanded(false);
+											}}
+										/>
+									</Box>
+									<Box>
+										<img src={getCardIcon(cardBrand)} alt={`${cardBrand} icon`} style={{ marginLeft: '10px', width: '40px' }} />
+									</Box>
+								</Box>
+							</Box>
+
+							<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+								<Box sx={{ width: '50%' }}>
+									<Typography
+										variant='h6'
+										sx={
+											fromHomePage
+												? {
+														fontFamily: 'Varela Round',
+														fontWeight: 500,
+														mb: 0.5,
+														fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+														color: '#2C3E50',
+													}
+												: { fontSize: '0.9rem', mb: 0.5 }
+										}>
+										{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
+									</Typography>
 							<Box
 								sx={
 									fromHomePage
@@ -947,6 +1175,7 @@ const PaymentDialog = ({
 									onChange={(event) => {
 										setCardExpiryComplete(event.complete);
 										setErrorMessage('');
+										setIsGroupSelectionExpanded(false);
 									}}
 								/>
 							</Box>
@@ -958,7 +1187,7 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												fontFamily: 'Varela Round',
-												color: isCourseFree ? '#aab7c4' : '#2C3E50',
+												color: '#2C3E50',
 												fontWeight: 500,
 												mb: 0.5,
 												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
@@ -1018,6 +1247,8 @@ const PaymentDialog = ({
 									onChange={(event) => {
 										setCardCvcComplete(event.complete);
 										setErrorMessage('');
+										setIsGroupSelectionExpanded(false);
+									
 									}}
 								/>
 							</Box>
@@ -1127,7 +1358,9 @@ const PaymentDialog = ({
 							/>
 						</Box>
 					</Box>
-				</Box>
+					</>
+				)}
+			</Box>
 
 				<TermsConditions
 					termsConditionsModalOpen={termsConditionsModalOpen}
@@ -1245,7 +1478,10 @@ const PaymentDialog = ({
 									pointerEvents: isProcessing ? 'none' : 'auto',
 								}),
 					}}
-					disableBtn={isProcessing}
+					disableBtn={
+						isProcessing ||
+						(course?.groups && course.groups.length > 0 && !selectedGroupName.trim())
+					}
 					disableCancelBtn={isProcessing}
 					actionSx={{ mr: '1rem', mb: '0.5rem' }}
 				/>

@@ -1,15 +1,17 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton,  DialogContent } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { SingleCourse } from '../../interfaces/course';
+import { SingleCourse, CourseGroup } from '../../interfaces/course';
 import theme from '../../themes';
 import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
-import { Roles } from '../../interfaces/enums';
-import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
+import { Add, Edit, Delete } from '@mui/icons-material';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -32,7 +34,6 @@ const CourseDetailsEditBox = ({
 }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
-	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -43,6 +44,17 @@ const CourseDetailsEditBox = ({
 	const [USD, setUSD] = useState<string>('');
 	const [EUR, setEUR] = useState<string>('');
 	const [TRY, setTRY] = useState<string>('');
+
+	// Group management state
+	const [isGroupDialogOpen, setIsGroupDialogOpen] = useState<boolean>(false);
+	const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
+	const [groupFormData, setGroupFormData] = useState<{ name: string; capacity: string; description: string }>({
+		name: '',
+		capacity: '',
+		description: '',
+	});
+	const [groupNameError, setGroupNameError] = useState<string>('');
+	const [capacityError, setCapacityError] = useState<string>('');
 
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
@@ -87,6 +99,119 @@ const CourseDetailsEditBox = ({
 	const parseDate = (dateString: string) => {
 		const [year, month, day] = dateString.split('-');
 		return new Date(`${year}-${month}-${day}`);
+	};
+
+	// Group management handlers
+	const openAddGroupDialog = () => {
+		setGroupFormData({ name: '', capacity: '', description: '' });
+		setEditingGroupIndex(null);
+		setGroupNameError('');
+		setCapacityError('');
+		setIsGroupDialogOpen(true);
+	};
+
+	const openEditGroupDialog = (index: number) => {
+		const group = singleCourseBeforeSave?.groups?.[index];
+		if (group) {
+			setGroupFormData({
+				name: group.name,
+				capacity: group.capacity?.toString() || '',
+				description: group.description || '',
+			});
+			setGroupNameError('');
+			setCapacityError('');
+			setEditingGroupIndex(index);
+			setIsGroupDialogOpen(true);
+		}
+	};
+
+	const closeGroupDialog = () => {
+		setIsGroupDialogOpen(false);
+		setEditingGroupIndex(null);
+		setGroupFormData({ name: '', capacity: '', description: '' });
+		setGroupNameError('');
+		setCapacityError('');
+	};
+
+	// Check for duplicate group names (case-insensitive)
+	const checkDuplicateGroupName = (name: string, excludeIndex: number | null = null): boolean => {
+		if (!singleCourseBeforeSave || !name.trim()) return false;
+		const groups = singleCourseBeforeSave.groups || [];
+		const nameLower = name.trim().toLowerCase();
+		
+		return groups.some((group, index) => {
+			if (excludeIndex !== null && index === excludeIndex) return false;
+			return group.name?.toLowerCase() === nameLower;
+		});
+	};
+
+	const handleSaveGroup = () => {
+		const trimmedName = groupFormData.name.trim();
+		const trimmedDescription = groupFormData.description.trim();
+		
+		if (!singleCourseBeforeSave || !trimmedName || trimmedName.length === 0 || !trimmedDescription || trimmedDescription.length === 0) {
+			return;
+		}
+
+		// Check for duplicate names (case-insensitive)
+		if (checkDuplicateGroupName(trimmedName, editingGroupIndex)) {
+			setGroupNameError('A group with this name already exists. Group names must be unique.');
+			return;
+		}
+
+		// Validate capacity: must be a positive integer if provided
+		let validatedCapacity: number | undefined = undefined;
+		if (groupFormData.capacity && groupFormData.capacity.trim()) {
+			// Remove leading zeros before parsing
+			const trimmedCapacity = groupFormData.capacity.trim().replace(/^0+/, '') || '0';
+			const capacityNum = parseInt(trimmedCapacity, 10);
+			if (isNaN(capacityNum) || !Number.isInteger(capacityNum) || capacityNum <= 0) {
+				setCapacityError('Capacity must be a positive integer');
+				return;
+			}
+			validatedCapacity = capacityNum;
+		}
+
+		// Clear errors if validation passes
+		setGroupNameError('');
+		setCapacityError('');
+
+		const newGroup: CourseGroup = {
+			name: trimmedName,
+			description: trimmedDescription,
+			capacity: validatedCapacity,
+		};
+
+		setSingleCourseBeforeSave((prevCourse) => {
+			if (!prevCourse) return prevCourse;
+
+			const groups = prevCourse.groups || [];
+			if (editingGroupIndex !== null) {
+				// Edit existing group (keep _id if exists)
+				const existingGroup = groups[editingGroupIndex];
+				const updatedGroups = [...groups];
+				updatedGroups[editingGroupIndex] = { ...existingGroup, ...newGroup };
+				return { ...prevCourse, groups: updatedGroups };
+			} else {
+				// Add new group
+				return { ...prevCourse, groups: [...groups, newGroup] };
+			}
+		});
+
+		setHasUnsavedChanges(true);
+		closeGroupDialog();
+	};
+
+	const handleDeleteGroup = (index: number) => {
+		if (!singleCourseBeforeSave) return;
+
+		setSingleCourseBeforeSave((prevCourse) => {
+			if (!prevCourse) return prevCourse;
+			const groups = prevCourse.groups || [];
+			return { ...prevCourse, groups: groups.filter((_, i) => i !== index) };
+		});
+
+		setHasUnsavedChanges(true);
 	};
 	return (
 		<>
@@ -513,6 +638,187 @@ const CourseDetailsEditBox = ({
 					</Box>
 				</Box>
 			</Box>
+
+			{/* Groups Management Section */}
+			{hasAdminAccess && (
+				<Box sx={{ mt: '2rem', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Groups (Optional)
+						</Typography>
+						<CustomSubmitButton
+							startIcon={<Add sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />}
+							onClick={openAddGroupDialog}
+							sx={{
+								textTransform: 'capitalize',
+								fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+								py: isMobileSize ? '0.25rem' : '0.5rem',
+							}}>
+							Add Group
+						</CustomSubmitButton>
+					</Box>
+
+					{/* Groups List */}
+					{singleCourseBeforeSave?.groups && singleCourseBeforeSave.groups.length > 0 ? (
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+							{singleCourseBeforeSave.groups.map((group, index) => (
+								<Box
+									key={index}
+									sx={{
+										border: `1px solid ${theme.palette.divider}`,
+										borderRadius: '0.25rem',
+										padding: '1rem',
+										backgroundColor: theme.bgColor?.common,
+									}}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+										<Box sx={{ flex: 1 }}>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: '0.5rem' }}>
+												<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', fontWeight: 600 }}>
+													{group.name}
+												</Typography>
+												{group.isFull && (
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', color: 'error.main', fontWeight: 600 }}>
+														(Full)
+													</Typography>
+												)}
+											</Box>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem', mb: '0.5rem' }}>
+												{group.description}
+											</Typography>
+											<Typography 
+												variant='body2' 
+												sx={{ 
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem', 
+													mb: '0.25rem',
+													color: group.capacity !== undefined 
+														? (group.isFull ? 'error.main' : group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 'warning.main' : 'text.secondary')
+														: 'text.secondary',
+													fontWeight: group.capacity !== undefined && group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 600 : 400,
+												}}>
+												{group.capacity !== undefined 
+													? `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? ` (${group.remainingSeats} remaining)` : ''}`
+													: `Enrolled: ${group.enrolledCount || 0} learners`}
+											</Typography>
+										</Box>
+										<Box sx={{ display: 'flex', gap: '0.5rem', ml: '1rem' }}>
+											<Tooltip title='Edit Group' placement='top' arrow>
+												<IconButton
+													size='small'
+													onClick={() => {openEditGroupDialog(index); setGroupNameError(''); setCapacityError('');}}
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
+													<Edit fontSize='small' />
+												</IconButton>
+											</Tooltip>
+											<Tooltip title='Delete Group' placement='top' arrow>
+												<IconButton
+													size='small'
+													onClick={() => handleDeleteGroup(index)}
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
+													<Delete fontSize='small' />
+												</IconButton>
+											</Tooltip>
+										</Box>
+									</Box>
+								</Box>
+							))}
+						</Box>
+					) : (
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+							No groups added. Groups are optional and allow you to organize learners into different batches with separate schedules.
+						</Typography>
+					)}
+
+					{/* Add/Edit Group Dialog */}
+					<CustomDialog
+						openModal={isGroupDialogOpen}
+						closeModal={closeGroupDialog}
+						title={editingGroupIndex !== null ? 'Edit Group' : 'Add Group'}
+						maxWidth='sm'>
+						<DialogContent>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', mt: '0.5rem' }}>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Group Name*
+									</Typography>
+									<CustomTextField
+										value={groupFormData.name}
+										onChange={(e) => {
+											setGroupFormData({ ...groupFormData, name: e.target.value });
+											// Clear error when user starts typing
+											if (groupNameError) {
+												setGroupNameError('');
+											}
+											// Check for duplicates in real-time
+											if (e.target.value.trim() && checkDuplicateGroupName(e.target.value.trim(), editingGroupIndex)) {
+												setGroupNameError('A group with this name already exists. Group names must be unique.');
+											}
+										}}
+										placeholder='e.g., Group A'
+										InputProps={{ inputProps: { maxLength: 15 } }}
+										fullWidth
+										error={!!groupNameError && !groupNameError.includes('Capacity')}
+									/>
+									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
+										{groupFormData.name.length}/15 Characters
+									</Typography>
+									{groupNameError && !groupNameError.includes('Capacity') && <CustomErrorMessage>{groupNameError}</CustomErrorMessage>}
+								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Description*
+									</Typography>
+									<CustomTextField
+										multiline
+										rows={3}
+										value={groupFormData.description}
+										onChange={(e) => setGroupFormData({ ...groupFormData, description: e.target.value })}
+										placeholder='Enter group description'
+										InputProps={{ inputProps: { maxLength: 250 } }}
+										fullWidth
+										required
+									/>
+									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
+										{groupFormData.description.length}/250 Characters
+									</Typography>
+								</Box>
+								<Box>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+										Max Seats (Optional)
+									</Typography>
+									<CustomTextField
+										value={groupFormData.capacity}
+											onChange={(e) => {
+												const value = e.target.value;
+												// Allow empty string or positive integers only
+												if (value === '' || /^\d+$/.test(value)) {
+													setGroupFormData({ ...groupFormData, capacity: value });
+													// Clear capacity error if user starts typing valid input
+													if (capacityError) {
+														setCapacityError('');
+													}
+												}
+											}}
+										placeholder='e.g., 20'
+										type='text'
+										fullWidth
+										error={!!capacityError}
+									/>
+									{capacityError && <CustomErrorMessage>{capacityError}</CustomErrorMessage>}
+								</Box>
+							
+							</Box>
+						</DialogContent>
+						<CustomDialogActions
+							onCancel={closeGroupDialog}
+							onSubmit={handleSaveGroup}
+							submitBtnText={editingGroupIndex !== null ? 'Update' : 'Add'}
+							disableBtn={!groupFormData.name.trim() || !groupFormData.description.trim() || !!groupNameError || !!capacityError}
+							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
+						/>
+					</CustomDialog>
+				</Box>
+			)}
+
 		</>
 	);
 };

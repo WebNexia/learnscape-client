@@ -34,6 +34,8 @@ export interface UserCoursesIdsWithCourseIds {
 	isActive: boolean;
 	validUntil: string;
 	completedChapterChecklistIds?: string[];
+	groupName?: string | null;
+	groupDescription?: string | null;
 }
 
 export interface UserLessonDataStorage {

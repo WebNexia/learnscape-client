@@ -5,7 +5,7 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy, Info, Visibility } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Info, Visibility, Person } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -588,6 +588,19 @@ const AdminCourses = () => {
 													})()}
 													icon={
 														<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+													}
+												/>
+												<CustomActionBtn
+													title='See Roster'
+													onClick={() => {
+														if (isInstructor) {
+															navigate(`/instructor/course-roster/course/${course._id}`);
+														} else {
+															navigate(`/admin/course-roster/course/${course._id}`);
+														}
+													}}
+													icon={
+														<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
 													}
 												/>
 												<CustomActionBtn
