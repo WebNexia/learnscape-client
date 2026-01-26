@@ -1,7 +1,7 @@
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
-import { InsertDriveFile, Edit, Delete, PlayCircle } from '@mui/icons-material';
+import { Box, Typography, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
+import { InsertDriveFile, Edit, Delete, PlayCircle, MoreVert } from '@mui/icons-material';
 import { ResourceItem } from '../../interfaces/resource';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -16,11 +16,34 @@ const ResourceItemCard = ({ item, onEdit, onDelete, onView }: ResourceItemCardPr
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { hasAdminAccess } = useAuth();
+	const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+	const isMenuOpen = Boolean(menuAnchor);
 
 	const handleClick = () => {
 		if (onView && item.url) {
 			onView();
 		}
+	};
+
+	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+		event.stopPropagation();
+		setMenuAnchor(event.currentTarget);
+	};
+
+	const handleMenuClose = () => {
+		setMenuAnchor(null);
+	};
+
+	const handleEdit = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		handleMenuClose();
+		if (onEdit) onEdit(e);
+	};
+
+	const handleDelete = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		handleMenuClose();
+		if (onDelete) onDelete(e);
 	};
 
 	return (
@@ -37,69 +60,92 @@ const ResourceItemCard = ({ item, onEdit, onDelete, onView }: ResourceItemCardPr
 				transition: 'all 0.2s ease',
 				'&:hover': {
 					transform: 'translateY(-2px)',
+					'& .menu-button': {
+						opacity: 1,
+					},
 				},
 			}}
 			onClick={handleClick}>
-			{/* Action Buttons */}
+			{/* Three-dot menu - Google Drive style */}
 			{hasAdminAccess && (onEdit || onDelete) && (
 				<Box
 					sx={{
 						position: 'absolute',
-						top:isMobileSize? '1.5rem' : '1.75rem',
-						right: '3rem',
-						display: 'flex',
-						flexDirection: 'column',
-						gap:isMobileSize? '0.25rem' : '0.5rem',
-						zIndex: 1,
+						top: isMobileSize ? '1.5rem' : '1.75rem',
+						right: isMobileSize ? '1.5rem' : '1.75rem',
+						zIndex: 10,
 					}}
 					onClick={(e) => e.stopPropagation()}>
-					{onEdit && (
-						<Tooltip title='Edit' placement='right' arrow>
-							<IconButton
-								size='small'
-								onClick={onEdit}
-								sx={{
-									backgroundColor: 'transparent',
-									'&:hover': { backgroundColor: 'action.hover' },
-								}}>
-								<Edit fontSize='small' sx={{fontSize: isMobileSize? '1rem' : '1.25rem'}} />
-							</IconButton>
-						</Tooltip>
-					)}
-					{onDelete && (
-						<Tooltip title='Delete' placement='right' arrow>
-							<IconButton
-								size='small'
-								onClick={onDelete}
-								sx={{
-									backgroundColor: 'transparent',
-									'&:hover': { backgroundColor: 'action.hover' },
-								}}>
-								<Delete fontSize='small' color='error' sx={{fontSize: isMobileSize? '1rem' : '1.25rem'}} />
-							</IconButton>
-						</Tooltip>
-					)}
+					<IconButton
+						size='small'
+						onClick={handleMenuOpen}
+						sx={{
+							padding: '0.25rem',
+							opacity: 0,
+							transition: 'opacity 0.2s ease',
+							'&:hover': {
+								backgroundColor: 'action.hover',
+							},
+						}}
+						className='menu-button'>
+						<MoreVert sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+					</IconButton>
+					<Menu
+						anchorEl={menuAnchor}
+						open={isMenuOpen}
+						onClose={handleMenuClose}
+						anchorOrigin={{
+							vertical: 'bottom',
+							horizontal: 'right',
+						}}
+						transformOrigin={{
+							vertical: 'top',
+							horizontal: 'right',
+						}}
+						MenuListProps={{
+							'aria-labelledby': 'menu-button',
+						}}>
+						{onEdit && (
+							<MenuItem onClick={handleEdit} sx={{ gap: '0.5rem' }}>
+								<Edit fontSize='small' sx={{fontSize: isMobileSize ? '0.85rem' : '0.95rem'}}/>
+								<Typography variant='body2' sx={{fontSize: isMobileSize ? '0.7rem' : '0.8rem'}}>Edit</Typography>
+							</MenuItem>
+						)}
+						{onDelete && (
+							<MenuItem onClick={handleDelete} sx={{ gap: '0.5rem', color: 'error.main' }}>
+								<Delete fontSize='small' sx={{fontSize: isMobileSize ? '0.85rem' : '0.95rem'}}/>
+								<Typography variant='body2' sx={{fontSize: isMobileSize ? '0.7rem' : '0.8rem'}}>Delete</Typography>
+							</MenuItem>
+						)}
+					</Menu>
 				</Box>
 			)}
 
 			{/* File/Video Icon */}
-			{item.type === 'video' ? (
-				<PlayCircle
-					sx={{
-						fontSize: isMobileSize ? '3.5rem' : '5rem',
-						color: 'primary.main',
-						mb: '0.75rem',
-					}}
-				/>
-			) : (
-				<InsertDriveFile
-					sx={{
-						fontSize: isMobileSize ? '3.5rem' : '5rem',
-						color: 'primary.main',
-						mb: '0.75rem',
-					}}
-				/>
-			)}
+			<Box
+				sx={{
+					position: 'relative',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					mb: '0.75rem',
+				}}>
+				{item.type === 'video' ? (
+					<PlayCircle
+						sx={{
+							fontSize: isMobileSize ? '4.5rem' : '6.5rem',
+							color: 'primary.main',
+						}}
+					/>
+				) : (
+					<InsertDriveFile
+						sx={{
+							fontSize: isMobileSize ? '4.5rem' : '6.5rem',
+							color: 'primary.main',
+						}}
+					/>
+				)}
+			</Box>
 
 			{/* Item Name */}
 			<Typography

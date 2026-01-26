@@ -315,7 +315,7 @@ const ResourceItems = () => {
 						) : (
 							<Grid container spacing={3} sx={{ mt: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
 								{sortedItems.map((item) => (
-									<Grid item xs={6} sm={4} md={3} lg={3} key={item._id} display='flex' justifyContent='center'>
+									<Grid item xs={6} sm={4} md={3} lg={2.4} key={item._id} display='flex' justifyContent='center'>
 										<ResourceItemCard
 											item={item}
 											onEdit={canEdit ? (e) => {

@@ -1,7 +1,7 @@
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
-import { Folder, Edit, Delete } from '@mui/icons-material';
+import { Box, Typography, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
+import { Folder, Edit, Delete, MoreVert } from '@mui/icons-material';
 import { ResourceFolder } from '../../interfaces/resource';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -16,6 +16,29 @@ const FolderCard = ({ folder, onClick, onEdit, onDelete }: FolderCardProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { hasAdminAccess } = useAuth();
+	const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+	const isMenuOpen = Boolean(menuAnchor);
+
+	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+		event.stopPropagation();
+		setMenuAnchor(event.currentTarget);
+	};
+
+	const handleMenuClose = () => {
+		setMenuAnchor(null);
+	};
+
+	const handleEdit = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		handleMenuClose();
+		if (onEdit) onEdit(e);
+	};
+
+	const handleDelete = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		handleMenuClose();
+		if (onDelete) onDelete(e);
+	};
 
 	return (
 		<Box
@@ -27,66 +50,92 @@ const FolderCard = ({ folder, onClick, onEdit, onDelete }: FolderCardProps) => {
 				padding: '1.5rem',
 				cursor: 'pointer',
 				position: 'relative',
-				width: isMobileSize ? '12rem' : '14rem',
+				width: isMobileSize ? '12rem' : '16rem',
 				transition: 'all 0.2s ease',
-				boxShadow: '0 0 0.85rem 0.1rem rgba(0,0,0,0.2)',
 				borderRadius: '0.5rem',
 				'&:hover': {
 					transform: 'translateY(-2px)',
+					'& .menu-button': {
+						opacity: 1,
+					},
 				},
 				mb: '1rem',
 			}}
 			onClick={onClick}>
-			{/* Action Buttons */}
+			{/* Three-dot menu - Google Drive style */}
 			{hasAdminAccess && (onEdit || onDelete) && (
 				<Box
 					sx={{
 						position: 'absolute',
-						top:isMobileSize? '1.5rem' : '1.75rem',
-						right: '0.25rem',
-						display: 'flex',
-						flexDirection: 'column',
-						gap:isMobileSize? '0.25rem' : '0.5rem',
-						zIndex: 1,
+						top: isMobileSize ? '1.75rem' : '1.75rem',
+						right: isMobileSize ? '1rem' : '0.75rem',
+						zIndex: 10,
 					}}
 					onClick={(e) => e.stopPropagation()}>
-					{onEdit && (
-						<Tooltip title='Edit Folder' placement='right' arrow>
-							<IconButton
-								size='small'
-								onClick={onEdit}
-								sx={{
-									backgroundColor: 'transparent',
-									'&:hover': { backgroundColor: 'action.hover' },
-								}}>
-								<Edit fontSize='small' sx={{fontSize: isMobileSize? '1.05rem' : '1.25rem'}}/>
-							</IconButton>
-						</Tooltip>
-					)}
-					{onDelete && (
-						<Tooltip title='Delete Folder' placement='right' arrow>
-							<IconButton
-								size='small'
-								onClick={onDelete}
-								sx={{
-									backgroundColor: 'transparent',
-									'&:hover': { backgroundColor: 'action.hover' },
-								}}>
-								<Delete fontSize='small' color='error' sx={{fontSize: isMobileSize? '1.05rem' : '1.25rem'}}/>
-							</IconButton>
-						</Tooltip>
-					)}
+					<IconButton
+						size='small'
+						onClick={handleMenuOpen}
+						sx={{
+							padding: '0.25rem',
+							opacity: 0,
+							transition: 'opacity 0.2s ease',
+							'&:hover': {
+								backgroundColor: 'action.hover',
+							},
+						}}
+						className='menu-button'>
+						<MoreVert sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+					</IconButton>
+					<Menu
+						anchorEl={menuAnchor}
+						open={isMenuOpen}
+						onClose={handleMenuClose}
+						anchorOrigin={{
+							vertical: 'bottom',
+							horizontal: 'right',
+						}}
+						transformOrigin={{
+							vertical: 'top',
+							horizontal: 'right',
+						}}
+						MenuListProps={{
+							'aria-labelledby': 'menu-button',
+						}}>
+						{onEdit && (
+							<MenuItem onClick={handleEdit} sx={{ gap: '0.5rem' }}>
+								<Edit fontSize='small' sx={{fontSize: isMobileSize ? '0.85rem' : '0.95rem'}}/>
+								<Typography variant='body2' sx={{fontSize:isMobileSize? '0.7rem': '0.8rem'}}>Edit</Typography>
+							</MenuItem>
+						)}
+						{onDelete && (
+							<MenuItem onClick={handleDelete} sx={{ gap: '0.5rem', color: 'error.main' }}>
+								<Delete fontSize='small' sx={{fontSize: isMobileSize ? '0.85rem' : '0.95rem'}}/>
+								<Typography variant='body2' sx={{fontSize:isMobileSize? '0.7rem': '0.8rem'}}>Delete</Typography>
+							</MenuItem>
+						)}
+					</Menu>
 				</Box>
 			)}
 
 			{/* Folder Icon */}
-			<Folder
+			<Box
 				sx={{
-					fontSize: isMobileSize ? '3.5rem' : '5rem',
-					color: 'primary.main',
+					position: 'relative',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
 					mb: '0.5rem',
-				}}
-			/>
+					'&:hover ~ .menu-button, & ~ .menu-button:hover': {
+						opacity: 1,
+					},
+				}}>
+				<Folder
+					sx={{
+						fontSize: isMobileSize ? '6rem' : '7rem',
+						color: 'primary.main',
+					}}
+				/>
+			</Box>	
 
 			{/* Folder Name */}
 			<Typography
