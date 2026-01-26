@@ -1,6 +1,7 @@
 import { Box, Drawer, Typography } from '@mui/material';
 import theme from '../../../themes';
 import SidebarBtn from './SidebarBtn';
+import SidebarGroupedMenu from './SidebarGroupedMenu';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
@@ -14,6 +15,7 @@ import {
 	CreditCard,
 	Email,
 	FilePresent,
+	Folder,
 	Groups,
 	LibraryAddCheck,
 	LibraryBooks,
@@ -107,7 +109,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 							width: '8.5rem',
 						}}>
 						<img
-							src={user?.imageUrl}
+							src={user?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='user_profile_pic'
 							style={{
 								height: '3rem',
@@ -142,33 +144,83 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										onClick={() => navigateWithPage(PageName.ADMIN_USERS, `/admin/users`)}
 										active={selectedPage === PageName.ADMIN_USERS}
 									/>
-									<SidebarBtn
-										btnText='Courses'
-										IconName={LibraryBooks}
-										onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses`)}
-										active={
-											selectedPage === PageName.ADMIN_COURSES ||
-											(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms'))
+									<SidebarGroupedMenu
+										mainBtnText='Courses'
+										mainIconName={LibraryBooks}
+										mainPath='/admin/courses'
+										mainIsActive={
+											(selectedPage === PageName.ADMIN_COURSES ||
+												(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms'))) &&
+											selectedPage !== PageName.ADMIN_LESSONS &&
+											!window.location.pathname?.includes('/admin/lesson-edit') &&
+											selectedPage !== PageName.ADMIN_QUESTIONS &&
+											selectedPage !== PageName.ADMIN_DOCUMENTS
 										}
+										subMenuItems={[
+											{
+												btnText: 'Courses',
+												IconName: LibraryBooks,
+												path: '/admin/courses',
+												isActive:
+													selectedPage === PageName.ADMIN_COURSES ||
+													(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms')),
+											},
+											{
+												btnText: 'Lessons',
+												IconName: AssignmentIndRounded,
+												path: '/admin/lessons',
+												isActive: selectedPage === PageName.ADMIN_LESSONS,
+											},
+											{
+												btnText: 'Questions',
+												IconName: QuizOutlined,
+												path: '/admin/questions',
+												isActive: selectedPage === PageName.ADMIN_QUESTIONS,
+											},
+											{
+												btnText: 'Documents',
+												IconName: FilePresent,
+												path: '/admin/documents',
+												isActive: selectedPage === PageName.ADMIN_DOCUMENTS,
+											},
+										]}
+										onNavigate={(path) => {
+											const pageName = path.includes('courses')
+												? PageName.ADMIN_COURSES
+												: path.includes('lessons')
+													? PageName.ADMIN_LESSONS
+													: path.includes('questions')
+														? PageName.ADMIN_QUESTIONS
+														: path.includes('documents')
+															? PageName.ADMIN_DOCUMENTS
+															: '';
+											navigateWithPage(pageName, path);
+										}}
 									/>
-									<SidebarBtn
-										btnText='Lessons'
-										IconName={AssignmentIndRounded}
-										onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons`)}
-										active={selectedPage === PageName.ADMIN_LESSONS}
-									/>
-									<SidebarBtn
-										btnText='Questions'
-										IconName={QuizOutlined}
-										onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions`)}
-										active={selectedPage === PageName.ADMIN_QUESTIONS}
-									/>
-									<SidebarBtn
-										btnText='Documents'
-										IconName={FilePresent}
-										onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents`)}
-										active={selectedPage === PageName.ADMIN_DOCUMENTS}
-									/>
+									{(selectedPage === PageName.ADMIN_LESSONS || window.location.pathname?.includes('/admin/lesson-edit')) && (
+										<SidebarBtn
+											btnText='Lessons'
+											IconName={AssignmentIndRounded}
+											onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons`)}
+											active={selectedPage === PageName.ADMIN_LESSONS}
+										/>
+									)}
+									{selectedPage === PageName.ADMIN_QUESTIONS && (
+										<SidebarBtn
+											btnText='Questions'
+											IconName={QuizOutlined}
+											onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions`)}
+											active={selectedPage === PageName.ADMIN_QUESTIONS}
+										/>
+									)}
+									{selectedPage === PageName.ADMIN_DOCUMENTS && (
+										<SidebarBtn
+											btnText='Documents'
+											IconName={FilePresent}
+											onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents`)}
+											active={selectedPage === PageName.ADMIN_DOCUMENTS}
+										/>
+									)}
 									<SidebarBtn
 										btnText='Forms'
 										IconName={Ballot}
@@ -207,6 +259,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Groups}
 										onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community`)}
 										active={selectedPage === PageName.ADMIN_COMMUNITY}
+									/>
+									<SidebarBtn
+										btnText='Resources'
+										IconName={Folder}
+										onClick={() => navigateWithPage('Resources', `/admin/resources`)}
+										active={window.location.pathname?.includes('/admin/resources')}
 									/>
 								</>
 							)}
@@ -256,6 +314,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Settings}
 										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings`)}
 										active={selectedPage === PageName.SETTINGS}
+									/>
+									<SidebarBtn
+										btnText='Resources'
+										IconName={Folder}
+										onClick={() => navigateWithPage('Resources', `/resources`)}
+										active={window.location.pathname?.includes('/resources')}
 									/>
 								</>
 							)}
@@ -323,6 +387,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Groups}
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COMMUNITY, `/instructor/community`)}
 										active={selectedPage === PageName.INSTRUCTOR_COMMUNITY}
+									/>
+									<SidebarBtn
+										btnText='Resources'
+										IconName={Folder}
+										onClick={() => navigateWithPage('Resources', `/instructor/resources`)}
+										active={window.location.pathname?.includes('/instructor/resources')}
 									/>
 								</>
 							)}

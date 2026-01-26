@@ -33,6 +33,7 @@ interface HandleDocUploadURLProps {
 	initialDocumentUrl?: string;
 	initialDocumentName?: string;
 	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>>;
+	maxSizeMB?: number; // Optional file size limit override (default 10MB)
 }
 
 const HandleDocUploadURL = ({
@@ -56,8 +57,9 @@ const HandleDocUploadURL = ({
 	initialDocumentUrl,
 	initialDocumentName,
 	setHasUnsavedChanges,
+	maxSizeMB,
 }: HandleDocUploadURLProps) => {
-	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
+	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload({ maxSizeMB });
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -244,7 +246,7 @@ const HandleDocUploadURL = ({
 									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 										handleDocChange(e);
 									}}
-									inputProps={{ accept: '.pdf' }}
+									inputProps={{ accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx' }}
 									sx={{
 										width: fromAdminDocs ? '80%' : '82.5%',
 										backgroundColor: theme.bgColor?.common,
@@ -268,7 +270,7 @@ const HandleDocUploadURL = ({
 									</LoadingButton>
 								)}
 							</Box>
-							{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of 10 MB </CustomErrorMessage>}
+							{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of {maxSizeMB || 10} MB </CustomErrorMessage>}
 						</Box>
 					)}
 

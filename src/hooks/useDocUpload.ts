@@ -2,15 +2,19 @@ import { useState } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 
-const useDocUpload = () => {
+interface UseDocUploadOptions {
+	maxSizeMB?: number; // Default 10MB, can be overridden (e.g., 25MB for resources)
+}
+
+const useDocUpload = (options: UseDocUploadOptions = {}) => {
+	const { maxSizeMB = 10 } = options;
 	const [docUpload, setDocUpload] = useState<File | null>(null);
 	const [isDocSizeLarge, setIsDocSizeLarge] = useState<boolean>(false);
 	const [isDocLoading, setIsDocLoading] = useState<boolean>(false);
 
 	const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			if (e.target.files[0].size > 10 * 1024 * 1024) {
-				// 10MB limit for documents (admin only)
+			if (e.target.files[0].size > maxSizeMB * 1024 * 1024) {
 				setIsDocSizeLarge(true);
 			} else {
 				setDocUpload(e.target.files[0]);
@@ -21,7 +25,10 @@ const useDocUpload = () => {
 		}
 	};
 
-	const handleDocUpload = async (folderName: string, handleUrlCallback: (url: string) => void) => {
+	const handleDocUpload = async (
+		folderName: string,
+		handleUrlCallback: (url: string) => void
+	) => {
 		if (docUpload === null || isDocSizeLarge) {
 			setIsDocSizeLarge(false);
 			return;
@@ -29,16 +36,18 @@ const useDocUpload = () => {
 
 		setIsDocLoading(true);
 		try {
-			const storageRef = ref(storage, `${folderName}/${docUpload.name}`);
+			const timestamp = Date.now();
+			const sanitizedFilename = docUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+			const storageRef = ref(storage, `${folderName}/${timestamp}-${sanitizedFilename}`);
 			const uploadTask = uploadBytesResumable(storageRef, docUpload);
 
 			uploadTask.on(
 				'state_changed',
-				(snapshot) => {
-					const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+				() => {
+					// Progress tracking can be added here if needed
 				},
 				(error) => {
-					console.error('Error uploading PDF:', error);
+					console.error('Error uploading document:', error);
 					setIsDocLoading(false);
 				},
 				() => {
@@ -49,7 +58,7 @@ const useDocUpload = () => {
 				}
 			);
 		} catch (error) {
-			console.error('Error uploading PDF:', error);
+			console.error('Error uploading document:', error);
 			setIsDocLoading(false);
 		}
 	};

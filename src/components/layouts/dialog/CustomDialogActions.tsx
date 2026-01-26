@@ -123,6 +123,7 @@ const CustomDialogActions = ({
 				</LoadingButton>
 			) : (
 				<CustomDeleteButton
+					disabled={disableBtn}
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
 						height: isMobileSize ? '1.5rem' : '2.15rem',

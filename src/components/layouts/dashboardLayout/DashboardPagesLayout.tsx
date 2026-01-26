@@ -45,7 +45,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRigh
 						justifyContent: customSettings?.justifyContent || 'center',
 						alignItems: customSettings?.alignItems || 'center',
 						minHeight: 'calc(100vh - 4rem)',
-						backgroundColor: theme.palette.secondary.main,
+						backgroundColor: theme.palette.secondary.main || '#FFFF',
 						overflowY: 'auto',
 						position: 'relative',
 					}}>
