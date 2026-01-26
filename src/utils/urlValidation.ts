@@ -254,7 +254,7 @@ export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean;
 export const isValidDocumentUrl = (url: string): boolean => {
 	if (!isValidUrl(url)) return false;
 
-	const documentExtensions = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.pages'];
+	const documentExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt', '.pages'];
 	const urlLower = url.toLowerCase();
 
 	// Check for common document hosting services
@@ -332,8 +332,12 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 		if (contentType) {
 			const validDocumentTypes = [
 				'application/pdf',
-				'application/msword',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				'application/msword', // .doc
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+				'application/vnd.ms-excel', // .xls
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+				'application/vnd.ms-powerpoint', // .ppt
+				'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
 				'text/plain',
 				'application/rtf',
 				'application/vnd.oasis.opendocument.text',
@@ -349,7 +353,7 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 		return { isValid: true };
 	} catch (error) {
 		// If HEAD request fails, try a GET request for URLs with clear document extensions
-		const documentExtensions = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.pages'];
+		const documentExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt', '.pages'];
 		const hasValidExtension = documentExtensions?.some((ext) => urlLower?.includes(ext)) || false;
 
 		if (hasValidExtension) {

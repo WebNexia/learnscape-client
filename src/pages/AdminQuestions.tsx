@@ -178,8 +178,8 @@ const AdminQuestions = () => {
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
-	// Show loading state while questions are being fetched or when data is empty and not loading yet
-	if (loading) {
+
+	if (loading || questions === undefined || (questions && questions.length === 0 && loadedPages.length === 0)) {
 		return (
 			<DashboardPagesLayout
 				pageName={isInstructor ? 'My Questions' : 'Questions'}

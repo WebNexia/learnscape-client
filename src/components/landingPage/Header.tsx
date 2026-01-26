@@ -35,10 +35,10 @@ const Header = () => {
 		{
 			label: 'Kaynaklar',
 			action: () => {
-				navigate('/resources');
+				navigate('/landing-page-resources');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
-			isActive: location.pathname === '/resources',
+			isActive: location.pathname === '/landing-page-resources',
 		},
 		{
 			label: 'İletişim',

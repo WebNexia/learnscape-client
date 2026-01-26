@@ -8,6 +8,7 @@ import {
 	CreditCard,
 	Email,
 	FilePresent,
+	Folder,
 	Groups,
 	LibraryAddCheck,
 	LibraryBooks,
@@ -16,6 +17,7 @@ import {
 	Settings,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
+import SidebarGroupedMenu from './SidebarGroupedMenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { Roles } from '../../../interfaces/enums';
@@ -111,34 +113,74 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(`/admin/users`)}
 								active={currentPath?.includes('/admin/users')}
 							/>
-							<SidebarBtn
-								btnText='Courses'
-								IconName={LibraryBooks}
-								onClick={() => navigateWithPage(`/admin/courses`)}
-								active={
-									currentPath?.includes('/admin/courses') ||
-									currentPath?.includes('/admin/course-edit') ||
-									(currentPath?.includes('/admin/course') && currentPath?.includes('/forms'))
+							<SidebarGroupedMenu
+								mainBtnText='Courses'
+								mainIconName={LibraryBooks}
+								mainPath='/admin/courses'
+								mainIsActive={
+									(currentPath?.includes('/admin/courses') ||
+										currentPath?.includes('/admin/course-edit') ||
+										(currentPath?.includes('/admin/course') && currentPath?.includes('/forms'))) &&
+									!currentPath?.includes('/admin/lessons') &&
+									!currentPath?.includes('/admin/lesson-edit') &&
+									!currentPath?.includes('/admin/questions') &&
+									!currentPath?.includes('/admin/documents')
 								}
+								subMenuItems={[
+									{
+										btnText: 'Courses',
+										IconName: LibraryBooks,
+										path: '/admin/courses',
+										isActive:
+											currentPath?.includes('/admin/courses') ||
+											currentPath?.includes('/admin/course-edit') ||
+											(currentPath?.includes('/admin/course') && currentPath?.includes('/forms')),
+									},
+									{
+										btnText: 'Lessons',
+										IconName: AssignmentIndRounded,
+										path: '/admin/lessons',
+										isActive: currentPath?.includes('/admin/lessons') || currentPath?.includes('/admin/lesson-edit'),
+									},
+									{
+										btnText: 'Questions',
+										IconName: QuizOutlined,
+										path: '/admin/questions',
+										isActive: currentPath?.includes('/admin/questions'),
+									},
+									{
+										btnText: 'Documents',
+										IconName: FilePresent,
+										path: '/admin/documents',
+										isActive: currentPath?.includes('/admin/documents'),
+									},
+								]}
+								onNavigate={navigateWithPage}
 							/>
-							<SidebarBtn
-								btnText='Lessons'
-								IconName={AssignmentIndRounded}
-								onClick={() => navigateWithPage(`/admin/lessons`)}
-								active={currentPath?.includes('/admin/lessons') || currentPath?.includes('/admin/lesson-edit')}
-							/>
-							<SidebarBtn
-								btnText='Questions'
-								IconName={QuizOutlined}
-								onClick={() => navigateWithPage(`/admin/questions`)}
-								active={currentPath?.includes('/admin/questions')}
-							/>
-							<SidebarBtn
-								btnText='Documents'
-								IconName={FilePresent}
-								onClick={() => navigateWithPage(`/admin/documents`)}
-								active={currentPath?.includes('/admin/documents')}
-							/>
+							{(currentPath?.includes('/admin/lessons') || currentPath?.includes('/admin/lesson-edit')) && (
+								<SidebarBtn
+									btnText='Lessons'
+									IconName={AssignmentIndRounded}
+									onClick={() => navigateWithPage(`/admin/lessons`)}
+									active={currentPath?.includes('/admin/lessons') || currentPath?.includes('/admin/lesson-edit')}
+								/>
+							)}
+							{currentPath?.includes('/admin/questions') && (
+								<SidebarBtn
+									btnText='Questions'
+									IconName={QuizOutlined}
+									onClick={() => navigateWithPage(`/admin/questions`)}
+									active={currentPath?.includes('/admin/questions')}
+								/>
+							)}
+							{currentPath?.includes('/admin/documents') && (
+								<SidebarBtn
+									btnText='Documents'
+									IconName={FilePresent}
+									onClick={() => navigateWithPage(`/admin/documents`)}
+									active={currentPath?.includes('/admin/documents')}
+								/>
+							)}
 							<SidebarBtn
 								btnText='Forms'
 								IconName={Ballot}
@@ -177,6 +219,12 @@ const Sidebar = () => {
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/admin/community`)}
 								active={currentPath?.includes('/admin/community')}
+							/>
+							<SidebarBtn
+								btnText='Resources'
+								IconName={Folder}
+								onClick={() => navigateWithPage(`/admin/resources`)}
+								active={currentPath?.includes('/admin/resources')}
 							/>
 						</>
 					)}
@@ -224,6 +272,12 @@ const Sidebar = () => {
 								IconName={Settings}
 								onClick={() => navigateWithPage(`/settings`)}
 								active={currentPath?.includes('/settings')}
+							/>
+							<SidebarBtn
+								btnText='Resources'
+								IconName={Folder}
+								onClick={() => navigateWithPage(`/resources`)}
+								active={currentPath?.includes('/resources')}
 							/>
 						</>
 					)}
@@ -291,6 +345,12 @@ const Sidebar = () => {
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/instructor/community`)}
 								active={currentPath?.includes('/instructor/community')}
+							/>
+							<SidebarBtn
+								btnText='Resources'
+								IconName={Folder}
+								onClick={() => navigateWithPage(`/instructor/resources`)}
+								active={currentPath?.includes('/instructor/resources')}
 							/>
 						</>
 					)}

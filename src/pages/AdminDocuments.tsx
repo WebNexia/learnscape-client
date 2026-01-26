@@ -178,7 +178,8 @@ const AdminDocuments = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while documents are being fetched or when data is empty and not loading yet
-	if (loading) {
+	// Also show loading if documents is undefined or empty with no loaded pages (initial state) to prevent green box flash
+	if (loading || documents === undefined || (documents && documents.length === 0 && loadedPages.length === 0)) {
 		return (
 			<DashboardPagesLayout
 				pageName={isInstructor ? 'My Documents' : 'Documents'}

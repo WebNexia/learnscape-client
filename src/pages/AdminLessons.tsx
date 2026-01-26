@@ -142,7 +142,8 @@ const AdminLessons = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while lessons are being fetched or when data is empty and not loading yet
-	if (loading) {
+	// Also show loading if lessons is undefined or empty with no loaded pages (initial state) to prevent green box flash
+	if (loading || lessons === undefined || (lessons && lessons.length === 0 && loadedPages.length === 0)) {
 		return (
 			<DashboardPagesLayout pageName={isInstructor ? 'My Lessons' : 'Lessons'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

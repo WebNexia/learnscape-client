@@ -20,6 +20,7 @@ import DocumentsContextProvider from './contexts/DocumentsContextProvider';
 import CoursesContextProvider from './contexts/CoursesContextProvider';
 import { RecycleBinQuestionsProvider } from './contexts/RecycleBinQuestionsContextProvider';
 import { RecycleBinDocumentsProvider } from './contexts/RecycleBinDocumentsContextProvider';
+import ResourcesContextProvider from './contexts/ResourcesContextProvider';
 import FeedbackFormsContextProvider from './contexts/FeedbackFormsContextProvider';
 import SubscriptionsContextProvider from './contexts/SubscriptionsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
@@ -63,6 +64,8 @@ const InstructorDashboard = React.lazy(() => import('./pages/InstructorDashboard
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
+const Resources = React.lazy(() => import('./pages/Resources'));
+const ResourceItems = React.lazy(() => import('./pages/ResourceItems'));
 const AdminCheckoutsFeedback = React.lazy(() => import('./pages/AdminCheckoutsFeedback'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
@@ -105,7 +108,7 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
-				path: 'resources',
+				path: 'landing-page-resources',
 				element: (
 					<LandingPageResourcesContextProvider>
 						<LandingPageResources />
@@ -251,6 +254,26 @@ export const router = createBrowserRouter([
 						<DocumentsContextProvider>
 							<AdminDocuments />
 						</DocumentsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/resources',
+				element: (
+					<AdminRouteGuard>
+						<ResourcesContextProvider>
+							<Resources />
+						</ResourcesContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/resources/folder/:folderId',
+				element: (
+					<AdminRouteGuard>
+						<ResourcesContextProvider>
+							<ResourceItems />
+						</ResourcesContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -542,6 +565,26 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
+				path: 'instructor/resources',
+				element: (
+					<InstructorRouteGuard>
+						<ResourcesContextProvider>
+							<Resources />
+						</ResourcesContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/resources/folder/:folderId',
+				element: (
+					<InstructorRouteGuard>
+						<ResourcesContextProvider>
+							<ResourceItems />
+						</ResourcesContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
 				path: 'instructor/submissions',
 				element: (
 					<InstructorRouteGuard>
@@ -685,6 +728,26 @@ export const router = createBrowserRouter([
 				element: (
 					<LearnerRouteGuard>
 						<Courses />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'resources',
+				element: (
+					<LearnerRouteGuard>
+						<ResourcesContextProvider>
+							<Resources />
+						</ResourcesContextProvider>
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'resources/folder/:folderId',
+				element: (
+					<LearnerRouteGuard>
+						<ResourcesContextProvider>
+							<ResourceItems />
+						</ResourcesContextProvider>
 					</LearnerRouteGuard>
 				),
 			},

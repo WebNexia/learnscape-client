@@ -210,6 +210,11 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 
 			// Search button only works when search value exists
 			if (searchValue && searchValue.trim()) {
+				// Clear previous search results first to prevent persistence
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				
 				// Store the searched value
 				setSearchedValue(searchValue.trim());
 
@@ -241,6 +246,11 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			setError(errorMessage);
 			onSearchError?.(err instanceof Error ? err : new Error(errorMessage));
 			console.error('Search error:', err);
+			// Clear search results on error to prevent stale data
+			setSearchResults([]);
+			setSearchResultsLoadedPages([]);
+			setSearchResultsTotalItems(0);
+			setIsSearchActive(false);
 		} finally {
 			setIsLoading(false);
 		}
@@ -495,6 +505,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			setSearchResultsTotalItems(0);
 			setIsSearchActive(false);
 			setSearchResultsPage(1);
+			setCurrentContextPage(1); // Reset context page to 1
 		}
 	}, [filterValue, limit, orderBy, order, getEndpoint]);
 
@@ -554,6 +565,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 		setSearchResultsTotalItems(0);
 		setIsSearchActive(false);
 		setSearchResultsPage(1);
+		setCurrentContextPage(1); // Reset context page to 1
 		setError(null);
 
 		// Reset sorting
