@@ -7,10 +7,12 @@ const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 export const feedbackFormsService = {
 	// Forms
-	getAllFeedbackForms: async (courseId?: string, orgId?: string): Promise<FeedbackForm[]> => {
+	getAllFeedbackForms: async (filters?: { courseId?: string; consultationId?: string; orgId?: string; useForConsultation?: boolean }): Promise<FeedbackForm[]> => {
 		const params = new URLSearchParams();
-		if (courseId) params.append('courseId', courseId);
-		if (orgId) params.append('orgId', orgId);
+		if (filters?.courseId) params.append('courseId', filters.courseId);
+		if (filters?.consultationId) params.append('consultationId', filters.consultationId);
+		if (filters?.orgId) params.append('orgId', filters.orgId);
+		if (filters?.useForConsultation === true) params.append('useForConsultation', 'true');
 		const response = await axiosInstance.get(`${base_url}/feedback-forms?${params.toString()}`);
 		return response.data.data;
 	},
@@ -77,6 +79,8 @@ export const feedbackFormsService = {
 			userEmail?: string;
 			userId?: string;
 			recaptchaToken?: string | null;
+			consultationId?: string;
+			consultationAppointmentId?: string;
 		}
 	): Promise<FeedbackFormSubmission> => {
 		const response = await axiosInstance.post(`${base_url}/feedback-forms/public/${publicLink}/submit`, submissionData);

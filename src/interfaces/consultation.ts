@@ -27,6 +27,8 @@ export interface Consultation {
 	};
 	coverImageUrl?: string;
 	tags?: string[];
+	feedbackFormId?: string;
+	feedbackForm?: import('./feedbackForm').FeedbackForm; // Populated when present
 	meetingType?: 'video';
 	createdAt: string;
 	updatedAt: string;

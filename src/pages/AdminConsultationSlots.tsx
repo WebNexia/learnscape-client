@@ -236,7 +236,7 @@ const AdminConsultationSlots = () => {
 									setSlotToDelete(slotId);
 									setIsDeleteSlotDialogOpen(true);
 								}}
-								consultationDuration={consultation?.duration || 30}
+								consultationDuration={consultation?.duration ?? 60}
 							/>
 						)}
 					</Box>

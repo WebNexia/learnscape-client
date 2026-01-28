@@ -45,7 +45,7 @@ const CreateConsultationSlotDialog = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [slotStart, setSlotStart] = useState<Dayjs | null>(null);
-	const [duration, setDuration] = useState<number>(consultation?.duration || 30);
+	const [duration, setDuration] = useState<number>(consultation?.duration ?? 60);
 	const [addMyselfAsConsultant, setAddMyselfAsConsultant] = useState<boolean>(true);
 	const [selectedConsultants, setSelectedConsultants] = useState<SearchUser[]>([]);
 	const [consultantSearchValue, setConsultantSearchValue] = useState<string>('');
@@ -59,12 +59,12 @@ const CreateConsultationSlotDialog = ({
 		if (isOpen) {
 			if (existingSlot) {
 				setSlotStart(dayjs(existingSlot.slotStart));
-				setDuration(existingSlot.duration || consultation?.duration || 30);
+				setDuration(existingSlot.duration ?? consultation?.duration ?? 60);
 				setSelectedConsultants([]);
 				setAddMyselfAsConsultant(true);
 			} else {
 				setSlotStart(dayjs().add(1, 'hour'));
-				setDuration(consultation?.duration || 30);
+				setDuration(consultation?.duration ?? 60);
 				setSelectedConsultants([]);
 				setAddMyselfAsConsultant(true);
 			}
@@ -118,7 +118,7 @@ const CreateConsultationSlotDialog = ({
 			});
 			// Reset form
 			setSlotStart(dayjs().add(1, 'hour'));
-			setDuration(consultation?.duration || 30);
+			setDuration(consultation?.duration ?? 60);
 			setAddMyselfAsConsultant(true);
 			setSelectedConsultants([]);
 			setConsultantSearchValue('');

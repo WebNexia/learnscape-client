@@ -35,7 +35,7 @@ const ConsultationSlotsCalendar = ({ slots, onSlotClick }: ConsultationSlotsCale
 	const calendarEvents = useMemo(() => {
 		return slots.map((slot) => {
 			const start = new Date(slot.slotStart);
-			const end = new Date(new Date(slot.slotStart).getTime() + (slot.duration || 30) * 60000);
+			const end = new Date(new Date(slot.slotStart).getTime() + (slot.duration ?? 60) * 60000);
 
 			const isBooked = !!slot.appointmentRef;
 			const appointmentInfo =

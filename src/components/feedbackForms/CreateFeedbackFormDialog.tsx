@@ -9,7 +9,6 @@ import {
 	MenuItem,
 	Select,
 	FormControl,
-	InputLabel,
 	Chip,
 } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
@@ -50,6 +49,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 	const [allowMultipleSubmissions, setAllowMultipleSubmissions] = useState<boolean>(false);
 	const [submissionDeadline, setSubmissionDeadline] = useState<string>('');
 	const [showResultsToSubmitters, setShowResultsToSubmitters] = useState<boolean>(false);
+	const [useForConsultation, setUseForConsultation] = useState<boolean>(false);
 
 	// Template selection state
 	const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -98,10 +98,17 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setTitle(formToEdit.title || '');
 			setDescription(formToEdit.description || '');
 			setFields(formToEdit.fields || []);
-			setAllowAnonymous(formToEdit.allowAnonymous ?? true);
-			setAllowMultipleSubmissions(formToEdit.allowMultipleSubmissions ?? false);
 			setSubmissionDeadline(isoToDateTimeLocal(formToEdit.submissionDeadline));
 			setShowResultsToSubmitters(formToEdit.showResultsToSubmitters ?? false);
+			setUseForConsultation(formToEdit.useForConsultation ?? false);
+			// When use for consultation, anonymous and multiple submissions must be false
+			if (formToEdit.useForConsultation) {
+				setAllowAnonymous(false);
+				setAllowMultipleSubmissions(false);
+			} else {
+				setAllowAnonymous(formToEdit.allowAnonymous ?? true);
+				setAllowMultipleSubmissions(formToEdit.allowMultipleSubmissions ?? false);
+			}
 			// If editing and form has courseId, set selectedCourse (but it won't be shown if courseId prop is provided)
 			// Handle both populated object and string ID
 			if (formToEdit.courseId) {
@@ -130,6 +137,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setAllowMultipleSubmissions(false);
 			setSubmissionDeadline('');
 			setShowResultsToSubmitters(false);
+			setUseForConsultation(false);
 			setSelectedCourse(null);
 			setSearchCourseValue('');
 			setSelectedTemplateId('');
@@ -186,10 +194,11 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 					...field,
 					order: index,
 				})),
-				allowAnonymous,
-				allowMultipleSubmissions,
+				allowAnonymous: useForConsultation ? false : allowAnonymous,
+				allowMultipleSubmissions: useForConsultation ? false : allowMultipleSubmissions,
 				submissionDeadline: submissionDeadline || undefined,
 				showResultsToSubmitters,
+				useForConsultation,
 			};
 
 			if (formToEdit) {
@@ -498,27 +507,71 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 				</Box>
 
 				{/* Form Settings */}
-				<Box sx={{ margin: isMobileSize ? '0.75rem 0' : '0.75rem 1rem' }}>
+				<Box sx={{ margin: isMobileSize ? '0.75rem 0' : '1.5rem 1rem 0.5rem 1rem' }}>
 					<Typography variant='h6' sx={{ marginBottom: '1rem', fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
 						Form Settings
 					</Typography>
 
-					<FormControlLabel
-						control={<Checkbox checked={allowAnonymous} onChange={(e) => setAllowAnonymous(e.target.checked)} size='small' />}
-						label='Allow Anonymous Submissions'
-						sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
-					/>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={useForConsultation ? false : allowAnonymous}
+									disabled={useForConsultation}
+									onChange={(e) => setAllowAnonymous(e.target.checked)}
+									size='small'
+								/>
+							}
+							label='Allow Anonymous Submissions'
+							sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
+						/>
 
-					<FormControlLabel
-						control={<Checkbox checked={allowMultipleSubmissions} onChange={(e) => setAllowMultipleSubmissions(e.target.checked)} size='small' />}
-						label='Allow Multiple Submissions'
-						sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
-					/>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={useForConsultation ? false : allowMultipleSubmissions}
+									disabled={useForConsultation}
+									onChange={(e) => setAllowMultipleSubmissions(e.target.checked)}
+									size='small'
+								/>
+							}
+							label='Allow Multiple Submissions'
+							sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
+						/>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: '0.5rem' }}>
+						<Box>
+							<Tooltip title='When checked, this form will appear in the Consultation form dropdown when editing a consultation. Consultation forms require identified, single submissions.' placement='top' arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={useForConsultation}
+											onChange={(e) => {
+												const checked = e.target.checked;
+												setUseForConsultation(checked);
+												if (checked) {
+													setAllowAnonymous(false);
+													setAllowMultipleSubmissions(false);
+												}
+											}}
+											size='small'
+										/>
+									}
+									label='Use for Consultancy'
+									sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
+								/>
+							</Tooltip>
 
-					<Box sx={{ marginTop: '1rem' }}>
+							<Typography variant='caption' sx={{ display: 'block', fontSize: '0.7rem', color: 'text.secondary', mt: '-0.5rem', mb: '0.5rem' }}>
+								Show in consultation form selector
+							</Typography>
+
+						</Box>
+
+
 						<CustomTextField
 							sx={{ width: 'fit-content' }}
-							label='Submission Deadline (Optional)'
+							label='Submission Deadline'
 							required={false}
 							type='datetime-local'
 							value={submissionDeadline}

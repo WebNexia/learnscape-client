@@ -268,7 +268,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										active={window.location.pathname?.includes('/admin/resources')}
 									/>
 									<SidebarBtn
-										btnText='Consultations'
+										btnText='Consultancy'
 										IconName={VideoCall}
 										onClick={() => navigateWithPage(PageName.ADMIN_CONSULTATIONS, `/admin/consultations`)}
 										active={selectedPage === PageName.ADMIN_CONSULTATIONS || window.location.pathname?.includes('/admin/consultations')}

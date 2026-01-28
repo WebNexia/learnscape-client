@@ -33,6 +33,7 @@ interface BulkSlotCreationDialogProps {
 		endDate: string;
 		startTime: string;
 		endTime: string;
+		timeZoneOffsetMinutes: number;
 		duration: number;
 		intervalMinutes: number;
 		recurring: boolean;
@@ -52,7 +53,7 @@ const BulkSlotCreationDialog = ({ isOpen, onClose, onCreate, consultation }: Bul
 	const [endDate, setEndDate] = useState<Dayjs | null>(dayjs().add(7, 'days'));
 	const [startTime, setStartTime] = useState<Dayjs | null>(dayjs().hour(9).minute(0));
 	const [endTime, setEndTime] = useState<Dayjs | null>(dayjs().hour(17).minute(0));
-	const [duration, setDuration] = useState<number>(consultation?.duration || 30);
+	const [duration, setDuration] = useState<number>(consultation?.duration ?? 60);
 	const [intervalMinutes, setIntervalMinutes] = useState<number>(30);
 	const [recurring, setRecurring] = useState<boolean>(false);
 	const [recurringDays, setRecurringDays] = useState<number[]>([]);
@@ -151,11 +152,13 @@ const BulkSlotCreationDialog = ({ isOpen, onClose, onCreate, consultation }: Bul
 
 		setIsSubmitting(true);
 		try {
+			// Send date (YYYY-MM-DD) and time (HH:mm) in admin's local; offset lets server build correct UTC (no server-TZ bugs)
 			await onCreate({
-				startDate: startDate.toISOString(),
-				endDate: endDate.toISOString(),
-				startTime: startTime.toISOString(),
-				endTime: endTime.toISOString(),
+				startDate: startDate.format('YYYY-MM-DD'),
+				endDate: endDate.format('YYYY-MM-DD'),
+				startTime: startTime.format('HH:mm'),
+				endTime: endTime.format('HH:mm'),
+				timeZoneOffsetMinutes: -new Date().getTimezoneOffset(),
 				duration,
 				intervalMinutes,
 				recurring,
@@ -169,7 +172,7 @@ const BulkSlotCreationDialog = ({ isOpen, onClose, onCreate, consultation }: Bul
 			setEndDate(dayjs().add(7, 'days'));
 			setStartTime(dayjs().hour(9).minute(0));
 			setEndTime(dayjs().hour(17).minute(0));
-			setDuration(consultation?.duration || 30);
+			setDuration(consultation?.duration ?? 60);
 			setIntervalMinutes(30);
 			setRecurring(false);
 			setRecurringDays([]);

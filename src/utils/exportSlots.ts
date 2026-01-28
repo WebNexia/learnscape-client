@@ -1,10 +1,14 @@
 import { ConsultationSlot } from '../interfaces/consultation';
 
 export const exportSlotsToCSV = (slots: ConsultationSlot[], consultationTitle: string): void => {
-	const headers = ['Date & Time', 'Duration (min)', 'Status', 'Consultants', 'Appointment Info'];
+	const headers = ['Date & Time (your local)', 'Duration (min)', 'Status', 'Consultants', 'Appointment Info'];
 	const rows = slots.map((slot) => {
 		const date = new Date(slot.slotStart);
-		const dateTimeStr = date.toLocaleString();
+		const dateTimeStr = date.toLocaleString(undefined, {
+			dateStyle: 'short',
+			timeStyle: 'short',
+			timeZoneName: 'short',
+		});
 		const duration = slot.duration || 30;
 		const isBooked = !!slot.appointmentRef;
 		const status = isBooked ? 'Booked' : 'Available';

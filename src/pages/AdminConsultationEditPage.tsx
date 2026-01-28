@@ -1,9 +1,10 @@
-import { Box, DialogContent, Typography, Grid, FormControlLabel, Checkbox, Tooltip, MenuItem, Select, SelectChangeEvent, FormControl, Snackbar, Alert } from '@mui/material';
+import { Box, DialogContent, Typography, Grid, FormControlLabel, Checkbox, Tooltip, Snackbar, Alert, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { FormEvent, useContext, useEffect, useState } from 'react';
+import { FormEvent, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { ConsultationsContext } from '../contexts/ConsultationsContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -17,6 +18,8 @@ import { validateImageUrl } from '../utils/urlValidation';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../hooks/useImageUpload';
 import ConsultationDetailsNonEditBox from '../components/adminSingleConsultation/ConsultationDetailsNonEditBox';
+import { feedbackFormsService } from '../services/feedbackFormsService';
+import { FeedbackForm } from '../interfaces/feedbackForm';
 
 const AdminConsultationEditPage = () => {
 	const { consultationId } = useParams();
@@ -24,6 +27,7 @@ const AdminConsultationEditPage = () => {
 	const navigate = useNavigate();
 
 	const { updateConsultation } = useContext(ConsultationsContext);
+	const { orgId } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -55,6 +59,9 @@ const AdminConsultationEditPage = () => {
 	const [tags, setTags] = useState<string[]>([]);
 	const [tagInput, setTagInput] = useState<string>('');
 
+	// Consultation form (optional survey for booking)
+	const [orgForms, setOrgForms] = useState<FeedbackForm[]>([]);
+	const [formsLoading, setFormsLoading] = useState<boolean>(false);
 
 	const [allowNavigation, setAllowNavigation] = useState(false);
 	const [nextLocation, setNextLocation] = useState<string | null>(null);
@@ -144,6 +151,40 @@ const AdminConsultationEditPage = () => {
 		}
 	}, [consultationId]);
 
+	// Fetch org feedback forms for optional consultation form selector
+	useEffect(() => {
+		if (!orgId) return;
+		let cancelled = false;
+		setFormsLoading(true);
+		feedbackFormsService
+			.getAllFeedbackForms({ orgId, useForConsultation: true })
+			.then((data) => {
+				if (!cancelled) setOrgForms(Array.isArray(data) ? data : []);
+			})
+			.catch(() => {
+				if (!cancelled) setOrgForms([]);
+			})
+			.finally(() => {
+				if (!cancelled) setFormsLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [orgId]);
+
+	// Show forms marked for consultation; include currently attached form if it's not in the list (e.g. flag was unchecked)
+	const consultationFormOptions = useMemo(() => {
+		const list = [...orgForms];
+		const currentId = singleConsultationBeforeSave?.feedbackFormId;
+		if (currentId && !list.some((f) => f._id === currentId)) {
+			const pop = singleConsultationBeforeSave?.feedbackForm;
+			if (pop && typeof pop === 'object' && pop.title) {
+				list.unshift({ _id: currentId, title: (pop as any).title, isPublished: (pop as any).isPublished } as FeedbackForm);
+			}
+		}
+		return list;
+	}, [orgForms, singleConsultationBeforeSave?.feedbackFormId, singleConsultationBeforeSave?.feedbackForm]);
+
 	const handlePublishing = async (): Promise<void> => {
 		if (consultationId !== undefined) {
 			try {
@@ -216,10 +257,11 @@ const AdminConsultationEditPage = () => {
 				...singleConsultationBeforeSave,
 				title: singleConsultationBeforeSave.title?.trim() || '',
 				description: singleConsultationBeforeSave.description?.trim() || '',
-				duration: singleConsultationBeforeSave.duration || 30,
+				duration: singleConsultationBeforeSave.duration ?? 60,
 				prices,
 				coverImageUrl: singleConsultationBeforeSave.coverImageUrl?.trim() || '',
 				tags: tags.filter((tag) => tag.trim() !== ''),
+				feedbackFormId: singleConsultationBeforeSave.feedbackFormId || null,
 			};
 
 			const response = await axios.patch(`${base_url}/consultations/${consultationId}`, updatedConsultation);
@@ -234,6 +276,7 @@ const AdminConsultationEditPage = () => {
 				prices: updatedConsultation.prices,
 				coverImageUrl: updatedConsultation.coverImageUrl,
 				tags: updatedConsultation.tags,
+				feedbackFormId: responseUpdatedData.feedbackFormId ?? singleConsultationBeforeSave.feedbackFormId,
 				updatedAt: responseUpdatedData.updatedAt,
 				updatedBy: responseUpdatedData.updatedBy,
 			};
@@ -454,47 +497,43 @@ const AdminConsultationEditPage = () => {
 									</Box>
 
 								</Box>
-
-								<Box sx={{ flex: 1, textAlign: 'left' }}>
-									<FormControl>
-										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-											Duration (minutes)
-										</Typography>
-										<Select
-											value={singleConsultationBeforeSave?.duration?.toString() || '30'}
-											onChange={(e: SelectChangeEvent) => {
-												setHasUnsavedChanges(true);
-												setSingleConsultationBeforeSave((prev) => {
-													if (prev) {
-														return { ...prev, duration: parseInt(e.target.value, 10) };
-													}
-													return prev;
-												});
-											}}
-											size='small'
-											required
-											sx={{ backgroundColor: theme.bgColor?.common, fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.5rem' }}>
-											<MenuItem value='30' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												30
-											</MenuItem>
-											<MenuItem value='45' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												45
-											</MenuItem>
-											<MenuItem value='60' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												60
-											</MenuItem>
-											<MenuItem value='75' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												75
-											</MenuItem>
-											<MenuItem value='90' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												90
-											</MenuItem>
-										</Select>
-									</FormControl>
-								</Box>
 							</Box>
 
-
+							{/* Consultation form (optional – survey shown during booking) */}
+							<Box sx={{ ...sectionSx, mt: '1.5rem' }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', marginBottom: '0.5rem' }}>
+									Consultation Form
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'text.secondary', mb: '0.75rem' }}>
+									If you add a form, it can be shown as part of the booking flow on the landing page. Leave as &quot;None&quot; to not use a form.
+								</Typography>
+								<FormControl size='small' fullWidth sx={{ maxWidth: 400, backgroundColor: theme.bgColor?.common }}>
+									<InputLabel id='consultation-form-label'>Form</InputLabel>
+									<Select
+										labelId='consultation-form-label'
+										label='Form'
+										value={singleConsultationBeforeSave?.feedbackFormId ?? ''}
+										onChange={(e: SelectChangeEvent) => {
+											setHasUnsavedChanges(true);
+											const v = e.target.value as string;
+											setSingleConsultationBeforeSave((prev) =>
+												prev ? { ...prev, feedbackFormId: v || undefined } : prev
+											);
+										}}
+										disabled={formsLoading}
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+											None
+										</MenuItem>
+										{consultationFormOptions.map((f) => (
+											<MenuItem key={f._id} value={f._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+												{f.title}
+												{f.isPublished ? ' (published)' : ''}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							</Box>
 
 							<Box sx={{ display: 'flex', gap: '1rem', mb: '4rem' }}>
 								{/* Prices */}

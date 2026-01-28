@@ -37,7 +37,6 @@ const AdminForms = () => {
 		unpublishForm,
 		fetchForms: fetchFormsFromContext,
 		fetchMoreForms,
-		formsPageNumber,
 		setFormsPageNumber,
 		totalItems,
 		loadedPages,
@@ -118,18 +117,18 @@ const AdminForms = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'title', label: 'Title' },
-					{ key: 'status', label: 'Status' },
-					{ key: 'submissions', label: 'Submissions' },
-					{ key: 'actions', label: 'Actions' },
-				]
+				{ key: 'title', label: 'Title' },
+				{ key: 'status', label: 'Status' },
+				{ key: 'submissions', label: 'Submissions' },
+				{ key: 'actions', label: 'Actions' },
+			]
 			: [
-					{ key: 'title', label: 'Title' },
-					{ key: 'course', label: 'Course' },
-					{ key: 'status', label: 'Status' },
-					{ key: 'submissions', label: 'Submissions' },
-					{ key: 'actions', label: 'Actions' },
-				];
+				{ key: 'title', label: 'Title' },
+				{ key: 'course', label: 'Course' },
+				{ key: 'status', label: 'Status' },
+				{ key: 'submissions', label: 'Submissions' },
+				{ key: 'actions', label: 'Actions' },
+			];
 	};
 
 	const sortedForms = useMemo(() => {
@@ -190,7 +189,7 @@ const AdminForms = () => {
 		}
 	};
 
-	const handlePublishToggle = async (form: FeedbackForm, index: number) => {
+	const handlePublishToggle = async (form: FeedbackForm) => {
 		try {
 			if (form.isPublished) {
 				await unpublishForm(form._id);
@@ -297,6 +296,7 @@ const AdminForms = () => {
 						{ value: 'published', label: 'Published' },
 						{ value: 'unpublished', label: 'Unpublished' },
 						{ value: 'active', label: 'Active' },
+						{ value: 'consultation', label: 'Consultancy' },
 					]}
 					filterPlaceholder='Filter Forms'
 					searchValue={searchValue}
@@ -443,7 +443,6 @@ const AdminForms = () => {
 						<TableBody>
 							{paginatedForms &&
 								paginatedForms.map((form: FeedbackForm, index: number) => {
-									const deleteModalOpen = isDeleteModalOpen[index] || false;
 									const courseTitle = (form.courseId as any)?.title || 'N/A';
 									return (
 										<TableRow key={form._id} hover>
@@ -453,7 +452,7 @@ const AdminForms = () => {
 												<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
 													<Switch
 														checked={form.isPublished || false}
-														onChange={() => handlePublishToggle(form, index)}
+														onChange={() => handlePublishToggle(form)}
 														size='small'
 														color='primary'
 													/>
@@ -612,23 +611,7 @@ const AdminForms = () => {
 								<CustomDialogActions
 									onCancel={() => closeDeleteModal(index)}
 									deleteBtn={true}
-									onDelete={async () => {
-										try {
-											await deleteForm(form._id);
-											setSuccessMessage('Form deleted successfully');
-											setSuccessSnackbarOpen(true);
-											closeDeleteModal(index);
-
-											// If search is active, remove from search results
-											if (isSearchActive) {
-												removeFromSearchResults(form._id);
-											}
-											// Context will automatically refetch after mutation
-										} catch (error: any) {
-											setErrorMessage(error?.message || 'Failed to delete form');
-											setErrorSnackbarOpen(true);
-										}
-									}}
+									onDelete={handleDelete}
 									actionSx={{ mb: '0.5rem' }}
 								/>
 							</CustomDialog>

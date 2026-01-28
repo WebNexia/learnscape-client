@@ -228,7 +228,7 @@ const Sidebar = () => {
 								active={currentPath?.includes('/admin/resources')}
 							/>
 							<SidebarBtn
-								btnText='Consultations'
+								btnText='Consultancy'
 								IconName={VideoCall}
 								onClick={() => navigateWithPage(`/admin/consultations`)}
 								active={currentPath?.includes('/admin/consultations')}
