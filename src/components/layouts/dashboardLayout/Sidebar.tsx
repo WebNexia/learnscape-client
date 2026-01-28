@@ -15,6 +15,7 @@ import {
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
+	VideoCall,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
@@ -225,6 +226,12 @@ const Sidebar = () => {
 								IconName={Folder}
 								onClick={() => navigateWithPage(`/admin/resources`)}
 								active={currentPath?.includes('/admin/resources')}
+							/>
+							<SidebarBtn
+								btnText='Consultations'
+								IconName={VideoCall}
+								onClick={() => navigateWithPage(`/admin/consultations`)}
+								active={currentPath?.includes('/admin/consultations')}
 							/>
 						</>
 					)}

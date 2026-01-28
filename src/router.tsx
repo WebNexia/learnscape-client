@@ -28,6 +28,7 @@ import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import EventsContextProvider from './contexts/EventsContextProvider';
 import CommunityContextProvider from './contexts/CommunityContextProvider';
 import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
+import ConsultationsContextProvider from './contexts/ConsultationsContextProvider';
 // Context providers are now centralized in App.tsx
 
 // Lazy load pages
@@ -64,6 +65,9 @@ const InstructorDashboard = React.lazy(() => import('./pages/InstructorDashboard
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
+const AdminConsultations = React.lazy(() => import('./pages/AdminConsultations'));
+const AdminConsultationEditPage = React.lazy(() => import('./pages/AdminConsultationEditPage'));
+const AdminConsultationSlots = React.lazy(() => import('./pages/AdminConsultationSlots'));
 const Resources = React.lazy(() => import('./pages/Resources'));
 const ResourceItems = React.lazy(() => import('./pages/ResourceItems'));
 const AdminCheckoutsFeedback = React.lazy(() => import('./pages/AdminCheckoutsFeedback'));
@@ -254,6 +258,36 @@ export const router = createBrowserRouter([
 						<DocumentsContextProvider>
 							<AdminDocuments />
 						</DocumentsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/consultations',
+				element: (
+					<AdminRouteGuard>
+						<ConsultationsContextProvider>
+							<AdminConsultations />
+						</ConsultationsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/consultation-edit/consultation/:consultationId',
+				element: (
+					<AdminRouteGuard>
+						<ConsultationsContextProvider>
+							<AdminConsultationEditPage />
+						</ConsultationsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/consultation-slots/consultation/:consultationId',
+				element: (
+					<AdminRouteGuard>
+						<ConsultationsContextProvider>
+							<AdminConsultationSlots />
+						</ConsultationsContextProvider>
 					</AdminRouteGuard>
 				),
 			},

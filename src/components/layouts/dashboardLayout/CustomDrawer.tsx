@@ -22,6 +22,7 @@ import {
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
+	VideoCall,
 } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../../hooks/useAuth';
@@ -265,6 +266,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Folder}
 										onClick={() => navigateWithPage('Resources', `/admin/resources`)}
 										active={window.location.pathname?.includes('/admin/resources')}
+									/>
+									<SidebarBtn
+										btnText='Consultations'
+										IconName={VideoCall}
+										onClick={() => navigateWithPage(PageName.ADMIN_CONSULTATIONS, `/admin/consultations`)}
+										active={selectedPage === PageName.ADMIN_CONSULTATIONS || window.location.pathname?.includes('/admin/consultations')}
 									/>
 								</>
 							)}
