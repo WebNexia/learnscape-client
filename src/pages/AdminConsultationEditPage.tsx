@@ -21,6 +21,8 @@ import ConsultationDetailsNonEditBox from '../components/adminSingleConsultation
 import { feedbackFormsService } from '../services/feedbackFormsService';
 import { FeedbackForm } from '../interfaces/feedbackForm';
 
+const CONSULTATION_FORM_NONE = '__NONE__';
+
 const AdminConsultationEditPage = () => {
 	const { consultationId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -172,9 +174,9 @@ const AdminConsultationEditPage = () => {
 		};
 	}, [orgId]);
 
-	// Show forms marked for consultation; include currently attached form if it's not in the list (e.g. flag was unchecked)
+
 	const consultationFormOptions = useMemo(() => {
-		const list = [...orgForms];
+		const list = orgForms.filter((f) => f.isPublished);
 		const currentId = singleConsultationBeforeSave?.feedbackFormId;
 		if (currentId && !list.some((f) => f._id === currentId)) {
 			const pop = singleConsultationBeforeSave?.feedbackForm;
@@ -262,6 +264,7 @@ const AdminConsultationEditPage = () => {
 				coverImageUrl: singleConsultationBeforeSave.coverImageUrl?.trim() || '',
 				tags: tags.filter((tag) => tag.trim() !== ''),
 				feedbackFormId: singleConsultationBeforeSave.feedbackFormId || null,
+				requireFormSubmission: Boolean(singleConsultationBeforeSave.requireFormSubmission),
 			};
 
 			const response = await axios.patch(`${base_url}/consultations/${consultationId}`, updatedConsultation);
@@ -277,6 +280,7 @@ const AdminConsultationEditPage = () => {
 				coverImageUrl: updatedConsultation.coverImageUrl,
 				tags: updatedConsultation.tags,
 				feedbackFormId: responseUpdatedData.feedbackFormId ?? singleConsultationBeforeSave.feedbackFormId,
+				requireFormSubmission: responseUpdatedData.requireFormSubmission ?? singleConsultationBeforeSave.requireFormSubmission,
 				updatedAt: responseUpdatedData.updatedAt,
 				updatedBy: responseUpdatedData.updatedBy,
 			};
@@ -507,32 +511,57 @@ const AdminConsultationEditPage = () => {
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'text.secondary', mb: '0.75rem' }}>
 									If you add a form, it can be shown as part of the booking flow on the landing page. Leave as &quot;None&quot; to not use a form.
 								</Typography>
-								<FormControl size='small' fullWidth sx={{ maxWidth: 400, backgroundColor: theme.bgColor?.common }}>
-									<InputLabel id='consultation-form-label'>Form</InputLabel>
-									<Select
-										labelId='consultation-form-label'
-										label='Form'
-										value={singleConsultationBeforeSave?.feedbackFormId ?? ''}
-										onChange={(e: SelectChangeEvent) => {
-											setHasUnsavedChanges(true);
-											const v = e.target.value as string;
-											setSingleConsultationBeforeSave((prev) =>
-												prev ? { ...prev, feedbackFormId: v || undefined } : prev
-											);
-										}}
-										disabled={formsLoading}
-										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-											None
-										</MenuItem>
-										{consultationFormOptions.map((f) => (
-											<MenuItem key={f._id} value={f._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
-												{f.title}
-												{f.isPublished ? ' (published)' : ''}
+								<Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+									<FormControl size='small' sx={{ minWidth: 200, maxWidth: 400, flex: 1, backgroundColor: theme.bgColor?.common }}>
+										<InputLabel id='consultation-form-label' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Form</InputLabel>
+										<Select
+											labelId='consultation-form-label'
+											label='Form'
+											value={singleConsultationBeforeSave?.feedbackFormId ?? CONSULTATION_FORM_NONE}
+											onChange={(e: SelectChangeEvent) => {
+												setHasUnsavedChanges(true);
+												const v = e.target.value as string;
+												const isNone = v === CONSULTATION_FORM_NONE;
+												setSingleConsultationBeforeSave((prev) =>
+													prev
+														? {
+																...prev,
+																feedbackFormId: isNone ? undefined : v,
+																requireFormSubmission: isNone ? false : true,
+															}
+														: prev
+												);
+											}}
+											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+											disabled={formsLoading}
+										>
+											<MenuItem value={CONSULTATION_FORM_NONE} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+												None
 											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
+											{consultationFormOptions.map((f) => (
+												<MenuItem key={f._id} value={f._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+													{f.title}
+												</MenuItem>
+											))}
+										</Select>
+									</FormControl>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={Boolean(singleConsultationBeforeSave?.requireFormSubmission)}
+												onChange={(e) => {
+													setHasUnsavedChanges(true);
+													setSingleConsultationBeforeSave((prev) =>
+														prev ? { ...prev, requireFormSubmission: e.target.checked } : prev
+													);
+												}}
+												disabled={!singleConsultationBeforeSave?.feedbackFormId}
+												size='small'
+											/>
+										}
+										label={<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: !singleConsultationBeforeSave?.feedbackFormId ? 'gray' : 'inherit' }} >Require form submission</Typography>}
+									/>
+								</Box>
 							</Box>
 
 							<Box sx={{ display: 'flex', gap: '1rem', mb: '4rem' }}>

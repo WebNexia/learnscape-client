@@ -277,7 +277,8 @@ const AdminForms = () => {
 		setFormToEdit(null);
 	};
 
-	if (formsLoading && !displayForms) {
+	// Show skeleton on initial load when we have no data yet (displayForms can be [] so check length too)
+	if (formsLoading && (!displayForms || displayForms.length === 0)) {
 		return (
 			<DashboardPagesLayout pageName='All Forms' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={7} />

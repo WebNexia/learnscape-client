@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, Info, KeyboardBackspaceOutlined, Event } from '@mui/icons-material';
+import { Edit, Info, KeyboardBackspaceOutlined, Event, EventAvailable } from '@mui/icons-material';
 import { Consultation } from '../../interfaces/consultation';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { LoadingButton } from '@mui/lab';
@@ -125,17 +125,30 @@ const ConsultationPaper = ({
 						</Button>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
 							{!isMobileSize && (
-								<Tooltip title='Slots' placement='top' arrow>
-									<IconButton
-										size='small'
-										sx={{ color: theme.textColor?.common.main }}
-										onClick={() => {
-											if (!consultationId) return;
-											navigate(`/admin/consultation-slots/consultation/${consultationId}`);
-										}}>
-										<Event fontSize='small' />
-									</IconButton>
-								</Tooltip>
+								<>
+									<Tooltip title='Slots' placement='top' arrow>
+										<IconButton
+											size='small'
+											sx={{ color: theme.textColor?.common.main }}
+											onClick={() => {
+												if (!consultationId) return;
+												navigate(`/admin/consultation-slots/consultation/${consultationId}`);
+											}}>
+											<Event fontSize='small' />
+										</IconButton>
+									</Tooltip>
+									<Tooltip title='Appointments' placement='top' arrow>
+										<IconButton
+											size='small'
+											sx={{ color: theme.textColor?.common.main }}
+											onClick={() => {
+												if (!consultationId) return;
+												navigate(`/admin/consultation-appointments/consultation/${consultationId}`);
+											}}>
+											<EventAvailable fontSize='small' />
+										</IconButton>
+									</Tooltip>
+								</>
 							)}
 						</Box>
 					</Box>
@@ -144,6 +157,7 @@ const ConsultationPaper = ({
 							sx={{
 								display: 'flex',
 								alignItems: 'center',
+								gap: '0.25rem',
 								paddingLeft: '0.25rem',
 								mt: isSticky ? 0 : '0.5rem',
 							}}>
@@ -156,6 +170,17 @@ const ConsultationPaper = ({
 										navigate(`/admin/consultation-slots/consultation/${consultationId}`);
 									}}>
 									<Event fontSize='small' />
+								</IconButton>
+							</Tooltip>
+							<Tooltip title='Appointments' placement='top' arrow>
+								<IconButton
+									size='small'
+									sx={{ color: theme.textColor?.common.main }}
+									onClick={() => {
+										if (!consultationId) return;
+										navigate(`/admin/consultation-appointments/consultation/${consultationId}`);
+									}}>
+									<EventAvailable fontSize='small' />
 								</IconButton>
 							</Tooltip>
 						</Box>

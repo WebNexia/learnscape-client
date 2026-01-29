@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Outlet } from 'react-router-dom';
 import App from './App';
 import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
@@ -11,6 +11,8 @@ import LandingPageUpcomingPublicEventsContextProvider from './contexts/LandingPa
 import LandingPageLatestCoursesContextProvider from './contexts/LandingPageLatestCoursesContextProvider';
 import AllPublicCoursesContextProvider from './contexts/AllPublicCoursesContextProvider';
 import LandingPageResourcesContextProvider from './contexts/LandingPageResourcesContextProvider';
+import LandingPageConsultationsContextProvider from './contexts/LandingPageConsultationsContextProvider';
+import { ConsultationCartProvider } from './contexts/ConsultationCartContextProvider';
 import InquiriesContextProvider from './contexts/InquiriesContextProvider';
 import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContextProvider';
 import UsersContextProvider from './contexts/UsersContextProvider';
@@ -37,6 +39,8 @@ const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingPageResources = React.lazy(() => import('./pages/LandingPageResources'));
 const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
 const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
+const LandingPageConsultations = React.lazy(() => import('./pages/LandingPageConsultations'));
+const LandingPageConsultationCheckout = React.lazy(() => import('./pages/LandingPageConsultationCheckout'));
 const AboutUs = React.lazy(() => import('./pages/AboutUs'));
 const ContactUs = React.lazy(() => import('./pages/ContactUs'));
 const CookiePolicy = React.lazy(() => import('./pages/CookiePolicy'));
@@ -68,6 +72,7 @@ const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
 const AdminConsultations = React.lazy(() => import('./pages/AdminConsultations'));
 const AdminConsultationEditPage = React.lazy(() => import('./pages/AdminConsultationEditPage'));
 const AdminConsultationSlots = React.lazy(() => import('./pages/AdminConsultationSlots'));
+const AdminConsultationAppointments = React.lazy(() => import('./pages/AdminConsultationAppointments'));
 const Resources = React.lazy(() => import('./pages/Resources'));
 const ResourceItems = React.lazy(() => import('./pages/ResourceItems'));
 const AdminCheckoutsFeedback = React.lazy(() => import('./pages/AdminCheckoutsFeedback'));
@@ -287,6 +292,16 @@ export const router = createBrowserRouter([
 					<AdminRouteGuard>
 						<ConsultationsContextProvider>
 							<AdminConsultationSlots />
+						</ConsultationsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/consultation-appointments/consultation/:consultationId',
+				element: (
+					<AdminRouteGuard>
+						<ConsultationsContextProvider>
+							<AdminConsultationAppointments />
 						</ConsultationsContextProvider>
 					</AdminRouteGuard>
 				),

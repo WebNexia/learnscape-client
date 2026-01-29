@@ -253,7 +253,7 @@ const AdminCourseFeedbackForms = () => {
 		setFormToEdit(null);
 	};
 
-	if (formsLoading && !displayForms) {
+	if (formsLoading && (!displayForms || displayForms.length === 0)) {
 		return (
 			<DashboardPagesLayout pageName='Course Feedback Forms' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

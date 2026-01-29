@@ -29,6 +29,7 @@ export interface Consultation {
 	tags?: string[];
 	feedbackFormId?: string;
 	feedbackForm?: import('./feedbackForm').FeedbackForm; // Populated when present
+	requireFormSubmission?: boolean; // When true, booking flow requires form submission
 	meetingType?: 'video';
 	createdAt: string;
 	updatedAt: string;
@@ -61,6 +62,33 @@ export interface ConsultationSlot {
 		appointmentDate: string;
 		status: string;
 	} | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ConsultationAppointment {
+	_id: string;
+	consultationId: string | { _id: string; title?: string; duration?: number; description?: string; prices?: ConsultationPrice[] };
+	slotRef?: string | { _id: string; slotStart?: string; duration?: number };
+	appointmentDate: string;
+	duration: number;
+	status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+	guestName?: string;
+	guestEmail: string;
+	guestPhone?: string;
+	paymentRef?: string | { _id: string; amount?: number; currency?: string; status?: string; paymentId?: string };
+	paymentStatus?: string;
+	adminNotes?: string;
+	notesAddedAt?: string;
+	notesAddedBy?: string | { _id: string; firstName?: string; lastName?: string };
+	meetingType?: string;
+	zoomMeetingId?: string;
+	zoomJoinUrl?: string;
+	zoomStartUrl?: string;
+	zoomMeetingPassword?: string;
+	zoomMeetingNumber?: string;
+	assignedConsultantId: string | { _id: string; firstName?: string; lastName?: string; imageUrl?: string; email?: string };
+	orgId: string;
 	createdAt: string;
 	updatedAt: string;
 }

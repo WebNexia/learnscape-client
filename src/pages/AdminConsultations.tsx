@@ -289,28 +289,19 @@ const AdminConsultations = () => {
 		setSelectedConsultation(null);
 	};
 
-	// Format duration for display (used in table)
-	const formatDuration = (duration: number) => {
-		return `${duration} min`;
-	};
 
 	// Responsive column configuration
-	const getColumns = (isMobileSize: boolean) => {
-		return isMobileSize
-			? [
-					{ key: 'title', label: 'Title' },
-					{ key: 'isActive', label: 'Status' },
-					{ key: 'actions', label: 'Actions' },
-				]
-			: [
-					{ key: 'title', label: 'Title' },
-					{ key: 'duration', label: 'Duration' },
-					{ key: 'isActive', label: 'Status' },
-					{ key: 'actions', label: 'Actions' },
-				];
+	const getColumns = () => {
+		return [
+			{ key: 'title', label: 'Title' },
+			{ key: 'isActive', label: 'Status' },
+			{ key: 'actions', label: 'Actions' },
+		]
+
 	};
 
-	if (loading && !consultations) {
+	// Show skeleton on initial load when we have no data yet (consultations is [] so !consultations is false; use length)
+	if (loading && (!consultations || consultations.length === 0)) {
 		return (
 			<AdminPageErrorBoundary pageName='Consultations'>
 				<DashboardPagesLayout pageName='Consultations' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -446,7 +437,7 @@ const AdminConsultations = () => {
 							<TableBody>
 								{/* Spacer row to ensure header alignment */}
 								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-									{getColumns(isMobileSize).map((_, idx) => (
+									{getColumns().map((_, idx) => (
 										<TableCell key={idx} sx={{ padding: 0, border: 'none' }} />
 									))}
 								</TableRow>
@@ -455,7 +446,7 @@ const AdminConsultations = () => {
 								orderBy={orderBy as keyof Consultation}
 								order={order}
 								handleSort={(property: keyof Consultation) => handleSort(property as string)}
-								columns={getColumns(isMobileSize)}
+								columns={getColumns()}
 							/>
 							<TableBody>
 								{paginatedConsultations &&
@@ -463,7 +454,6 @@ const AdminConsultations = () => {
 										return (
 											<TableRow key={consultation._id} hover>
 												<CustomTableCell value={consultation?.title} />
-												{!isMobileSize && <CustomTableCell value={formatDuration(consultation.duration)} />}
 												<CustomTableCell value={consultation.isActive ? 'Active' : 'Inactive'} />
 
 												<TableCell
@@ -481,7 +471,7 @@ const AdminConsultations = () => {
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />}
 													/>
-												
+
 													{/* Show delete button only for owner */}
 													{(isOwner || isSuperAdmin) && (
 														<CustomActionBtn
@@ -523,7 +513,7 @@ const AdminConsultations = () => {
 																	The following will be preserved for historical records:
 																</Typography>
 																<Typography variant='body2' component='ul' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '0.5rem', pl: '1.5rem', color: 'info.main' }}>
-																	<li>All appointment records (including consultee data, dates, consultants, notes)</li>
+																	<li>All appointment records (including client data, dates, consultants, notes)</li>
 																	<li>All payment records (for accounting and audit purposes)</li>
 																</Typography>
 																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem', fontWeight: 'bold', color: 'error.main' }}>
