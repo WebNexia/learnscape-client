@@ -175,17 +175,24 @@ const AdminConsultationEditPage = () => {
 	}, [orgId]);
 
 
+	const feedbackFormIdString = (() => {
+		const fid = singleConsultationBeforeSave?.feedbackFormId;
+		if (!fid) return undefined;
+		if (typeof fid === 'string') return fid;
+		if (typeof fid === 'object' && fid !== null && '_id' in fid) return (fid as { _id: string })._id;
+		return undefined;
+	})();
+
 	const consultationFormOptions = useMemo(() => {
 		const list = orgForms.filter((f) => f.isPublished);
-		const currentId = singleConsultationBeforeSave?.feedbackFormId;
-		if (currentId && !list.some((f) => f._id === currentId)) {
-			const pop = singleConsultationBeforeSave?.feedbackForm;
-			if (pop && typeof pop === 'object' && pop.title) {
-				list.unshift({ _id: currentId, title: (pop as any).title, isPublished: (pop as any).isPublished } as FeedbackForm);
+		if (feedbackFormIdString && !list.some((f) => f._id === feedbackFormIdString)) {
+			const pop = singleConsultationBeforeSave?.feedbackForm ?? singleConsultationBeforeSave?.feedbackFormId;
+			if (pop && typeof pop === 'object' && pop !== null && 'title' in pop) {
+				list.unshift({ _id: feedbackFormIdString, title: (pop as any).title, isPublished: (pop as any).isPublished } as FeedbackForm);
 			}
 		}
 		return list;
-	}, [orgForms, singleConsultationBeforeSave?.feedbackFormId, singleConsultationBeforeSave?.feedbackForm]);
+	}, [orgForms, singleConsultationBeforeSave?.feedbackFormId, singleConsultationBeforeSave?.feedbackForm, feedbackFormIdString]);
 
 	const handlePublishing = async (): Promise<void> => {
 		if (consultationId !== undefined) {
@@ -262,8 +269,7 @@ const AdminConsultationEditPage = () => {
 				duration: singleConsultationBeforeSave.duration ?? 60,
 				prices,
 				coverImageUrl: singleConsultationBeforeSave.coverImageUrl?.trim() || '',
-				tags: tags.filter((tag) => tag.trim() !== ''),
-				feedbackFormId: singleConsultationBeforeSave.feedbackFormId || null,
+				feedbackFormId: feedbackFormIdString ?? null,
 				requireFormSubmission: Boolean(singleConsultationBeforeSave.requireFormSubmission),
 			};
 
@@ -517,7 +523,7 @@ const AdminConsultationEditPage = () => {
 										<Select
 											labelId='consultation-form-label'
 											label='Form'
-											value={singleConsultationBeforeSave?.feedbackFormId ?? CONSULTATION_FORM_NONE}
+											value={feedbackFormIdString ?? CONSULTATION_FORM_NONE}
 											onChange={(e: SelectChangeEvent) => {
 												setHasUnsavedChanges(true);
 												const v = e.target.value as string;

@@ -51,8 +51,8 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
 
-	// Check if we're on the resources page only
-	const isResourcesPage = location.pathname === '/resources';
+	// Check if we're on the resources page (LP or legacy path)
+	const isResourcesPage = location.pathname === '/resources' || location.pathname === '/landing-page-resources';
 
 	// State for pagination
 	const [currentPage, setCurrentPage] = useState(1);

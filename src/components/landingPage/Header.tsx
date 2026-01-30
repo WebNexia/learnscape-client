@@ -1,10 +1,12 @@
-import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, Badge } from '@mui/material';
 import theme from '../../themes';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
+import { useConsultationCart } from '../../contexts/ConsultationCartContextProvider';
 import logo from '../../assets/logo.png';
-import { Menu } from '@mui/icons-material';
+import { Menu, ShoppingCart } from '@mui/icons-material';
 import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
 const Header = () => {
@@ -15,6 +17,9 @@ const Header = () => {
 	const navigate = useNavigate();
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 	const location = useLocation();
+	const { count: documentCartCount } = useDocumentCart();
+	const { count: consultationCartCount } = useConsultationCart();
+	const cartCount = documentCartCount + consultationCartCount;
 
 	const navItems = [
 		{
@@ -39,6 +44,14 @@ const Header = () => {
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
 			isActive: location.pathname === '/landing-page-resources',
+		},
+		{
+			label: 'Danışmanlık',
+			action: () => {
+				navigate('/landing-page-consultations');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+			isActive: location.pathname === '/landing-page-consultations',
 		},
 		{
 			label: 'İletişim',
@@ -117,30 +130,82 @@ const Header = () => {
 							{navItems
 								?.filter((item) => item.label !== 'Ana Sayfa')
 								?.map((item, index) => (
-									<Box key={index} onClick={item.action} sx={{ ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem' }}>
+									<Box
+										key={index}
+										onClick={item.action}
+										sx={{
+											ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem',
+											position: 'relative',
+											cursor: 'pointer',
+											'&::after': {
+												content: '""',
+												position: 'absolute',
+												left: '50%',
+												bottom: -4,
+												height: 2,
+												width: item.isActive ? '100%' : 0,
+												background: item.isActive
+													? 'linear-gradient(90deg, transparent, #ff7d55, #FF6B3D, #ff7d55, transparent)'
+													: 'linear-gradient(90deg, transparent, #ff7d55 20%, #FF6B3D 50%, #ff7d55 80%, transparent)',
+												borderRadius: 1,
+												transform: 'translateX(-50%)',
+												transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+											},
+											'&:hover::after': {
+												width: '100%',
+											},
+										}}
+									>
 										<Typography
 											sx={{
-												'fontFamily': 'Varela Round',
-												'color': item.isActive ? '#ff7d55' : '#0A1A2F',
-												'textDecoration': item.isActive ? 'underline' : 'none',
-												'textUnderlineOffset': '4px',
-												'fontWeight': item.isActive ? 600 : 400,
-												'&:hover': {
-													color: '#fff',
-													textDecoration: 'underline',
-													textUnderlineOffset: '4px',
-												},
-												'cursor': 'pointer',
-												'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
-												'transition': 'all 0.3s ease',
-											}}>
+												fontFamily: 'Varela Round',
+												color: item.isActive ? '#ff7d55' : '#0A1A2F',
+												textDecoration: 'none',
+												fontWeight: item.isActive ? 600 : 400,
+												cursor: 'pointer',
+												fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
+												transition: 'color 0.25s ease',
+											}}
+										>
 											{item.label}
 										</Typography>
 									</Box>
 								))}
 						</Box>
 					)}
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1, alignItems: 'center', gap: 1 }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1, alignItems: 'center', gap: 2.5 }}>
+						<Badge
+							badgeContent={cartCount}
+							color="primary"
+							invisible={cartCount === 0}
+							anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+							sx={{
+								'& .MuiBadge-badge': {
+									fontSize: isMobileSizeSmall ? '0.6rem' : '0.7rem',
+									width: isMobileSizeSmall ? 2 : 10,
+									height: isMobileSizeSmall ? 16 : 18,
+									padding: 0,
+									borderRadius: '50%',
+									top: isMobileSizeSmall ? 4 : 6,
+									right: 6,
+									transition: 'background-color 0.3s',
+								},
+								'&:hover .MuiBadge-badge': {
+									backgroundColor: '#ff7d55',
+								},
+							}}
+						>
+							<IconButton
+								onClick={() => navigate('/landing-page-cart')}
+								sx={{
+									color: theme.textColor?.primary?.main ?? '#0A1A2F',
+									'&:hover': { backgroundColor: 'transparent' },
+								}}
+								aria-label="Sepet"
+							>
+								<ShoppingCart fontSize={isMobileSizeSmall ? 'small' : 'large'} sx={{ fontSize: isMobileSizeSmall ? '1.6rem' : '1.75rem' }} />
+							</IconButton>
+						</Badge>
 						<Button
 							sx={{
 								'fontFamily': 'Varela Round',

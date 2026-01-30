@@ -1,0 +1,672 @@
+import { Box, Typography, Button, Card, CardContent, Alert, Snackbar, IconButton, Table, TableBody, TableRow, TableCell, Autocomplete, TextField } from '@mui/material';
+import { ShoppingCart, Close, Description, Assignment, ContactPhone, ReceiptLong, Lock, } from '@mui/icons-material';
+import LandingPageLayout from '../components/landingPage/LandingPageLayout';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import { useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useConsultationCart } from '../contexts/ConsultationCartContextProvider';
+import { useDocumentCart } from '../contexts/DocumentCartContextProvider';
+import { consultationsService } from '../services/consultationsService';
+import { feedbackFormsService } from '../services/feedbackFormsService';
+import CartPaymentDialogWrapper from '../components/landingPage/CartPaymentDialogWrapper';
+import type { CartPaymentItem } from '../components/landingPage/CartPaymentDialog';
+import { setCurrencySymbol } from '../utils/setCurrencySymbol';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale/tr';
+import LondonBg from '../assets/london-bg.jpg';
+import axios from 'axios';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { useGeoLocation } from '../hooks/useGeoLocation';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import theme from '../themes';
+import { COUNTRY_LIST } from '../data/countries';
+
+const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+function parseAmount(amount: string): number {
+	if (!amount || amount.toLowerCase() === 'free') return 0;
+	const n = parseFloat(amount.replace(/,/g, '.'));
+	return Number.isFinite(n) ? n : 0;
+}
+
+function getCartTotals(
+	documentItems: Array<{ amount: string; currency: string }>,
+	consultationItems: Array<{ price: { amount: string; currency: string } }>
+): Record<string, number> {
+	const totals: Record<string, number> = {};
+	documentItems.forEach((item) => {
+		const c = (item.currency || 'usd').toLowerCase();
+		totals[c] = (totals[c] ?? 0) + parseAmount(item.amount);
+	});
+	consultationItems.forEach((item) => {
+		const c = (item.price?.currency || 'usd').toLowerCase();
+		totals[c] = (totals[c] ?? 0) + parseAmount(item.price?.amount ?? '0');
+	});
+	return totals;
+}
+
+export default function LandingPageCart() {
+	const navigate = useNavigate();
+	const location = useGeoLocation();
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	useEffect(() => {
+		if (location?.countryCode) {
+			const code = location.countryCode.toUpperCase();
+			const found = COUNTRY_LIST.some((c) => c.code === code);
+			setCheckoutGuestCountry(found ? code : 'TR');
+		}
+	}, [location?.countryCode]);
+
+	const { items: consultationItems, removeItem: removeConsultation, clearCart: clearConsultationCart } = useConsultationCart();
+	const { items: documentItems, removeItem: removeDocument, clearCart: clearDocumentCart } = useDocumentCart();
+
+	const [checkoutGuestFirstName, setCheckoutGuestFirstName] = useState('');
+	const [checkoutGuestLastName, setCheckoutGuestLastName] = useState('');
+	const [checkoutGuestEmail, setCheckoutGuestEmail] = useState('');
+	const [checkoutGuestCountry, setCheckoutGuestCountry] = useState('TR');
+	const [checkoutGuestPhone, setCheckoutGuestPhone] = useState('');
+
+	const [cartPaymentOpen, setCartPaymentOpen] = useState(false);
+	const [paymentQueue, setPaymentQueue] = useState<CartPaymentItem[]>([]);
+	const [payAllLoading, setPayAllLoading] = useState(false);
+
+	const [error, setError] = useState<string | null>(null);
+	const [successSnack, setSuccessSnack] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+
+	const handlePayAll = async () => {
+		setError(null);
+		const firstName = checkoutGuestFirstName.trim();
+		const lastName = checkoutGuestLastName.trim();
+		const email = checkoutGuestEmail.trim();
+		const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+		if (!firstName) {
+			setError('Lütfen adınızı girin.');
+			return;
+		}
+		if (!lastName) {
+			setError('Lütfen soyadınızı girin.');
+			return;
+		}
+		if (!email) {
+			setError('Lütfen e-posta adresinizi girin.');
+			return;
+		}
+		if (!emailValid) {
+			setError('Geçerli bir e-posta adresi girin.');
+			return;
+		}
+		setPayAllLoading(true);
+		try {
+			const queue: CartPaymentItem[] = [];
+			const guestName = `${firstName} ${lastName}`.trim();
+
+			for (const item of documentItems) {
+				const res = await axios.post(`${base_url}/payments`, {
+					amount: parseAmount(item.amount),
+					currency: item.currency,
+					documentId: item.documentId,
+					orgId: item.orgId,
+					email,
+					firstName,
+					lastName,
+					paymentType: 'document',
+				});
+				const { clientSecret, paymentIntentId } = res.data;
+				queue.push({
+					type: 'document',
+					clientSecret,
+					paymentIntentId,
+					capturePayload: { documentId: item.documentId, orgId: item.orgId, firstName, lastName, email, paymentType: 'document' },
+				});
+			}
+
+			for (const item of consultationItems) {
+				const { clientSecret, paymentIntentId, appointmentId } = await consultationsService.createAppointment(item.consultationId, {
+					slotId: item.slotId,
+					consultantId: item.consultantId,
+					guestName,
+					guestEmail: email,
+					guestPhone: checkoutGuestPhone.trim() || undefined,
+					price: item.price,
+				});
+				queue.push({
+					type: 'consultation',
+					clientSecret,
+					paymentIntentId,
+					capturePayload: { paymentType: 'consultation', firstName, lastName, email },
+					formSubmissionId: item.formSubmissionId,
+					appointmentId,
+				});
+			}
+
+			setPaymentQueue(queue);
+			setCartPaymentOpen(true);
+		} catch (e: unknown) {
+			const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+			setError(msg || 'Ödeme hazırlanırken bir hata oluştu.');
+		} finally {
+			setPayAllLoading(false);
+		}
+	};
+
+	const handleCartPaymentSuccess = async () => {
+		// Link consultation form submissions to appointments (guest name/email + appointmentId)
+		const firstName = checkoutGuestFirstName.trim();
+		const lastName = checkoutGuestLastName.trim();
+		const email = checkoutGuestEmail.trim();
+		for (const item of paymentQueue) {
+			if (item.type === 'consultation' && item.formSubmissionId && item.appointmentId) {
+				try {
+					await feedbackFormsService.linkSubmissionToAppointment(item.formSubmissionId, {
+						firstName,
+						lastName,
+						userEmail: email,
+						consultationAppointmentId: item.appointmentId,
+					});
+				} catch (_e) {
+					// Non-blocking: submission stays unlinked; admin can still see form responses
+				}
+			}
+		}
+		clearDocumentCart();
+		clearConsultationCart();
+		setCartPaymentOpen(false);
+		setPaymentQueue([]);
+		setSuccessMessage('Ödemeniz başarıyla tamamlandı. Kaynaklar ve randevu onayları e-posta ile gönderilecektir.');
+		setSuccessSnack(true);
+	};
+
+	const totalCount = consultationItems.length + documentItems.length;
+	const isEmpty = totalCount === 0 && !cartPaymentOpen;
+	const cartTotals = getCartTotals(documentItems, consultationItems);
+	const totalCurrencies = Object.entries(cartTotals).filter(([, v]) => v > 0);
+
+	if (isEmpty) {
+		return (
+			<Box sx={{ minHeight: '100vh', background: `url(${LondonBg}) center/cover`, position: 'relative' }}>
+				<Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.92)', zIndex: 0 }} />
+				<Box sx={{ position: 'relative', zIndex: 1 }}>
+					<LandingPageLayout>
+						<Box sx={{ py: 10, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+							<Box
+								sx={{
+									width: 80,
+									height: 80,
+									borderRadius: '50%',
+									bgcolor: 'grey.100',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									mb: 3,
+									mt: isMobileSize ? '10vh' : '13vh',
+								}}
+							>
+								<ShoppingCart sx={{ color: 'text.secondary', fontSize: 40 }} />
+							</Box>
+							<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '1.5rem', color: '#0A1A2F', mb: 1 }}>
+								Sepetiniz boş
+							</Typography>
+							<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.95rem', mb: 3 }}>
+								Kaynak veya danışmanlık ekleyerek devam edin.
+							</Typography>
+							<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+								<Button
+									variant="contained"
+									onClick={() => navigate('/landing-page-resources')}
+									sx={{
+										fontFamily: 'Varela Round',
+										textTransform: 'capitalize',
+										fontWeight: 600,
+										px: 3,
+										py: 1.25,
+										borderRadius: 2,
+										background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+										boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
+										'&:hover': { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)', boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)' },
+									}}
+								>
+									Kaynaklara Git
+								</Button>
+								<Button
+									variant="outlined"
+									onClick={() => navigate('/landing-page-consultations')}
+									sx={{
+										fontFamily: 'Varela Round',
+										textTransform: 'capitalize',
+										fontWeight: 500,
+										px: 3,
+										py: 1.25,
+										borderRadius: 2,
+										borderColor: '#6366f1',
+										color: '#6366f1',
+										'&:hover': { borderColor: '#4f46e5', bgcolor: 'rgba(99, 102, 241, 0.04)' },
+									}}
+								>
+									Danışmanlıklara Git
+								</Button>
+							</Box>
+						</Box>
+					</LandingPageLayout>
+				</Box>
+			</Box>
+		);
+	}
+
+	return (
+		<Box sx={{ minHeight: '100vh', background: `url(${LondonBg}) center/cover`, position: 'relative' }}>
+			<Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.92)', zIndex: 0 }} />
+			<Box sx={{ position: 'relative', zIndex: 1 }}>
+				<LandingPageLayout>
+					<Box sx={{ maxWidth: 1100, mx: 'auto', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
+						{/* Page title */}
+						<Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5, mt: isMobileSize ? '10vh' : '13vh' }}>
+							<Box
+								sx={{
+									width: 44,
+									height: 44,
+									borderRadius: 2,
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+									boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
+								}}
+							>
+								<ShoppingCart sx={{ color: 'white', fontSize: 26 }} />
+							</Box>
+							<Box>
+								<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1.5rem', color: '#0A1A2F', lineHeight: 1.2 }}>
+									Sepet & Ödeme
+								</Typography>
+								<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.85rem', color: 'text.secondary' }}>
+									{totalCount} {totalCount === 1 ? 'ürün' : 'ürün'}
+								</Typography>
+							</Box>
+						</Box>
+
+
+						{error && (
+							<Alert severity="error" sx={{ mb: 3, fontFamily: 'Varela Round', borderRadius: 2 }} onClose={() => setError(null)}>
+								{error}
+							</Alert>
+						)}
+
+						{/* Two-column layout on md+: Contact left, Cart + Summary right */}
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: { xs: 'column', md: 'row' },
+								gap: { xs: 3, md: 4 },
+								alignItems: 'stretch',
+							}}
+						>
+							{/* Left: İletişim bilgileri */}
+							<Box sx={{ flex: 2, order: { xs: 1, md: 1 } }}>
+								<Card
+									sx={{
+										borderRadius: 3,
+										boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+										border: '1px solid rgba(91, 141, 239, 0.12)',
+										overflow: 'hidden',
+										height: '100%',
+									}}
+								>
+									<Box
+										sx={{
+											px: 2.5,
+											py: 2,
+											background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.06) 100%)',
+											borderBottom: '1px solid rgba(91, 141, 239, 0.1)',
+										}}
+									>
+										<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', display: 'flex', alignItems: 'center', gap: 1 }}>
+											<ContactPhone sx={{ color: '#6366f1', fontSize: 22 }} /> İletişim bilgileriniz
+										</Typography>
+										<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
+											Kaynak veya danışmanlık ödemesi için kullanılacaktır.
+										</Typography>
+									</Box>
+									<CardContent sx={{ p: 2.5 }}>
+										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+											<Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+												<CustomTextField
+													label="Ad"
+													value={checkoutGuestFirstName}
+													onChange={(e) => setCheckoutGuestFirstName(e.target.value)}
+													fullWidth
+													required
+													placeholder="Adınız"
+												/>
+												<CustomTextField
+													label="Soyad"
+													value={checkoutGuestLastName}
+													onChange={(e) => setCheckoutGuestLastName(e.target.value)}
+													fullWidth
+													required
+													placeholder="Soyadınız"
+												/>
+											</Box>
+											<CustomTextField
+												label="E-posta"
+												type="email"
+												value={checkoutGuestEmail}
+												onChange={(e) => setCheckoutGuestEmail(e.target.value)}
+												fullWidth
+												required
+												placeholder="ornek@email.com"
+											/>
+											<Box sx={{ '& .react-tel-input': { fontFamily: 'Varela Round' }, '& .form-control': { width: '100% !important', fontFamily: 'Varela Round' } }}>
+												<PhoneInput
+													country={location?.countryCode?.toLowerCase() || 'tr'}
+													enableSearch
+													searchPlaceholder="Ülke arayın..."
+													searchNotFound="Ülke bulunamadı"
+													enableAreaCodes={false}
+													countryCodeEditable={false}
+													specialLabel=""
+													value={checkoutGuestPhone}
+													onChange={(phoneNumber) => {
+														const formatted = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+														setCheckoutGuestPhone(formatted);
+													}}
+													inputProps={{
+														placeholder: 'Telefon (isteğe bağlı)',
+														style: {
+															width: '100%',
+															height: '2.5rem',
+															fontFamily: 'Varela Round',
+															fontSize: '0.9rem',
+															borderRadius: '0.5rem',
+															border: '1px solid rgba(0, 0, 0, 0.23)',
+														},
+													}}
+													containerStyle={{ marginBottom: '0.5rem', color: theme.textColor?.secondary?.main, fontFamily: 'Varela Round' }}
+													buttonStyle={{ borderRadius: '0.35rem 0 0 0.35rem', border: '1px solid rgba(0, 0, 0, 0.23)', backgroundColor: 'transparent' }}
+													dropdownStyle={{ borderRadius: '0.35rem', border: '1px solid rgba(0, 0, 0, 0.23)', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', fontFamily: 'Varela Round' }}
+													searchStyle={{ width: '100%', height: '2rem', fontFamily: 'Varela Round', fontSize: '0.85rem', borderRadius: '0.5rem', border: '1px solid rgba(0, 0, 0, 0.23)', margin: '0.5rem 0' }}
+												/>
+											</Box>
+											<Autocomplete
+												options={COUNTRY_LIST}
+												value={COUNTRY_LIST.find((c) => c.code === checkoutGuestCountry) ?? null}
+												onChange={(_, newValue) => setCheckoutGuestCountry(newValue?.code ?? '')}
+												getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+												isOptionEqualToValue={(option, value) => option.code === value?.code}
+												renderInput={(params) => (
+													<TextField
+														{...params}
+														label="Ülke"
+														required
+														size="small"
+														sx={{
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiOutlinedInput-root': { fontFamily: 'Varela Round', borderRadius: '0.5rem' },
+														}}
+													/>
+												)}
+												ListboxProps={{ sx: { maxHeight: 320, fontFamily: 'Varela Round' } }}
+												filterOptions={(options, { inputValue }) =>
+													options.filter((opt) => opt.label.toLowerCase().includes(inputValue.toLowerCase()))
+												}
+											/>
+										</Box>
+									</CardContent>
+								</Card>
+							</Box>
+
+							{/* Right: Cart items (docs + cons separate) + Summary – column scrolls, summary stays in view */}
+							<Box sx={{ flex: 2.5, minWidth: 0, order: { xs: 2, md: 2 }, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: { md: 'calc(100vh - 200px)' }, minHeight: 0 }}>
+								{totalCount > 0 && (
+									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+										{/* Kaynaklar (docs) – separate section, scrollable */}
+										{documentItems.length > 0 && (
+											<Card
+												sx={{
+													borderRadius: 3,
+													boxShadow: '0 12px 40px rgba(10, 26, 47, 0.08), 0 2px 8px rgba(10, 26, 47, 0.04)',
+													border: '1px solid rgba(91, 141, 239, 0.14)',
+													overflow: 'hidden',
+													flexShrink: 0,
+												}}
+											>
+												<Box
+													sx={{
+														px: 2.5,
+														py: 1.5,
+														flexShrink: 0,
+														display: 'flex',
+														alignItems: 'center',
+														gap: 1.5,
+														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+													}}
+												>
+													<Box sx={{ width: 36, height: 36, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+														<Description sx={{ color: 'white', fontSize: 20 }} />
+													</Box>
+													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
+														Kaynaklar
+													</Typography>
+													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.8rem', color: 'text.secondary' }}>
+														{documentItems.length} {documentItems.length === 1 ? 'ürün' : 'ürün'}
+													</Typography>
+												</Box>
+												<Table size="small">
+													<TableBody>
+														{documentItems.map((item) => (
+															<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1.5 }}>
+																	<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+																		<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+																			<Description sx={{ color: '#6366f1', fontSize: 20 }} />
+																		</Box>
+																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.9rem', color: '#0A1A2F' }}>{item.title}</Typography>
+																	</Box>
+																</TableCell>
+																<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: '0.95rem' }} align="right">
+																	{setCurrencySymbol(item.currency)}{item.amount}
+																</TableCell>
+																<TableCell padding="none" sx={{ width: 44 }}>
+																	<IconButton size="small" onClick={() => removeDocument(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
+																		<Close fontSize="small" />
+																	</IconButton>
+																</TableCell>
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											</Card>
+										)}
+										{/* Danışmanlıklar (cons) – separate section */}
+										{consultationItems.length > 0 && (
+											<Card
+												sx={{
+													borderRadius: 3,
+													boxShadow: '0 12px 40px rgba(10, 26, 47, 0.08), 0 2px 8px rgba(10, 26, 47, 0.04)',
+													border: '1px solid rgba(91, 141, 239, 0.14)',
+													overflow: 'hidden',
+													flexShrink: 0,
+												}}
+											>
+												<Box
+													sx={{
+														px: 2.5,
+														py: 1.5,
+														flexShrink: 0,
+														display: 'flex',
+														alignItems: 'center',
+														gap: 1.5,
+														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+													}}
+												>
+													<Box sx={{ width: 36, height: 36, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+														<Assignment sx={{ color: 'white', fontSize: 20 }} />
+													</Box>
+													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
+														Danışmanlıklar
+													</Typography>
+													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.8rem', color: 'text.secondary' }}>
+														{consultationItems.length} {consultationItems.length === 1 ? 'ürün' : 'ürün'}
+													</Typography>
+												</Box>
+												<Table size="small">
+													<TableBody>
+														{consultationItems.map((item) => (
+															<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1.5 }}>
+																	<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+																		<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+																			<Assignment sx={{ color: '#6366f1', fontSize: 20 }} />
+																		</Box>
+																		<Box>
+																			<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.9rem' }}>{item.consultationTitle}</Typography>
+																			<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.75rem', mt: 0.25 }}>
+																				{format(new Date(item.slotStart), 'd MMM yyyy, HH:mm', { locale: tr })} · {item.consultantName}
+																			</Typography>
+																		</Box>
+																	</Box>
+																</TableCell>
+																<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: '0.95rem' }} align="right">
+																	{item.price.amount === '0' ? 'Ücretsiz' : `${setCurrencySymbol(item.price.currency)}${item.price.amount}`}
+																</TableCell>
+																<TableCell padding="none" sx={{ width: 44 }}>
+																	<IconButton size="small" onClick={() => removeConsultation(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
+																		<Close fontSize="small" />
+																	</IconButton>
+																</TableCell>
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											</Card>
+										)}
+
+										{/* Summary + Pay – fixed at bottom of column */}
+										<Card
+											sx={{
+												flexShrink: 0,
+												borderRadius: 3,
+												boxShadow: '0 12px 40px rgba(10, 26, 47, 0.08), 0 2px 8px rgba(10, 26, 47, 0.04)',
+												border: '1px solid rgba(255, 107, 61, 0.2)',
+												background: 'linear-gradient(165deg, #ffffff 0%, rgba(255, 247, 237, 0.5) 100%)',
+												overflow: 'hidden',
+												transition: 'box-shadow 0.25s ease',
+												'&:hover': { boxShadow: '0 16px 48px rgba(255, 107, 61, 0.12), 0 4px 12px rgba(10, 26, 47, 0.06)' },
+											}}
+										>
+											<CardContent sx={{ py: 3, px: 2.5 }}>
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+													<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(255, 107, 61, 0.15) 0%, rgba(251, 146, 60, 0.1) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 107, 61, 0.25)' }}>
+														<ReceiptLong sx={{ color: '#FF6B3D', fontSize: 22 }} />
+													</Box>
+													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', letterSpacing: '-0.02em' }}>
+														Sepet özeti
+													</Typography>
+												</Box>
+												<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2.5 }}>
+													<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+														<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.9rem' }}>
+															{totalCount} {totalCount === 1 ? 'ürün' : 'ürün'}
+														</Typography>
+													</Box>
+													{totalCurrencies.length > 0 ? (
+														totalCurrencies.map(([currency, amount]) => (
+															<Box
+																key={currency}
+																sx={{
+																	display: 'flex',
+																	justifyContent: 'space-between',
+																	alignItems: 'center',
+																	py: 1.5,
+																	px: 2,
+																	borderRadius: 2,
+																	background: 'linear-gradient(135deg, rgba(255, 107, 61, 0.06) 0%, rgba(251, 146, 60, 0.04) 100%)',
+																	border: '1px solid rgba(255, 107, 61, 0.12)',
+																}}
+															>
+																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.95rem' }}>
+																	Toplam ({currency.toUpperCase()})
+																</Typography>
+																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: isMobileSize ? '1rem' : '1.25rem', color: '#0A1A2F', letterSpacing: '-0.02em' }}>
+																	{amount === 0 ? 'Ücretsiz' : `${setCurrencySymbol(currency)}${amount.toFixed(2)}`}
+																</Typography>
+															</Box>
+														))
+													) : (
+														<Box sx={{ py: 1.5, px: 2, borderRadius: 2, background: 'linear-gradient(135deg, rgba(255, 107, 61, 0.06) 0%, rgba(251, 146, 60, 0.04) 100%)', border: '1px solid rgba(255, 107, 61, 0.12)' }}>
+															<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: '1.25rem', color: '#0A1A2F' }}>
+																Ücretsiz
+															</Typography>
+														</Box>
+													)}
+												</Box>
+												<Button
+													variant="outlined"
+													fullWidth
+													onClick={handlePayAll}
+													disabled={payAllLoading}
+													startIcon={!payAllLoading ? <Lock sx={{ fontSize: 18 }} /> : null}
+													sx={{
+														border: 'none',
+														color: 'white',
+														borderRadius: { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+														py: 1.5,
+														fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+														fontFamily: 'Varela Round',
+														fontWeight: 800,
+														letterSpacing: '0.03em',
+														textTransform: 'capitalize',
+														textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+														background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+														'&:hover': {
+															border: 'none',
+															background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+															transform: 'translateY(-3px)',
+															boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+														},
+														'&.Mui-disabled': { background: 'grey.300', color: 'grey.500', border: 'none' },
+														transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+													}}
+												>
+													{payAllLoading ? 'Hazırlanıyor...' : 'Ödemeyi Tamamla'}
+												</Button>
+												<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.75rem', color: 'text.secondary', textAlign: 'center', mt: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+													<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme
+												</Typography>
+											</CardContent>
+										</Card>
+									</Box>
+								)}
+							</Box>
+						</Box>
+					</Box>
+				</LandingPageLayout>
+			</Box>
+
+			<CartPaymentDialogWrapper
+				open={cartPaymentOpen}
+				onClose={() => { setCartPaymentOpen(false); setPaymentQueue([]); }}
+				queue={paymentQueue}
+				firstName={checkoutGuestFirstName.trim()}
+				lastName={checkoutGuestLastName.trim()}
+				email={checkoutGuestEmail.trim()}
+				onSuccess={handleCartPaymentSuccess}
+			/>
+
+			<Snackbar
+				open={successSnack}
+				autoHideDuration={4000}
+				onClose={() => setSuccessSnack(false)}
+				message={successMessage}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+				ContentProps={{ sx: { fontFamily: 'Varela Round' } }}
+			/>
+		</Box>
+	);
+}

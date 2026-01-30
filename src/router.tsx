@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
 import App from './App';
 import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
@@ -12,7 +12,6 @@ import LandingPageLatestCoursesContextProvider from './contexts/LandingPageLates
 import AllPublicCoursesContextProvider from './contexts/AllPublicCoursesContextProvider';
 import LandingPageResourcesContextProvider from './contexts/LandingPageResourcesContextProvider';
 import LandingPageConsultationsContextProvider from './contexts/LandingPageConsultationsContextProvider';
-import { ConsultationCartProvider } from './contexts/ConsultationCartContextProvider';
 import InquiriesContextProvider from './contexts/InquiriesContextProvider';
 import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContextProvider';
 import UsersContextProvider from './contexts/UsersContextProvider';
@@ -40,7 +39,7 @@ const LandingPageResources = React.lazy(() => import('./pages/LandingPageResourc
 const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
 const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
 const LandingPageConsultations = React.lazy(() => import('./pages/LandingPageConsultations'));
-const LandingPageConsultationCheckout = React.lazy(() => import('./pages/LandingPageConsultationCheckout'));
+const LandingPageCart = React.lazy(() => import('./pages/LandingPageCart'));
 const AboutUs = React.lazy(() => import('./pages/AboutUs'));
 const ContactUs = React.lazy(() => import('./pages/ContactUs'));
 const CookiePolicy = React.lazy(() => import('./pages/CookiePolicy'));
@@ -139,6 +138,25 @@ export const router = createBrowserRouter([
 						<LandingPageCourses />
 					</AllPublicCoursesContextProvider>
 				),
+			},
+			{
+				path: 'landing-page-consultations',
+				element: <Outlet />,
+				children: [
+					{
+						index: true,
+						element: (
+							<LandingPageConsultationsContextProvider>
+								<LandingPageConsultations />
+							</LandingPageConsultationsContextProvider>
+						),
+					},
+					{ path: 'checkout', element: <Navigate to="/landing-page-cart" replace /> },
+				],
+			},
+			{
+				path: 'landing-page-cart',
+				element: <LandingPageCart />,
 			},
 			{ path: 'auth', element: <AuthWrapper /> },
 			{ path: 'reset-password', element: <PasswordResetPage /> },

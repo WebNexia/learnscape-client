@@ -192,7 +192,7 @@ const LandingPageResources = () => {
 									width: '100%',
 									backgroundColor: 'transparent',
 								}}>
-								<Box sx={{ width: '85%', mt: '0.5rem' }}>
+								<Box sx={{ width: '85%', mt: '0.5rem', position: 'relative' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}

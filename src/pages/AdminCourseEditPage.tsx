@@ -1071,7 +1071,7 @@ const AdminCourseEditPage = () => {
 														clonedFromTitle: '',
 														usedInLessons: [],
 														usedInCourses: courseId ? [courseId] : [],
-														samplePageImageUrl: '',
+														samplePageImageUrls: [],
 														isOnLandingPage: false,
 														isArchived: false,
 														pageCount: 0,

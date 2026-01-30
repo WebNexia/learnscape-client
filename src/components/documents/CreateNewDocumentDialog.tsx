@@ -4,6 +4,7 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import HandleDocUploadURL from '../forms/uploadImageVideoDocument/HandleDocUploadURL';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
+import SamplePageImagesUpload from '../forms/uploadImageVideoDocument/SamplePageImagesUpload';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction, useContext } from 'react';
@@ -35,6 +36,7 @@ interface CreateNewDocumentDialogProps {
 	TRY: Price;
 	setTRY: (price: Price) => void;
 	isCreating?: boolean;
+	onDeleteSamplePageImagesFromStorage?: (urls: string[]) => void | Promise<void>;
 }
 
 const CreateNewDocumentDialog = ({
@@ -47,8 +49,6 @@ const CreateNewDocumentDialog = ({
 	setEnterDocUrl,
 	enterDocImageUrl,
 	setEnterDocImageUrl,
-	enterSamplePageImageUrl,
-	setEnterSamplePageImageUrl,
 	fileUploaded,
 	setFileUploaded,
 	isFree,
@@ -62,6 +62,7 @@ const CreateNewDocumentDialog = ({
 	TRY,
 	setTRY,
 	isCreating = false,
+	onDeleteSamplePageImagesFromStorage,
 }: CreateNewDocumentDialogProps) => {
 	const { isInstructor } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -131,47 +132,26 @@ const CreateNewDocumentDialog = ({
 							/>
 						</Box>
 					</Box>
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: isMobileSize ? 'column' : 'row',
-							margin: isMobileSize ? '1rem 0' : '1rem 1rem 1rem 6rem',
-							justifyContent: 'space-between',
-							alignItems: isMobileSize ? 'center' : 'flex-start',
-							flex: 1,
-						}}>
-						<Box sx={{ display: 'flex', flex: 1, width: isMobileSize ? '100%' : undefined }}>
-							<HandleImageUploadURL
-								label='Sample Page Image'
-								onImageUploadLogic={(url) => {
+					{singleDocument?.isOnLandingPage && (
+						<Box
+							sx={{
+								margin: isMobileSize ? '1rem 0' : '1rem 1rem 1rem 6rem',
+								flex: 1,
+								width: isMobileSize ? '100%' : undefined,
+							}}>
+							<SamplePageImagesUpload
+								urls={singleDocument?.samplePageImageUrls ?? []}
+								onUrlsChange={(urls) => {
 									if (singleDocument) {
-										setSingleDocument({ ...singleDocument, samplePageImageUrl: url });
+										setSingleDocument({ ...singleDocument, samplePageImageUrls: urls });
 									}
 								}}
-								onChangeImgUrl={(e) => {
-									if (singleDocument) {
-										setSingleDocument({ ...singleDocument, samplePageImageUrl: e.target.value });
-									}
-								}}
-								imageUrlValue={singleDocument?.samplePageImageUrl || ''}
-								imageFolderName='DocumentImages'
-								enterImageUrl={enterSamplePageImageUrl}
-								setEnterImageUrl={setEnterSamplePageImageUrl}
+								imageFolderName="DocumentImages"
+								label="Sample Page Images"
+								onRemoveUrl={(url) => onDeleteSamplePageImagesFromStorage?.([url])}
 							/>
 						</Box>
-						<Box sx={{ ml: isMobileSize ? '0rem' : '3rem' }}>
-							<ImageThumbnail
-								imgSource={singleDocument?.samplePageImageUrl || 'https://placehold.co/400x300/e2e8f0/64748b?text=Sample+Page'}
-								removeImage={() => {
-									if (singleDocument) {
-										setSingleDocument({ ...singleDocument, samplePageImageUrl: '' });
-									}
-								}}
-								boxStyle={{ width: isMobileSize ? '7rem' : '8rem', height: isMobileSize ? '7rem' : '8rem' }}
-								imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
-							/>
-						</Box>
-					</Box>
+					)}
 				</Box>
 				<Box
 					sx={{

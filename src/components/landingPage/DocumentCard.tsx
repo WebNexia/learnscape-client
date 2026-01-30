@@ -1,26 +1,43 @@
-import { Box, Button, Card, CardContent, CardMedia, Typography, useTheme, Dialog, DialogContent, IconButton, Snackbar, Alert } from '@mui/material';
+import { Box, Button, Card, CardContent, CardMedia, Typography, useTheme, Dialog, DialogContent, IconButton } from '@mui/material';
 import { Document } from '../../interfaces/document';
 import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-import DocumentPaymentDialogWrapper from './DocumentPaymentDialogWrapper';
-import { Download, ShoppingCart } from '@mui/icons-material';
+import { Download, AddShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
 import { decodeHtmlEntities } from '../../utils/utilText';
+import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 
 interface DocumentCardProps {
-	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrl' | 'documentUrl' | 'orgId' | 'pageCount'>;
+	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrls' | 'documentUrl' | 'orgId' | 'pageCount'>;
 	userCurrency: string;
 	fromHomePage?: boolean;
+	onAddedToCart?: () => void;
 }
 
-const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProps) => {
+const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardProps) => {
 	const theme = useTheme();
+	const { items: documentCartItems, addItem: addToDocumentCart } = useDocumentCart();
+	const isInCart = documentCartItems.some((item) => item.documentId === document._id);
 	const [openSample, setOpenSample] = useState(false);
-	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-	const [showSuccess, setShowSuccess] = useState(false);
-	const [showEmailWarning, setShowEmailWarning] = useState(false);
+	const [sampleIndex, setSampleIndex] = useState(0);
+	const sampleUrls = document.samplePageImageUrls ?? [];
+	const hasSamplePages = sampleUrls.length > 0;
+	const currentSampleUrl = sampleUrls[sampleIndex];
 	const price = document.prices?.find((p) => p.currency === userCurrency);
 	const isFree = !price || price.amount === '0' || price.amount === 'Free';
+
+	const handleAddToCart = () => {
+		if (isFree || !price || !document.orgId) return;
+		addToDocumentCart({
+			documentId: document._id,
+			orgId: document.orgId,
+			title: document.name || 'Kaynak',
+			amount: price.amount,
+			currency: price.currency,
+			imageUrl: document.imageUrl,
+		});
+		onAddedToCart?.();
+	};
 
 	const handleOpenSample = () => {
 		setOpenSample(true);
@@ -196,7 +213,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 							{document.pageCount} sayfa
 						</Typography>
 
-						<Box sx={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+						<Box sx={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
 							<Button
 								variant='outlined'
 								fullWidth
@@ -213,36 +230,47 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									'textTransform': 'none',
 									'height': '1.85rem',
 								}}>
-								Örnek Sayfa
+								{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
 							</Button>
-							<Button
-								variant='text'
-								fullWidth
-								onClick={() => {
-									if (isFree) {
-										window.open(document.documentUrl, '_blank');
-									} else {
-										setIsPaymentDialogOpen(true);
-									}
-								}}
-								sx={{
-									'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
-									'color': 'white',
-									'&:hover': {
-										background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
-									},
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-									'fontFamily': "'Varela Round', sans-serif",
-									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-									'padding': '0.5rem',
-									'textTransform': 'none',
-									'px': '0',
-									'height': '1.85rem',
-								}}
-								endIcon={isFree ? <Download /> : <ShoppingCart />}>
-								{isFree ? 'İndir' : 'Satın Al'}
-							</Button>
+							{isFree ? (
+								<Button
+									variant='text'
+									fullWidth
+									onClick={() => window.open(document.documentUrl, '_blank')}
+									sx={{
+										'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+										'color': 'white',
+										'&:hover': {
+											background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+											boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+										},
+										'fontFamily': "'Varela Round', sans-serif",
+										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
+										'textTransform': 'none',
+										'height': '1.85rem',
+									}}
+									endIcon={<Download />}>
+									İndir
+								</Button>
+							) : (
+								<Button
+									variant='text'
+									fullWidth
+									disabled={isInCart}
+									onClick={handleAddToCart}
+									sx={{
+										'background': isInCart ? 'grey.300' : 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+										'color': 'white',
+										'&:hover': !isInCart ? { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
+										'fontFamily': "'Varela Round', sans-serif",
+										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
+										'textTransform': 'none',
+										'height': '1.85rem',
+									}}
+									endIcon={isInCart ? <Check /> : <AddShoppingCart />}>
+									{isInCart ? 'Eklendi' : 'Sepete Ekle'}
+								</Button>
+							)}
 						</Box>
 					</CardContent>
 				</Card>
@@ -251,14 +279,17 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 			{/* Sample Page Dialog */}
 			<Dialog
 				open={openSample}
-				onClose={handleCloseSample}
+				onClose={() => {
+					setSampleIndex(0);
+					handleCloseSample();
+				}}
 				maxWidth={false}
 				PaperProps={{
 					sx: {
 						borderRadius: '16px',
 						backgroundColor: 'transparent',
-						width: !document.samplePageImageUrl ? '30rem' : 'fit-content',
-						height: !document.samplePageImageUrl ? '60vh' : 'fit-content',
+						width: !hasSamplePages ? '30rem' : 'fit-content',
+						height: !hasSamplePages ? '60vh' : 'fit-content',
 						maxWidth: '80vw',
 						maxHeight: '80vh',
 						objectFit: 'contain',
@@ -270,10 +301,13 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 						position: 'relative',
 						padding: 0,
 						height: 'auto',
-						width: !document?.samplePageImageUrl ? '100%' : { xs: '80vw', sm: '50vw', md: '25vw', lg: '30vw' },
+						width: !hasSamplePages ? '100%' : { xs: '80vw', sm: '50vw', md: '25vw', lg: '30vw' },
 					}}>
 					<IconButton
-						onClick={handleCloseSample}
+						onClick={() => {
+							setSampleIndex(0);
+							handleCloseSample();
+						}}
 						sx={{
 							'position': 'absolute',
 							'right': 8,
@@ -287,25 +321,75 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 						}}>
 						<CloseIcon fontSize='small' />
 					</IconButton>
-					{document.samplePageImageUrl ? (
+					{hasSamplePages ? (
 						<Box
 							sx={{
 								width: '100%',
 								height: '100%',
+								position: 'relative',
 								display: 'flex',
+								flexDirection: 'column',
 								alignItems: 'center',
 								justifyContent: 'center',
 								overflow: 'hidden',
 							}}>
+							{/* Current image */}
 							<img
-								src={document.samplePageImageUrl}
-								alt='Sample Page'
+								src={currentSampleUrl}
+								alt={`Sample Page ${sampleIndex + 1}`}
 								style={{
 									maxWidth: '100%',
-									maxHeight: '100%',
+									maxHeight: '70vh',
 									objectFit: 'contain',
 								}}
 							/>
+							{/* Slider: prev/next arrows when multiple pages */}
+							{sampleUrls.length > 1 && (
+								<>
+									<IconButton
+										onClick={() => setSampleIndex((i) => Math.max(0, i - 1))}
+										disabled={sampleIndex === 0}
+										sx={{
+											position: 'absolute',
+											left: 8,
+											top: '50%',
+											transform: 'translateY(-50%)',
+											zIndex: 1,
+											backgroundColor: 'rgba(255,255,255,0.9)',
+											boxShadow: 1,
+											'&:hover': { backgroundColor: 'white' },
+											'&.Mui-disabled': { backgroundColor: 'rgba(255,255,255,0.5)' },
+										}}
+										size="small"
+									>
+										<ChevronLeft />
+									</IconButton>
+									<IconButton
+										onClick={() => setSampleIndex((i) => Math.min(sampleUrls.length - 1, i + 1))}
+										disabled={sampleIndex === sampleUrls.length - 1}
+										sx={{
+											position: 'absolute',
+											right: 8,
+											top: '50%',
+											transform: 'translateY(-50%)',
+											zIndex: 1,
+											backgroundColor: 'rgba(255,255,255,0.9)',
+											boxShadow: 1,
+											'&:hover': { backgroundColor: 'white' },
+											'&.Mui-disabled': { backgroundColor: 'rgba(255,255,255,0.5)' },
+										}}
+										size="small"
+									>
+										<ChevronRight />
+									</IconButton>
+									{/* Counter / dots */}
+									<Box sx={{ display: 'flex', gap: 0.5, py: 1, alignItems: 'center', justifyContent: 'center' }}>
+										<Typography variant="caption" color="text.secondary">
+											{sampleIndex + 1} / {sampleUrls.length}
+										</Typography>
+									</Box>
+								</>
+							)}
 						</Box>
 					) : (
 						<Box
@@ -321,60 +405,6 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 					)}
 				</DialogContent>
 			</Dialog>
-
-			<DocumentPaymentDialogWrapper
-				document={document}
-				isPaymentDialogOpen={isPaymentDialogOpen}
-				setIsPaymentDialogOpen={setIsPaymentDialogOpen}
-				userCurrency={userCurrency}
-				fromHomePage={fromHomePage}
-				showSuccess={showSuccess}
-				setShowSuccess={setShowSuccess}
-				showEmailWarning={showEmailWarning}
-				setShowEmailWarning={setShowEmailWarning}
-			/>
-
-			{/* Success Snackbar */}
-			<Snackbar
-				open={showSuccess}
-				autoHideDuration={3500}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => setShowSuccess(false)}
-				sx={{ mt: '6rem' }}>
-				<Alert
-					severity='success'
-					variant='filled'
-					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						backgroundColor: 'rgba(147, 51, 234, 1)',
-						color: theme.palette.common.white,
-					}}>
-					Ödeme başarıyla tamamlandı! Satın aldığınız kaynağa email'inizden ulaşabilirsiniz.
-				</Alert>
-			</Snackbar>
-
-			{/* Email Warning Snackbar */}
-			<Snackbar
-				open={showEmailWarning}
-				autoHideDuration={5000}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => setShowEmailWarning(false)}
-				sx={{ mt: '6rem' }}>
-				<Alert
-					severity='warning'
-					variant='filled'
-					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						color: '#fff',
-						backgroundColor: '#FFA726',
-					}}>
-					Ödeme başarılı, ancak email gönderilemedi. Lütfen destek için iletişime geçin.
-				</Alert>
-			</Snackbar>
 		</>
 	);
 };

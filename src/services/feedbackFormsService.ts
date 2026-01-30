@@ -87,6 +87,27 @@ export const feedbackFormsService = {
 		return response.data.data;
 	},
 
+	/** Link a consultation-booking form submission to an appointment after payment (set guest name/email). */
+	linkSubmissionToAppointment: async (
+		submissionId: string,
+		payload: {
+			firstName: string;
+			lastName: string;
+			userEmail: string;
+			consultationAppointmentId: string;
+		}
+	): Promise<void> => {
+		await axiosInstance.patch(
+			`${base_url}/feedback-forms/public/submissions/${submissionId}/link-appointment`,
+			{
+				firstName: payload.firstName,
+				lastName: payload.lastName,
+				userEmail: payload.userEmail,
+				consultationAppointmentId: payload.consultationAppointmentId,
+			}
+		);
+	},
+
 	exportSubmissions: async (formId: string): Promise<Blob> => {
 		const response = await axiosInstance.get(`${base_url}/feedback-forms/${formId}/submissions/export`, {
 			responseType: 'blob',

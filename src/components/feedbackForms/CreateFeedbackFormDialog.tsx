@@ -101,10 +101,9 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setSubmissionDeadline(isoToDateTimeLocal(formToEdit.submissionDeadline));
 			setShowResultsToSubmitters(formToEdit.showResultsToSubmitters ?? false);
 			setUseForConsultation(formToEdit.useForConsultation ?? false);
-			// When use for consultation, anonymous and multiple submissions must be false
 			if (formToEdit.useForConsultation) {
-				setAllowAnonymous(false);
-				setAllowMultipleSubmissions(false);
+				setAllowAnonymous(true);
+				setAllowMultipleSubmissions(true);
 			} else {
 				setAllowAnonymous(formToEdit.allowAnonymous ?? true);
 				setAllowMultipleSubmissions(formToEdit.allowMultipleSubmissions ?? false);
@@ -194,8 +193,8 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 					...field,
 					order: index,
 				})),
-				allowAnonymous: useForConsultation ? false : allowAnonymous,
-				allowMultipleSubmissions: useForConsultation ? false : allowMultipleSubmissions,
+				allowAnonymous: useForConsultation ? true : allowAnonymous,
+				allowMultipleSubmissions: useForConsultation ? true : allowMultipleSubmissions,
 				submissionDeadline: submissionDeadline || undefined,
 				showResultsToSubmitters,
 				useForConsultation,
@@ -512,24 +511,30 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 						Form Settings
 					</Typography>
 
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+						<Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={useForConsultation ? true : allowAnonymous}
+										disabled={useForConsultation}
+										onChange={(e) => setAllowAnonymous(e.target.checked)}
+										size='small'
+									/>
+								}
+								label='Allow Anonymous Submissions'
+								sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
+							/>
+							{useForConsultation && (
+								<Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem', ml: 0.5 }}>
+									(Required for booking consultations)
+								</Typography>
+							)}
+						</Box>
 						<FormControlLabel
 							control={
 								<Checkbox
-									checked={useForConsultation ? false : allowAnonymous}
-									disabled={useForConsultation}
-									onChange={(e) => setAllowAnonymous(e.target.checked)}
-									size='small'
-								/>
-							}
-							label='Allow Anonymous Submissions'
-							sx={{ 'marginBottom': '0.5rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
-						/>
-
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={useForConsultation ? false : allowMultipleSubmissions}
+									checked={useForConsultation ? true : allowMultipleSubmissions}
 									disabled={useForConsultation}
 									onChange={(e) => setAllowMultipleSubmissions(e.target.checked)}
 									size='small'
@@ -541,7 +546,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 					</Box>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: '0.5rem' }}>
 						<Box>
-							<Tooltip title='When checked, this form will appear in the Consultation form dropdown when editing a consultation. Consultation forms require identified, single submissions.' placement='top' arrow>
+							<Tooltip title='When checked, this form will appear in the Consultation form dropdown. Anonymous and multiple submissions are enabled so guests can submit from the booking flow and re-book or retry.' placement='top' arrow>
 								<FormControlLabel
 									control={
 										<Checkbox
@@ -550,8 +555,8 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 												const checked = e.target.checked;
 												setUseForConsultation(checked);
 												if (checked) {
-													setAllowAnonymous(false);
-													setAllowMultipleSubmissions(false);
+													setAllowAnonymous(true);
+													setAllowMultipleSubmissions(true);
 												}
 											}}
 											size='small'
