@@ -22,6 +22,7 @@ import {
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
+	VideoCall,
 } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../../hooks/useAuth';
@@ -94,9 +95,9 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 				</Box>
 				<Box
 					sx={{
-						flexGrow: 1, // Allow the box to grow and take available space
-						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'hidden' : 'auto', // Disable scrolling for learner on mobile
-						width: '100%', // Make sure it takes full width
+						flexGrow: 1,
+						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'hidden' : 'auto',
+						width: '100%',
 						overflowX: 'hidden',
 						height: isMobilePortrait && user?.role === Roles.USER ? 'auto' : '50vh',
 					}}>
@@ -154,7 +155,8 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 											selectedPage !== PageName.ADMIN_LESSONS &&
 											!window.location.pathname?.includes('/admin/lesson-edit') &&
 											selectedPage !== PageName.ADMIN_QUESTIONS &&
-											selectedPage !== PageName.ADMIN_DOCUMENTS
+											selectedPage !== PageName.ADMIN_DOCUMENTS &&
+											selectedPage !== PageName.ADMIN_QUIZ_SUBMISSIONS
 										}
 										subMenuItems={[
 											{
@@ -162,8 +164,9 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 												IconName: LibraryBooks,
 												path: '/admin/courses',
 												isActive:
-													selectedPage === PageName.ADMIN_COURSES ||
-													(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms')),
+													(selectedPage === PageName.ADMIN_COURSES ||
+														(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms'))) &&
+													selectedPage !== PageName.ADMIN_QUIZ_SUBMISSIONS,
 											},
 											{
 												btnText: 'Lessons',
@@ -183,17 +186,25 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 												path: '/admin/documents',
 												isActive: selectedPage === PageName.ADMIN_DOCUMENTS,
 											},
+											{
+												btnText: 'Submissions',
+												IconName: LibraryAddCheck,
+												path: '/admin/submissions',
+												isActive: selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS,
+											},
 										]}
 										onNavigate={(path) => {
-											const pageName = path.includes('courses')
-												? PageName.ADMIN_COURSES
-												: path.includes('lessons')
-													? PageName.ADMIN_LESSONS
-													: path.includes('questions')
-														? PageName.ADMIN_QUESTIONS
-														: path.includes('documents')
-															? PageName.ADMIN_DOCUMENTS
-															: '';
+											const pageName = path.includes('submissions')
+												? PageName.ADMIN_QUIZ_SUBMISSIONS
+												: path.includes('courses')
+													? PageName.ADMIN_COURSES
+													: path.includes('lessons')
+														? PageName.ADMIN_LESSONS
+														: path.includes('questions')
+															? PageName.ADMIN_QUESTIONS
+															: path.includes('documents')
+																? PageName.ADMIN_DOCUMENTS
+																: '';
 											navigateWithPage(pageName, path);
 										}}
 									/>
@@ -221,24 +232,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 											active={selectedPage === PageName.ADMIN_DOCUMENTS}
 										/>
 									)}
-									<SidebarBtn
-										btnText='Forms'
-										IconName={Ballot}
-										onClick={() => navigateWithPage(PageName.ADMIN_FORMS, `/admin/forms`)}
-										active={selectedPage === PageName.ADMIN_FORMS && !window.location.pathname?.includes('/admin/course')}
-									/>
-									<SidebarBtn
-										btnText='Submissions'
-										IconName={LibraryAddCheck}
-										onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions`)}
-										active={selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS}
-									/>
-									{canAccessPayments && (
+									{selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS && (
 										<SidebarBtn
-											btnText='Payments'
-											IconName={CreditCard}
-											onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
-											active={selectedPage === PageName.ADMIN_PAYMENTS}
+											btnText='Submissions'
+											IconName={LibraryAddCheck}
+											onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions`)}
+											active={selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS}
 										/>
 									)}
 									<SidebarBtn
@@ -266,6 +265,26 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										onClick={() => navigateWithPage('Resources', `/admin/resources`)}
 										active={window.location.pathname?.includes('/admin/resources')}
 									/>
+									<SidebarBtn
+										btnText='Forms'
+										IconName={Ballot}
+										onClick={() => navigateWithPage(PageName.ADMIN_FORMS, `/admin/forms`)}
+										active={selectedPage === PageName.ADMIN_FORMS && !window.location.pathname?.includes('/admin/course')}
+									/>
+									<SidebarBtn
+										btnText='Consultancy'
+										IconName={VideoCall}
+										onClick={() => navigateWithPage(PageName.ADMIN_CONSULTATIONS, `/admin/consultations`)}
+										active={selectedPage === PageName.ADMIN_CONSULTATIONS || window.location.pathname?.includes('/admin/consultations')}
+									/>
+									{canAccessPayments && (
+										<SidebarBtn
+											btnText='Payments'
+											IconName={CreditCard}
+											onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
+											active={selectedPage === PageName.ADMIN_PAYMENTS}
+										/>
+									)}
 								</>
 							)}
 							{user?.role === Roles.USER && (

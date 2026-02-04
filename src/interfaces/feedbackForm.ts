@@ -15,6 +15,7 @@ export interface FeedbackFormField {
 export interface FeedbackForm {
 	_id: string;
 	courseId?: string;
+	consultationId?: string;
 	orgId: string;
 	createdBy: string;
 	updatedBy?: string;
@@ -40,6 +41,7 @@ export interface FeedbackForm {
 	allowMultipleSubmissions?: boolean;
 	submissionDeadline?: string; // Optional deadline
 	showResultsToSubmitters?: boolean;
+	useForConsultation?: boolean; // If true, form appears in Consultation form (optional) dropdown
 
 	// Metadata
 	submissionCount?: number; // Cached count

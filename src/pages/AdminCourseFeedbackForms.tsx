@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography, Snackbar, Alert
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useMemo, useState, useRef } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FeedbackFormsContext } from '../contexts/FeedbackFormsContextProvider';
 import { useAuth } from '../hooks/useAuth';
@@ -38,7 +38,6 @@ const AdminCourseFeedbackForms = () => {
 		unpublishForm,
 		fetchForms: fetchFormsFromContext,
 		fetchMoreForms,
-		formsPageNumber,
 		setFormsPageNumber,
 		totalItems,
 		loadedPages,
@@ -117,7 +116,7 @@ const AdminCourseFeedbackForms = () => {
 	}, [displayForms, formsCurrentPage, filterValue, searchValue]);
 
 	// Responsive column configuration
-	const getColumns = (isMobileSize: boolean) => {
+	const getColumns = () => {
 		return [
 			{ key: 'title', label: 'Title' },
 			{ key: 'status', label: 'Status' },
@@ -184,7 +183,7 @@ const AdminCourseFeedbackForms = () => {
 		}
 	};
 
-	const handlePublishToggle = async (form: FeedbackForm, index: number) => {
+	const handlePublishToggle = async (form: FeedbackForm) => {
 		try {
 			if (form.isPublished) {
 				await unpublishForm(form._id);
@@ -195,7 +194,6 @@ const AdminCourseFeedbackForms = () => {
 			}
 			setSuccessSnackbarOpen(true);
 
-			// Context will automatically refetch after mutation (query invalidation handles both general and course-specific queries)
 		} catch (error: any) {
 			setErrorMessage(error?.message || 'Failed to update form status');
 			setErrorSnackbarOpen(true);
@@ -255,7 +253,7 @@ const AdminCourseFeedbackForms = () => {
 		setFormToEdit(null);
 	};
 
-	if (formsLoading && !displayForms) {
+	if (formsLoading && (!displayForms || displayForms.length === 0)) {
 		return (
 			<DashboardPagesLayout pageName='Course Feedback Forms' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />
@@ -274,6 +272,7 @@ const AdminCourseFeedbackForms = () => {
 						{ value: 'published', label: 'Published' },
 						{ value: 'unpublished', label: 'Unpublished' },
 						{ value: 'active', label: 'Active' },
+						{ value: 'consultation', label: 'Consultancy' },
 					]}
 					filterPlaceholder='Filter Forms'
 					searchValue={searchValue}
@@ -291,12 +290,12 @@ const AdminCourseFeedbackForms = () => {
 					actionButtons={[
 						...(courseId
 							? [
-									{
-										label: 'Back',
-										onClick: () => navigate(`/admin/course-edit/course/${courseId}`),
-										startIcon: isMobileSize ? undefined : <ArrowBack fontSize='small' />,
-									},
-								]
+								{
+									label: 'Back',
+									onClick: () => navigate(`/admin/course-edit/course/${courseId}`),
+									startIcon: isMobileSize ? undefined : <ArrowBack fontSize='small' />,
+								},
+							]
 							: []),
 						{
 							label: isMobileSize ? 'Templates' : 'Form Templates',
@@ -415,12 +414,11 @@ const AdminCourseFeedbackForms = () => {
 							orderBy={orderBy as keyof FeedbackForm}
 							order={order}
 							handleSort={handleSort}
-							columns={getColumns(isMobileSize)}
+							columns={getColumns()}
 						/>
 						<TableBody>
 							{paginatedForms &&
 								paginatedForms.map((form: FeedbackForm, index: number) => {
-									const deleteModalOpen = isDeleteModalOpen[index] || false;
 									return (
 										<TableRow key={form._id} hover>
 											<CustomTableCell value={truncateText(form.title, isMobileSize ? 20 : 40)} />
@@ -428,7 +426,7 @@ const AdminCourseFeedbackForms = () => {
 												<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
 													<Switch
 														checked={form.isPublished || false}
-														onChange={() => handlePublishToggle(form, index)}
+														onChange={() => handlePublishToggle(form)}
 														size='small'
 														color='primary'
 													/>
@@ -567,23 +565,7 @@ const AdminCourseFeedbackForms = () => {
 								<CustomDialogActions
 									onCancel={() => closeDeleteModal(index)}
 									deleteBtn={true}
-									onDelete={async () => {
-										try {
-											await deleteForm(form._id);
-											setSuccessMessage('Form deleted successfully');
-											setSuccessSnackbarOpen(true);
-											closeDeleteModal(index);
-
-											// If search is active, remove from search results
-											if (isSearchActive) {
-												removeFromSearchResults(form._id);
-											}
-											// Context will automatically refetch after mutation
-										} catch (error: any) {
-											setErrorMessage(error?.message || 'Failed to delete form');
-											setErrorSnackbarOpen(true);
-										}
-									}}
+									onDelete={handleDelete}
 									actionSx={{ mb: '0.5rem' }}
 								/>
 							</CustomDialog>

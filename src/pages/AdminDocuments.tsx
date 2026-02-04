@@ -134,6 +134,8 @@ const AdminDocuments = () => {
 	const [isDocumentCreateModalOpen, setIsDocumentCreateModalOpen] = useState<boolean>(false);
 
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
+	/** Sample page URLs when dialog was opened (for cleanup on close without save) */
+	const initialSamplePageImageUrlsRef = useRef<string[]>([]);
 
 	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
 	const [enterDocImageUrl, setEnterDocImageUrl] = useState<boolean>(true);
@@ -190,7 +192,24 @@ const AdminDocuments = () => {
 		);
 	}
 
-	const resetForm = () => {
+	const deleteSamplePageImagesFromStorage = async (urls: string[]) => {
+		const firebaseUrls = urls.filter((u) => typeof u === 'string' && u.trim() && u.includes('firebasestorage.googleapis.com'));
+		if (firebaseUrls.length === 0) return;
+		try {
+			await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}/storage/delete-sample-urls`, { urls: firebaseUrls });
+		} catch (err) {
+			console.error('Failed to delete orphaned sample page images:', err);
+		}
+	};
+
+	const resetForm = (opts?: { skipOrphanDelete?: boolean }) => {
+		// Delete sample page images only when closing the CREATE dialog without saving (not when closing the edit dialog)
+		if (isDocumentCreateModalOpen && !opts?.skipOrphanDelete) {
+			const urlsToDelete = singleDocument?.samplePageImageUrls ?? [];
+			if (urlsToDelete.length > 0) {
+				deleteSamplePageImagesFromStorage(urlsToDelete);
+			}
+		}
 		setIsDocumentCreateModalOpen(false);
 		setEnterDocUrl(true);
 		setEnterDocImageUrl(true);
@@ -229,12 +248,15 @@ const AdminDocuments = () => {
 				}
 			}
 
-			// Validate sample page image URL if provided
-			if (singleDocument?.samplePageImageUrl?.trim()) {
-				const sampleImageValidation = await validateImageUrl(singleDocument.samplePageImageUrl.trim());
-				if (!sampleImageValidation.isValid) {
-					errorMessages.push(`Sample Page Image URL: ${sampleImageValidation.error}`);
-					hasUrlErrors = true;
+			// Validate sample page image URLs if provided
+			const sampleUrls = singleDocument?.samplePageImageUrls ?? [];
+			for (let i = 0; i < sampleUrls.length; i++) {
+				if (sampleUrls[i]?.trim()) {
+					const sampleImageValidation = await validateImageUrl(sampleUrls[i].trim());
+					if (!sampleImageValidation.isValid) {
+						errorMessages.push(`Sample Page Image ${i + 1}: ${sampleImageValidation.error}`);
+						hasUrlErrors = true;
+					}
 				}
 			}
 
@@ -258,7 +280,7 @@ const AdminDocuments = () => {
 				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
-				samplePageImageUrl: singleDocument?.samplePageImageUrl,
+				samplePageImageUrls: singleDocument?.samplePageImageUrls ?? [],
 				isOnLandingPage: singleDocument?.isOnLandingPage,
 				prices,
 				description: singleDocument?.description,
@@ -274,7 +296,7 @@ const AdminDocuments = () => {
 				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
-				samplePageImageUrl: singleDocument?.samplePageImageUrl,
+				samplePageImageUrls: singleDocument?.samplePageImageUrls ?? [],
 				isOnLandingPage: singleDocument?.isOnLandingPage,
 				prices,
 				description: singleDocument?.description,
@@ -287,7 +309,7 @@ const AdminDocuments = () => {
 				updatedByImageUrl: documentResponseData.updatedByImageUrl,
 				updatedByName: documentResponseData.updatedByName,
 				updatedByRole: documentResponseData.updatedByRole,
-			} as Document);
+			} as unknown as Document);
 
 			return true;
 		} catch (error) {
@@ -324,12 +346,15 @@ const AdminDocuments = () => {
 					}
 				}
 
-				// Validate sample page image URL if provided
-				if (singleDocument.samplePageImageUrl?.trim()) {
-					const sampleImageValidation = await validateImageUrl(singleDocument.samplePageImageUrl.trim());
-					if (!sampleImageValidation.isValid) {
-						errorMessages.push(`Sample Page Image URL: ${sampleImageValidation.error}`);
-						hasUrlErrors = true;
+				// Validate sample page image URLs if provided
+				const sampleUrlsUpdate = singleDocument.samplePageImageUrls ?? [];
+				for (let i = 0; i < sampleUrlsUpdate.length; i++) {
+					if (sampleUrlsUpdate[i]?.trim()) {
+						const sampleImageValidation = await validateImageUrl(sampleUrlsUpdate[i].trim());
+						if (!sampleImageValidation.isValid) {
+							errorMessages.push(`Sample Page Image ${i + 1}: ${sampleImageValidation.error}`);
+							hasUrlErrors = true;
+						}
 					}
 				}
 
@@ -357,7 +382,7 @@ const AdminDocuments = () => {
 					name: singleDocument.name.trim(),
 					documentUrl: singleDocument.documentUrl,
 					imageUrl: singleDocument.imageUrl || '',
-					samplePageImageUrl: singleDocument.samplePageImageUrl || '',
+					samplePageImageUrls: singleDocument.samplePageImageUrls ?? [],
 					isOnLandingPage: singleDocument.isOnLandingPage || false,
 					prices,
 					description: singleDocument.description || '',
@@ -459,6 +484,7 @@ const AdminDocuments = () => {
 		if (documentIndex === -1) return;
 
 		const documentToEdit = paginatedDocuments[documentIndex];
+		initialSamplePageImageUrlsRef.current = documentToEdit.samplePageImageUrls ?? [];
 		setSingleDocument(documentToEdit);
 
 		const updatedState = [...editDocumentModalOpen];
@@ -485,7 +511,16 @@ const AdminDocuments = () => {
 		setEnterSamplePageImageUrl(true);
 	};
 
-	const closeDocumentEditModal = (index: number) => {
+	const closeDocumentEditModal = (index: number, opts?: { skipOrphanDelete?: boolean }) => {
+		// Delete sample page images uploaded this session only when user closes WITHOUT saving
+		if (!opts?.skipOrphanDelete) {
+			const currentUrls = singleDocument?.samplePageImageUrls ?? [];
+			const initialUrls = initialSamplePageImageUrlsRef.current ?? [];
+			const urlsToDelete = currentUrls.filter((u) => !initialUrls.includes(u));
+			if (urlsToDelete.length > 0) {
+				deleteSamplePageImagesFromStorage(urlsToDelete);
+			}
+		}
 		const newEditModalOpen = [...editDocumentModalOpen];
 		newEditModalOpen[index] = false;
 		setEditDocumentModalOpen(newEditModalOpen);
@@ -537,6 +572,7 @@ const AdminDocuments = () => {
 							{
 								label: isMobileSize ? 'New' : 'New Document',
 								onClick: () => {
+									initialSamplePageImageUrlsRef.current = [];
 									setIsDocumentCreateModalOpen(true);
 									setSingleDocument({
 										name: '',
@@ -544,7 +580,7 @@ const AdminDocuments = () => {
 										userId: user?._id,
 										orgId,
 										imageUrl: '',
-										samplePageImageUrl: '',
+										samplePageImageUrls: [],
 										isOnLandingPage: false,
 										prices: [
 											{ currency: 'gbp', amount: '0' },
@@ -554,7 +590,7 @@ const AdminDocuments = () => {
 										],
 										description: '',
 										pageCount: 0,
-									} as Document);
+									} as unknown as Document);
 									setIsFree(false);
 									setGBP({ currency: 'gbp', amount: '0' });
 									setUSD({ currency: 'usd', amount: '0' });
@@ -577,7 +613,7 @@ const AdminDocuments = () => {
 							e.preventDefault();
 							const success = await createDocument();
 							if (success) {
-								resetForm();
+								resetForm({ skipOrphanDelete: true });
 							}
 						}}
 						singleDocument={singleDocument}
@@ -601,6 +637,7 @@ const AdminDocuments = () => {
 						TRY={TRY}
 						setTRY={setTRY}
 						isCreating={isCreating}
+						onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
 					/>
 
 					<Box
@@ -770,7 +807,7 @@ const AdminDocuments = () => {
 															if (singleDocument?.name && singleDocument.name.trim()) {
 																const success = await handleDocUpdate();
 																if (success) {
-																	closeDocumentEditModal(fullIndex);
+																	closeDocumentEditModal(fullIndex, { skipOrphanDelete: true });
 																	resetForm();
 																}
 															}
@@ -796,6 +833,7 @@ const AdminDocuments = () => {
 														TRY={TRY}
 														setTRY={setTRY}
 														isUpdating={isUpdating}
+														onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
 													/>
 
 													<CustomActionBtn

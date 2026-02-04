@@ -19,13 +19,14 @@ import { useFilterSearch } from '../../../hooks/useFilterSearch';
 import FilterSearchRow from '../FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import { useAuth } from '../../../hooks/useAuth';
+import AdminTableSkeleton from '../skeleton/AdminTableSkeleton';
 
 const AdminPaymentsTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { payments, totalItems, loadedPages, fetchMorePayments, enablePaymentsFetch, setPaymentsPageNumber } = useContext(PaymentsContext);
+	const { payments, loading: paymentsLoading, totalItems, loadedPages, fetchMorePayments, enablePaymentsFetch, setPaymentsPageNumber } = useContext(PaymentsContext);
 	const { courses } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -92,6 +93,11 @@ const AdminPaymentsTab = () => {
 	useEffect(() => {
 		enablePaymentsFetch();
 	}, [enablePaymentsFetch]);
+
+	// Show skeleton on initial load when we have no data yet
+	if (paymentsLoading && (!payments || payments.length === 0)) {
+		return <AdminTableSkeleton rows={8} columns={6} />;
+	}
 
 	const handleViewPayment = (payment: Payment) => {
 		setSelectedPayment(payment);

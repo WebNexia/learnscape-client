@@ -1,4 +1,4 @@
-import { Alert, Box, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useState, useEffect } from 'react';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
@@ -42,6 +42,7 @@ const Settings = () => {
 	const [phone, setPhone] = useState<string>(user?.phone || '');
 
 	const [email, setEmail] = useState<string>(user?.email || '');
+	const [marketingEmailConsent, setMarketingEmailConsent] = useState<boolean>(user?.marketingEmailConsent ?? false);
 
 	const [currentPassword, setCurrentPassword] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
@@ -69,6 +70,11 @@ const Settings = () => {
 	const [emailToUpdate, setEmailToUpdate] = useState<string | null>(null);
 	const [dialogPassword, setDialogPassword] = useState('');
 	const [dialogError, setDialogError] = useState<string | undefined>(undefined);
+
+	// Sync marketing consent from user when user loads
+	useEffect(() => {
+		setMarketingEmailConsent(user?.marketingEmailConsent ?? false);
+	}, [user?.marketingEmailConsent]);
 
 	// Add auth state listener
 	useEffect(() => {
@@ -141,6 +147,7 @@ const Settings = () => {
 						firstName,
 						lastName,
 						phone,
+						marketingEmailConsent,
 						...(email === user?.email ? { email } : {}), // Only include email if it hasn't changed
 					});
 
@@ -153,6 +160,7 @@ const Settings = () => {
 								firstName,
 								lastName,
 								phone,
+								marketingEmailConsent,
 								...(email === user?.email ? { email } : {}), // Only update email if it hasn't changed
 							};
 						}
@@ -495,6 +503,29 @@ const Settings = () => {
 								/>
 							</Box>
 						</Box>
+
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={marketingEmailConsent}
+									onChange={(e) => {
+										setMarketingEmailConsent(e.target.checked);
+										setIsProfileUpdated(true);
+									}}
+									size='small'
+									sx={{
+										'color': 'rgba(0, 0, 0, 0.6)',
+										'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
+									}}
+								/>
+							}
+							label={
+								<Typography component='span' sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
+									Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum
+								</Typography>
+							}
+							sx={{ width: '90%', mt: '0.5rem', mb: '0.25rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+						/>
 
 						<CustomDialog
 							title='Username Rules'

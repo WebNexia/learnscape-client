@@ -33,6 +33,7 @@ export const enum AuthFormErrorMessages {
 	RECAPTCHA_ERROR = 'Lütfen reCAPTCHA doğrulamasını tamamlayın.',
 	RECAPTCHA_ERROR_OCCURRED = 'reCAPTCHA doğrulaması sırasında hata oluştu.',
 	USER_INACTIVE = 'Şu anda hesabınıza ulaşamazsınız. Lütfen yönetici ile iletişime geçin.',
+	AGREEMENTS_REQUIRED = 'Kayıt olmak için Kullanıcı Sözleşmesi ve Gizlilik Politikasını kabul etmeniz gerekmektedir.',
 }
 
 export const enum PasswordUpdateErrorMessages {
@@ -59,6 +60,7 @@ export const enum PageName {
 	ADMIN_LESSONS = 'Lessons',
 	ADMIN_QUESTIONS = 'Questions',
 	ADMIN_DOCUMENTS = 'Documents',
+	ADMIN_CONSULTATIONS = 'Consultations',
 	ADMIN_FORMS = 'Forms',
 	ADMIN_FEEDBACKS = 'Feedbacks',
 

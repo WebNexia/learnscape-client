@@ -2118,7 +2118,7 @@ const AdminLessonEditPage = () => {
 														{ currency: 'eur', amount: '0' },
 													],
 													description: '',
-													samplePageImageUrl: '',
+													samplePageImageUrls: [],
 													isOnLandingPage: false,
 													isArchived: false,
 													pageCount: 0,

@@ -18,6 +18,7 @@ const recipientOptions = [
 	{ value: 'formSubmitters', label: 'All Contact Form Submitters' },
 	{ value: 'documentBuyers', label: 'All Document Buyers' },
 	{ value: 'eventAttendees', label: 'All Event Participants' },
+	{ value: 'marketingConsent', label: 'Kampanya / Duyuru Onayı Verenler' },
 	{ value: 'everybody', label: 'All Contacts' },
 ];
 

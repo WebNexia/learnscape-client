@@ -187,20 +187,44 @@ const Footer = () => {
 							Çerez Tercihleri
 						</Typography>
 						<Typography
+							component={Link}
+							to='/terms'
 							variant='body2'
+							onClick={() => {
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
 							sx={{
-								color: theme.textColor?.common.main,
-								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
-								fontFamily: fontFamilyLandingPage,
+								'color': theme.textColor?.common.main,
+								'fontSize': { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								'fontFamily': fontFamilyLandingPage,
+								'display': 'block',
+								'textDecoration': 'none',
+								'cursor': 'pointer',
+								'mb': '0.25rem',
+								'&:hover': {
+									textDecoration: 'underline',
+								},
 							}}>
 							Kullanıcı Sözleşmesi
 						</Typography>
 						<Typography
+							component={Link}
+							to='/privacy-policy'
 							variant='body2'
+							onClick={() => {
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
 							sx={{
-								color: theme.textColor?.common.main,
-								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
-								fontFamily: fontFamilyLandingPage,
+								'color': theme.textColor?.common.main,
+								'fontSize': { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								'fontFamily': fontFamilyLandingPage,
+								'display': 'block',
+								'textDecoration': 'none',
+								'cursor': 'pointer',
+								'mb': '0.25rem',
+								'&:hover': {
+									textDecoration: 'underline',
+								},
 							}}>
 							Gizlilik
 						</Typography>

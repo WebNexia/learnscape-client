@@ -18,7 +18,7 @@ export interface Document {
 	clonedFromTitle: string;
 	usedInLessons: string[];
 	usedInCourses: string[];
-	samplePageImageUrl: string;
+	samplePageImageUrls: string[];
 	isOnLandingPage: boolean;
 	isArchived: boolean;
 	createdBy: string;

@@ -15,6 +15,7 @@ import {
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
+	VideoCall,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
@@ -124,7 +125,8 @@ const Sidebar = () => {
 									!currentPath?.includes('/admin/lessons') &&
 									!currentPath?.includes('/admin/lesson-edit') &&
 									!currentPath?.includes('/admin/questions') &&
-									!currentPath?.includes('/admin/documents')
+									!currentPath?.includes('/admin/documents') &&
+									!currentPath?.includes('/admin/submissions')
 								}
 								subMenuItems={[
 									{
@@ -132,9 +134,10 @@ const Sidebar = () => {
 										IconName: LibraryBooks,
 										path: '/admin/courses',
 										isActive:
-											currentPath?.includes('/admin/courses') ||
-											currentPath?.includes('/admin/course-edit') ||
-											(currentPath?.includes('/admin/course') && currentPath?.includes('/forms')),
+											(currentPath?.includes('/admin/courses') ||
+												currentPath?.includes('/admin/course-edit') ||
+												(currentPath?.includes('/admin/course') && currentPath?.includes('/forms'))) &&
+											!currentPath?.includes('/admin/submissions'),
 									},
 									{
 										btnText: 'Lessons',
@@ -153,6 +156,12 @@ const Sidebar = () => {
 										IconName: FilePresent,
 										path: '/admin/documents',
 										isActive: currentPath?.includes('/admin/documents'),
+									},
+									{
+										btnText: 'Submissions',
+										IconName: LibraryAddCheck,
+										path: '/admin/submissions',
+										isActive: currentPath?.includes('/admin/submissions'),
 									},
 								]}
 								onNavigate={navigateWithPage}
@@ -181,24 +190,12 @@ const Sidebar = () => {
 									active={currentPath?.includes('/admin/documents')}
 								/>
 							)}
-							<SidebarBtn
-								btnText='Forms'
-								IconName={Ballot}
-								onClick={() => navigateWithPage(`/admin/forms`)}
-								active={currentPath?.includes('/admin/forms') && !currentPath?.includes('/admin/course')}
-							/>
-							<SidebarBtn
-								btnText='Submissions'
-								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(`/admin/submissions`)}
-								active={currentPath?.includes('/admin/submissions')}
-							/>
-							{(user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
+							{currentPath?.includes('/admin/submissions') && (
 								<SidebarBtn
-									btnText='Payments'
-									IconName={CreditCard}
-									onClick={() => navigateWithPage(`/admin/payments`)}
-									active={currentPath?.includes('/admin/payments')}
+									btnText='Submissions'
+									IconName={LibraryAddCheck}
+									onClick={() => navigateWithPage(`/admin/submissions`)}
+									active={currentPath?.includes('/admin/submissions')}
 								/>
 							)}
 							<SidebarBtn
@@ -226,6 +223,26 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(`/admin/resources`)}
 								active={currentPath?.includes('/admin/resources')}
 							/>
+							<SidebarBtn
+								btnText='Forms'
+								IconName={Ballot}
+								onClick={() => navigateWithPage(`/admin/forms`)}
+								active={currentPath?.includes('/admin/forms') && !currentPath?.includes('/admin/course')}
+							/>
+							<SidebarBtn
+								btnText='Consultancy'
+								IconName={VideoCall}
+								onClick={() => navigateWithPage(`/admin/consultations`)}
+								active={currentPath?.includes('/admin/consultations')}
+							/>
+							{(user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
+								<SidebarBtn
+									btnText='Payments'
+									IconName={CreditCard}
+									onClick={() => navigateWithPage(`/admin/payments`)}
+									active={currentPath?.includes('/admin/payments')}
+								/>
+							)}
 						</>
 					)}
 					{user?.role === Roles.USER && (

@@ -17,6 +17,8 @@ import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 import CoursesContextProvider from './contexts/CoursesContextProvider';
 import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
 import { CookieConsentProvider, useCookieConsent } from './contexts/CookieConsentContext';
+import { ConsultationCartProvider } from './contexts/ConsultationCartContextProvider';
+import { DocumentCartProvider } from './contexts/DocumentCartContextProvider';
 
 const queryClient = new QueryClient();
 
@@ -48,15 +50,19 @@ function App() {
 								<UserAuthContextProvider>
 									<UserCourseLessonDataContextProvider>
 										<ConditionalUploadLimitProvider>
-											{/* Centralized context providers - only one instance of each */}
-											<CoursesContextProvider>
-												<ErrorBoundary context='Application'>
-													<Suspense fallback={<Loading />}>
-														<Outlet />
-													</Suspense>
-												</ErrorBoundary>
-												<CookieConsentWrapper />
-											</CoursesContextProvider>
+											<ConsultationCartProvider>
+												<DocumentCartProvider>
+													{/* Centralized context providers - only one instance of each */}
+													<CoursesContextProvider>
+														<ErrorBoundary context='Application'>
+															<Suspense fallback={<Loading />}>
+																<Outlet />
+															</Suspense>
+														</ErrorBoundary>
+														<CookieConsentWrapper />
+													</CoursesContextProvider>
+												</DocumentCartProvider>
+											</ConsultationCartProvider>
 										</ConditionalUploadLimitProvider>
 									</UserCourseLessonDataContextProvider>
 								</UserAuthContextProvider>

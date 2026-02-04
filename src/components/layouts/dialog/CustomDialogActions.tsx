@@ -25,6 +25,7 @@ interface CustomDialogActionsProps {
 	showCancelBtn?: boolean;
 	isSubmitting?: boolean;
 	isDeleting?: boolean;
+	hideSubmit?: boolean; // When true, only show cancel button
 }
 
 const CustomDialogActions = ({
@@ -45,6 +46,7 @@ const CustomDialogActions = ({
 	showCancelBtn = true,
 	isSubmitting = false,
 	isDeleting = false,
+	hideSubmit = false,
 }: CustomDialogActionsProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -71,39 +73,38 @@ const CustomDialogActions = ({
 					{cancelBtnText}
 				</CustomCancelButton>
 			)}
-			{!deleteBtn ? (
-				isSubmitting ? (
-					<LoadingButton
-						type={submitBtnType}
-						disabled={true}
-						loading={true}
-						variant='contained'
-						sx={{
-							margin: '0 0.5rem 0.5rem 0',
-							height: isMobileSize ? '1.5rem' : '2.15rem',
-							fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							textTransform: 'capitalize',
-							...submitBtnSx,
-						}}
-						size='small'>
-						{submitBtnText}
-					</LoadingButton>
-				) : (
-					<CustomSubmitButton
-						type={submitBtnType}
-						disabled={disableBtn}
-						sx={{
-							margin: '0 0.5rem 0.5rem 0',
-							height: isMobileSize ? '1.5rem' : '2.15rem',
-							fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-							...submitBtnSx,
-						}}
-						onClick={onSubmit}>
-						{submitBtnText}
-					</CustomSubmitButton>
-				)
-			) : isDeleting ? (
+			{!hideSubmit && !deleteBtn && (isSubmitting ? (
+				<LoadingButton
+					type={submitBtnType}
+					disabled={true}
+					loading={true}
+					variant='contained'
+					sx={{
+						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						backgroundColor: theme.bgColor?.greenPrimary,
+						textTransform: 'capitalize',
+						...submitBtnSx,
+					}}
+					size='small'>
+					{submitBtnText}
+				</LoadingButton>
+			) : (
+				<CustomSubmitButton
+					type={submitBtnType}
+					disabled={disableBtn}
+					sx={{
+						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...submitBtnSx,
+					}}
+					onClick={onSubmit}>
+					{submitBtnText}
+				</CustomSubmitButton>
+			))}
+			{!hideSubmit && deleteBtn && (isDeleting ? (
 				<LoadingButton
 					disabled={true}
 					loading={true}
@@ -132,7 +133,7 @@ const CustomDialogActions = ({
 					onClick={onDelete}>
 					{deleteBtnText}
 				</CustomDeleteButton>
-			)}
+			))}
 		</DialogActions>
 	);
 };
