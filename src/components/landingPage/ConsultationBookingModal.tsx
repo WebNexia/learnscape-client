@@ -558,7 +558,7 @@ export default function ConsultationBookingModal({
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 								<CustomTextField fullWidth size="small" label="Ad" value={freeGuestFirstName} onChange={(e) => setFreeGuestFirstName(e.target.value)} placeholder="Adınız" required />
 								<CustomTextField fullWidth size="small" label="Soyad" value={freeGuestLastName} onChange={(e) => setFreeGuestLastName(e.target.value)} placeholder="Soyadınız" required />
-								<CustomTextField fullWidth size="small" type="email" label="E-posta" value={freeGuestEmail} onChange={(e) => setFreeGuestEmail(e.target.value)} placeholder="ornek@email.com" required />
+								<CustomTextField fullWidth size="small" type="email" label="E-posta" value={freeGuestEmail} onChange={(e) => setFreeGuestEmail(e.target.value)} placeholder="ornek@email.com" required InputProps={{ inputProps: { maxLength: 254 } }} />
 								<Box sx={{ '& .react-tel-input': { fontFamily: 'Varela Round' }, '& .form-control': { width: '100% !important', fontFamily: 'Varela Round' } }}>
 									<PhoneInput
 										country={location?.countryCode?.toLowerCase() || 'tr'}
@@ -677,9 +677,9 @@ export default function ConsultationBookingModal({
 						<Box sx={{ mt: 2 }}>
 							<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.9rem', mb: 1.5 }}>İletişim bilgileriniz</Typography>
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-								<CustomTextField fullWidth size="small" label="Ad" value={freeGuestFirstName} onChange={(e) => setFreeGuestFirstName(e.target.value)} placeholder="Adınız" required />
-								<CustomTextField fullWidth size="small" label="Soyad" value={freeGuestLastName} onChange={(e) => setFreeGuestLastName(e.target.value)} placeholder="Soyadınız" required />
-								<CustomTextField fullWidth size="small" type="email" label="E-posta" value={freeGuestEmail} onChange={(e) => setFreeGuestEmail(e.target.value)} placeholder="ornek@email.com" required />
+								<CustomTextField fullWidth size="small" label="Ad" value={freeGuestFirstName} onChange={(e) => setFreeGuestFirstName(e.target.value)} placeholder="İsminiz" required InputProps={{ inputProps: { maxLength: 50 } }} />
+								<CustomTextField fullWidth size="small" label="Soyad" value={freeGuestLastName} onChange={(e) => setFreeGuestLastName(e.target.value)} placeholder="Soy İsminiz" required InputProps={{ inputProps: { maxLength: 50 } }} />
+								<CustomTextField fullWidth size="small" type="email" label="E-posta" value={freeGuestEmail} onChange={(e) => setFreeGuestEmail(e.target.value)} placeholder="ornek@email.com" required InputProps={{ inputProps: { maxLength: 254 } }} />
 								<Box sx={{ '& .react-tel-input': { fontFamily: 'Varela Round' }, '& .form-control': { width: '100% !important', fontFamily: 'Varela Round' } }}>
 									<PhoneInput
 										country={location?.countryCode?.toLowerCase() || 'tr'}

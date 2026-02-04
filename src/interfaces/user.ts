@@ -23,6 +23,7 @@ export interface User {
 	subscriptionStatus: 'none' | 'active' | 'past_due' | 'canceled' | 'canceled_at_period_end' | 'trialing';
 	subscriptionValidUntil: string | null;
 	accessLevel: 'limited' | 'subscription' | 'full';
+	marketingEmailConsent?: boolean;
 }
 
 export interface AdminUser {

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
@@ -20,7 +20,7 @@ import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import LondonBg from '../assets/london-bg.jpg';
 
 const Auth = () => {
@@ -59,6 +59,9 @@ const Auth = () => {
 
 	const [isResetPassword, setIsResetPassword] = useState<boolean>(false);
 	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
+
+	const [agreeTermsAndPrivacy, setAgreeTermsAndPrivacy] = useState<boolean>(false);
+	const [agreeMarketing, setAgreeMarketing] = useState<boolean>(false);
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [resetRecaptchaToken, setResetRecaptchaToken] = useState<string | null>(null);
@@ -227,6 +230,12 @@ const Auth = () => {
 			return;
 		}
 
+		// Agreements validation
+		if (!agreeTermsAndPrivacy) {
+			setErrorMsg(AuthFormErrorMessages.AGREEMENTS_REQUIRED);
+			return;
+		}
+
 		// reCAPTCHA validation (move this BEFORE Firebase call)
 		if (!recaptchaToken) {
 			setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR);
@@ -269,6 +278,7 @@ const Auth = () => {
 				firebaseUserId: user.uid,
 				isEmailVerified: false,
 				recaptchaToken,
+				agreeMarketing,
 			};
 
 			await axiosInstance.post(`${base_url}/users/signup`, signupData);
@@ -282,6 +292,8 @@ const Auth = () => {
 			setUsername('');
 			setPhone('');
 			setOrgCode('');
+			setAgreeTermsAndPrivacy(false);
+			setAgreeMarketing(false);
 			setErrorMsg(undefined);
 			setSignUpMessage(true);
 			setShowPassword(false);
@@ -386,9 +398,9 @@ const Auth = () => {
 		<Box
 			sx={{
 				'position': 'relative',
-				'overflow': 'hidden',
+				'overflowY': 'auto',
+				'overflowX': 'hidden',
 				'minHeight': '100vh',
-				'height': '100vh',
 				'display': 'flex',
 				'flexDirection': 'column',
 				// Fixed background image - London cityscape
@@ -466,8 +478,8 @@ const Auth = () => {
 					alignItems: 'center',
 					justifyContent: 'flex-start',
 					position: 'relative',
-					overflow: 'hidden',
 					paddingTop: '10vh',
+					paddingBottom: '2rem',
 					zIndex: 2,
 				}}>
 				{/* Logo and Title */}
@@ -1087,6 +1099,57 @@ const Auth = () => {
 														</Tooltip>
 													</Box>
 												</Box>
+
+												<Box sx={{ width: '100%', mb: '1.25rem', mt: '0.25rem' }}>
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={agreeTermsAndPrivacy}
+																onChange={(e) => {
+																	setAgreeTermsAndPrivacy(e.target.checked);
+																	setErrorMsg(undefined);
+																}}
+																size='small'
+																sx={{
+																	'color': 'rgba(0, 0, 0, 0.6)',
+																	'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
+																}}
+															/>
+														}
+														label={
+															<Typography component='span' sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.textColor?.secondary?.main }}>
+																<Link to='/terms' target='_blank' rel='noopener noreferrer' style={{ color: theme.palette?.primary?.main ?? '#1EC28B', textDecoration: 'underline' }}>
+																	Kullanıcı Sözleşmesi
+																</Link>
+																{' '}ve{' '}
+																<Link to='/privacy-policy' target='_blank' rel='noopener noreferrer' style={{ color: theme.palette?.primary?.main ?? '#1EC28B', textDecoration: 'underline' }}>
+																	Gizlilik Politikası
+																</Link>
+																{' '}nı okudum ve kabul ediyorum. *
+															</Typography>
+														}
+														sx={{ alignItems: 'flex-start', display: 'block', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+													/>
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={agreeMarketing}
+																onChange={(e) => setAgreeMarketing(e.target.checked)}
+																size='small'
+																sx={{
+																	'color': 'rgba(0, 0, 0, 0.6)',
+																	'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
+																}}
+															/>
+														}
+														label={
+															<Typography component='span' sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.textColor?.secondary?.main }}>
+																Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum.
+															</Typography>
+														}
+														sx={{ alignItems: 'flex-start', display: 'block', mt: '0.5rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+													/>
+												</Box>
 											</Box>
 											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: '1.5rem' }}>
 												<ReCAPTCHA
@@ -1301,6 +1364,7 @@ const Auth = () => {
 								[AuthFormErrorMessages.RECAPTCHA_ERROR]: errorMessageTypography,
 								[AuthFormErrorMessages.RECAPTCHA_ERROR_OCCURRED]: errorMessageTypography,
 								[AuthFormErrorMessages.USER_INACTIVE]: errorMessageTypography,
+								[AuthFormErrorMessages.AGREEMENTS_REQUIRED]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>

@@ -43,6 +43,8 @@ const LandingPageCart = React.lazy(() => import('./pages/LandingPageCart'));
 const AboutUs = React.lazy(() => import('./pages/AboutUs'));
 const ContactUs = React.lazy(() => import('./pages/ContactUs'));
 const CookiePolicy = React.lazy(() => import('./pages/CookiePolicy'));
+const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const UserAgreement = React.lazy(() => import('./pages/UserAgreement'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Submissions = React.lazy(() => import('./pages/Submissions'));
@@ -168,6 +170,8 @@ export const router = createBrowserRouter([
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
 			{ path: 'cookie-policy', element: <CookiePolicy /> },
+			{ path: 'privacy-policy', element: <PrivacyPolicy /> },
+			{ path: 'terms', element: <UserAgreement /> },
 			{
 				path: 'admin/dashboard',
 				element: (

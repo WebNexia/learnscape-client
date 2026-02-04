@@ -106,7 +106,7 @@ const CookieConsent = ({ forceOpen, onClose }: CookieConsentProps = { forceOpen:
 	return (
 		<Dialog
 			open={open}
-			onClose={forceOpen ? handleClose : () => {}} // Allow closing if forced open, otherwise prevent
+			onClose={forceOpen ? handleClose : () => { }} // Allow closing if forced open, otherwise prevent
 			maxWidth='sm'
 			fullWidth
 			PaperProps={{
@@ -144,11 +144,12 @@ const CookieConsent = ({ forceOpen, onClose }: CookieConsentProps = { forceOpen:
 							sx={{
 								fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								color: 'text.secondary',
-								lineHeight: 1.6,
+								lineHeight: 1.7,
 								fontFamily: 'Varela Round, sans-serif',
 							}}>
-							Tarama deneyiminizi geliştirmek, kişiselleştirilmiş içerik sunmak ve trafiğimizi analiz etmek için çerezler kullanıyoruz. "Tümünü Kabul
-							Et" butonuna tıklayarak çerez kullanımımıza onay veriyorsunuz.{' '}
+							Web sitemizin temel işlevlerini güvenli ve kesintisiz şekilde sunabilmesi için zorunlu çerezler kullanıyoruz.
+							Ayrıca, deneyiminizi iyileştirmek ve hizmetlerimizi geliştirmek amacıyla isteğe bağlı çerezler kullanabiliriz.
+							Zorunlu olmayan çerezleri kabul edebilir veya reddedebilirsiniz. Tercihlerinizi dilediğiniz zaman güncelleyebilirsiniz.{' '}
 							<Link
 								to='/cookie-policy'
 								onClick={() => setOpen(false)}

@@ -1,9 +1,9 @@
-import { Box, Typography, Button, Card, CardContent, Alert, Snackbar, IconButton, Table, TableBody, TableRow, TableCell, Autocomplete, TextField } from '@mui/material';
-import { ShoppingCart, Close, Description, Assignment, ContactPhone, ReceiptLong, Lock, } from '@mui/icons-material';
+import { Box, Typography, Button, Card, CardContent, Alert, Snackbar, IconButton, Table, TableBody, TableRow, TableCell, Autocomplete, TextField, Collapse, Checkbox, FormControlLabel } from '@mui/material';
+import { ShoppingCart, Close, Description, Assignment, ContactPhone, ReceiptLong, Lock, ExpandMore, ExpandLess } from '@mui/icons-material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useConsultationCart } from '../contexts/ConsultationCartContextProvider';
 import { useDocumentCart } from '../contexts/DocumentCartContextProvider';
 import { consultationsService } from '../services/consultationsService';
@@ -21,6 +21,7 @@ import { useGeoLocation } from '../hooks/useGeoLocation';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import theme from '../themes';
 import { COUNTRY_LIST } from '../data/countries';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -49,6 +50,7 @@ function getCartTotals(
 export default function LandingPageCart() {
 	const navigate = useNavigate();
 	const location = useGeoLocation();
+	const { orgId: contextOrgId } = useContext(OrganisationContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -68,6 +70,8 @@ export default function LandingPageCart() {
 	const [checkoutGuestEmail, setCheckoutGuestEmail] = useState('');
 	const [checkoutGuestCountry, setCheckoutGuestCountry] = useState('TR');
 	const [checkoutGuestPhone, setCheckoutGuestPhone] = useState('');
+	const [agreeTermsAndPrivacy, setAgreeTermsAndPrivacy] = useState(false);
+	const [agreeMarketing, setAgreeMarketing] = useState(false);
 
 	const [cartPaymentOpen, setCartPaymentOpen] = useState(false);
 	const [paymentQueue, setPaymentQueue] = useState<CartPaymentItem[]>([]);
@@ -76,6 +80,8 @@ export default function LandingPageCart() {
 	const [error, setError] = useState<string | null>(null);
 	const [successSnack, setSuccessSnack] = useState(false);
 	const [successMessage, setSuccessMessage] = useState('');
+	const [kaynaklarExpanded, setKaynaklarExpanded] = useState(true);
+	const [danismanliklarExpanded, setDanismanliklarExpanded] = useState(true);
 
 	const handlePayAll = async () => {
 		setError(null);
@@ -97,6 +103,10 @@ export default function LandingPageCart() {
 		}
 		if (!emailValid) {
 			setError('Geçerli bir e-posta adresi girin.');
+			return;
+		}
+		if (!agreeTermsAndPrivacy) {
+			setError('Ödemeye devam etmek için Kullanıcı Sözleşmesi ve Gizlilik Politikasını kabul etmeniz gerekmektedir.');
 			return;
 		}
 		setPayAllLoading(true);
@@ -137,7 +147,13 @@ export default function LandingPageCart() {
 					type: 'consultation',
 					clientSecret,
 					paymentIntentId,
-					capturePayload: { paymentType: 'consultation', firstName, lastName, email },
+					capturePayload: {
+						consultationId: item.consultationId,
+						paymentType: 'consultation',
+						firstName,
+						lastName,
+						email
+					},
 					formSubmissionId: item.formSubmissionId,
 					appointmentId,
 				});
@@ -169,6 +185,23 @@ export default function LandingPageCart() {
 					});
 				} catch (_e) {
 					// Non-blocking: submission stays unlinked; admin can still see form responses
+				}
+			}
+		}
+		// Record guest marketing consent if they opted in
+		if (agreeMarketing && email) {
+			const orgId = documentItems[0]?.orgId || contextOrgId || import.meta.env.VITE_ORG_ID;
+			if (orgId) {
+				try {
+					await axios.post(`${base_url}/marketing-consent/guest`, {
+						email,
+						orgId,
+						firstName: checkoutGuestFirstName.trim(),
+						lastName: checkoutGuestLastName.trim(),
+						source: 'cart',
+					});
+				} catch (_e) {
+					// Non-blocking: consent not stored; user can opt in again later
 				}
 			}
 		}
@@ -319,7 +352,7 @@ export default function LandingPageCart() {
 										sx={{
 											px: 2.5,
 											py: 2,
-											background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.06) 100%)',
+											background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
 											borderBottom: '1px solid rgba(91, 141, 239, 0.1)',
 										}}
 									>
@@ -334,20 +367,22 @@ export default function LandingPageCart() {
 										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 											<Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
 												<CustomTextField
-													label="Ad"
+													label="İsim"
 													value={checkoutGuestFirstName}
 													onChange={(e) => setCheckoutGuestFirstName(e.target.value)}
 													fullWidth
 													required
-													placeholder="Adınız"
+													placeholder="İsminiz"
+													InputProps={{ inputProps: { maxLength: 50 } }}
 												/>
 												<CustomTextField
-													label="Soyad"
+													label="Soy İsminiz"
 													value={checkoutGuestLastName}
 													onChange={(e) => setCheckoutGuestLastName(e.target.value)}
 													fullWidth
 													required
-													placeholder="Soyadınız"
+													placeholder="Soy isminiz"
+													InputProps={{ inputProps: { maxLength: 50 } }}
 												/>
 											</Box>
 											<CustomTextField
@@ -358,6 +393,7 @@ export default function LandingPageCart() {
 												fullWidth
 												required
 												placeholder="ornek@email.com"
+												InputProps={{ inputProps: { maxLength: 254 } }}
 											/>
 											<Box sx={{ '& .react-tel-input': { fontFamily: 'Varela Round' }, '& .form-control': { width: '100% !important', fontFamily: 'Varela Round' } }}>
 												<PhoneInput
@@ -396,6 +432,7 @@ export default function LandingPageCart() {
 												onChange={(_, newValue) => setCheckoutGuestCountry(newValue?.code ?? '')}
 												getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
 												isOptionEqualToValue={(option, value) => option.code === value?.code}
+												noOptionsText="Ülke bulunamadı"
 												renderInput={(params) => (
 													<TextField
 														{...params}
@@ -403,17 +440,67 @@ export default function LandingPageCart() {
 														required
 														size="small"
 														sx={{
-															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
-															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
-															'& .MuiOutlinedInput-root': { fontFamily: 'Varela Round', borderRadius: '0.5rem' },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round', },
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round', fontSize: '0.95rem', },
+															'& .MuiOutlinedInput-root': { fontFamily: 'Varela Round', borderRadius: '0.5rem', },
 														}}
 													/>
 												)}
-												ListboxProps={{ sx: { maxHeight: 320, fontFamily: 'Varela Round' } }}
+												ListboxProps={{ sx: { maxHeight: 300, fontFamily: 'Varela Round', '& .MuiAutocomplete-option': { fontSize: '0.85rem' } } }}
 												filterOptions={(options, { inputValue }) =>
 													options.filter((opt) => opt.label.toLowerCase().includes(inputValue.toLowerCase()))
 												}
 											/>
+											<Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+												<FormControlLabel
+													control={
+														<Checkbox
+															checked={agreeTermsAndPrivacy}
+															onChange={(e) => {
+																setAgreeTermsAndPrivacy(e.target.checked);
+																setError(null);
+															}}
+															size="small"
+															sx={{
+																'color': 'rgba(0, 0, 0, 0.6)',
+																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#6366f1' },
+															}}
+														/>
+													}
+													label={
+														<Typography component="span" sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: 'text.secondary' }}>
+															<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#6366f1', textDecoration: 'underline' }}>
+																Kullanıcı Sözleşmesi
+															</Link>
+															{' ve '}
+															<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#6366f1', textDecoration: 'underline' }}>
+																Gizlilik Politikası
+															</Link>
+															{' nı okudum ve kabul ediyorum. *'}
+														</Typography>
+													}
+													sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+												/>
+												<FormControlLabel
+													control={
+														<Checkbox
+															checked={agreeMarketing}
+															onChange={(e) => setAgreeMarketing(e.target.checked)}
+															size="small"
+															sx={{
+																'color': 'rgba(0, 0, 0, 0.6)',
+																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#6366f1' },
+															}}
+														/>
+													}
+													label={
+														<Typography component="span" sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: 'text.secondary' }}>
+															Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum.
+														</Typography>
+													}
+													sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+												/>
+											</Box>
 										</Box>
 									</CardContent>
 								</Card>
@@ -435,18 +522,24 @@ export default function LandingPageCart() {
 												}}
 											>
 												<Box
+													onClick={() => setKaynaklarExpanded((e) => !e)}
+													role="button"
+													aria-expanded={kaynaklarExpanded}
+													aria-label={kaynaklarExpanded ? 'Kaynakları daralt' : 'Kaynakları genişlet'}
 													sx={{
 														px: 2.5,
-														py: 1.5,
+														py: 1,
 														flexShrink: 0,
 														display: 'flex',
 														alignItems: 'center',
 														gap: 1.5,
-														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
 														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+														cursor: 'pointer',
+														'&:hover': { background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(99, 102, 241, 0.18) 100%)' },
 													}}
 												>
-													<Box sx={{ width: 36, height: 36, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 														<Description sx={{ color: 'white', fontSize: 20 }} />
 													</Box>
 													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
@@ -455,31 +548,36 @@ export default function LandingPageCart() {
 													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.8rem', color: 'text.secondary' }}>
 														{documentItems.length} {documentItems.length === 1 ? 'ürün' : 'ürün'}
 													</Typography>
+													<Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+														{kaynaklarExpanded ? <ExpandLess sx={{ color: 'text.secondary' }} /> : <ExpandMore sx={{ color: 'text.secondary' }} />}
+													</Box>
 												</Box>
-												<Table size="small">
-													<TableBody>
-														{documentItems.map((item) => (
-															<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
-																<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1.5 }}>
-																	<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-																		<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-																			<Description sx={{ color: '#6366f1', fontSize: 20 }} />
+												<Collapse in={kaynaklarExpanded}>
+													<Table size="small">
+														<TableBody>
+															{documentItems.map((item) => (
+																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																	<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1 }}>
+																		<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+																				<Description sx={{ color: '#6366f1', fontSize: isMobileSize ? 15 : 20 }} />
+																			</Box>
+																			<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.9rem', color: '#0A1A2F' }}>{item.title}</Typography>
 																		</Box>
-																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.9rem', color: '#0A1A2F' }}>{item.title}</Typography>
-																	</Box>
-																</TableCell>
-																<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: '0.95rem' }} align="right">
-																	{setCurrencySymbol(item.currency)}{item.amount}
-																</TableCell>
-																<TableCell padding="none" sx={{ width: 44 }}>
-																	<IconButton size="small" onClick={() => removeDocument(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
-																		<Close fontSize="small" />
-																	</IconButton>
-																</TableCell>
-															</TableRow>
-														))}
-													</TableBody>
-												</Table>
+																	</TableCell>
+																	<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} align="right">
+																		{setCurrencySymbol(item.currency)}{item.amount}
+																	</TableCell>
+																	<TableCell padding="none" sx={{ width: 44 }}>
+																		<IconButton size="small" onClick={() => removeDocument(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
+																			<Close fontSize="small" sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+																		</IconButton>
+																	</TableCell>
+																</TableRow>
+															))}
+														</TableBody>
+													</Table>
+												</Collapse>
 											</Card>
 										)}
 										{/* Danışmanlıklar (cons) – separate section */}
@@ -494,19 +592,25 @@ export default function LandingPageCart() {
 												}}
 											>
 												<Box
+													onClick={() => setDanismanliklarExpanded((e) => !e)}
+													role="button"
+													aria-expanded={danismanliklarExpanded}
+													aria-label={danismanliklarExpanded ? 'Danışmanlıkları daralt' : 'Danışmanlıkları genişlet'}
 													sx={{
 														px: 2.5,
-														py: 1.5,
+														py: 1,
 														flexShrink: 0,
 														display: 'flex',
 														alignItems: 'center',
 														gap: 1.5,
-														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
 														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+														cursor: 'pointer',
+														'&:hover': { background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(99, 102, 241, 0.18) 100%)' },
 													}}
 												>
-													<Box sx={{ width: 36, height: 36, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-														<Assignment sx={{ color: 'white', fontSize: 20 }} />
+													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+														<Assignment sx={{ color: 'white', fontSize: isMobileSize ? 15 : 20 }} />
 													</Box>
 													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
 														Danışmanlıklar
@@ -514,36 +618,41 @@ export default function LandingPageCart() {
 													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.8rem', color: 'text.secondary' }}>
 														{consultationItems.length} {consultationItems.length === 1 ? 'ürün' : 'ürün'}
 													</Typography>
+													<Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+														{danismanliklarExpanded ? <ExpandLess sx={{ color: 'text.secondary' }} /> : <ExpandMore sx={{ color: 'text.secondary' }} />}
+													</Box>
 												</Box>
-												<Table size="small">
-													<TableBody>
-														{consultationItems.map((item) => (
-															<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
-																<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1.5 }}>
-																	<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-																		<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-																			<Assignment sx={{ color: '#6366f1', fontSize: 20 }} />
+												<Collapse in={danismanliklarExpanded}>
+													<Table size="small">
+														<TableBody>
+															{consultationItems.map((item) => (
+																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																	<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1 }}>
+																		<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+																				<Assignment sx={{ color: '#6366f1', fontSize: isMobileSize ? 15 : '1.25rem' }} />
+																			</Box>
+																			<Box>
+																				<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.9rem' }}>{item.consultationTitle}</Typography>
+																				<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.75rem', mt: 0.25 }}>
+																					{format(new Date(item.slotStart), 'd MMM yyyy, HH:mm', { locale: tr })} · {item.consultantName}
+																				</Typography>
+																			</Box>
 																		</Box>
-																		<Box>
-																			<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.9rem' }}>{item.consultationTitle}</Typography>
-																			<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.75rem', mt: 0.25 }}>
-																				{format(new Date(item.slotStart), 'd MMM yyyy, HH:mm', { locale: tr })} · {item.consultantName}
-																			</Typography>
-																		</Box>
-																	</Box>
-																</TableCell>
-																<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: '0.95rem' }} align="right">
-																	{item.price.amount === '0' ? 'Ücretsiz' : `${setCurrencySymbol(item.price.currency)}${item.price.amount}`}
-																</TableCell>
-																<TableCell padding="none" sx={{ width: 44 }}>
-																	<IconButton size="small" onClick={() => removeConsultation(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
-																		<Close fontSize="small" />
-																	</IconButton>
-																</TableCell>
-															</TableRow>
-														))}
-													</TableBody>
-												</Table>
+																	</TableCell>
+																	<TableCell sx={{ fontFamily: 'Varela Round', fontWeight: 700, color: '#0A1A2F', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} align="right">
+																		{item.price.amount === '0' ? 'Ücretsiz' : `${setCurrencySymbol(item.price.currency)}${item.price.amount}`}
+																	</TableCell>
+																	<TableCell padding="none" sx={{ width: 44 }}>
+																		<IconButton size="small" onClick={() => removeConsultation(item.id)} aria-label="Kaldır" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: 'rgba(239, 68, 68, 0.08)' }, borderRadius: 1.5 }}>
+																			<Close fontSize="small" sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+																		</IconButton>
+																	</TableCell>
+																</TableRow>
+															))}
+														</TableBody>
+													</Table>
+												</Collapse>
 											</Card>
 										)}
 
@@ -561,7 +670,7 @@ export default function LandingPageCart() {
 											}}
 										>
 											<CardContent sx={{ py: 3, px: 2.5 }}>
-												<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, py: 1.5, px: 2, borderRadius: 2, background: 'linear-gradient(135deg, rgba(255, 107, 61, 0.16) 0%, rgba(251, 146, 60, 0.12) 100%)', border: '1px solid rgba(255, 107, 61, 0.22)' }}>
 													<Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'linear-gradient(135deg, rgba(255, 107, 61, 0.15) 0%, rgba(251, 146, 60, 0.1) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 107, 61, 0.25)' }}>
 														<ReceiptLong sx={{ color: '#FF6B3D', fontSize: 22 }} />
 													</Box>
@@ -590,10 +699,10 @@ export default function LandingPageCart() {
 																	border: '1px solid rgba(255, 107, 61, 0.12)',
 																}}
 															>
-																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.95rem' }}>
+																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: isMobileSize ? '0.9rem' : '0.95rem' }}>
 																	Toplam ({currency.toUpperCase()})
 																</Typography>
-																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: isMobileSize ? '1rem' : '1.25rem', color: '#0A1A2F', letterSpacing: '-0.02em' }}>
+																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: isMobileSize ? '0.95rem' : '1.05rem', color: '#0A1A2F', letterSpacing: '-0.02em' }}>
 																	{amount === 0 ? 'Ücretsiz' : `${setCurrencySymbol(currency)}${amount.toFixed(2)}`}
 																</Typography>
 															</Box>
@@ -616,7 +725,7 @@ export default function LandingPageCart() {
 														border: 'none',
 														color: 'white',
 														borderRadius: { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
-														py: 1.5,
+														py: 0.75,
 														fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
 														fontFamily: 'Varela Round',
 														fontWeight: 800,
@@ -625,12 +734,12 @@ export default function LandingPageCart() {
 														textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 														background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
 														'&:hover': {
-															border: 'none',
-															background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-															transform: 'translateY(-3px)',
-															boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+															background: 'white !important',
+															backgroundColor: 'white !important',
+															color: ' rgba(91, 33, 182, 0.7) !important',
+															border: '1px solid  rgba(91, 33, 182, 0.7)!important',
 														},
-														'&.Mui-disabled': { background: 'grey.300', color: 'grey.500', border: 'none' },
+														'&.Mui-disabled': { background: 'grey.300', color: 'white', border: 'none' },
 														transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 													}}
 												>

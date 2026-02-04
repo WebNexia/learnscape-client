@@ -15,7 +15,6 @@ import {
 	Paper,
 } from '@mui/material';
 import { Search, Clear, FilterList, InfoOutlined } from '@mui/icons-material';
-import theme from '../../themes';
 import LandingPageCoursesInfoDialog from './LandingPageCoursesInfoDialog';
 
 interface FilterOption {
