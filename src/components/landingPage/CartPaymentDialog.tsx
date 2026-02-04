@@ -133,9 +133,6 @@ export default function CartPaymentDialog({
 			const e = err as { message?: string; response?: { data?: { error?: { message?: string }; message?: string } } };
 			const msg = e?.response?.data?.error?.message ?? e?.response?.data?.message ?? e?.message ?? 'Ödeme işlemi sırasında bir hata oluştu.';
 			setErrorMessage(msg);
-			if (import.meta.env.DEV) {
-				console.error('CartPaymentDialog payment error:', e);
-			}
 		} finally {
 			setIsProcessing(false);
 			setCurrentIndex(0);
