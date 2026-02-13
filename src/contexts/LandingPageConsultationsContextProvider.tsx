@@ -60,8 +60,8 @@ const LandingPageConsultationsContextProvider = (props: LandingPageConsultations
 		isError,
 	} = useQuery(['landingPageConsultations', orgId, currentPage], fetchConsultations, {
 		enabled: !!orgId && isConsultationsPage,
-		staleTime: 5 * 60 * 1000,
-		cacheTime: 30 * 60 * 1000,
+		staleTime: 60 * 60 * 1000, // 1 hour
+		cacheTime: 60 * 60 * 1000, // 1 hour
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});

@@ -115,8 +115,8 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 		isError,
 	} = useQuery(['landingPageResources', orgId, currentPage, searchedValue, activeFilter, location.search], fetchResources, {
 		enabled: !!orgId && isResourcesPage,
-		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
-		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		staleTime: 60 * 60 * 1000, // 1 hour - data stays fresh
+		cacheTime: 60 * 60 * 1000, // 1 hour - data stays in cache
 		refetchOnWindowFocus: false, // No refetch on window focus
 		refetchOnMount: false, // No refetch on component remount
 	});

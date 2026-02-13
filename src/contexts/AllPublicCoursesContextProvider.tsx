@@ -119,8 +119,8 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 		isError,
 	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search], fetchCourses, {
 		enabled: !!orgId && isLandingPageRoute,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		cacheTime: 30 * 60 * 1000, // 30 minutes
+		staleTime: 60 * 60 * 1000, // 1 hour
+		cacheTime: 60 * 60 * 1000, // 1 hour
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});
