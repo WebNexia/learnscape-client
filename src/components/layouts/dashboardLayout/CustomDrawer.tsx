@@ -86,12 +86,9 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 					sx={{
 						display: 'flex',
 						alignItems: 'center',
-						height: '3rem',
+						height: '1rem',
 						marginBottom: '0.25rem',
 					}}>
-					<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.25rem' }}>
-						{organisation?.orgName}
-					</Typography>
 				</Box>
 				<Box
 					sx={{
@@ -113,8 +110,8 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 							src={user?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='user_profile_pic'
 							style={{
-								height: '3rem',
-								width: '3rem',
+								height: '4rem',
+								width: '4rem',
 								borderRadius: '50%',
 								marginBottom: '0.5rem',
 								objectFit: 'cover',

@@ -531,10 +531,10 @@ const AdminConsultationEditPage = () => {
 												setSingleConsultationBeforeSave((prev) =>
 													prev
 														? {
-																...prev,
-																feedbackFormId: isNone ? undefined : v,
-																requireFormSubmission: isNone ? false : true,
-															}
+															...prev,
+															feedbackFormId: isNone ? undefined : v,
+															requireFormSubmission: isNone ? false : true,
+														}
 														: prev
 												);
 											}}

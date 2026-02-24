@@ -617,10 +617,24 @@ const AdminCourseEditPage = () => {
 					videoURLs: singleCourseBeforeSave.videoURLs || [], // Explicitly include videoURLs
 				};
 
+				// Minimal payload: send only IDs for chapters/documents to avoid PayloadTooLargeError
+				const { chapters: _ch, documents: _d, ...courseFields } = singleCourseBeforeSave as unknown as Record<string, unknown>;
+				const patchPayload = {
+					...courseFields,
+					chapterIds: updatedChapters?.map((chapter) => chapter?.chapterId),
+					documentIds: updatedDocumentIds,
+					// BE needs chapters with lessonIds for usedInCourses sync - send minimal structure only
+					chapters: updatedChapters?.map((ch) => ({
+						chapterId: ch?.chapterId,
+						lessonIds: ch?.lessonIds,
+					})),
+					isExpired: validUntil ? validUntil < new Date() : false,
+					groups: singleCourseBeforeSave.groups || [],
+					videoURLs: singleCourseBeforeSave.videoURLs || [],
+				};
+
 				try {
-					const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
-						...updatedCourse,
-					});
+					const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, patchPayload);
 
 					const responseUpdatedData = response.data.data;
 
@@ -1214,7 +1228,7 @@ const AdminCourseEditPage = () => {
 													onClick={() => {
 														const trimmedUrl = videoFormData.url.trim();
 														const trimmedTitle = videoFormData.title.trim();
-														
+
 														if (!trimmedUrl || trimmedTitle.length === 0) {
 															if (!trimmedUrl) setVideoUrlError('Video URL is required');
 															if (trimmedTitle.length === 0) setVideoTitleError('Video title is required');
@@ -1283,7 +1297,7 @@ const AdminCourseEditPage = () => {
 									</Box>
 
 									{/* Existing videos list */}
-									<Box sx={{ mt: '1.5rem', mb:isMobileSize ? '1rem' : '1.5rem', }}>
+									<Box sx={{ mt: '1.5rem', mb: isMobileSize ? '1rem' : '1.5rem', }}>
 										{singleCourseBeforeSave?.videoURLs &&
 											singleCourseBeforeSave.videoURLs.length > 0 &&
 											singleCourseBeforeSave.videoURLs

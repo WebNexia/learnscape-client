@@ -84,6 +84,7 @@ interface PracticeQuestionProps {
 	closeAiResponseDrawer: (index: number) => void;
 	isSoundMuted?: boolean;
 	practiceAgainMode?: boolean;
+	enableWordAssist?: boolean;
 }
 
 const PracticeQuestion = ({
@@ -107,6 +108,7 @@ const PracticeQuestion = ({
 	closeAiResponseDrawer,
 	isSoundMuted = false,
 	practiceAgainMode = false,
+	enableWordAssist = true,
 }: PracticeQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
@@ -262,6 +264,15 @@ const PracticeQuestion = ({
 		prevErrorRef.current = false;
 	}, [displayedQuestionNumber, question._id]);
 
+	// Keep open-ended answer populated after lesson completion when user answers load asynchronously.
+	useEffect(() => {
+		if (!isOpenEndedQuestion) return;
+		if (!isLessonCompleted || practiceAgainMode) return;
+
+		const savedOpenEndedAnswer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
+		setValue(savedOpenEndedAnswer);
+	}, [isOpenEndedQuestion, isLessonCompleted, practiceAgainMode, userAnswers, question._id]);
+
 	// Save translate answers to store whenever they change (only during active practice, not when lesson is completed)
 	useEffect(() => {
 		if (isTranslate && !isLessonCompleted && question._id) {
@@ -309,10 +320,11 @@ const PracticeQuestion = ({
 		playErrorSound,
 	]);
 
-	const createUserQuestion = async () => {
+	const createUserQuestion = async (answerOverride?: string) => {
+		const answerToPersist = (answerOverride ?? userAnswer ?? '').trim();
 		const existingUserAnswer = userAnswers?.find((data) => data.questionId === question._id);
 
-		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
+		if (!existingUserAnswer || existingUserAnswer.userAnswer !== answerToPersist) {
 			try {
 				if (isOpenEndedQuestion) {
 					const res = await axios.post(`${base_url}/userQuestions`, {
@@ -324,24 +336,43 @@ const PracticeQuestion = ({
 						isCompleted: true,
 						isInProgress: false,
 						orgId,
-						userAnswer: userAnswer.trim(),
+						userAnswer: answerToPersist,
 						teacherFeedback: '',
 						teacherAudioFeedbackUrl: '',
 					});
 
 					const userQuestionId = res.data._id;
 					if (res.status === 200) {
-						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
+						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer: answerToPersist });
 						setUserAnswers((prevData) => {
-							if (!prevData) return [];
-							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data)) || [];
+							const currentData = prevData || [];
+							const hasExistingQuestion = currentData.some((data) => data.questionId === question._id);
+							if (hasExistingQuestion) {
+								return currentData.map((data) =>
+									data.questionId === question._id ? { ...data, userAnswer: answerToPersist } : data
+								);
+							}
+							return [
+								...currentData,
+								{
+									userQuestionId: userQuestionId || '',
+									questionId: question._id,
+									userAnswer: answerToPersist,
+									audioRecordUrl: '',
+									videoRecordUrl: '',
+									teacherFeedback: '',
+									teacherAudioFeedbackUrl: '',
+									userMatchingPairAnswers: [],
+									userBlankValuePairAnswers: [],
+								},
+							];
 						});
 					} else {
 						setUserAnswers((prevData) => {
 							const newUserAnswer = {
 								userQuestionId: res.data._id,
 								questionId: question._id,
-								userAnswer,
+								userAnswer: answerToPersist,
 								audioRecordUrl: '',
 								videoRecordUrl: '',
 								teacherFeedback: '',
@@ -349,12 +380,12 @@ const PracticeQuestion = ({
 								userMatchingPairAnswers: [],
 								userBlankValuePairAnswers: [],
 							};
-							return [...prevData, newUserAnswer];
+							return [...(prevData || []), newUserAnswer];
 						});
 					}
 
 					setIsOpenEndedAnswerSubmitted(true);
-					setValue(userAnswer);
+					setValue(answerToPersist);
 					playSubmitSound();
 				}
 
@@ -426,7 +457,8 @@ const PracticeQuestion = ({
 		if (isOpenEndedQuestion && value !== '') {
 			setIsSubmittingOpenEnded(true);
 			setError(false); // Explicitly set error to false for open-ended questions
-			await createUserQuestion();
+			setUserAnswer(value);
+			await createUserQuestion(value);
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
 			setIsAnswerCorrect(true);
@@ -478,7 +510,9 @@ const PracticeQuestion = ({
 				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
 					<FormControl sx={{ width: '100%' }} error={error && !isOpenEndedQuestion} variant='standard'>
 						<QuestionMedia question={question} />
-						{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} />}
+						{!isFITBDragDrop && !isFITBTyping && (
+							<QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} enableWordAssist={enableWordAssist} />
+						)}
 
 						{isOpenEndedQuestion && (
 							<Box sx={{ width: '95%', margin: '0rem auto' }}>
@@ -572,6 +606,7 @@ const PracticeQuestion = ({
 									lessonType={lessonType}
 									onCorrectMatch={playSuccessSound}
 									onWrongMatch={playErrorSound}
+									enableWordAssist={enableWordAssist}
 								/>
 							</Box>
 						)}
@@ -607,6 +642,7 @@ const PracticeQuestion = ({
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
 									onCorrectMatch={playSuccessSound}
+									enableWordAssist={enableWordAssist}
 								/>
 							</Box>
 						)}
@@ -973,11 +1009,24 @@ const PracticeQuestion = ({
 				<IconButton
 					sx={{
 						'flexShrink': 0,
-						'padding': '0.35rem',
-						':hover': {
-							color: theme.bgColor?.greenPrimary,
-							backgroundColor: 'transparent',
-							border: '2px solid lightgray',
+						'width': isMobileSize ? 34 : 40,
+						'height': isMobileSize ? 34 : 40,
+						'borderRadius': '12px',
+						'backgroundColor': 'rgba(1, 67, 90, 0.08)',
+						'border': '1px solid rgba(1, 67, 90, 0.15)',
+						'color': theme.palette.primary.main,
+						'boxShadow': '0 2px 8px rgba(0,0,0,0.08)',
+						'transition': 'all .2s ease',
+						'&:hover': {
+							backgroundColor: 'rgba(1, 67, 90, 0.14)',
+							transform: 'translateY(-1px)',
+							boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+						},
+						'&.Mui-disabled': {
+							opacity: 0.35,
+							color: 'rgba(0,0,0,0.35)',
+							borderColor: 'rgba(0,0,0,0.12)',
+							backgroundColor: 'rgba(0,0,0,0.03)',
 						},
 					}}
 					onClick={() => {
@@ -998,7 +1047,6 @@ const PracticeQuestion = ({
 						sx={{
 							position: 'absolute',
 							left: '50%',
-							transform: 'translateX(-50%)',
 						}}>
 						{displayedQuestionNumber} / {numberOfQuestions}
 					</Typography>
@@ -1060,55 +1108,38 @@ const PracticeQuestion = ({
 						}}
 						sx={{
 							'flexShrink': 0,
-							'padding': '0.35rem',
-							'color': isTranslate
-								? // For translate questions: gray if not all pairs checked (unless lesson completed or viewing previous)
-									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
-									? 'gray'
-									: theme.textColor?.common.main
-								: // For other question types: use existing logic
-									!isAnswerCorrect &&
-									  !isOpenEndedAnswerSubmitted &&
-									  !allPairsMatchedFITBDragDrop &&
-									  !allPairsMatchedFITBTyping &&
-									  !allPairsMatchedMatching &&
-									  !isCardFlipped
-									? 'gray'
-									: theme.textColor?.common.main,
-							'backgroundColor': isTranslate
-								? // For translate questions: inherit if not all pairs checked (unless lesson completed or viewing previous)
-									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
-									? 'inherit'
-									: theme.bgColor?.greenPrimary
-								: // For other question types: use existing logic
-									!isAnswerCorrect &&
-									  !isOpenEndedAnswerSubmitted &&
-									  !allPairsMatchedFITBDragDrop &&
-									  !allPairsMatchedFITBTyping &&
-									  !allPairsMatchedMatching &&
-									  !isCardFlipped
-									? 'inherit'
-									: theme.bgColor?.greenPrimary,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-								border: '2px solid lightgray',
+							'width': isMobileSize ? 34 : 40,
+							'height': isMobileSize ? 34 : 40,
+							'borderRadius': '12px',
+							'backgroundColor': 'rgba(1, 67, 90, 0.08)',
+							'border': '1px solid rgba(1, 67, 90, 0.15)',
+							'color': theme.palette.primary.main,
+							'boxShadow': '0 2px 8px rgba(0,0,0,0.08)',
+							'transition': 'all .2s ease',
+							'&:hover': {
+								backgroundColor: 'rgba(1, 67, 90, 0.14)',
+								transform: 'translateY(-1px)',
+								boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+							},
+							'&.Mui-disabled': {
+								opacity: 0.35,
+								color: 'rgba(0,0,0,0.35)',
+								borderColor: 'rgba(0,0,0,0.12)',
+								backgroundColor: 'rgba(0,0,0,0.03)',
 							},
 						}}
 						disabled={
 							isTranslate
 								? // For translate questions: disabled if not all pairs are checked (unless lesson is completed or viewing previous questions)
-									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+								checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
 								: // For other question types: use existing logic
-									(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-									!isCardFlipped &&
-									!allPairsMatchedFITBDragDrop &&
-									!allPairsMatchedFITBTyping &&
-									!allPairsMatchedMatching
+								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+								!isCardFlipped &&
+								!allPairsMatchedFITBDragDrop &&
+								!allPairsMatchedFITBTyping &&
+								!allPairsMatchedMatching
 						}>
 						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
@@ -1135,34 +1166,24 @@ const PracticeQuestion = ({
 							}}
 							sx={{
 								'flexShrink': 0,
-								'color':
-									!isAnswerCorrect &&
-									!isOpenEndedAnswerSubmitted &&
-									!allPairsMatchedFITBDragDrop &&
-									!allPairsMatchedFITBTyping &&
-									!allPairsMatchedMatching &&
-									!isCardFlipped
-										? 'gray'
-										: theme.textColor?.common.main,
-								'backgroundColor':
-									!isAnswerCorrect &&
-									!isOpenEndedAnswerSubmitted &&
-									!allPairsMatchedFITBDragDrop &&
-									!allPairsMatchedFITBTyping &&
-									!allPairsMatchedMatching &&
-									!isCardFlipped
-										? 'inherit'
-										: theme.bgColor?.greenPrimary,
-								':hover': {
-									color: theme.bgColor?.greenPrimary,
-									backgroundColor: 'transparent',
+								'width': isMobileSize ? 34 : 40,
+								'height': isMobileSize ? 34 : 40,
+								'borderRadius': '12px',
+								'backgroundColor': 'rgba(1, 67, 90, 0.08)',
+								'border': '1px solid rgba(1, 67, 90, 0.15)',
+								'color': theme.palette.primary.main,
+								'boxShadow': '0 2px 8px rgba(0,0,0,0.08)',
+								'transition': 'all .2s ease',
+								'&:hover': {
+									backgroundColor: 'rgba(1, 67, 90, 0.14)',
+									transform: 'translateY(-1px)',
+									boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
 								},
-								'padding': '0.35rem',
 							}}>
 							{isCompletingCourse ? (
 								<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
 							) : isLessonCompleted && isLastQuestion ? (
-								<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
+								<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'large'} />
 							) : isCompletingLesson ? (
 								<Done fontSize={isMobileSize ? 'small' : 'medium'} />
 							) : (
@@ -1201,17 +1222,17 @@ const PracticeQuestion = ({
 					position: 'fixed',
 					top: isMobileSize ? '7.5rem' : '11rem',
 					right: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
-					width: '80%',
+					width: 'fit-content',
 					zIndex: 9,
 				}}>
 				{displayedQuestionNumber === questionNumber &&
-				!isFlipCard &&
-				!isMatching &&
-				!isFITBDragDrop &&
-				!isFITBTyping &&
-				!isTranslate &&
-				!isTrueFalseQuestion &&
-				!isMultipleChoiceQuestion ? (
+					!isFlipCard &&
+					!isMatching &&
+					!isFITBDragDrop &&
+					!isFITBTyping &&
+					!isTranslate &&
+					!isTrueFalseQuestion &&
+					!isMultipleChoiceQuestion ? (
 					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
 						<Tooltip title='Receive feedback from AI' placement='left' arrow>
 							<IconButton

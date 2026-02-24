@@ -165,6 +165,42 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		}
 	}, [isChapterCompleted, hasChecklistItems, isChecklistCompleted, isEnrolledStatus, chapterId, autoOpenKey, chapter.askForFeedback]);
 
+	// Fallback auto-expand: if sessionStorage targets a lesson in this chapter, expand directly.
+	// This makes chapter expansion resilient to ref timing/order issues in the parent.
+	useEffect(() => {
+		if (!chapter?.lessons?.length) return;
+
+		// Prefer direct chapter-id signal when available
+		for (let i = sessionStorage.length - 1; i >= 0; i--) {
+			const key = sessionStorage.key(i);
+			if (!key || !key.startsWith('expand-chapter-by-id-')) continue;
+			if (sessionStorage.getItem(key) !== 'true') continue;
+
+			const chapterIdToExpand = key.replace('expand-chapter-by-id-', '');
+			if (chapterIdToExpand === String(chapterId)) {
+				setIsExpanded(true);
+				sessionStorage.removeItem(key);
+				return;
+			}
+		}
+
+		for (let i = 0; i < sessionStorage.length; i++) {
+			const key = sessionStorage.key(i);
+			if (!key || !key.startsWith('expand-chapter-for-lesson-')) continue;
+
+			const storedValue = sessionStorage.getItem(key);
+			if (storedValue !== 'true') continue;
+
+			const lessonIdToExpand = key.replace('expand-chapter-for-lesson-', '');
+			const hasTargetLesson = chapter.lessons.some((lesson) => lesson && lesson._id === lessonIdToExpand);
+			if (hasTargetLesson) {
+				setIsExpanded(true);
+				sessionStorage.removeItem(key);
+				break;
+			}
+		}
+	}, [chapter?.lessons]);
+
 	const handleToggleExpanded = () => {
 		setIsExpanded(!isExpanded);
 	};

@@ -21,6 +21,7 @@ interface QuestionsProps {
 	isSoundMuted?: boolean;
 	onQuestionChange?: (questionNumber: number) => void;
 	practiceAgainMode?: boolean;
+	enableWordAssist?: boolean;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -35,6 +36,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	isSoundMuted = false,
 	onQuestionChange,
 	practiceAgainMode = false,
+	enableWordAssist = true,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(isLessonCompleted ? 1 : getLastQuestion);
@@ -49,7 +51,7 @@ const Questions: React.FC<QuestionsProps> = ({
 		} else {
 			setDisplayedQuestionNumber(getLastQuestion);
 		}
-	}, [lessonId]); 
+	}, [lessonId]);
 
 	useEffect(() => {
 		if (onQuestionChange) {
@@ -137,6 +139,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							toggleAiIcon={toggleAiIcon}
 							isSoundMuted={isSoundMuted}
 							practiceAgainMode={practiceAgainMode}
+							enableWordAssist={enableWordAssist}
 						/>
 					) : isQuiz ? (
 						<QuizQuestion
@@ -153,6 +156,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							setUserQuizAnswers={setUserQuizAnswers}
 							setIsQuizInProgress={setIsQuizInProgress}
 							lessonName={lessonName}
+							enableWordAssist={enableWordAssist}
 						/>
 					) : null;
 				})}

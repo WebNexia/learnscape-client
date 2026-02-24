@@ -110,6 +110,41 @@ export const useUserCourseLessonData = () => {
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
 		try {
+			let resolvedNextLessonId: string | null = nextLessonId;
+
+			// Fallback: derive next lesson from course structure when query param is missing
+			if (!resolvedNextLessonId && singleCourseUser && lessonId) {
+				const chapters = singleCourseUser.chapters || [];
+				for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
+					const chapter = chapters[chapterIndex];
+					if (!chapter?.lessons?.length) continue;
+
+					// Use only valid lessons to avoid null placeholders breaking next-lesson resolution
+					const validLessonsInChapter = chapter.lessons.filter((lesson) => lesson && lesson._id);
+					const currentLessonIndex = validLessonsInChapter.findIndex((lesson) => lesson && lesson._id === lessonId);
+					if (currentLessonIndex === -1) continue;
+
+					// Next lesson in same chapter
+					if (currentLessonIndex < validLessonsInChapter.length - 1) {
+						const nextLessonInChapter = validLessonsInChapter[currentLessonIndex + 1];
+						if (nextLessonInChapter?._id) {
+							resolvedNextLessonId = nextLessonInChapter._id;
+						}
+					} else {
+						// First lesson of next chapter that has lessons
+						for (let nextChapterIndex = chapterIndex + 1; nextChapterIndex < chapters.length; nextChapterIndex++) {
+							const nextChapter = chapters[nextChapterIndex];
+							const firstValidLesson = nextChapter?.lessons?.find((lesson) => lesson && lesson._id);
+							if (firstValidLesson?._id) {
+								resolvedNextLessonId = firstValidLesson._id;
+								break;
+							}
+						}
+					}
+					break;
+				}
+			}
+
 			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
 
 			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
@@ -142,11 +177,31 @@ export const useUserCourseLessonData = () => {
 				}
 			}
 
-			if (nextLessonId) {
-				// Store nextLessonId in sessionStorage to expand its chapter when navigating back
-				sessionStorage.setItem(`expand-chapter-for-lesson-${nextLessonId}`, 'true');
+			if (resolvedNextLessonId) {
+				// Keep only one active expansion target to avoid stale key collisions
+				for (let i = sessionStorage.length - 1; i >= 0; i--) {
+					const key = sessionStorage.key(i);
+					if (
+						key &&
+						(key.startsWith('expand-chapter-for-lesson-') || key.startsWith('expand-chapter-by-id-'))
+					) {
+						sessionStorage.removeItem(key);
+					}
+				}
 
-				const existingNextLesson = parsedUserLessonData?.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
+				// Store next lesson ID to expand its chapter when navigating back
+				sessionStorage.setItem(`expand-chapter-for-lesson-${resolvedNextLessonId}`, 'true');
+
+				// Also store chapter ID for robust expansion fallback
+				const targetChapter = singleCourseUser?.chapters?.find((chapter) =>
+					chapter?.lessons?.some((lesson) => lesson && lesson._id === resolvedNextLessonId)
+				);
+				const targetChapterId = (targetChapter as any)?._id || (targetChapter as any)?.chapterId;
+				if (targetChapterId) {
+					sessionStorage.setItem(`expand-chapter-by-id-${targetChapterId}`, 'true');
+				}
+
+				const existingNextLesson = parsedUserLessonData?.find((data) => data.lessonId === resolvedNextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
 					try {
@@ -172,7 +227,7 @@ export const useUserCourseLessonData = () => {
 
 						// Make sure the responseUserLesson API call is completed and returns valid data
 						const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
-							lessonId: nextLessonId,
+							lessonId: resolvedNextLessonId,
 							userId: user?._id,
 							courseId,
 							userCourseId: validUserCourseId,

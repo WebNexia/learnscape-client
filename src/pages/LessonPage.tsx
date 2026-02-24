@@ -11,7 +11,10 @@ import {
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
+	MenuBook,
 	NotListedLocation,
+	RecordVoiceOver,
+	RecordVoiceOverOutlined,
 	VolumeOff,
 	VolumeUp,
 } from '@mui/icons-material';
@@ -47,6 +50,9 @@ import { QuestionType } from '../interfaces/enums';
 import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import InstructionalLessonsDialog from '../components/userCourses/InstructionalLessonsDialog';
+import { useWordAssist, wrapWordsForHover } from '../hooks/useWordAssist';
+import WordAssistPopper from '../components/userCourses/WordAssistPopper';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -132,10 +138,20 @@ const LessonPage = () => {
 	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
+	const [isWordAssistEnabled, setIsWordAssistEnabled] = useState<boolean>(() => {
+		const saved = localStorage.getItem('word-assist-enabled');
+		return saved === null ? true : saved === 'true';
+	});
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
+	const [isInstructionalLessonsDialogOpen, setIsInstructionalLessonsDialogOpen] = useState<boolean>(false);
+	const [selectedInstructionalLessonId, setSelectedInstructionalLessonId] = useState<string>('');
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+		enabled: isWordAssistEnabled,
+		hoverDelayMs: 1000,
+	});
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
 
@@ -179,6 +195,38 @@ const LessonPage = () => {
 
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
+	const lessonTextColor = theme.textColor?.secondary.main || '#4D7B8B';
+	const lessonTextFontFamily = theme.fontFamily?.main || 'Poppins';
+
+	const instructionalLessonsInChapter = useMemo(() => {
+		if (!singleCourseUser || !lessonId) return [];
+
+		const currentChapter = (singleCourseUser.chapters || []).find(
+			(chapter) => chapter?.lessons?.some((chapterLesson) => chapterLesson?._id === lessonId)
+		);
+		if (!currentChapter?.lessons) return [];
+
+		return currentChapter.lessons.filter(
+			(chapterLesson) => chapterLesson !== null && chapterLesson.type === LessonType.INSTRUCTIONAL_LESSON
+		);
+	}, [singleCourseUser, lessonId]);
+
+	useEffect(() => {
+		if (instructionalLessonsInChapter.length > 0) {
+			setSelectedInstructionalLessonId((previousSelectedLessonId) => {
+				const hasPreviousLesson = instructionalLessonsInChapter.some(
+					(chapterLesson) => chapterLesson._id === previousSelectedLessonId
+				);
+				return hasPreviousLesson ? previousSelectedLessonId : instructionalLessonsInChapter[0]._id;
+			});
+			return;
+		}
+		setSelectedInstructionalLessonId('');
+	}, [instructionalLessonsInChapter]);
+
+	useEffect(() => {
+		localStorage.setItem('word-assist-enabled', String(isWordAssistEnabled));
+	}, [isWordAssistEnabled]);
 
 	// Reset practiceAgainMode when lessonId changes (on mount/navigation)
 	useEffect(() => {
@@ -197,20 +245,6 @@ const LessonPage = () => {
 						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null) || [],
 					});
 					setLessonType(lessonData.type);
-
-					// Only fetch user lesson data if userLessonId exists
-					if (userLessonId) {
-						try {
-							const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
-							if (userLessonResponse.data.data && userLessonResponse.data.data[0]) {
-								setUserLessonNotes(userLessonResponse.data.data[0].notes);
-								setEditorContent(userLessonResponse.data.data[0].notes);
-								setTeacherQuizFeedback(userLessonResponse.data.data[0].teacherFeedback);
-							}
-						} catch (error) {
-							console.log('Error fetching user lesson data:', error);
-						}
-					}
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
 					if (lessonData.type === LessonType.QUIZ) {
@@ -252,6 +286,27 @@ const LessonPage = () => {
 			setIsQuizInProgress(true);
 		}
 	}, [lessonId]);
+
+
+	useEffect(() => {
+		if (!userLessonId) return;
+
+		const fetchUserLessonData = async () => {
+			try {
+				const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
+				if (userLessonResponse.data.data && userLessonResponse.data.data[0]) {
+					const lessonData = userLessonResponse.data.data[0];
+					setUserLessonNotes(lessonData.notes || '');
+					setEditorContent(lessonData.notes || '');
+					setTeacherQuizFeedback(lessonData.teacherFeedback);
+				}
+			} catch (error) {
+				console.log('Error fetching user lesson data:', error);
+			}
+		};
+
+		fetchUserLessonData();
+	}, [userLessonId]);
 
 	useEffect(() => {
 		if (isQuiz && !isLessonCompleted) {
@@ -423,11 +478,31 @@ const LessonPage = () => {
 								</IconButton>
 							</Tooltip>
 						)}
-						<Tooltip title='Take Notes' placement='right' arrow>
+						<Tooltip title='Take Notes' placement='top' arrow>
 							<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
 								<Article fontSize={isMobileSize ? 'small' : 'medium'} />
 							</IconButton>
 						</Tooltip>
+						{lessonType === LessonType.PRACTICE_LESSON && (
+							<Tooltip title={isWordAssistEnabled ? 'Disable Pronunciation Assist' : 'Enable Pronunciation Assist'} placement='top' arrow>
+								<IconButton
+									onClick={() => setIsWordAssistEnabled((prev) => !prev)}
+									sx={{
+										'&:hover': {
+											backgroundColor: isWordAssistEnabled ? 'rgba(25, 118, 210, 0.2)' : 'rgba(77, 123, 139, 0.2)',
+										},
+									}}>
+									{!isWordAssistEnabled ? <RecordVoiceOverOutlined fontSize='small' /> : <RecordVoiceOver fontSize='small' />}
+								</IconButton>
+							</Tooltip>
+						)}
+						{lessonType === LessonType.PRACTICE_LESSON && instructionalLessonsInChapter.length > 0 && (
+							<Tooltip title='Lectures in this Chapter' placement='right' arrow>
+								<IconButton onClick={() => setIsInstructionalLessonsDialogOpen(true)}>
+									<MenuBook fontSize={isMobileSize ? 'small' : 'medium'} />
+								</IconButton>
+							</Tooltip>
+						)}
 					</Box>
 				)}
 
@@ -576,6 +651,14 @@ const LessonPage = () => {
 					)}
 				</Box>
 				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+					{lesson.isGraded && lesson.type === LessonType.QUIZ && isQuestionsVisible && isLessonCompleted && (
+						<Tooltip title={isWordAssistEnabled ? 'Disable Pronunciation Assist' : 'Enable Pronunciation Assist'} placement='left' arrow>
+							<IconButton
+								onClick={() => setIsWordAssistEnabled((prev) => !prev)}>
+								{!isWordAssistEnabled ? <RecordVoiceOverOutlined fontSize='small' /> : <RecordVoiceOver fontSize='small' />}
+							</IconButton>
+						</Tooltip>
+					)}
 					{lesson.isGraded && lesson.type === LessonType.QUIZ && isQuestionsVisible && (
 						<Tooltip title='Take Notes' placement='left' arrow>
 							<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
@@ -606,7 +689,7 @@ const LessonPage = () => {
 					position: 'fixed',
 					top: isSmallMobilePortrait ? '6.5rem' : isSmallMobileLandscape ? '9rem' : '8rem',
 					left: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
-					width: '80%',
+					width: 'fit-content',
 					zIndex: 3,
 					overflow: 'auto',
 				}}>
@@ -669,7 +752,7 @@ const LessonPage = () => {
 										setEditorContent(content);
 										setIsNotesUpdated(true);
 									}}
-									initialValue={userLessonNotes}
+									value={editorContent}
 								/>
 							</Box>
 							<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -759,6 +842,13 @@ const LessonPage = () => {
 								</Typography>
 							</Box>
 						)}
+						<Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: '0.35rem' }}>
+							<Tooltip title={isWordAssistEnabled ? 'Disable Pronunciation Assist' : 'Enable Pronunciation Assist'} placement='top' arrow>
+								<IconButton onClick={() => setIsWordAssistEnabled((prev) => !prev)}>
+									{!isWordAssistEnabled ? <RecordVoiceOverOutlined fontSize='small' /> : <RecordVoiceOver fontSize='small' />}
+								</IconButton>
+							</Tooltip>
+						</Box>
 						<Box
 							sx={{
 								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
@@ -768,21 +858,42 @@ const LessonPage = () => {
 								width: '100%',
 								mt: isMobileSizeSmall ? '0.85rem' : '',
 								ml: isMobileSizeSmall ? '1rem' : '',
+								'&, & *': {
+									fontFamily: `${lessonTextFontFamily} !important`,
+									color: `${lessonTextColor} !important`,
+									lineHeight: '2 !important',
+								},
 							}}>
-							<Box className='rich-text-content'>
+							<Box
+								className='rich-text-content'
+								onMouseOver={handleWordHover}
+								onMouseLeave={handleMouseLeave}
+								onTouchStart={handleWordTouchStart}
+								onTouchEnd={handleWordTouchEnd}
+								onTouchCancel={handleWordTouchEnd}>
 								<Typography
 									component='div'
-									dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(lesson.text)) }}
+									dangerouslySetInnerHTML={{ __html: wrapWordsForHover(sanitizeHtml(decode(lesson.text))) }}
 									sx={{
 										'lineHeight': 2,
-										'fontSize': isMobileSize ? '0.7rem' : '0.9rem',
-										'color': 'black',
+										'fontSize': isMobileSize ? '0.75rem' : '0.9rem',
+										'color': lessonTextColor,
+										'fontFamily': lessonTextFontFamily,
 										'& img': {
 											maxWidth: '100%',
 											height: 'auto',
 											borderRadius: '0.35rem',
 											margin: '1rem 0',
 											boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
+										},
+										'& .pronounceable-word': {
+											cursor: isWordAssistEnabled ? 'pointer' : 'default',
+											borderRadius: '0.2rem',
+											padding: '0 0.1rem',
+											transition: 'background-color 0.15s ease',
+										},
+										'& .pronounceable-word:hover': {
+											backgroundColor: isWordAssistEnabled ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
 										},
 									}}
 								/>
@@ -845,7 +956,7 @@ const LessonPage = () => {
 										? 'Start Quiz'
 										: 'Review Quiz'}
 					</CustomSubmitButton>
-				{isLessonCompleted && <Box>
+					{isLessonCompleted && <Box>
 						{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
 							<CustomSubmitButton
 								onClick={() => {
@@ -907,6 +1018,7 @@ const LessonPage = () => {
 						onQuestionChange={setCurrentQuestionNumber}
 						isSoundMuted={isSoundMuted}
 						practiceAgainMode={practiceAgainMode}
+						enableWordAssist={isWordAssistEnabled}
 					/>
 				</Box>
 			)}
@@ -969,10 +1081,8 @@ const LessonPage = () => {
 							onSubmit={async () => {
 								setIsNavigatingToNextLesson(true);
 								try {
-									// Only call handleNextLesson if not already completed
-									if (!isLessonCompleted) {
-										await handleNextLesson();
-									}
+									// Always call handleNextLesson so next-chapter expansion keys are set reliably.
+									await handleNextLesson();
 									// Navigate to course home page
 									navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -988,6 +1098,21 @@ const LessonPage = () => {
 					</CustomDialog>
 				</Box>
 			)}
+			<InstructionalLessonsDialog
+				open={isInstructionalLessonsDialogOpen}
+				onClose={() => setIsInstructionalLessonsDialogOpen(false)}
+				lessons={instructionalLessonsInChapter}
+				selectedLessonId={selectedInstructionalLessonId}
+				onSelectLesson={setSelectedInstructionalLessonId}
+				enableWordAssist={isWordAssistEnabled}
+			/>
+			<WordAssistPopper
+				open={Boolean(anchorEl) && isWordAssistEnabled}
+				anchorEl={anchorEl}
+				activeWord={activeWord}
+				wordInfo={wordInfo}
+				isLoadingWordInfo={isLoadingWordInfo}
+			/>
 		</Box>
 	);
 };
