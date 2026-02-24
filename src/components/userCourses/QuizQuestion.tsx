@@ -58,6 +58,7 @@ interface QuizQuestionProps {
 	setIsLessonCompleted: React.Dispatch<React.SetStateAction<boolean>>;
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	setIsQuizInProgress: React.Dispatch<React.SetStateAction<boolean>>;
+	enableWordAssist?: boolean;
 }
 
 const QuizQuestion = ({
@@ -73,6 +74,7 @@ const QuizQuestion = ({
 	setIsLessonCompleted,
 	setUserQuizAnswers,
 	setIsQuizInProgress,
+	enableWordAssist = true,
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
@@ -82,7 +84,7 @@ const QuizQuestion = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useQuestionTypes();
 	const { user } = useContext(UserAuthContext);
-	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+	const { userCoursesData, singleCourseUser } = useContext(UserCourseLessonDataContext);
 
 	const {
 		isSmallScreen,
@@ -118,6 +120,7 @@ const QuizQuestion = ({
 
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 	const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
+	const isWordAssistEnabledForQuizReview = Boolean(enableWordAssist && isLessonCompleted);
 
 	const [teacherQuestionFeedback, setTeacherQuestionFeedback] = useState<string>('');
 	const [teacherQuestionAudioFeedback, setTeacherQuestionAudioFeedback] = useState<string>('');
@@ -152,6 +155,29 @@ const QuizQuestion = ({
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
 	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
+
+	const navigateToCourseHome = () => {
+		if (nextLessonId) {
+			for (let i = sessionStorage.length - 1; i >= 0; i--) {
+				const key = sessionStorage.key(i);
+				if (key && (key.startsWith('expand-chapter-for-lesson-') || key.startsWith('expand-chapter-by-id-'))) {
+					sessionStorage.removeItem(key);
+				}
+			}
+			sessionStorage.setItem(`expand-chapter-for-lesson-${nextLessonId}`, 'true');
+
+			// Extra fallback: store chapter id as well
+			const targetChapter = singleCourseUser?.chapters?.find((chapter) =>
+				chapter?.lessons?.some((lesson) => lesson && lesson._id === nextLessonId)
+			);
+			const targetChapterId = (targetChapter as any)?._id || (targetChapter as any)?.chapterId;
+			if (targetChapterId) {
+				sessionStorage.setItem(`expand-chapter-by-id-${targetChapterId}`, 'true');
+			}
+		}
+		navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
 
 	useEffect(() => {
 		setUserQuizAnswerAfterSubmission(() => {
@@ -400,7 +426,9 @@ const QuizQuestion = ({
 			<form style={{ width: '100%' }}>
 				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
-					{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
+					{!isFITBDragDrop && !isFITBTyping && (
+						<QuestionText question={question} questionNumber={questionNumber} enableWordAssist={isWordAssistEnabledForQuizReview} />
+					)}
 
 					{isOpenEndedQuestion && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -613,6 +641,7 @@ const QuizQuestion = ({
 								setUserQuizAnswers={setUserQuizAnswers}
 								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
 								lessonType={lessonType}
+								enableWordAssist={isWordAssistEnabledForQuizReview}
 							/>
 						</Box>
 					)}
@@ -649,6 +678,7 @@ const QuizQuestion = ({
 								setUserQuizAnswers={setUserQuizAnswers}
 								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
 								lessonType={lessonType}
+								enableWordAssist={isWordAssistEnabledForQuizReview}
 							/>
 						</Box>
 					)}
@@ -873,11 +903,24 @@ const QuizQuestion = ({
 				<IconButton
 					sx={{
 						'flexShrink': 0,
-						'padding': '0.35rem',
-						':hover': {
-							color: theme.bgColor?.greenPrimary,
-							backgroundColor: 'transparent',
-							border: '2px solid lightgray',
+						'width': isMobileSize ? 34 : 40,
+						'height': isMobileSize ? 34 : 40,
+						'borderRadius': '12px',
+						'backgroundColor': 'rgba(1, 67, 90, 0.08)',
+						'border': '1px solid rgba(1, 67, 90, 0.15)',
+						'color': theme.palette.primary.main,
+						'boxShadow': '0 2px 8px rgba(0,0,0,0.08)',
+						'transition': 'all .2s ease',
+						'&:hover': {
+							backgroundColor: 'rgba(1, 67, 90, 0.14)',
+							transform: 'translateY(-1px)',
+							boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+						},
+						'&.Mui-disabled': {
+							opacity: 0.35,
+							color: 'rgba(0,0,0,0.35)',
+							borderColor: 'rgba(0,0,0,0.12)',
+							backgroundColor: 'rgba(0,0,0,0.03)',
 						},
 					}}
 					onClick={() => {
@@ -938,11 +981,12 @@ const QuizQuestion = ({
 					placement='top'
 					arrow>
 					<IconButton
-						onClick={() => {
+						onClick={async () => {
 							if (isLastQuestion && !isLessonCompleted) {
 								setIsSubmitQuizModalOpen(true);
 							} else if (isLastQuestion && isLessonCompleted) {
-								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								await handleNextLesson();
+								navigateToCourseHome();
 							}
 							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
 								setDisplayedQuestionNumber((prev) => prev + 1);
@@ -952,12 +996,25 @@ const QuizQuestion = ({
 						}}
 						sx={{
 							'flexShrink': 0,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-								border: '2px solid lightgray',
+							'width': isMobileSize ? 34 : 40,
+							'height': isMobileSize ? 34 : 40,
+							'borderRadius': '12px',
+							'backgroundColor': 'rgba(1, 67, 90, 0.08)',
+							'border': '1px solid rgba(1, 67, 90, 0.15)',
+							'color': theme.palette.primary.main,
+							'boxShadow': '0 2px 8px rgba(0,0,0,0.08)',
+							'transition': 'all .2s ease',
+							'&:hover': {
+								backgroundColor: 'rgba(1, 67, 90, 0.14)',
+								transform: 'translateY(-1px)',
+								boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
 							},
-							'padding': '0.35rem',
+							'&.Mui-disabled': {
+								opacity: 0.35,
+								color: 'rgba(0,0,0,0.35)',
+								borderColor: 'rgba(0,0,0,0.12)',
+								backgroundColor: 'rgba(0,0,0,0.03)',
+							},
 						}}>
 						{isCompletingCourse ? (
 							<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
@@ -994,7 +1051,7 @@ const QuizQuestion = ({
 					openModal={isMsgModalAfterSubmitOpen}
 					closeModal={() => {
 						setIsMsgModalAfterSubmitOpen(false);
-						navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+						navigateToCourseHome();
 					}}
 					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
@@ -1024,7 +1081,7 @@ const QuizQuestion = ({
 							type='button'
 							onClick={() => {
 								setIsMsgModalAfterSubmitOpen(false);
-								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								navigateToCourseHome();
 							}}
 							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: isMobileSize ? '1.75rem' : '2rem' }}>
 							Close

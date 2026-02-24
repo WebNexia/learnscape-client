@@ -14,13 +14,15 @@ import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAligne
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
+import WordAssistPopper from '../../userCourses/WordAssistPopper';
+import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
 
 const Container = styled(Box)`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	margin-top: '0.5rem';
+	margin-top: 1.5rem;
 	flex-grow: 1;
 `;
 
@@ -30,22 +32,25 @@ const Column = styled(Box)`
 `;
 
 const TextContainer = styled(Box)`
-	display: inline;
+	display: flex;
 	flex-wrap: wrap;
-	align-items: baseline;
-	line-height: 1.5rem;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	line-height: 2rem;
 	width: 100%;
 	white-space: pre-wrap;
 	margin: 0;
 	padding: 0;
 `;
 
-const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $isLessonCompleted?: boolean; $lessonType?: string }>`
+const DropArea = styled(Box) <{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $isLessonCompleted?: boolean; $lessonType?: string }>`
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	min-width: 4rem;
-	height: 1.75rem;
+	min-height: 2rem;
+	height: 2rem;
 	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
@@ -60,27 +65,27 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser
 						: '#ef5350'};
 	border: 0.1rem solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
-			$isLessonCompleted
-				? $isCorrect
-					? '#c3e6cb'
-					: '#f5c6cb'
-				: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+		$isLessonCompleted
+			? $isCorrect
+				? '#c3e6cb'
+				: '#f5c6cb'
+			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+				? '#cccccc'
+				: $isCorrect === null
 					? '#cccccc'
-					: $isCorrect === null
-						? '#cccccc'
-						: $isCorrect
-							? '#c3e6cb'
-							: '#f5c6cb'};
+					: $isCorrect
+						? '#c3e6cb'
+						: '#f5c6cb'};
 	border-radius: 0.25rem;
-	padding: 0 0.25rem;
-	margin: 0.1rem 0.35rem;
+	padding: 0 0.35rem;
+	margin: 0 0.35rem;
 	font-size: 0.75rem;
 	color: #495057;
 	overflow: hidden;
 	white-space: nowrap;
 	text-align: center;
 	vertical-align: middle;
-	line-height: 1.5rem;
+	line-height: normal;
 	flex-shrink: 0;
 	width: auto;
 `;
@@ -92,7 +97,7 @@ const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: bo
 		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#e0e0e0' : $isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373'};
 	border: 1px solid
 		${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
-			$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
+		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
 	border-radius: 0.25rem;
 	cursor: pointer;
 	text-align: center;
@@ -133,6 +138,7 @@ interface FillInTheBlanksDragDropProps {
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	onCorrectMatch?: () => void;
 	onWrongMatch?: () => void;
+	enableWordAssist?: boolean;
 }
 
 // Function to decode HTML entities
@@ -161,6 +167,7 @@ const FillInTheBlanksDragDrop = ({
 	setUserQuizAnswers,
 	onCorrectMatch,
 	onWrongMatch,
+	enableWordAssist = true,
 }: FillInTheBlanksDragDropProps) => {
 	const [blanks, setBlanks] = useState<BlankValuePair[]>([]);
 	const [responses, setResponses] = useState<BlankValuePair[]>([]);
@@ -198,6 +205,10 @@ const FillInTheBlanksDragDrop = ({
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+		enabled: enableWordAssist,
+		hoverDelayMs: 1000,
+	});
 
 	useEffect(() => {
 		const sanitizedHtml = sanitizeHtml(decode(textWithBlanks))
@@ -390,7 +401,12 @@ const FillInTheBlanksDragDrop = ({
 		<DragDropContext onDragEnd={handleDragEnd}>
 			<Container>
 				<Column>
-					<TextContainer>
+					<TextContainer
+						onMouseOver={handleWordHover}
+						onMouseLeave={handleMouseLeave}
+						onTouchStart={handleWordTouchStart}
+						onTouchEnd={handleWordTouchEnd}
+						onTouchCancel={handleWordTouchEnd}>
 						{textSegments?.map((segment, index) => {
 							const match = segment.match(/___(\d+)___/);
 							if (match) {
@@ -431,7 +447,7 @@ const FillInTheBlanksDragDrop = ({
 																<Typography
 																	variant='body2'
 																	component='span'
-																	sx={{ display: 'inline-flex', fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+																	sx={{ display: 'inline-flex', fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>
 																	{blanks[blankIndex].value}
 																</Typography>
 															</Item>
@@ -445,22 +461,42 @@ const FillInTheBlanksDragDrop = ({
 								);
 							}
 
+							const hoverableSegmentHtml = wrapWordsForHover(segment);
 							return (
 								<Typography
 									key={`text-${index}`}
 									variant='body2'
 									component='span'
-									dangerouslySetInnerHTML={{ __html: segment }}
-									sx={{ lineHeight: '2.25', fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}
+									dangerouslySetInnerHTML={{ __html: hoverableSegmentHtml }}
+									sx={{
+										lineHeight: '2rem',
+										fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem',
+										'& .pronounceable-word': {
+											cursor: enableWordAssist ? 'pointer' : 'default',
+											borderRadius: '0.2rem',
+											padding: '0 0.1rem',
+											transition: 'background-color 0.15s ease',
+										},
+										'& .pronounceable-word:hover': {
+											backgroundColor: enableWordAssist ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
+										},
+									}}
 								/>
 							);
 						})}
 					</TextContainer>
+					<WordAssistPopper
+						open={Boolean(anchorEl) && enableWordAssist}
+						anchorEl={anchorEl}
+						activeWord={activeWord}
+						wordInfo={wordInfo}
+						isLoadingWordInfo={isLoadingWordInfo}
+					/>
 				</Column>
 
 				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
 					<>
-						<Box sx={{ width: '100%', flex: 1, mt: '2rem' }}>
+						<Box sx={{ width: '100%', flex: 1, mt: '5rem' }}>
 							<CustomInfoMessageAlignedLeft message='Select and drag the correct word cards into the blanks to complete the sentence(s)' />
 						</Box>
 						<Column
@@ -469,7 +505,7 @@ const FillInTheBlanksDragDrop = ({
 								alignItems: 'flex-start',
 								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 								borderRadius: '0.35rem',
-								padding: '1rem',
+								padding: '1.75rem 1rem',
 								marginBottom: '2rem',
 							}}>
 							<Droppable droppableId='responses'>
@@ -492,7 +528,7 @@ const FillInTheBlanksDragDrop = ({
 												index={index}>
 												{(provided) => (
 													<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
-														<Typography variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+														<Typography variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>
 															{response.value}
 														</Typography>
 													</Item>
@@ -541,7 +577,7 @@ const FillInTheBlanksDragDrop = ({
 														padding: '0.25rem',
 														margin: '0 0.15rem',
 														borderRadius: '0.35rem',
-														fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+														fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 													}}>
 													{correctValue}
 												</Typography>
@@ -554,7 +590,7 @@ const FillInTheBlanksDragDrop = ({
 											key={`correct-text-${index}`}
 											variant='body2'
 											component='span'
-											sx={{ lineHeight: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											sx={{ lineHeight: 2, fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>
 											{decodeHtmlEntities(segment)
 												.replace(/[()]/g, '')
 												.replace(/<\/?[^>]+(>|$)/g, '')}

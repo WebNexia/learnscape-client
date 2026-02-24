@@ -14,13 +14,15 @@ import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAligne
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
+import WordAssistPopper from '../../userCourses/WordAssistPopper';
+import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
 
 const Container = styled(Box)`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	margin-top: '0.5rem';
+	margin-top: 1.5rem;
 	flex-grow: 1;
 `;
 
@@ -29,10 +31,12 @@ const Column = styled(Box)`
 	flex-grow: 1;
 `;
 
-const TextContainer = styled(Box)<{ isMobileSizeSmall: boolean }>`
-	display: inline;
+const TextContainer = styled(Box) <{ isMobileSizeSmall: boolean }>`
+	display: flex;
 	flex-wrap: wrap;
+	justify-content: center;
 	align-items: baseline;
+	text-align: center;
 	line-height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? 1.7 : 2.5)};
 	width: 100%;
 	white-space: pre-wrap;
@@ -57,34 +61,34 @@ const StyledInput = styled(
 )`
 	& .MuiOutlinedInput-root {
 		background-color: ${({ isCorrect, fromQuizQuestionUser, isLessonCompleted, lessonType }) => {
-			if (isLessonCompleted) return isCorrect ? theme.palette.success.main : '#ef5350';
+		if (isLessonCompleted) return isCorrect ? theme.palette.success.main : '#ef5350';
 
-			if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
-				return '#fff';
-			}
-
-			if (isCorrect === true) return theme.palette.success.main;
-			if (isCorrect === false) return '#ef5350';
+		if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
 			return '#fff';
-		}};
+		}
+
+		if (isCorrect === true) return theme.palette.success.main;
+		if (isCorrect === false) return '#ef5350';
+		return '#fff';
+	}};
 	}
 
 	& .MuiOutlinedInput-input,
 	& .MuiInputBase-input,
 	& input {
 		color: ${({ isLessonCompleted, isCorrect, fromQuizQuestionUser, lessonType }) => {
-			if (isLessonCompleted) return '#fff';
+		if (isLessonCompleted) return '#fff';
 
-			// If it's a quiz question, keep the default text color
-			if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
-				return 'black';
-			}
-
-			// If it's a practice question, use white text if correct/incorrect is determined
-			if (isCorrect !== null) return '#fff';
+		// If it's a quiz question, keep the default text color
+		if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
 			return 'black';
-		}};
-		font-size: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : '0.85rem')};
+		}
+
+		// If it's a practice question, use white text if correct/incorrect is determined
+		if (isCorrect !== null) return '#fff';
+		return 'black';
+	}};
+		font-size: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : '0.9rem')};
 		height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : undefined)};
 		width: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '6rem' : '7.5rem')};
 		padding-left: 0.35rem;
@@ -114,6 +118,7 @@ interface FillInTheBlanksTypingProps {
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	onCorrectMatch?: () => void;
 	onWrongMatch?: () => void;
+	enableWordAssist?: boolean;
 }
 
 const FillInTheBlanksTyping = ({
@@ -136,6 +141,7 @@ const FillInTheBlanksTyping = ({
 	setUserQuizAnswers,
 	onCorrectMatch,
 	onWrongMatch,
+	enableWordAssist = true,
 }: FillInTheBlanksTypingProps) => {
 	const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
 	const [inputStatus, setInputStatus] = useState<Record<string, boolean | null>>({});
@@ -191,6 +197,10 @@ const FillInTheBlanksTyping = ({
 	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+		enabled: enableWordAssist,
+		hoverDelayMs: 1000,
+	});
 
 	useEffect(() => {
 		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
@@ -387,7 +397,13 @@ const FillInTheBlanksTyping = ({
 	return (
 		<Container>
 			<Column>
-				<TextContainer isMobileSizeSmall={isMobileSizeSmall}>
+				<TextContainer
+					isMobileSizeSmall={isMobileSizeSmall}
+					onMouseOver={handleWordHover}
+					onMouseLeave={handleMouseLeave}
+					onTouchStart={handleWordTouchStart}
+					onTouchEnd={handleWordTouchEnd}
+					onTouchCancel={handleWordTouchEnd}>
 					{textSegments?.map((segment, index) => {
 						const match = segment.match(/___(\d+)___/);
 						if (match) {
@@ -413,19 +429,42 @@ const FillInTheBlanksTyping = ({
 								/>
 							);
 						} else {
+							const hoverableSegmentHtml = wrapWordsForHover(segment);
 							return (
-								<Typography key={`text-${index}`} variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
-									{segment}
-								</Typography>
+								<Typography
+									key={`text-${index}`}
+									variant='body2'
+									component='span'
+									dangerouslySetInnerHTML={{ __html: hoverableSegmentHtml }}
+									sx={{
+										fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem',
+										'& .pronounceable-word': {
+											cursor: enableWordAssist ? 'pointer' : 'default',
+											borderRadius: '0.2rem',
+											padding: '0 0.1rem',
+											transition: 'background-color 0.15s ease',
+										},
+										'& .pronounceable-word:hover': {
+											backgroundColor: enableWordAssist ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
+										},
+									}}
+								/>
 							);
 						}
 					})}
 				</TextContainer>
+				<WordAssistPopper
+					open={Boolean(anchorEl) && enableWordAssist}
+					anchorEl={anchorEl}
+					activeWord={activeWord}
+					wordInfo={wordInfo}
+					isLoadingWordInfo={isLoadingWordInfo}
+				/>
 
 				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
 					<Box
 						sx={{
-							mt: '2rem',
+							mt: '5rem',
 							mb: '2rem',
 						}}>
 						<CustomInfoMessageAlignedLeft message='Type the correct word into each blank to complete the sentence(s)' />
@@ -438,7 +477,7 @@ const FillInTheBlanksTyping = ({
 								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 								borderRadius: '0.35rem',
 								width: '100%',
-								padding: '1rem',
+								padding: '1.75rem 1rem',
 							}}>
 							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
 								{hints?.map((hint, index) => {
@@ -452,11 +491,11 @@ const FillInTheBlanksTyping = ({
 												borderRadius: '0.35rem',
 											}}>
 											{showHiddenBlankValues ? (
-												<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+												<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>
 													{hint}
 												</Typography>
 											) : (
-												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>*****</Typography>
+												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>*****</Typography>
 											)}
 										</Box>
 									);
@@ -509,7 +548,7 @@ const FillInTheBlanksTyping = ({
 													padding: '0.25rem',
 													margin: '0 0.15rem',
 													borderRadius: '0.35rem',
-													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 												}}>
 												{correctValue}
 											</Typography>
@@ -520,7 +559,7 @@ const FillInTheBlanksTyping = ({
 												key={`correct-text-${index}`}
 												variant='body2'
 												component='span'
-												sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>
 												{segment}
 											</Typography>
 										);

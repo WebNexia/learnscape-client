@@ -1396,7 +1396,7 @@ const AdminLessonEditPage = () => {
 									maxLength={15000}
 								/>
 								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0', textAlign: 'right' }}>
-									{editorContent?.length || 0}/15000 Characters
+									{stripHtml(editorContent || '').length}/15000 Characters
 								</Typography>
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>

@@ -47,34 +47,72 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 	useEffect(() => {
 		if (!course?.chapters) return;
 
-		// Find which lesson ID is stored in sessionStorage
-		let nextLessonIdToExpand: string | null = null;
+		// First, try chapter-id based expansion (most robust)
+		let chapterIdToExpand: string | null = null;
+		for (let i = sessionStorage.length - 1; i >= 0; i--) {
+			const key = sessionStorage.key(i);
+			if (key && key.startsWith('expand-chapter-by-id-') && sessionStorage.getItem(key) === 'true') {
+				chapterIdToExpand = key.replace('expand-chapter-by-id-', '');
+				break;
+			}
+		}
+
+		if (chapterIdToExpand) {
+			course.chapters.forEach((chapter, index) => {
+				if (!chapter) return;
+				const currentChapterId = (chapter as any)._id || (chapter as any).chapterId;
+				if (currentChapterId === chapterIdToExpand && chapterRefs.current[index]) {
+					setTimeout(() => {
+						chapterRefs.current[index]?.setExpanded(true);
+						sessionStorage.removeItem(`expand-chapter-by-id-${chapterIdToExpand}`);
+					}, 100);
+				}
+			});
+			return;
+		}
+
+		// Build a set of lesson IDs that belong to this course
+		const currentCourseLessonIds = new Set(
+			course.chapters
+				.flatMap((chapter) => (chapter?.lessons || []).map((lesson) => lesson?._id))
+				.filter((lessonId): lessonId is string => Boolean(lessonId))
+		);
+
+		// Collect all expansion requests from sessionStorage
+		const expansionRequests: { key: string; lessonId: string }[] = [];
 		for (let i = 0; i < sessionStorage.length; i++) {
 			const key = sessionStorage.key(i);
 			if (key && key.startsWith('expand-chapter-for-lesson-')) {
 				const storedValue = sessionStorage.getItem(key);
 				if (storedValue === 'true') {
-					nextLessonIdToExpand = key.replace('expand-chapter-for-lesson-', '');
-					break;
+					expansionRequests.push({
+						key,
+						lessonId: key.replace('expand-chapter-for-lesson-', ''),
+					});
 				}
 			}
 		}
 
-		if (nextLessonIdToExpand) {
-			// Find which chapter contains this lesson
-			course.chapters.forEach((chapter, index) => {
-				if (!chapter || !chapter.lessons) return;
-				const hasNextLesson = chapter.lessons.some((lesson) => lesson && lesson._id === nextLessonIdToExpand);
-				if (hasNextLesson && chapterRefs.current[index]) {
-					// Small delay to ensure refs are registered
-					setTimeout(() => {
-						chapterRefs.current[index]?.setExpanded(true);
-						// Clear the sessionStorage after expanding
-						sessionStorage.removeItem(`expand-chapter-for-lesson-${nextLessonIdToExpand}`);
-					}, 100);
-				}
-			});
-		}
+		// Prefer the most recently added matching key (reverse order)
+		const matchingRequest = [...expansionRequests]
+			.reverse()
+			.find((request) => currentCourseLessonIds.has(request.lessonId));
+
+		if (!matchingRequest) return;
+
+		// Find and expand the chapter containing the matched lesson
+		course.chapters.forEach((chapter, index) => {
+			if (!chapter || !chapter.lessons) return;
+			const hasNextLesson = chapter.lessons.some((lesson) => lesson && lesson._id === matchingRequest.lessonId);
+			if (hasNextLesson && chapterRefs.current[index]) {
+				// Small delay to ensure refs are registered
+				setTimeout(() => {
+					chapterRefs.current[index]?.setExpanded(true);
+					// Clear only the key that has been consumed
+					sessionStorage.removeItem(matchingRequest.key);
+				}, 100);
+			}
+		});
 	}, [course]);
 
 	return (
@@ -156,8 +194,15 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 				course?.chapters?.map((chapter, index) => {
 					if (chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) {
 						let nextChapterFirstLessonId: string = '';
-						if (index + 1 < course?.chapters?.length) {
-							nextChapterFirstLessonId = course?.chapters[index + 1].lessonIds[0];
+						// Find the first valid lesson in the next available chapter (skip empty/null chapters)
+						for (let nextIndex = index + 1; nextIndex < course.chapters.length; nextIndex++) {
+							const nextChapter = course.chapters[nextIndex];
+							if (!nextChapter) continue;
+							const firstValidNextChapterLesson = nextChapter.lessons?.find((lesson) => lesson && lesson._id);
+							if (firstValidNextChapterLesson?._id) {
+								nextChapterFirstLessonId = firstValidNextChapterLesson._id;
+								break;
+							}
 						}
 						return (
 							<Chapter

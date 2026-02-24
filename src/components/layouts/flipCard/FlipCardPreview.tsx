@@ -1,5 +1,6 @@
-import { Box, styled, Typography } from '@mui/material';
-import { useContext, useState } from 'react';
+import { Box, CircularProgress, IconButton, Paper, Popper, Tooltip, styled, Typography } from '@mui/material';
+import { RecordVoiceOverOutlined } from '@mui/icons-material';
+import { useContext, useMemo, useRef, useState } from 'react';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -108,6 +109,9 @@ const FlipCardPreview = ({
 	isSoundMuted = false,
 }: FlipCardPreviewProps) => {
 	const [isFlipped, setIsFlipped] = useState<boolean>(false);
+	const [phraseAnchorEl, setPhraseAnchorEl] = useState<HTMLElement | null>(null);
+	const [isPhraseLoading, setIsPhraseLoading] = useState<boolean>(false);
+	const phraseHoverTimerRef = useRef<number | null>(null);
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
 	const { isSmallScreen, isRotatedMedium, isMobilePortrait, isMobileLandscape, isTabletPortrait, isDesktopLandscape, isDesktopPortrait } =
@@ -116,6 +120,55 @@ const FlipCardPreview = ({
 
 	// Sound effect for flip - enabled only for practice questions (not for edit/preview modes)
 	const { playFlipSound } = useSoundEffect(fromPracticeQuestionUser, isSoundMuted);
+
+	const frontExpressionText = useMemo(() => {
+		const htmlText = (frontText || question?.question || '')
+			.replace(/\*(.*?)\*/g, '$1')
+			.replace(/_(.*?)_/g, '$1')
+			.replace(/<[^>]*>/g, ' ')
+			.replace(/&nbsp;/g, ' ')
+			.replace(/&amp;/g, '&');
+		return htmlText.replace(/\s+/g, ' ').trim();
+	}, [frontText, question?.question]);
+
+	const clearPhraseHoverTimer = () => {
+		if (phraseHoverTimerRef.current) {
+			window.clearTimeout(phraseHoverTimerRef.current);
+			phraseHoverTimerRef.current = null;
+		}
+	};
+
+	const speakPhrase = (text: string) => {
+		if (!text || typeof window === 'undefined' || !window.speechSynthesis) return;
+		window.speechSynthesis.cancel();
+		const utterance = new SpeechSynthesisUtterance(text);
+		utterance.lang = 'en-US';
+		utterance.rate = 0.95;
+		window.speechSynthesis.speak(utterance);
+	};
+
+	const handlePhraseAssistStart = (event: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
+		event.stopPropagation();
+		if (!frontExpressionText) return;
+
+		const target = event.currentTarget as HTMLElement;
+		clearPhraseHoverTimer();
+		phraseHoverTimerRef.current = window.setTimeout(() => {
+			setPhraseAnchorEl(target);
+			setIsPhraseLoading(true);
+			speakPhrase(frontExpressionText);
+			window.setTimeout(() => {
+				setIsPhraseLoading(false);
+			}, 200);
+		}, 250);
+	};
+
+	const handlePhraseAssistEnd = (event?: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
+		event?.stopPropagation();
+		clearPhraseHoverTimer();
+		setPhraseAnchorEl(null);
+		setIsPhraseLoading(false);
+	};
 
 	const handleClick = async () => {
 		const newFlippedState = !isFlipped;
@@ -147,6 +200,30 @@ const FlipCardPreview = ({
 			<FlipCardInner isFlipped={isFlipped} onClick={handleClick}>
 				<FlipCardFront $isImageQuestionPresent={isImageQuestionPresent}>
 					{/* <Label>Front</Label> */}
+					{frontExpressionText && (
+						<Box sx={{ position: 'absolute', top: '0.35rem', right: '0.35rem', zIndex: 2 }}>
+
+							<IconButton
+								size='small'
+								onClick={(event) => event.stopPropagation()}
+								onMouseEnter={handlePhraseAssistStart}
+								onMouseLeave={handlePhraseAssistEnd}
+								onTouchStart={handlePhraseAssistStart}
+								onTouchEnd={handlePhraseAssistEnd}
+								onTouchCancel={handlePhraseAssistEnd}
+								sx={{
+									backgroundColor: 'rgba(255,255,255,0.22)',
+									color: theme.textColor?.common.main,
+									'&:hover': {
+										backgroundColor: 'rgba(255,255,255,0.34)',
+									},
+								}}>
+								<RecordVoiceOverOutlined fontSize='small' />
+							</IconButton>
+
+
+						</Box>
+					)}
 					{(question?.imageUrl || newQuestion?.imageUrl) && (
 						<img
 							src={

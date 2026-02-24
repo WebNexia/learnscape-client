@@ -49,23 +49,23 @@ const Item = styled.div<{
 						: '#ef5350'};
 	border: 1px solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
-			$isLessonCompleted
-				? $isCorrect
-					? '#c3e6cb'
-					: '#f5c6cb'
-				: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+		$isLessonCompleted
+			? $isCorrect
+				? '#c3e6cb'
+				: '#f5c6cb'
+			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+				? '#ccc'
+				: $isCorrect === null
 					? '#ccc'
-					: $isCorrect === null
-						? '#ccc'
-						: $isCorrect
-							? '#c3e6cb'
-							: '#f5c6cb'};
+					: $isCorrect
+						? '#c3e6cb'
+						: '#f5c6cb'};
 	border-radius: 0.25rem;
 	cursor: ${({ $isLessonCompleted }) => ($isLessonCompleted ? 'default' : 'pointer')};
 	text-align: center;
 `;
 
-const DropArea = styled(Box)<{ isMobileSize: boolean }>`
+const DropArea = styled(Box) <{ isMobileSize: boolean }>`
 	padding: ${({ isMobileSize }) => (isMobileSize ? '0.65rem' : '0.75rem')};
 	margin: 0.5rem 0;
 	background-color: #e0e0e0;
@@ -329,7 +329,7 @@ const MatchingPreview = ({
 				{!isLessonCompleted && (
 					<CustomInfoMessageAlignedLeft
 						message='Drag the correct cards from the right into the dashed areas to match the pairs'
-						sx={{ margin: '0 rem auto 0 auto', width: isMobileSize ? '100%' : '90%' }}
+						sx={{ margin: isMobileSize ? '1rem 0 0 0' : '1.5rem 0 0 0', width: isMobileSize ? '100%' : '90%' }}
 					/>
 				)}
 				<Container>
