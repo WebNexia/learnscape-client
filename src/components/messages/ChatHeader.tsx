@@ -90,10 +90,12 @@ const ChatHeader = ({
 				sx={{
 					display: 'flex',
 					alignItems: 'center',
-					borderBottom: '0.04rem solid lightgray',
+					borderBottom: '1px solid rgba(1, 67, 90, 0.1)',
 					width: '100%',
 					height: '4rem',
 					flexShrink: 0,
+					backgroundColor: '#ffffff',
+					boxShadow: '0 2px 8px rgba(1, 67, 90, 0.06)',
 				}}>
 				<Box sx={{ display: 'flex', alignItems: 'center', margin: isMobileSize ? '0 0.5rem' : '0 1.5rem', width: '100%' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -109,7 +111,8 @@ const ChatHeader = ({
 										height: isMobileSize ? '2.25rem' : '3rem',
 										width: isMobileSize ? '2.25rem' : '3rem',
 										borderRadius: '100%',
-										border: 'solid lightgray 0.1rem',
+										border: '2px solid rgba(1, 67, 90, 0.12)',
+										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.08)',
 									}}
 								/>
 							</Box>
@@ -159,7 +162,7 @@ const ChatHeader = ({
 													key={otherParticipant.firebaseUserId}
 													size='small'
 													onClick={() => handleBlockUnblockClick(otherParticipant.firebaseUserId)}
-													sx={{ ':hover': { backgroundColor: 'transparent' }, 'marginLeft': '0.5rem' }}>
+													sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' }, 'marginLeft': '0.5rem' }}>
 													{isBlocked ? (
 														<Tooltip title='Unblock User' placement='top' arrow>
 															<PersonOff color='error' fontSize={isMobileSize ? 'small' : 'medium'} />
@@ -189,7 +192,7 @@ const ChatHeader = ({
 									<IconButton
 										size='small'
 										onClick={() => setInfoDialogOpen(true)}
-										sx={{ ':hover': { backgroundColor: 'transparent' }, 'marginLeft': '0.5rem' }}>
+										sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' }, 'marginLeft': '0.5rem' }}>
 										<Info fontSize='small' color='action' />
 									</IconButton>
 								</Tooltip>
@@ -200,21 +203,21 @@ const ChatHeader = ({
 								{/* Download Menu for Group Chats */}
 								{(onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsTXT) && (
 									<Tooltip title='Download Chat History' placement='top' arrow>
-										<IconButton size='small' onClick={handleDownloadMenuOpen} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+										<IconButton size='small' onClick={handleDownloadMenuOpen} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}>
 											<FileDownload fontSize='small' />
 										</IconButton>
 									</Tooltip>
 								)}
 								{(hasAdminAccess || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onEditGroupChat && (
 									<Tooltip title='Edit Group' placement='top' arrow>
-										<IconButton size='small' onClick={onEditGroupChat} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+										<IconButton size='small' onClick={onEditGroupChat} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}>
 											<Edit fontSize='small' />
 										</IconButton>
 									</Tooltip>
 								)}
 								{/* Info Dialog for Group Chats */}
 								<Tooltip title='Chat History Info' placement='top' arrow>
-									<IconButton size='small' onClick={() => setInfoDialogOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+									<IconButton size='small' onClick={() => setInfoDialogOpen(true)} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}>
 										<Info fontSize='small' color='action' />
 									</IconButton>
 								</Tooltip>

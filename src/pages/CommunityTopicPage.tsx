@@ -583,11 +583,13 @@ const CommunityTopicPage = () => {
 					width: isMobileSize ? '90%' : '87%',
 					minHeight: isMobileSize ? '3rem' : '5rem',
 					maxHeight: isMobileSize ? '5rem' : '7rem',
-					border: 'solid lightgray 0.1rem',
+					border: '1px solid rgba(1, 67, 90, 0.1)',
 					marginTop: isMobileSize ? '3.75rem' : '9rem',
-					borderRadius: '0.35rem',
-					boxShadow: isMobileSize ? '0rem 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)' : '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
+					borderRadius: '0.75rem',
+					boxShadow: '0 4px 24px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
 					position: 'relative',
+					backgroundColor: theme.palette.secondary?.main || '#fff',
+					overflow: 'hidden',
 				}}>
 				{isTopicScrollable && (
 					<Tooltip title='Full View' placement='top' arrow>
@@ -663,7 +665,7 @@ const CommunityTopicPage = () => {
 						alignItems: 'center',
 						flex: 1,
 						padding: '0.5rem',
-						borderRight: 'solid lightgray 0.1rem',
+						borderRight: '1px solid rgba(1, 67, 90, 0.08)',
 					}}>
 					<Box>
 						<img
@@ -731,69 +733,126 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: isMobileSize ? '2rem' : '5rem',
 				}}>
-				{(() => {
-					const pageSize = 20;
-					const startIndex = (pageNumber - 1) * pageSize;
-					const endIndex = startIndex + pageSize;
-					const pageMessages = messages?.slice(startIndex, endIndex) || [];
+				<Box
+					sx={{
+						width: '100%',
+						maxWidth: isMobileSize ? '100%' : '56rem',
+						borderRadius: '0.75rem',
+						boxShadow: '0 4px 24px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
+						border: '1px solid rgba(1, 67, 90, 0.1)',
+						overflow: 'hidden',
+						backgroundColor: theme.palette.secondary?.main || '#fff',
+					}}>
+					<Box
+						sx={{
+							background: 'linear-gradient(135deg, rgba(1, 67, 90, 0.08) 0%, rgba(1, 67, 90, 0.04) 100%)',
+							borderBottom: '1px solid rgba(1, 67, 90, 0.1)',
+							py: 1,
+							px: 2,
+						}}>
+						<Typography
+							sx={{
+								fontSize: isMobileSize ? '0.85rem' : '1rem',
+								fontWeight: 600,
+								color: theme.palette.primary?.main || '#01435A',
+							}}>
+							Messages
+						</Typography>
+					</Box>
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', width: '100%' }}>
+						{(() => {
+							const pageSize = 20;
+							const startIndex = (pageNumber - 1) * pageSize;
+							const endIndex = startIndex + pageSize;
+							const pageMessages = messages?.slice(startIndex, endIndex) || [];
 
-					// If we don't have enough messages for this page, show appropriate state
-					if (pageMessages.length === 0) {
-						// If there are no messages at all, show empty state
-						if (totalItems === 0) {
-							return (
-								<Box sx={{ textAlign: 'center', padding: '2rem', color: 'gray' }}>
-									<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-										No messages yet. Be the first to start the conversation!
-									</Typography>
-								</Box>
-							);
-						}
-						// Otherwise show loading state
-						return (
-							<Box sx={{ textAlign: 'center', padding: '2rem', color: 'gray' }}>
-								<Typography>Loading messages for page {pageNumber}...</Typography>
-								<Typography variant='caption'>
-									Page {pageNumber} of {numberOfPages}
-								</Typography>
-							</Box>
-						);
-					}
+							// If we don't have enough messages for this page, show appropriate state
+							if (pageMessages.length === 0) {
+								// If there are no messages at all, show empty state
+								if (totalItems === 0) {
+									return (
+										<Box
+											sx={{
+												textAlign: 'center',
+												padding: isMobileSize ? '2.5rem 1.5rem' : '3.5rem 2rem',
+												color: 'rgba(1, 67, 90, 0.6)',
+											}}>
+											<Typography
+												sx={{
+													fontSize: isMobileSize ? '0.85rem' : '1rem',
+													lineHeight: 1.6,
+													letterSpacing: '0.02em',
+												}}>
+												No messages yet. Be the first to start the conversation.
+											</Typography>
+										</Box>
+									);
+								}
+								// Otherwise show loading state
+								return (
+									<Box
+										sx={{
+											textAlign: 'center',
+											padding: '2rem',
+											color: 'rgba(1, 67, 90, 0.6)',
+										}}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+											Loading messages for page {pageNumber}…
+										</Typography>
+										<Typography variant='caption' sx={{ display: 'block', mt: 0.5, color: 'rgba(1, 67, 90, 0.5)' }}>
+											Page {pageNumber} of {numberOfPages}
+										</Typography>
+									</Box>
+								);
+							}
 
-					return pageMessages.map((message: CommunityMessage, index) => (
-						<Message
-							key={message?._id}
-							message={message}
-							isFirst={index === 0}
-							isLast={index === pageMessages.length - 1}
-							setReplyToMessage={setReplyToMessage}
-							messageRefs={messageRefs}
-							setPageNumber={setPageNumber}
-							setHighlightedMessageId={setHighlightedMessageId}
-							isTopicLocked={isTopicLocked}
-							topicTitle={topic.title}
-							renderMessageContent={renderMessageContent}
-						/>
-					));
-				})()}
+							return pageMessages.map((message: CommunityMessage, index) => (
+								<Message
+									key={message?._id}
+									message={message}
+									isFirst={index === 0}
+									isLast={index === pageMessages.length - 1}
+									setReplyToMessage={setReplyToMessage}
+									messageRefs={messageRefs}
+									setPageNumber={setPageNumber}
+									setHighlightedMessageId={setHighlightedMessageId}
+									isTopicLocked={isTopicLocked}
+									topicTitle={topic.title}
+									renderMessageContent={renderMessageContent}
+								/>
+							));
+						})()}
+					</Box>
+				</Box>
 				<div ref={messagesEndRef} />
-				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: '1.5rem', width: '95%', gap: 1 }}>
-					{/* First Page Button */}
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						mt: '1.5rem',
+						width: '95%',
+						gap: 0.5,
+						'& .MuiIconButton-root': {
+							'&:hover:not(.Mui-disabled)': {
+								backgroundColor: 'rgba(1, 67, 90, 0.12)',
+							},
+						},
+						'& .MuiSelect-select': {
+							borderRadius: '0.5rem',
+						},
+					}}>
 					<IconButton onClick={() => handlePageChange(1)} disabled={pageNumber === 1} sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
 						<FirstPage fontSize='small' />
 					</IconButton>
-
-					{/* Previous Page Button */}
 					<IconButton
 						onClick={() => handlePageChange(pageNumber - 1)}
 						disabled={pageNumber === 1}
 						sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
 						<NavigateBefore fontSize='small' />
 					</IconButton>
-
-					{/* Page Select Dropdown */}
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', color: 'rgba(1, 67, 90, 0.8)' }}>
 							Page:
 						</Typography>
 						<FormControl size='small' sx={{ minWidth: 60 }}>
@@ -801,7 +860,7 @@ const CommunityTopicPage = () => {
 								value={pageNumber}
 								onChange={(e) => handlePageChange(Number(e.target.value))}
 								sx={{
-									'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									'& .MuiSelect-select': {
 										padding: isMobileSize ? '4px 8px' : '6px 12px',
 									},
@@ -813,20 +872,16 @@ const CommunityTopicPage = () => {
 								))}
 							</Select>
 						</FormControl>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', color: 'rgba(1, 67, 90, 0.8)' }}>
 							of {numberOfPages}
 						</Typography>
 					</Box>
-
-					{/* Next Page Button */}
 					<IconButton
 						onClick={() => handlePageChange(pageNumber + 1)}
 						disabled={pageNumber === numberOfPages}
 						sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
 						<NavigateNext fontSize='small' />
 					</IconButton>
-
-					{/* Last Page Button */}
 					<IconButton
 						onClick={() => handlePageChange(numberOfPages)}
 						disabled={pageNumber === numberOfPages}
@@ -850,16 +905,25 @@ const CommunityTopicPage = () => {
 				{replyToMessage && (
 					<Box
 						sx={{
-							border: '0.09rem solid lightgray',
+							border: '1px solid rgba(1, 67, 90, 0.1)',
 							borderBottom: 'none',
 							mt: '0.5rem',
 							position: 'relative',
 							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
-							borderRadius: '0.35rem 0.35rem 0 0',
-							bgcolor: '#E8E8E8',
+							borderRadius: '0.6rem 0.6rem 0 0',
+							backgroundColor: 'rgba(1, 67, 90, 0.06)',
+							boxShadow: '0 -2px 14px rgba(1, 67, 90, 0.1)',
 						}}>
-						<Box sx={{ borderBottom: '0.09rem solid lightgray', padding: isMobileSize ? '0.15rem' : '0.5rem' }}>
-							<Typography variant='body2' sx={{ color: 'gray', mb: '0.35rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						<Box sx={{ borderBottom: '1px solid rgba(1, 67, 90, 0.1)', padding: isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem' }}>
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'rgba(1, 67, 90, 0.65)',
+									mb: '0.25rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									fontWeight: 500,
+									letterSpacing: '0.02em',
+								}}>
 								Replying to:
 							</Typography>
 						</Box>
@@ -891,16 +955,26 @@ const CommunityTopicPage = () => {
 									/>
 								</Box>
 								<Box>
-									<Typography sx={{ fontSize: isMobileSize ? '0.55rem' : '0.65rem' }}>{replyToMessage?.userId?.username}</Typography>
+									<Typography sx={{ fontSize: isMobileSize ? '0.55rem' : '0.65rem', fontWeight: 600, color: 'rgba(1, 67, 90, 0.9)' }}>
+										{replyToMessage?.userId?.username}
+									</Typography>
 								</Box>
 								<Box>
-									<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.45rem' : '0.5rem', color: 'gray' }}>
+									<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.45rem' : '0.5rem', color: 'rgba(1, 67, 90, 0.5)' }}>
 										{formatMessageTime(replyToMessage?.createdAt)}
 									</Typography>
 								</Box>
 							</Box>
-							<Box sx={{ padding: isMobileSize ? '0.15rem' : '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
-								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+							<Box sx={{ padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem', flex: 8, borderLeft: '1px solid rgba(1, 67, 90, 0.08)' }}>
+								<Typography
+									sx={{
+										fontSize: '0.8rem',
+										lineHeight: 1.6,
+										minHeight: '3.5rem',
+										whiteSpace: 'pre-wrap',
+										wordBreak: 'break-word',
+										color: 'rgba(1, 67, 90, 0.85)',
+									}}>
 									{renderMessageWithEmojis(replyToMessage.text, '1.25rem', isMobileSize)}
 								</Typography>
 								{replyToMessage.imageUrl && (
@@ -925,7 +999,15 @@ const CommunityTopicPage = () => {
 							</Box>
 						</Box>
 
-						<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
+						<IconButton
+							size='small'
+							sx={{
+								position: 'absolute',
+								top: '0.2rem',
+								right: '0.2rem',
+								'&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.12)' },
+							}}
+							onClick={() => setReplyToMessage(null)}>
 							<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 						</IconButton>
 					</Box>

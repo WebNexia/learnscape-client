@@ -33,8 +33,15 @@ const Topic = ({ topic }: TopicProps) => {
 				alignItems: 'center',
 				width: '100%',
 				height: isMobileSize ? '3.75rem' : '4.5rem',
-				borderBottom: 'solid lightgray 0.05rem',
+				borderBottom: '1px solid rgba(1, 67, 90, 0.06)',
 				padding: isMobileSize ? '0.1rem 0.5rem' : '0.35rem 0.75rem',
+				transition: 'background-color 0.2s ease',
+				'&:hover': {
+					backgroundColor: 'rgba(1, 67, 90, 0.06)',
+				},
+				'&:last-of-type': {
+					borderBottom: 'none',
+				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 5, height: isMobileSize ? '3.75rem' : '4.5rem' }}>
 				<Box sx={{ mr: '0.85rem' }}>
@@ -67,11 +74,15 @@ const Topic = ({ topic }: TopicProps) => {
 								}
 							}}
 							sx={{
-								'cursor': 'pointer',
-								':hover': {
+								cursor: 'pointer',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								fontWeight: 500,
+								color: theme.palette.primary?.main || '#01435A',
+								transition: 'color 0.2s ease',
+								'&:hover': {
+									color: theme.textColor?.greenPrimary?.main || '#1EC28B',
 									textDecoration: 'underline',
 								},
-								'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 							}}>
 							{isVerySmallScreen ? truncateText(topic.title, 15) : isMobileSize ? truncateText(topic.title, 35) : topic.title}
 						</Typography>

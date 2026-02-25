@@ -282,9 +282,11 @@ const Community = () => {
 							flexDirection: 'column',
 							width: '100%',
 							height: 'fit-content',
-							border: 'solid lightgray 0.02rem',
-							borderRadius: '0.35rem',
-							boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0,0,0,0.2)',
+							borderRadius: '0.75rem',
+							overflow: 'hidden',
+							backgroundColor: theme.palette.secondary?.main || '#fff',
+							boxShadow: '0 4px 24px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
+							border: '1px solid rgba(1, 67, 90, 0.1)',
 						}}>
 						<Box
 							sx={{
@@ -292,15 +294,23 @@ const Community = () => {
 								justifyContent: 'space-between',
 								alignItems: 'center',
 								height: '3rem',
-								borderBottom: 'solid lightgray 0.1rem',
-								padding: '0.75rem',
+								padding: '0.75rem 1rem',
+								background: 'linear-gradient(135deg, rgba(1, 67, 90, 0.08) 0%, rgba(1, 67, 90, 0.04) 100%)',
+								borderBottom: '1px solid rgba(1, 67, 90, 0.1)',
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
-								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
+								<Typography
+									variant='h5'
+									sx={{
+										fontSize: isMobileSize ? '0.85rem' : '1.05rem',
+										fontWeight: 600,
+										letterSpacing: '-0.01em',
+										color: theme.palette.primary?.main || '#01435A',
+									}}>
 									Topics
 								</Typography>
 								<Tooltip title='Read the Community Rules' arrow placement='top'>
-									<IconButton onClick={() => setRulesModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+									<IconButton onClick={() => setRulesModalOpen(true)} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' }, ml: '0.25rem' }}>
 										<PriorityHigh sx={{ mr: '0.25rem' }} color='warning' fontSize={isMobileSize ? 'small' : 'medium'} />
 									</IconButton>
 								</Tooltip>
@@ -312,18 +322,19 @@ const Community = () => {
 										color: 'text.secondary',
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										whiteSpace: 'nowrap',
+										fontWeight: 500,
 									}}>
 									{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
 									{isSearchActive ? (searchResultsTotalItems === 1 ? 'Result' : 'Results') : totalItems === 1 ? 'Topic' : 'Topics'}
 								</Typography>
 							</Box>
 							<Box>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 500, color: 'text.secondary' }}>
 									Last Message
 								</Typography>
 							</Box>
 						</Box>
-						<Box>
+						<Box sx={{ backgroundColor: 'inherit' }}>
 							{paginatedTopics?.map((topic: CommunityTopic) => (
 								<Topic key={topic._id} topic={topic} />
 							))}

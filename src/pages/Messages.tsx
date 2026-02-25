@@ -499,9 +499,11 @@ const Messages = () => {
 									'left': '50%',
 									'transform': 'translateX(-50%)',
 									'backgroundColor': 'white',
-									'boxShadow': '0 2px 10px rgba(0,0,0,0.2)',
+									'boxShadow': '0 4px 16px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
+									'border': '1px solid rgba(1, 67, 90, 0.1)',
+									'borderRadius': '0.5rem',
 									'zIndex': 1000,
-									'&:hover': { backgroundColor: '#f0f0f0' },
+									'&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.06)' },
 								}}
 								onClick={scrollToBottom}>
 								<KeyboardDoubleArrowDown fontSize='small' />
@@ -530,11 +532,12 @@ const Messages = () => {
 									transform: 'translateX(-50%)',
 									padding: '6px 12px',
 									fontSize: isMobileSize ? '12px' : '14px',
-									background: '#007bff',
+									background: '#01435A',
 									color: 'white',
 									borderRadius: '20px',
 									cursor: 'pointer',
-									boxShadow: '0 0 10px rgba(0,0,0,0.2)',
+									boxShadow: '0 4px 16px rgba(1, 67, 90, 0.25), 0 2px 6px rgba(0,0,0,0.1)',
+									border: '1px solid rgba(1, 67, 90, 0.2)',
 									zIndex: 200,
 								}}>
 								New Messages ↓
@@ -575,19 +578,29 @@ const Messages = () => {
 						{replyToMessage && activeChat && (
 							<Box
 								sx={{
-									border: '0.01rem solid lightgray',
+									border: '1px solid rgba(1, 67, 90, 0.12)',
+									borderRadius: '0.5rem',
 									padding: isMobileSize ? '0.5rem' : '0.75rem',
 									position: 'relative',
+									backgroundColor: '#f0f6f8',
 								}}>
 								<Typography
 									variant='body2'
-									sx={{ color: 'gray', mb: isMobileSize ? '0.15rem' : '0.35rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									sx={{
+										color: 'rgba(1, 67, 90, 0.65)',
+										mb: isMobileSize ? '0.15rem' : '0.35rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										fontWeight: 500,
+									}}>
 									Replying to:
 								</Typography>
-								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.8rem', lineHeight: isMobileSize ? '1.6' : '1.8' }}>
+								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.8rem', lineHeight: isMobileSize ? '1.6' : '1.8', color: 'rgba(1, 67, 90, 0.85)' }}>
 									{replyToMessage.text}
 								</Typography>
-								<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
+								<IconButton
+									size='small'
+									sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem', '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}
+									onClick={() => setReplyToMessage(null)}>
 									<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
 								</IconButton>
 							</Box>
@@ -598,10 +611,11 @@ const Messages = () => {
 							sx={{
 								display: 'flex',
 								alignItems: 'center',
-								borderTop: '0.04rem solid gray',
+								borderTop: '1px solid rgba(1, 67, 90, 0.1)',
 								padding: isMobileSize ? '0.25rem' : '0.75rem',
 								flexShrink: 0,
 								position: 'relative',
+								backgroundColor: '#ffffff',
 							}}>
 							<MessageInput
 								activeChat={activeChat}
@@ -776,12 +790,12 @@ const Messages = () => {
 						<Box
 							sx={{
 								'p': 2,
-								'border': '1px solid #e0e0e0',
-								'borderRadius': 1,
+								'border': '1px solid rgba(1, 67, 90, 0.1)',
+								'borderRadius': '0.75rem',
 								'cursor': 'pointer',
-								'transition': 'background-color 0.3s ease',
+								'transition': 'background-color 0.2s ease',
 								'&:hover': {
-									backgroundColor: 'lightblue',
+									backgroundColor: 'rgba(1, 67, 90, 0.06)',
 								},
 							}}
 							onClick={async () => {
@@ -818,12 +832,12 @@ const Messages = () => {
 									<Box
 										sx={{
 											'p': 2,
-											'border': '1px solid #ff6b6b',
-											'borderRadius': 1,
+											'border': '1px solid rgba(255, 107, 107, 0.5)',
+											'borderRadius': '0.75rem',
 											'cursor': 'pointer',
-											'transition': 'background-color 0.3s ease',
+											'transition': 'background-color 0.2s ease',
 											'&:hover': {
-												backgroundColor: '#FFB6C1',
+												backgroundColor: 'rgba(255, 107, 107, 0.08)',
 											},
 										}}
 										onClick={async () => {

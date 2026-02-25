@@ -175,7 +175,11 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				right: isSticky ? 0 : 'auto', // Align with main content area
 				zIndex: 10000,
 				transition: 'all 0.5s ease',
-				borderRadius: isSticky ? 0 : undefined,
+				borderRadius: isSticky ? 0 : '0.75rem',
+				...(isSticky ? {} : {
+					boxShadow: '0 4px 24px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
+					border: '1px solid rgba(1, 67, 90, 0.1)',
+				}),
 			}}>
 			<Box
 				sx={{

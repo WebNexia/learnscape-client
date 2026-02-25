@@ -96,11 +96,11 @@ const Submissions = () => {
 		if (user?._id && orgId) enableLearnerQuizSubmissionsFetch();
 	}, [user?._id, orgId]);
 
-	// Responsive column configuration - same order and structure as AdminQuizSubmissions
-	// Always return 5 columns, Status will be hidden on mobile via CSS
+	// Responsive column configuration: Quiz, Chapter, Course, Score, Status, Actions
 	const getColumns = (isMobileSize: boolean) => {
 		return [
 			{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+			{ key: 'chapterName', label: 'Chapter' },
 			{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
 			{ key: 'score', label: 'Score' },
 			{ key: 'isChecked', label: 'Status' },
@@ -112,7 +112,7 @@ const Submissions = () => {
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<AdminPageErrorBoundary>
 				{loading ? (
-					<AdminTableSkeleton rows={8} columns={4} />
+					<AdminTableSkeleton rows={8} columns={6} />
 				) : (
 					<>
 						<FilterSearchRow
@@ -198,47 +198,55 @@ const Submissions = () => {
 									},
 
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
-										minWidth: isMobileSize ? '120px' : '150px',
-										width: isMobileSize ? '30%' : '25%',
+										minWidth: isMobileSize ? '100px' : '120px',
+										width: isMobileSize ? '25%' : '20%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
-										minWidth: isMobileSize ? '100px' : '200px',
-										width: isMobileSize ? '30%' : '25%',
+										minWidth: isMobileSize ? '80px' : '120px',
+										width: isMobileSize ? '20%' : '18%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
-										minWidth: isMobileSize ? '100px' : '100px',
-										width: isMobileSize ? '25%' : '25%',
+										minWidth: isMobileSize ? '100px' : '140px',
+										width: isMobileSize ? '25%' : '20%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
-										minWidth: isMobileSize ? '0px' : '100px',
+										minWidth: isMobileSize ? '70px' : '90px',
+										width: isMobileSize ? '15%' : '12%',
+									},
+									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+										minWidth: isMobileSize ? '0px' : '80px',
 										width: isMobileSize ? '0%' : '10%',
 										display: isMobileSize ? 'none' : 'table-cell',
 									},
-									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
 										minWidth: isMobileSize ? '60px' : '80px',
-										width: isMobileSize ? '15%' : '15%',
+										width: isMobileSize ? '15%' : '12%',
 									},
 									// Column widths for body cells - same as header
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
-										minWidth: isMobileSize ? '120px' : '150px',
-										width: isMobileSize ? '30%' : '25%',
+										minWidth: isMobileSize ? '100px' : '120px',
+										width: isMobileSize ? '25%' : '20%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
-										minWidth: isMobileSize ? '100px' : '200px',
-										width: isMobileSize ? '30%' : '25%',
+										minWidth: isMobileSize ? '80px' : '120px',
+										width: isMobileSize ? '20%' : '18%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
-										minWidth: isMobileSize ? '100px' : '100px',
-										width: isMobileSize ? '25%' : '25%',
+										minWidth: isMobileSize ? '100px' : '140px',
+										width: isMobileSize ? '25%' : '20%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
-										minWidth: isMobileSize ? '0px' : '100px',
+										minWidth: isMobileSize ? '70px' : '90px',
+										width: isMobileSize ? '15%' : '12%',
+									},
+									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+										minWidth: isMobileSize ? '0px' : '80px',
 										width: isMobileSize ? '0%' : '10%',
 										display: isMobileSize ? 'none' : 'table-cell',
 									},
-									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
 										minWidth: isMobileSize ? '60px' : '80px',
-										width: isMobileSize ? '15%' : '15%',
+										width: isMobileSize ? '15%' : '12%',
 									},
 								}}
 								size='small'
@@ -246,11 +254,12 @@ const Submissions = () => {
 								<TableBody>
 									{/* Spacer row to ensure header alignment */}
 									<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-										<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
-										<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
-										<TableCell sx={{ width: isMobileSize ? '25%' : '25%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '20%' : '18%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
 										<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
-										<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
 									</TableRow>
 								</TableBody>
 								<CustomTableHead<QuizSubmission>
@@ -276,6 +285,7 @@ const Submissions = () => {
 											return (
 												<TableRow key={submission._id} hover>
 													<CustomTableCell value={submission.lessonName} />
+													<CustomTableCell value={submission.chapterName ?? ''} />
 													<CustomTableCell value={submission.courseName} />
 													<TableCell sx={{ textAlign: 'center' }}>
 														{(() => {
