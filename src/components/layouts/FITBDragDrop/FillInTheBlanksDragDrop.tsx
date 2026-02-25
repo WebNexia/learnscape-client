@@ -91,31 +91,43 @@ const DropArea = styled(Box) <{ $isCorrect: boolean | null; $fromQuizQuestionUse
 `;
 
 const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $lessonType?: string }>`
-	padding: 0.25rem 0.5rem;
-	margin: 0.5rem 0.35rem;
-	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
-		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#e0e0e0' : $isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373'};
+	padding: 0.38rem 0.68rem;
+	margin: 0.45rem 0.35rem;
+	background: ${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
+		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ
+			? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
+			: $isCorrect === null
+				? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
+				: $isCorrect
+					? 'linear-gradient(135deg, #ebf9ef 0%, #d9f2e2 100%)'
+					: 'linear-gradient(135deg, #fdecec 0%, #f9dcdc 100%)'};
 	border: 1px solid
 		${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
-		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
-	border-radius: 0.25rem;
+		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? 'rgba(1, 67, 90, 0.16)' : $isCorrect === null ? 'rgba(1, 67, 90, 0.16)' : $isCorrect ? '#b9e3c7' : '#f0bcbc'};
+	border-radius: 0.62rem;
 	cursor: pointer;
 	text-align: center;
-	font-size: 0.75rem;
-	color: #495057;
+	font-size: 0.78rem;
+	font-weight: 500;
+	color: #2f4d5c;
 	position: relative;
-	line-height: 1rem;
+	line-height: 1.1rem;
 	width: auto;
 	height: fit-content;
 	max-width: 100%;
 	display: inline-block;
 	white-space: nowrap;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+
 	&:hover {
-		background-color: #ccc;
+		transform: translateY(-1px);
+		box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
+		border-color: rgba(1, 67, 90, 0.3);
 	}
 
 	&[data-rbd-drag-handle-context-id] {
-		box-shadow: 0px 0.2rem 0.1rem 0rem rgba(0, 0, 0, 0.3);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
 	}
 `;
 
@@ -503,8 +515,10 @@ const FillInTheBlanksDragDrop = ({
 							sx={{
 								display: 'flex',
 								alignItems: 'flex-start',
-								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-								borderRadius: '0.35rem',
+								boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+								borderRadius: '0.85rem',
+								background: 'rgba(255,255,255,0.78)',
+								border: '1px solid rgba(1, 67, 90, 0.12)',
 								padding: '1.75rem 1rem',
 								marginBottom: '2rem',
 							}}>
@@ -516,6 +530,7 @@ const FillInTheBlanksDragDrop = ({
 										sx={{
 											borderRadius: '0.35rem',
 											display: 'flex',
+											justifyContent: 'center',
 											flexWrap: 'wrap',
 											height: '100%',
 											width: '100%',

@@ -422,7 +422,7 @@ const LessonPage = () => {
 				</Typography>
 			</Box>
 			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1000 }}>
-				<DashboardHeader pageName={organisation?.orgName || ''} />
+				<DashboardHeader pageName={'Aden Academy'} />
 			</Box>
 			<Box
 				sx={{
@@ -987,41 +987,92 @@ const LessonPage = () => {
 					</Box>}
 				</Box>
 			)}
-			{isQuestionsVisible && (
-				<Box
-					sx={{
-						width: isSmallMobilePortrait
-							? '85%'
-							: isSmallMobileLandscape
-								? '75%'
-								: isMobilePortrait
-									? '80%'
-									: isMobileLandscape
-										? '70%'
-										: isTabletPortrait
+			{isQuestionsVisible && (() => {
+				const filteredQuestions = lesson?.questions?.filter((q) => q != null) ?? [];
+				if (filteredQuestions.length === 0) {
+					return (
+						<Box
+							sx={{
+								width: isSmallMobilePortrait ? '85%' : isTabletLandscape ? '70%' : '60%',
+								mt: '2rem',
+								mx: 'auto',
+								p: 3,
+								textAlign: 'center',
+								borderRadius: 2,
+								boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+								border: '1px solid',
+								borderColor: 'divider',
+								bgcolor: 'background.paper',
+							}}>
+							<Typography variant='h6' sx={{ mb: 1.5, fontSize: isMobileSize ? '0.95rem' : '1.1rem' }}>
+								No questions in this lesson
+							</Typography>
+							<Typography variant='body2' sx={{ mb: 2, color: 'text.secondary', fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+								This lesson has no questions right now (they may have been removed). You can go back to the course or mark this lesson complete and continue.
+							</Typography>
+							<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'center' }}>
+								<Button
+									variant='outlined'
+									startIcon={<KeyboardBackspaceOutlined />}
+									onClick={() => navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`)}
+									sx={{ textTransform: 'none' }}>
+									Back to course
+								</Button>
+								<Button
+									variant='contained'
+									startIcon={<DoneAll />}
+									onClick={async () => {
+										try {
+											await handleNextLesson();
+											navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+											window.scrollTo({ top: 0, behavior: 'smooth' });
+										} catch (e) {
+											console.error(e);
+										}
+									}}
+									sx={{ textTransform: 'none' }}>
+									Mark complete and go back
+								</Button>
+							</Box>
+						</Box>
+					);
+				}
+				return (
+					<Box
+						sx={{
+							width: isSmallMobilePortrait
+								? '85%'
+								: isSmallMobileLandscape
+									? '75%'
+									: isMobilePortrait
+										? '80%'
+										: isMobileLandscape
 											? '70%'
-											: isTabletLandscape
+											: isTabletPortrait
 												? '70%'
-												: '60%',
-						mt: isSmallMobilePortrait ? '1rem' : isSmallMobileLandscape ? '1rem' : '1rem',
-						minHeight: 'calc(90vh)',
-					}}>
-					<Questions
-						questions={lesson?.questions}
-						lessonType={lessonType}
-						userAnswers={userAnswers}
-						setUserAnswers={setUserAnswers}
-						setIsQuizInProgress={setIsQuizInProgress}
-						userQuizAnswers={userQuizAnswers}
-						setUserQuizAnswers={setUserQuizAnswers}
-						lessonName={lesson.title}
-						onQuestionChange={setCurrentQuestionNumber}
-						isSoundMuted={isSoundMuted}
-						practiceAgainMode={practiceAgainMode}
-						enableWordAssist={isWordAssistEnabled}
-					/>
-				</Box>
-			)}
+												: isTabletLandscape
+													? '70%'
+													: '60%',
+							mt: isSmallMobilePortrait ? '1rem' : isSmallMobileLandscape ? '1rem' : '1rem',
+							minHeight: 'calc(90vh)',
+						}}>
+						<Questions
+							questions={lesson?.questions}
+							lessonType={lessonType}
+							userAnswers={userAnswers}
+							setUserAnswers={setUserAnswers}
+							setIsQuizInProgress={setIsQuizInProgress}
+							userQuizAnswers={userQuizAnswers}
+							setUserQuizAnswers={setUserQuizAnswers}
+							lessonName={lesson.title}
+							onQuestionChange={setCurrentQuestionNumber}
+							isSoundMuted={isSoundMuted}
+							practiceAgainMode={practiceAgainMode}
+							enableWordAssist={isWordAssistEnabled}
+						/>
+					</Box>
+				);
+			})()}
 			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
 				<>
 					<Box sx={{ position: 'fixed', top: '90vh', right: isMobileSize ? '0.5rem' : '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>

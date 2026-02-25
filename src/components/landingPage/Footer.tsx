@@ -49,7 +49,7 @@ const Footer = () => {
 								fontSize: responsiveStyles.typography.body2,
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							AdenKent
+							Aden Academy
 						</Typography>
 						<Typography
 							variant='body2'
@@ -106,7 +106,7 @@ const Footer = () => {
 								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							info@adenkent.com
+							info@adenacademy.com
 						</Typography>
 						<Box
 							component='a'

@@ -115,6 +115,8 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 		});
 	}, [course]);
 
+	let visibleChapterIndex = -1;
+
 	return (
 		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
 			{/* Chapter Controls Header */}
@@ -193,6 +195,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 				course?.chapterIds.length !== 0 &&
 				course?.chapters?.map((chapter, index) => {
 					if (chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) {
+						visibleChapterIndex += 1;
 						let nextChapterFirstLessonId: string = '';
 						// Find the first valid lesson in the next available chapter (skip empty/null chapters)
 						for (let nextIndex = index + 1; nextIndex < course.chapters.length; nextIndex++) {
@@ -212,6 +215,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 								course={course}
 								isEnrolledStatus={isEnrolledStatus}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
+								isAlternateHeaderTone={visibleChapterIndex % 2 === 1}
 							/>
 						);
 					}
