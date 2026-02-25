@@ -3,6 +3,7 @@ import { QuestionInterface } from './question';
 export interface QuizSubmission {
 	_id: string;
 	lessonName: string;
+	chapterName?: string;
 	courseName: string;
 	userName: string;
 	lessonId: string;

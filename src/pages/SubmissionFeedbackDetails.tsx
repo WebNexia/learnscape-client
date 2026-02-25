@@ -34,6 +34,7 @@ const SubmissionFeedbackDetails = () => {
 	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const [quizName, setQuizName] = useState<string>('');
+	const [chapterName, setChapterName] = useState<string>('');
 	const [courseName, setCourseName] = useState<string>('');
 	const [quizFeedback, setQuizFeedback] = useState<string>('');
 	const [userResponseData, setUserResponseData] = useState<any>([]);
@@ -93,6 +94,27 @@ const SubmissionFeedbackDetails = () => {
 						setLesson(lessonData);
 					} catch (error) {
 						console.error('Error fetching lesson data:', error);
+					}
+				}
+
+
+				const courseIdForFetch =
+					userCourseQuizData?.[0]?.courseId != null
+						? typeof userCourseQuizData[0].courseId === 'object' && userCourseQuizData[0].courseId !== null && '_id' in userCourseQuizData[0].courseId
+							? (userCourseQuizData[0].courseId as { _id: string })._id
+							: String(userCourseQuizData[0].courseId)
+						: null;
+				if (courseIdForFetch && lessonIdToFetch) {
+					try {
+						const courseRes = await axios.get(`${base_url}/courses/activelessons/${courseIdForFetch}`);
+						const courseData = courseRes.data?.data || courseRes.data;
+						const chapters = courseData?.chapters || [];
+						const chapter = chapters.find(
+							(ch: { lessonIds?: string[] }) => ch?.lessonIds && Array.isArray(ch.lessonIds) && ch.lessonIds.some((id: string) => String(id) === String(lessonIdToFetch))
+						);
+						setChapterName(chapter?.title ?? '');
+					} catch (err) {
+						console.error('Error fetching course/chapter for feedback page:', err);
 					}
 				}
 			} catch (error) {
@@ -367,6 +389,7 @@ const SubmissionFeedbackDetails = () => {
 				}}>
 				{[
 					{ label: 'Quiz Name', value: quizName },
+					{ label: 'Chapter', value: chapterName },
 					{ label: 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked ? 'Checked' : 'Unchecked' },
 				]?.map(({ label, value }, index) => (

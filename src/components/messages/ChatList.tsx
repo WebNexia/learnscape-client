@@ -57,10 +57,11 @@ const ChatList = ({
 						justifyContent: 'center',
 						height: 'calc(100vh - 4rem)',
 						width: '1.35rem',
-						borderRight: 'solid 0.01rem lightgray',
+						borderRight: '1px solid rgba(1, 67, 90, 0.1)',
+						'&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.03)' },
 					}}
 					onClick={onChatsListToggle}>
-					<IconButton>
+					<IconButton sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.06)' } }}>
 						<Search fontSize='medium' />
 					</IconButton>
 				</Box>
@@ -71,8 +72,9 @@ const ChatList = ({
 						display: 'flex',
 						flexDirection: 'column',
 						flex: 3,
-						borderRight: '0.04rem solid lightgray',
+						borderRight: '1px solid rgba(1, 67, 90, 0.1)',
 						padding: isMobileSize ? '0 0rem 0 0.5rem' : '0 0rem 0 1rem',
+						boxShadow: '2px 0 12px rgba(1, 67, 90, 0.06)',
 					}}>
 					<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
 						<Box sx={{ flex: 8 }}>
@@ -100,7 +102,7 @@ const ChatList = ({
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
 									disabled={!user?.hasRegisteredCourse && user?.role === 'learner' && !user?.isSubscribed}
-									sx={{ ':hover': { backgroundColor: 'transparent' } }}
+									sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />
 								</IconButton>
@@ -109,7 +111,7 @@ const ChatList = ({
 						{(hasAdminAccess || user?.role === 'instructor') && (
 							<Box sx={{ flex: 1 }}>
 								<Tooltip title='Create Group Chat' placement='top' arrow>
-									<IconButton sx={{ ':hover': { backgroundColor: 'transparent' } }} onClick={onCreateGroupClick}>
+									<IconButton sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }} onClick={onCreateGroupClick}>
 										<Chat fontSize={isMobileSize ? 'small' : 'medium'} />
 									</IconButton>
 								</Tooltip>
@@ -136,15 +138,19 @@ const ChatList = ({
 										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 										sx={{
 											'display': 'flex',
-											'border': '0.04rem solid lightgray',
+											'border': '1px solid rgba(1, 67, 90, 0.06)',
 											'borderRight': 'none',
 											'borderBottom': 'none',
+											'transition': 'background-color 0.2s ease',
+											'&:hover': {
+												backgroundColor: chat.chatId === activeChatId ? undefined : 'rgba(1, 67, 90, 0.03)',
+											},
 											'&:last-of-type': {
-												borderBottom: '0.04rem solid lightgray',
-												borderBottomLeftRadius: '0.35rem',
+												borderBottom: '1px solid rgba(1, 67, 90, 0.06)',
+												borderBottomLeftRadius: '0.5rem',
 											},
 											'&:first-of-type': {
-												borderTopLeftRadius: '0.35rem',
+												borderTopLeftRadius: '0.5rem',
 											},
 											'backgroundImage': chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
 											'backgroundRepeat': 'no-repeat',
@@ -190,7 +196,8 @@ const ChatList = ({
 																height: isMobileSize ? '1.75rem' : '2.5rem',
 																width: isMobileSize ? '1.75rem' : '2.5rem',
 																borderRadius: '100%',
-																border: 'solid lightgray 0.1rem',
+																border: '2px solid rgba(1, 67, 90, 0.12)',
+																boxShadow: '0 2px 8px rgba(1, 67, 90, 0.08)',
 															}}
 														/>
 													</Badge>
@@ -258,8 +265,8 @@ const ChatList = ({
 												<IconButton
 													onClick={() => onDeleteChat(chat.chatId)}
 													sx={{
-														':hover': {
-															backgroundColor: 'transparent',
+														'&:hover': {
+															backgroundColor: 'rgba(1, 67, 90, 0.1)',
 														},
 													}}>
 													<Cancel

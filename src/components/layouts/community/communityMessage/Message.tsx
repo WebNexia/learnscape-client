@@ -208,18 +208,24 @@ const Message = ({
 			sx={{
 				display: 'flex',
 				justifyContent: 'flex-end',
-				width: '95%',
+				width: '100%',
 				minHeight: '3.5rem',
-				border: 'solid lightgray 0.1rem',
-				borderBottom: isLast ? '0.1rem solid lightgray' : 'none',
+				border: '1px solid rgba(1, 67, 90, 0.06)',
+				borderBottom: isLast ? '1px solid rgba(1, 67, 90, 0.06)' : 'none',
 				borderRadius: 'none',
+				backgroundColor: '#fff',
+				transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+				'&:hover': {
+					backgroundColor: 'rgba(1, 67, 90, 0.05)',
+					boxShadow: '0 2px 12px rgba(1, 67, 90, 0.1)',
+				},
 				...(isFirst && {
-					borderTopLeftRadius: '0.35rem',
-					borderTopRightRadius: '0.35rem',
+					borderTopLeftRadius: '0.75rem',
+					borderTopRightRadius: '0.75rem',
 				}),
 				...(isLast && {
-					borderBottomLeftRadius: '0.35rem',
-					borderBottomRightRadius: '0.35rem',
+					borderBottomLeftRadius: '0.75rem',
+					borderBottomRightRadius: '0.75rem',
 				}),
 			}}>
 			<Box
@@ -229,26 +235,50 @@ const Message = ({
 					justifyContent: 'center',
 					alignItems: 'center',
 					flex: 1,
-					padding: '0.35rem',
-					borderRight: 'solid lightgray 0.1rem',
+					padding: isMobileSize ? '0.5rem 0.35rem' : '0.75rem 0.5rem',
+					borderRight: '1px solid rgba(1, 67, 90, 0.06)',
 					minWidth: isMobileSize ? '5rem' : '7rem',
 					maxWidth: isMobileSize ? '5rem' : '7rem',
+					gap: '0.25rem',
 				}}>
-				<Box>
+				<Box
+					sx={{
+						'& img': {
+							height: isMobileSize ? '2rem' : '2.5rem',
+							width: isMobileSize ? '2rem' : '2.5rem',
+							borderRadius: '50%',
+							objectFit: 'cover',
+							border: '2px solid rgba(1, 67, 90, 0.18)',
+							boxShadow: '0 2px 12px rgba(1, 67, 90, 0.14)',
+						},
+					}}>
 					<img
 						src={message?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 						alt='profile'
 						onError={(e) => {
 							e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
 						}}
-						style={{ height: isMobileSize ? '1.75rem' : '2.25rem', width: isMobileSize ? '1.75rem' : '2.25rem', borderRadius: '50%' }}
 					/>
 				</Box>
 				<Box>
-					<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{message?.userId?.username}</Typography>
+					<Typography
+						sx={{
+							fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+							fontWeight: 600,
+							color: 'rgba(1, 67, 90, 0.9)',
+							letterSpacing: '0.01em',
+						}}>
+						{message?.userId?.username}
+					</Typography>
 				</Box>
 				<Box>
-					<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.55rem', color: 'gray' }}>
+					<Typography
+						variant='caption'
+						sx={{
+							fontSize: isMobileSize ? '0.5rem' : '0.6rem',
+							color: 'rgba(1, 67, 90, 0.5)',
+							letterSpacing: '0.02em',
+						}}>
 						{formatMessageTime(message?.createdAt)}
 					</Typography>
 				</Box>
@@ -258,12 +288,15 @@ const Message = ({
 					{message.parentMessageId && (
 						<Box
 							sx={{
-								margin: '0.35rem',
-								borderLeft: 'solid gray 0.3rem',
+								margin: isMobileSize ? '0.35rem' : '0.5rem',
+								borderLeft: '3px solid rgba(1, 67, 90, 0.18)',
 								minHeight: isMobileSize ? '3rem' : '4rem',
 								maxHeight: isMobileSize ? '5.5rem' : '7rem',
 								overflow: 'auto',
-								backgroundColor: '#E8E8E8',
+								backgroundColor: 'rgba(1, 67, 90, 0.05)',
+								borderRadius: '0 0.35rem 0.35rem 0',
+								transition: 'background-color 0.2s ease',
+								'&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.09)' },
 							}}>
 							{typeof message.parentMessageId === 'object' && message.parentMessageId.userId && (
 								<Box
@@ -273,14 +306,27 @@ const Message = ({
 										}
 									}}
 									sx={{ cursor: 'pointer' }}>
-									<Box sx={{ padding: '0.15rem 0.5rem' }}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.55rem' : '0.7rem', fontStyle: 'italic', mb: '0.35rem', color: 'gray' }}>
+									<Box sx={{ padding: '0.2rem 0.6rem' }}>
+										<Typography
+											sx={{
+												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+												fontWeight: 500,
+												fontStyle: 'italic',
+												mb: '0.25rem',
+												color: 'rgba(1, 67, 90, 0.65)',
+											}}>
 											{message.parentMessageId.userId.username}
 										</Typography>
 									</Box>
-									<Box sx={{ padding: '0.5rem' }}>
+									<Box sx={{ padding: '0.35rem 0.6rem' }}>
 										<Box>
-											<Typography sx={{ fontSize: isMobileSize ? '0.5rem' : '0.75rem', fontStyle: 'italic', color: 'gray' }}>
+											<Typography
+												sx={{
+													fontSize: isMobileSize ? '0.55rem' : '0.75rem',
+													lineHeight: 1.5,
+													fontStyle: 'italic',
+													color: 'rgba(1, 67, 90, 0.6)',
+												}}>
 												{renderMessageWithEmojis(message.parentMessageId.text, '1rem', isMobileSize)}
 											</Typography>
 										</Box>
@@ -323,22 +369,24 @@ const Message = ({
 								<Box>
 									<Typography
 										sx={{
-											lineHeight: isMobileSize ? 1.2 : 1.7,
-											margin: isMobileSize ? '0.15rem 0' : '0.5rem 0',
+											lineHeight: 1.65,
+											margin: isMobileSize ? '0.2rem 0' : '0.5rem 0',
 											whiteSpace: 'pre-wrap',
 											wordBreak: 'break-word',
-											fontSize: '0.85rem',
-											padding: '0 0.5rem',
+											fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											padding: isMobileSize ? '0 0.6rem' : '0 0.75rem',
+											color: 'rgba(1, 67, 90, 0.88)',
+											letterSpacing: '0.01em',
 										}}>
 										{renderMessageContent(message?.text || '')}
 									</Typography>
 								</Box>
 								{message.imageUrl && (
-									<Box sx={{ padding: '0.15rem 0.5rem' }}>
+									<Box sx={{ padding: '0.25rem 0.6rem', '& img': { borderRadius: '0.35rem', boxShadow: '0 2px 14px rgba(1, 67, 90, 0.14)' } }}>
 										<img
 											src={message.imageUrl}
 											alt='img'
-											style={{ maxHeight: isMobileSize ? '8rem' : '12rem', objectFit: 'contain', borderRadius: '0.15rem', cursor: 'pointer' }}
+											style={{ maxHeight: isMobileSize ? '8rem' : '12rem', objectFit: 'contain', cursor: 'pointer' }}
 											onClick={() => setZoomedImage(message.imageUrl)}
 										/>
 									</Box>
@@ -366,8 +414,8 @@ const Message = ({
 										<IconButton
 											onClick={() => setIsFullViewOpen(true)}
 											sx={{
-												':hover': {
-													backgroundColor: 'transparent',
+												'&:hover': {
+													backgroundColor: 'rgba(1, 67, 90, 0.1)',
 												},
 											}}>
 											<OpenInFullOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -376,15 +424,15 @@ const Message = ({
 								</Box>
 							)}
 							<Box>
-								<Tooltip title='Reply to Message' placement='top' arrow>
+								<Tooltip title='Reply to Message' placement='right' arrow>
 									<IconButton
 										onClick={() => {
 											setReplyToMessage(message);
 										}}
 										disabled={isTopicLocked}
 										sx={{
-											':hover': {
-												backgroundColor: 'transparent',
+											'&:hover': {
+												backgroundColor: 'rgba(1, 67, 90, 0.1)',
 											},
 										}}>
 										<TurnLeftOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -406,20 +454,27 @@ const Message = ({
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
 								<Box>
 									{(message.updatedAt > message.createdAt || isMsgEdited) && (
-										<Typography sx={{ color: 'gray', ml: '0.5rem', fontStyle: 'italic', fontSize: isMobileSize ? '0.55rem' : '0.65rem' }}>
+										<Typography
+											sx={{
+												color: 'rgba(1, 67, 90, 0.5)',
+												ml: '0.5rem',
+												fontStyle: 'italic',
+												fontSize: isMobileSize ? '0.55rem' : '0.65rem',
+												letterSpacing: '0.02em',
+											}}>
 											Edited
 										</Typography>
 									)}
 								</Box>
 
 								{!isMessageWriter && !isAdmin && (
-									<Tooltip title='Report Message' placement='top' arrow>
+									<Tooltip title='Report Message' placement='right' arrow>
 										<IconButton
 											onClick={() => setReportMsgModalOpen(true)}
 											disabled={message.isReported}
 											sx={{
-												':hover': {
-													backgroundColor: 'transparent',
+												'&:hover': {
+													backgroundColor: 'rgba(1, 67, 90, 0.1)',
 												},
 											}}>
 											<Flag
@@ -448,8 +503,8 @@ const Message = ({
 										<IconButton
 											onClick={() => setDeleteMessageModalOpen(true)}
 											sx={{
-												':hover': {
-													backgroundColor: 'transparent',
+												'&:hover': {
+													backgroundColor: 'rgba(1, 67, 90, 0.1)',
 												},
 											}}>
 											<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -464,8 +519,8 @@ const Message = ({
 												onClick={() => setEditMsgModalOpen(true)}
 												disabled={isTopicLocked}
 												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
+													'&:hover': {
+														backgroundColor: 'rgba(1, 67, 90, 0.1)',
 													},
 													'mr': '-0.5rem',
 												}}>
@@ -476,8 +531,8 @@ const Message = ({
 											<IconButton
 												onClick={() => setDeleteMessageModalOpen(true)}
 												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
+													'&:hover': {
+														backgroundColor: 'rgba(1, 67, 90, 0.1)',
 													},
 												}}>
 												<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -499,8 +554,8 @@ const Message = ({
 											<IconButton
 												onClick={() => setResolveReportModalOpen(true)}
 												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
+													'&:hover': {
+														backgroundColor: 'rgba(1, 67, 90, 0.1)',
 													},
 												}}>
 												<Verified fontSize='small' />

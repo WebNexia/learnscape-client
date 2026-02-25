@@ -5,7 +5,7 @@ import { Info, KeyboardBackspaceOutlined, Insights } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
@@ -18,6 +18,7 @@ import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
+import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -56,6 +57,20 @@ const CoursePageBanner = ({
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const parsedUserLessons = userLessonsData || [];
+
+	const courseProgress = useMemo(() => {
+		if (!isEnrolledStatus || !course?.chapters) return { completed: 0, total: 0, percentage: 0 };
+		const total = course.chapters.reduce(
+			(sum, ch) => sum + (ch.lessons?.length ?? ch.lessonIds?.length ?? 0),
+			0
+		);
+		const completed = parsedUserLessons.filter((ul) => ul.isCompleted).length;
+		const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+		return { completed, total, percentage };
+	}, [isEnrolledStatus, course?.chapters, parsedUserLessons]);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -453,8 +468,8 @@ const CoursePageBanner = ({
 							content={dateFormatter(course.startingDate)}
 							fromHomePage={fromHomePage}
 							customSettings={{
-								color: theme.textColor?.common.main,
-								bgColor: fromHomePage ? '#FF6F4E' : theme.bgColor?.greenSecondary,
+								color: fromHomePage ? theme.textColor?.common.main : isEnrolledStatus ? theme.textColor?.primary.main : theme.textColor?.common.main,
+								bgColor: fromHomePage ? '#FF6F4E' : isEnrolledStatus ? '#ffffff' : theme.bgColor?.greenSecondary,
 							}}
 						/>
 
@@ -471,11 +486,23 @@ const CoursePageBanner = ({
 							fromHomePage={fromHomePage}
 						/>
 						<CoursePageBannerDataCard
-							title={fromHomePage ? 'Fiyat' : 'Price'}
-							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${
-								isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
-							}`}
+							title={isEnrolledStatus ? (fromHomePage ? 'İlerleme' : 'Progress') : fromHomePage ? 'Fiyat' : 'Price'}
+							content={
+								isEnrolledStatus
+									? `${courseProgress.percentage}%`
+									: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${
+											isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
+										}`
+							}
 							fromHomePage={fromHomePage}
+							customSettings={
+								isEnrolledStatus
+									? {
+											bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
+											color: fromHomePage ? undefined : theme.textColor?.common.main,
+										}
+									: undefined
+							}
 						/>
 					</Box>
 				</Box>

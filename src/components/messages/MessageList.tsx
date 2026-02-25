@@ -104,16 +104,16 @@ const MessageList = ({
 							}}>
 							<Box
 								sx={{
-									backgroundColor: '#f0f0f0',
+									backgroundColor: '#e8f2f5',
 									padding: '0.5rem 1rem',
 									borderRadius: '1rem',
-									border: '1px solid #e0e0e0',
+									border: '1px solid rgba(1, 67, 90, 0.15)',
 								}}>
 								<Typography
 									variant='caption'
 									sx={{
 										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-										color: '#666',
+										color: 'rgba(1, 67, 90, 0.7)',
 										fontStyle: 'italic',
 									}}>
 									{msg.text}
@@ -168,7 +168,8 @@ const MessageList = ({
 											variant='caption'
 											sx={{
 												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-												color: '#666',
+												color: 'rgba(1, 67, 90, 0.7)',
+												fontWeight: 500,
 											}}>
 											{msg.senderId === 'system'
 												? 'System'
@@ -179,15 +180,16 @@ const MessageList = ({
 								{msg.replyTo && (
 									<Box
 										sx={{
-											backgroundColor: '#f1f1f1',
-											borderLeft: '0.25rem solid #aaa',
+											backgroundColor: '#f0f6f8',
+											borderLeft: '3px solid rgba(1, 67, 90, 0.25)',
 											padding: '0.5rem',
 											marginBottom: '0.5rem',
-											borderRadius: '0.25rem',
+											borderRadius: '0 0.25rem 0.25rem 0',
 											cursor: 'pointer',
+											'&:hover': { backgroundColor: '#e5eef2' },
 										}}
 										onClick={() => onScrollToOriginalMessage(msg.replyTo)}>
-										<Typography sx={{ color: 'gray', fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{msg.quotedText}</Typography>
+										<Typography sx={{ color: 'rgba(1, 67, 90, 0.7)', fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{msg.quotedText}</Typography>
 									</Box>
 								)}
 
@@ -202,19 +204,20 @@ const MessageList = ({
 											maxWidth: '100%',
 											borderRadius: '0.35rem',
 											cursor: 'pointer',
+											boxShadow: '0 2px 10px rgba(1, 67, 90, 0.1)',
 										}}
 										onClick={() => onZoomImage(msg.imageUrl || '')}
 									/>
 								) : (
 									<Box sx={{ alignSelf: 'flex-start' }}>
-										<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+										<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap', color: 'rgba(1, 67, 90, 0.88)' }}>
 											{renderMessageWithEmojis(msg.text, isMobileSize ? '1.15rem' : '1.75rem', isMobileSize)}
 										</Typography>
 									</Box>
 								)}
 
 								<Box sx={{ alignSelf: 'flex-end' }}>
-									<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: 'gray' }}>
+									<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: 'rgba(1, 67, 90, 0.55)' }}>
 										{formatMessageTime(msg.timestamp)}
 									</Typography>
 								</Box>
@@ -226,8 +229,8 @@ const MessageList = ({
 										size='small'
 										onClick={() => onReplyMessage(msg)}
 										sx={{
-											':hover': {
-												backgroundColor: 'transparent',
+											'&:hover': {
+												backgroundColor: 'rgba(1, 67, 90, 0.1)',
 											},
 										}}>
 										<TurnLeftOutlined sx={{ fontSize: isMobileSize ? '0.95rem' : '1.25rem' }} />
@@ -244,8 +247,8 @@ const MessageList = ({
 											size='small'
 											onClick={() => onDeleteMessage(msg.id)}
 											sx={{
-												':hover': {
-													backgroundColor: 'transparent',
+												'&:hover': {
+													backgroundColor: 'rgba(1, 67, 90, 0.1)',
 												},
 											}}>
 											<Cancel sx={{ fontSize: isMobileSize ? '0.9rem' : '1.15rem' }} />
