@@ -174,6 +174,7 @@ const PracticeQuestion = ({
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+	const [isNavigatingFromCompletedDialog, setIsNavigatingFromCompletedDialog] = useState<boolean>(false);
 	const [allPairsMatchedMatching, setAllPairsMatchedMatching] = useState<boolean>(false);
 	const [allPairsMatchedFITBTyping, setAllPairsMatchedFITBTyping] = useState<boolean>(false);
 	const [allPairsMatchedFITBDragDrop, setAllPairsMatchedFITBDragDrop] = useState<boolean>(false);
@@ -940,7 +941,7 @@ const PracticeQuestion = ({
 									color: success ? 'green' : 'inherit',
 									alignSelf: 'center',
 									mt: '2rem',
-									fontSize: isMobileLandscape || isMobilePortrait ? '0.9rem' : isTabletPortrait || isTabletLandscape ? '1rem' : '1rem',
+									fontSize: isMobileLandscape || isMobilePortrait ? '0.9rem' : isTabletPortrait || isTabletLandscape ? '0.9rem' : '0.9rem',
 								}}>
 								{helperText}
 							</FormHelperText>
@@ -995,7 +996,17 @@ const PracticeQuestion = ({
 					alignItems: 'center',
 					position: 'absolute',
 					mt: isMobileSize ? '1.5rem' : '2rem',
-					width: '70%',
+					width: '50%',
+					minWidth: isMobileSize ? '11.5rem' : '14rem',
+					left: '50%',
+					transform: 'translateX(-50%)',
+					gap: isMobileSize ? '0.55rem' : '0.75rem',
+					padding: isMobileSize ? '0.35rem 0.45rem' : '0.45rem 0.6rem',
+					borderRadius: '0.95rem',
+					background: 'rgba(255,255,255,0.78)',
+					backdropFilter: 'blur(10px)',
+					border: '1px solid rgba(1, 67, 90, 0.12)',
+					boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
 					mb: '1rem',
 					bottom:
 						isSmallMobilePortrait || isMobilePortrait
@@ -1047,6 +1058,13 @@ const PracticeQuestion = ({
 						sx={{
 							position: 'absolute',
 							left: '50%',
+							transform: 'translateX(-50%)',
+							fontWeight: 600,
+							fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+							color: theme.textColor?.secondary.main,
+							padding: isMobileSize ? '0.2rem 0.45rem' : '0.25rem 0.55rem',
+							borderRadius: '0.55rem',
+							backgroundColor: 'rgba(1, 67, 90, 0.06)',
 						}}>
 						{displayedQuestionNumber} / {numberOfQuestions}
 					</Typography>
@@ -1064,7 +1082,17 @@ const PracticeQuestion = ({
 						<Select
 							labelId='question_number'
 							id='question_number'
-							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
+							sx={{
+								fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+								minWidth: isMobileSize ? '3.25rem' : '3.6rem',
+								'& .MuiOutlinedInput-notchedOutline': {
+									borderColor: 'rgba(1, 67, 90, 0.2)',
+								},
+								'& .MuiSelect-select': {
+									paddingTop: isMobileSize ? '0.35rem' : '0.45rem',
+									paddingBottom: isMobileSize ? '0.35rem' : '0.45rem',
+								},
+							}}
 							value={selectedQuestion}
 							onChange={handleQuestionChange}
 							size='small'
@@ -1206,11 +1234,18 @@ const PracticeQuestion = ({
 					<CustomDialogActions
 						onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 						onSubmit={async () => {
-							await handleNextLesson();
-							navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
-							window.scrollTo({ top: 0, behavior: 'smooth' });
+							setIsNavigatingFromCompletedDialog(true);
+							try {
+								await handleNextLesson();
+								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							} catch (e) {
+								setIsNavigatingFromCompletedDialog(false);
+								console.error(e);
+							}
 						}}
 						submitBtnText='OK'
+						isSubmitting={isNavigatingFromCompletedDialog}
 						actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 					/>
 				</CustomDialog>

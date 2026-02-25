@@ -474,8 +474,11 @@ const FillInTheBlanksTyping = ({
 								justifyContent: 'space-between',
 								alignItems: 'center',
 								minHeight: '3rem',
-								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-								borderRadius: '0.35rem',
+								boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+								borderRadius: '0.85rem',
+								background: 'rgba(255,255,255,0.78)',
+								backdropFilter: 'blur(8px)',
+								border: '1px solid rgba(1, 67, 90, 0.12)',
 								width: '100%',
 								padding: '1.75rem 1rem',
 							}}>
@@ -485,10 +488,12 @@ const FillInTheBlanksTyping = ({
 										<Box
 											key={index}
 											sx={{
-												border: '0.01rem solid gray',
+												border: '1px solid rgba(1, 67, 90, 0.18)',
 												padding: '0.25rem 0.5rem',
 												margin: '0.25rem 0.35rem 0.5rem 0.35rem',
-												borderRadius: '0.35rem',
+												borderRadius: '0.5rem',
+												backgroundColor: 'rgba(1, 67, 90, 0.06)',
+												boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
 											}}>
 											{showHiddenBlankValues ? (
 												<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>

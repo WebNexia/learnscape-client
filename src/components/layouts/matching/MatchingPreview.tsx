@@ -35,43 +35,51 @@ const Item = styled.div<{
 }>`
 	padding: ${({ $isMobileSize }) => ($isMobileSize ? '0.5rem' : '0.75rem')};
 	margin: ${({ $isMobileSize }) => ($isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem')};
-	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
+	background: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
-				? theme.palette.success.main
-				: '#ef5350'
+				? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+				: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
 			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-				? '#f4f4f4'
+				? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
 				: $isCorrect === null
-					? '#f4f4f4'
+					? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
 					: $isCorrect
-						? theme.palette.success.main
-						: '#ef5350'};
+						? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+						: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
 	border: 1px solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
-				? '#c3e6cb'
-				: '#f5c6cb'
+				? '#b7e4c7'
+				: '#f1b8bd'
 			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-				? '#ccc'
+				? 'rgba(1, 67, 90, 0.16)'
 				: $isCorrect === null
-					? '#ccc'
+					? 'rgba(1, 67, 90, 0.16)'
 					: $isCorrect
-						? '#c3e6cb'
-						: '#f5c6cb'};
-	border-radius: 0.25rem;
+						? '#b7e4c7'
+						: '#f1b8bd'};
+	border-radius: 0.62rem;
 	cursor: ${({ $isLessonCompleted }) => ($isLessonCompleted ? 'default' : 'pointer')};
 	text-align: center;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+	&:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
+	}
 `;
 
 const DropArea = styled(Box) <{ isMobileSize: boolean }>`
 	padding: ${({ isMobileSize }) => (isMobileSize ? '0.65rem' : '0.75rem')};
 	margin: 0.5rem 0;
-	background-color: #e0e0e0;
-	border-radius: 0.35rem;
+	background: rgba(255, 255, 255, 0.78);
+	border-radius: 0.8rem;
 	min-height: ${({ isMobileSize }) => (isMobileSize ? '5rem' : '6rem')};
-	box-shadow: 0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+	border: 1px solid rgba(1, 67, 90, 0.12);
 	flex-grow: 1;
 `;
 
@@ -338,7 +346,7 @@ const MatchingPreview = ({
 							<Droppable key={`prompt-${index}`} droppableId={`prompt-${index}`}>
 								{(provided) => (
 									<DropArea ref={provided.innerRef} {...provided.droppableProps} isMobileSize={isMobileSize}>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600, color: theme.textColor?.secondary.main }}>
 											{pair.question}
 										</Typography>
 										{pair.answer ? (
@@ -355,9 +363,10 @@ const MatchingPreview = ({
 														<Typography
 															variant='body2'
 															sx={{
-																color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? null : '#fff',
+														color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? theme.textColor?.secondary.main : '#fff',
 																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 																margin: isMobileSize ? '-0.35rem 0rem' : '0rem',
+														fontWeight: 600,
 															}}>
 															{pair.answer}
 														</Typography>
@@ -369,8 +378,8 @@ const MatchingPreview = ({
 												style={{
 													minHeight: isMobileSize ? '2rem' : '2.5rem',
 													border: `dashed 0.1rem ${theme.bgColor?.lessonInProgress}`,
-													backgroundColor: theme.bgColor?.commonTwo,
-													borderRadius: '0.35rem',
+													background: 'rgba(1, 67, 90, 0.04)',
+													borderRadius: '0.55rem',
 													marginTop: '0.5rem',
 												}}></Box>
 										)}
@@ -387,12 +396,14 @@ const MatchingPreview = ({
 									ref={provided.innerRef}
 									{...provided.droppableProps}
 									sx={{
-										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-										borderRadius: '0.35rem',
+										boxShadow: '0 10px 24px rgba(0, 0, 0, 0.08)',
+										borderRadius: '0.8rem',
 										display: 'flex',
 										flexDirection: 'column',
 										height: '100%',
 										margin: '0.5rem 0',
+										background: 'rgba(255, 255, 255, 0.78)',
+										border: '1px solid rgba(1, 67, 90, 0.12)',
 									}}>
 									{responses?.map((response, index) => (
 										<Draggable
@@ -412,7 +423,7 @@ const MatchingPreview = ({
 													$isMobileSize={isMobileSize}>
 													<Typography
 														variant='body2'
-														sx={{ color: isLessonCompleted ? '#fff' : null, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														sx={{ color: isLessonCompleted ? '#fff' : theme.textColor?.secondary.main, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600 }}>
 														{response.answer}
 													</Typography>
 												</Item>

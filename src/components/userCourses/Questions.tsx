@@ -38,20 +38,35 @@ const Questions: React.FC<QuestionsProps> = ({
 	practiceAgainMode = false,
 	enableWordAssist = true,
 }) => {
-	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
+	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted, updateLastQuestion } = useUserCourseLessonData();
+	const filteredQuestions = questions?.filter((question) => question !== null && question !== undefined) ?? [];
+	const numberOfQuestions = filteredQuestions.length;
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(isLessonCompleted ? 1 : getLastQuestion);
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
-	const numberOfQuestions = questions?.length;
 	const { lessonId } = useParams();
 
-
+	// When lesson changes or question list changes, sync displayed index (e.g. after questions were deleted)
 	useEffect(() => {
 		if (isLessonCompleted) {
 			setDisplayedQuestionNumber(1);
 		} else {
-			setDisplayedQuestionNumber(getLastQuestion);
+			const last = getLastQuestion();
+			const clamped = numberOfQuestions > 0 ? Math.min(Math.max(1, last), numberOfQuestions) : 1;
+			setDisplayedQuestionNumber(clamped);
+			if (numberOfQuestions > 0 && last !== clamped) {
+				updateLastQuestion(clamped);
+			}
 		}
-	}, [lessonId]);
+	}, [lessonId, numberOfQuestions]);
+
+	// Keep displayed index in bounds when question list shrinks (e.g. admin deleted questions)
+	useEffect(() => {
+		if (numberOfQuestions === 0) return;
+		if (displayedQuestionNumber > numberOfQuestions) {
+			setDisplayedQuestionNumber(numberOfQuestions);
+			updateLastQuestion(numberOfQuestions);
+		}
+	}, [numberOfQuestions, displayedQuestionNumber, updateLastQuestion]);
 
 	useEffect(() => {
 		if (onQuestionChange) {
@@ -72,8 +87,7 @@ const Questions: React.FC<QuestionsProps> = ({
 				if (isLessonCompleted) {
 					return userQuizAnswers;
 				} else if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || (userQuizAnswers && userQuizAnswers.length === 0)) {
-					return questions
-						?.filter((question) => question !== null)
+					return filteredQuestions
 						?.map(
 							(question): QuizQuestionAnswer => ({
 								userAnswer: '',
@@ -113,9 +127,7 @@ const Questions: React.FC<QuestionsProps> = ({
 
 	return (
 		<Box>
-			{questions
-				?.filter((question) => question !== null)
-				?.map((question, index) => {
+			{filteredQuestions.map((question, index) => {
 					return isPracticeLesson ? (
 						<PracticeQuestion
 							key={question._id}

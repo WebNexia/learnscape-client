@@ -68,7 +68,7 @@ const FeaturesSection = () => {
 								'100%': { backgroundPosition: '0% 50%' },
 							},
 						}}>
-						Neden AdenKent?
+						Neden Aden Academy?
 					</Typography>
 					<Typography
 						variant='h5'

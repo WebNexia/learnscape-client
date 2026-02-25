@@ -1,5 +1,6 @@
-import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { Box, Typography, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -119,15 +120,19 @@ const TrueFalseOptions = ({
 					<Box
 						sx={{
 							'width': isMobileSize ? '5rem' : '6rem',
-							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
-							'boxShadow': '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
-							'transition': '0.3s',
-							'backgroundColor': theme.bgColor?.greenPrimary,
+							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.45rem 2rem',
+							'boxShadow': (fromLearner ? learnerSetting : adminSetting) === 'True' ? '0 10px 24px rgba(15, 118, 110, 0.42)' : '0 6px 14px rgba(6, 95, 70, 0.25)',
+							'transition': 'all .22s ease',
+							'background': (fromLearner ? learnerSetting : adminSetting) === 'True'
+								? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+								: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+							'border': (fromLearner ? learnerSetting : adminSetting) === 'True' ? '2px solid rgba(187, 247, 208, 0.88)' : '1px solid rgba(167, 243, 208, 0.3)',
 							'textAlign': 'center',
-							'borderRadius': '0.3rem',
+							'borderRadius': '0.75rem',
 							'position': 'relative',
 							':hover': {
-								boxShadow: '0 0 0.4rem 0.3rem rgba(0,0,0,0.3)',
+								boxShadow: '0 12px 26px rgba(16, 185, 129, 0.38)',
+								transform: 'translateY(-1px)',
 							},
 						}}>
 						<FormControlLabel
@@ -135,24 +140,39 @@ const TrueFalseOptions = ({
 							control={
 								<Radio
 									sx={{
-										'color': theme.textColor?.common.main,
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
-										},
+										opacity: 0,
+										position: 'absolute',
+										width: '100%',
+										height: '100%',
+										top: 0,
+										left: 0,
+										padding: 0,
+										margin: 0,
+										zIndex: 2,
+										'& .MuiSvgIcon-root': { display: 'none' },
 									}}
-									color='secondary'
 								/>
 							}
 							label={
-								<Typography variant={'body2'} sx={{ color: theme.textColor?.common.main }}>
-									True
-								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+									{(fromLearner ? learnerSetting : adminSetting) === 'True' && (
+										<CheckRoundedIcon sx={{ color: '#fff', fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
+									)}
+									<Typography variant={'body2'} sx={{ color: '#fff', fontWeight: 600, letterSpacing: '0.01em' }}>
+										True
+									</Typography>
+								</Box>
 							}
 							sx={{
 								position: 'absolute',
-								top: '50%',
-								left: '50%',
-								transform: 'translate(-50%, -50%)',
+								inset: 0,
+								width: '100%',
+								height: '100%',
+								margin: 0,
+								cursor: 'pointer',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
 							}}
 						/>
 					</Box>
@@ -160,16 +180,20 @@ const TrueFalseOptions = ({
 					<Box
 						sx={{
 							'width': isMobileSize ? '5rem' : '6rem',
-							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
-							'boxShadow': '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
-							'transition': '0.3s',
+							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.45rem 2rem',
+							'boxShadow': (fromLearner ? learnerSetting : adminSetting) === 'False' ? '0 10px 24px rgba(153, 27, 27, 0.44)' : '0 6px 14px rgba(127, 29, 29, 0.28)',
+							'transition': 'all .22s ease',
 							'marginLeft': '1.5rem',
-							'backgroundColor': 'error.main',
+							'background': (fromLearner ? learnerSetting : adminSetting) === 'False'
+								? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+								: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+							'border': (fromLearner ? learnerSetting : adminSetting) === 'False' ? '2px solid rgba(254, 202, 202, 0.88)' : '1px solid rgba(252, 165, 165, 0.3)',
 							'textAlign': 'center',
-							'borderRadius': '0.3rem',
+							'borderRadius': '0.75rem',
 							'position': 'relative',
 							':hover': {
-								boxShadow: '0 0 0.4rem 0.3rem rgba(0,0,0,0.3)',
+								boxShadow: '0 12px 26px rgba(239, 68, 68, 0.38)',
+								transform: 'translateY(-1px)',
 							},
 						}}>
 						<FormControlLabel
@@ -177,24 +201,39 @@ const TrueFalseOptions = ({
 							control={
 								<Radio
 									sx={{
-										'color': theme.textColor?.common.main,
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
-										},
+										opacity: 0,
+										position: 'absolute',
+										width: '100%',
+										height: '100%',
+										top: 0,
+										left: 0,
+										padding: 0,
+										margin: 0,
+										zIndex: 2,
+										'& .MuiSvgIcon-root': { display: 'none' },
 									}}
-									color='secondary'
 								/>
 							}
 							label={
-								<Typography variant={'body2'} sx={{ color: theme.textColor?.common.main }}>
-									False
-								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+									{(fromLearner ? learnerSetting : adminSetting) === 'False' && (
+										<CheckRoundedIcon sx={{ color: '#fff', fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
+									)}
+									<Typography variant={'body2'} sx={{ color: '#fff', fontWeight: 600, letterSpacing: '0.01em' }}>
+										False
+									</Typography>
+								</Box>
 							}
 							sx={{
 								position: 'absolute',
-								top: '50%',
-								left: '50%',
-								transform: 'translate(-50%, -50%)',
+								inset: 0,
+								width: '100%',
+								height: '100%',
+								margin: 0,
+								cursor: 'pointer',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
 							}}
 						/>
 					</Box>

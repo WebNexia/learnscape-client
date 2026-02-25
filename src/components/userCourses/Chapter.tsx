@@ -21,11 +21,12 @@ import CustomCancelButton from '../../components/forms/customButtons/CustomCance
 
 interface ChapterProps {
 	chapter:
-		| ChapterLessonData
-		| { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: ChecklistGroup[]; askForFeedback?: boolean };
+	| ChapterLessonData
+	| { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: ChecklistGroup[]; askForFeedback?: boolean };
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
+	isAlternateHeaderTone?: boolean;
 }
 
 export interface ChapterRef {
@@ -33,7 +34,7 @@ export interface ChapterRef {
 	setExpanded: (expanded: boolean) => void;
 }
 
-const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
+const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId, isAlternateHeaderTone = false }, ref) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
@@ -336,11 +337,12 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	}));
 
 	const validLessons = chapter?.lessons?.filter((lesson) => lesson !== null) || [];
+	const chapterHeaderBackground = isAlternateHeaderTone ? '#1a5a71' : theme.bgColor?.primary;
 
 	return (
 		<Box
 			sx={{
-				'marginBottom': isMobileSize ? '1rem' : '1.5rem',
+				'marginBottom': isMobileSize ? '1rem' : '1rem',
 				'backgroundColor': '#ffffff',
 				'border': '1px solid #e2e8f0',
 				'borderRadius': '0.35rem',
@@ -355,7 +357,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			{/* Chapter Header - Always Visible */}
 			<Box
 				sx={{
-					'backgroundColor': theme.bgColor?.primary,
+					'backgroundColor': chapterHeaderBackground,
 					'padding': isMobileSize ? '0.5rem' : '0.75rem 1rem 0.75rem 0.25rem',
 					'cursor': 'pointer',
 					'display': 'flex',
@@ -363,7 +365,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 					'justifyContent': 'space-between',
 					'transition': 'background-color 0.2s ease',
 					'&:hover': {
-						backgroundColor: theme.bgColor?.primary,
+						backgroundColor: chapterHeaderBackground,
 					},
 				}}
 				onClick={handleToggleExpanded}
@@ -752,9 +754,9 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						<CustomDialogActions
 							onSubmit={
 								isEnrolledStatus &&
-								isChapterCompleted &&
-								((hasChecklistItems && !isChecklistCompleted && allItemsChecked) ||
-									(chapter.askForFeedback === true && (!hasChecklistItems || isChecklistCompleted)))
+									isChapterCompleted &&
+									((hasChecklistItems && !isChecklistCompleted && allItemsChecked) ||
+										(chapter.askForFeedback === true && (!hasChecklistItems || isChecklistCompleted)))
 									? handleSubmitChecklist
 									: undefined
 							}

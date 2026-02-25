@@ -889,7 +889,18 @@ const QuizQuestion = ({
 					alignItems: 'center',
 					position: 'absolute',
 					mt: isMobileSize ? '1.5rem' : '2rem',
-					width: '70%',
+					width: '50%',
+					maxWidth: isMobileSize ? '24rem' : '28rem',
+					minWidth: isMobileSize ? '11.5rem' : '14rem',
+					left: '50%',
+					transform: 'translateX(-50%)',
+					gap: isMobileSize ? '0.55rem' : '0.75rem',
+					padding: isMobileSize ? '0.35rem 0.45rem' : '0.45rem 0.6rem',
+					borderRadius: '0.95rem',
+					background: 'rgba(255,255,255,0.78)',
+					backdropFilter: 'blur(10px)',
+					border: '1px solid rgba(1, 67, 90, 0.12)',
+					boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
 					mb: '1rem',
 					bottom:
 						isSmallMobilePortrait || isMobilePortrait
@@ -945,7 +956,18 @@ const QuizQuestion = ({
 					<Select
 						labelId='question_number'
 						id='question_number'
-						sx={{ mr: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
+						sx={{
+							mr: '0.5rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+							minWidth: isMobileSize ? '3.25rem' : '3.6rem',
+							'& .MuiOutlinedInput-notchedOutline': {
+								borderColor: 'rgba(1, 67, 90, 0.2)',
+							},
+							'& .MuiSelect-select': {
+								paddingTop: isMobileSize ? '0.35rem' : '0.45rem',
+								paddingBottom: isMobileSize ? '0.35rem' : '0.45rem',
+							},
+						}}
 						value={selectedQuestion}
 						onChange={handleQuestionChange}
 						size='small'
