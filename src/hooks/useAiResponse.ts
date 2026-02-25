@@ -66,10 +66,12 @@ const useAiResponse = () => {
 				}),
 			});
 			const data = await response.json();
-			const aiResponse = data.choices[0].message.content;
-			setAiResponse(aiResponse);
+			const responseText = data.choices[0]?.message?.content ?? '';
+			setAiResponse(responseText);
+			return responseText;
 		} catch (error) {
 			console.error('Error fetching AI response:', error);
+			return '';
 		} finally {
 			setIsLoadingAiResponse(false);
 		}

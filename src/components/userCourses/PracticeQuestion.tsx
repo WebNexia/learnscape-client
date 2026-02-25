@@ -40,6 +40,7 @@ import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { useSoundEffect } from '../../hooks/useSoundEffect';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 
@@ -62,6 +63,8 @@ const spin = keyframes`
         transform: rotate(360deg);
     }
 `;
+
+const AI_FEEDBACK_LIMIT = 3;
 
 interface PracticeQuestionProps {
 	question: QuestionInterface;
@@ -131,7 +134,8 @@ const PracticeQuestion = ({
 	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const { lessonId, courseId, userCourseId } = useParams();
+	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName, questionTypes } = useQuestionTypes();
 
@@ -158,7 +162,7 @@ const PracticeQuestion = ({
 		if ((isLessonCompleted && question.correctAnswer && !practiceAgainMode) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
 			return question.correctAnswer;
 		} else if (isOpenEndedQuestion) {
-			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+			const answer: string = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
 			return answer;
 		} else {
 			return userAnswer;
@@ -187,6 +191,12 @@ const PracticeQuestion = ({
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 	const [hasRequestedAiFeedback, setHasRequestedAiFeedback] = useState<boolean>(false);
 	const [isAiFeedbackLoading, setIsAiFeedbackLoading] = useState<boolean>(false);
+	// Open-ended 3-round flow: true after "Refresh" (user can edit/save again), false after Save (feedback phase)
+	const [unlockedForNextRound, setUnlockedForNextRound] = useState<boolean>(false);
+	// In each round, AI is requested only once; further clicks just show saved feedback. Reset on Refresh or question change.
+	const [hasRequestedAiThisRound, setHasRequestedAiThisRound] = useState<boolean>(false);
+	const hasInitializedAiRoundRef = useRef<boolean>(false);
+	const prevUnlockedForNextRoundRef = useRef<boolean>(false);
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null && isLessonCompleted;
@@ -199,6 +209,31 @@ const PracticeQuestion = ({
 		userInput: isLessonCompleted && !isLessonUpdating ? question.correctAnswer : userAnswer,
 		correctAnswer: question.correctAnswer,
 	});
+
+	// Open-ended: current user-question entry for AI feedback count and last response (no effect, no refetch)
+	const existingUserAnswerForAi = useMemo(
+		() => userAnswers?.find((data) => String(data.questionId) === String(question._id)),
+		[userAnswers, question._id]
+	);
+	const aiFeedbackCount = existingUserAnswerForAi?.aiFeedbackRequestCount ?? 0;
+	const hasReachedAiLimit = aiFeedbackCount >= AI_FEEDBACK_LIMIT;
+	const savedLastAiFeedback = existingUserAnswerForAi?.lastAiFeedback ?? '';
+	const hasOpenEndedUserQuestionId = Boolean(existingUserAnswerForAi?.userQuestionId);
+	// First-time solving: input enabled when no save yet, or after "Refresh" (unlocked for next round)
+	const isOpenEndedFirstTime = isOpenEndedQuestion && !isLessonCompleted;
+	const openEndedInputEnabled =
+		isOpenEndedFirstTime &&
+		((aiFeedbackCount === 0 && !hasOpenEndedUserQuestionId) || (unlockedForNextRound && aiFeedbackCount < AI_FEEDBACK_LIMIT));
+	const openEndedSaveEnabled =
+		isOpenEndedFirstTime && openEndedInputEnabled && value.trim() !== '' && !isSubmittingOpenEnded;
+	// After 3rd save (count still 2), hide Refresh until user clicks AI feedback; then count becomes 3 and Refresh stays hidden.
+	const openEndedShowRefresh =
+		isOpenEndedFirstTime &&
+		aiFeedbackCount >= 1 &&
+		aiFeedbackCount < AI_FEEDBACK_LIMIT &&
+		!openEndedInputEnabled &&
+		!(aiFeedbackCount === 2 && !hasRequestedAiThisRound);
+	const openEndedAiRequestEnabled = isOpenEndedFirstTime && !openEndedInputEnabled && hasOpenEndedUserQuestionId && aiFeedbackCount < AI_FEEDBACK_LIMIT;
 
 	useEffect(() => {
 		if (isTranslate && isLessonCompleted) {
@@ -226,7 +261,7 @@ const PracticeQuestion = ({
 			setValue('');
 		} else if (isOpenEndedQuestion) {
 			setValue(() => {
-				const answer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
+				const answer = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
 				return answer;
 			});
 		} else if (!isLessonCompleted && displayedQuestionNumber === getLastQuestion()) {
@@ -240,7 +275,7 @@ const PracticeQuestion = ({
 		if (isLessonCompleted) {
 			setShowQuestionSelector(true);
 			setQuestionPrompt((prevData) => {
-				const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+				const answer: string = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
 				return { ...prevData, userInput: answer };
 			});
 		}
@@ -259,20 +294,42 @@ const PracticeQuestion = ({
 
 		// Reset AI feedback state when question changes
 		setHasRequestedAiFeedback(false);
+		setUnlockedForNextRound(false);
+		setHasRequestedAiThisRound(false);
+		hasInitializedAiRoundRef.current = false;
 
 		// Reset sound tracking refs when question changes
 		prevIsAnswerCorrectRef.current = false;
 		prevErrorRef.current = false;
-	}, [displayedQuestionNumber, question._id]);
+	}, [displayedQuestionNumber, question._id, userAnswers]);
 
 	// Keep open-ended answer populated after lesson completion when user answers load asynchronously.
 	useEffect(() => {
 		if (!isOpenEndedQuestion) return;
 		if (!isLessonCompleted || practiceAgainMode) return;
 
-		const savedOpenEndedAnswer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
+		const savedOpenEndedAnswer = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
 		setValue(savedOpenEndedAnswer);
 	}, [isOpenEndedQuestion, isLessonCompleted, practiceAgainMode, userAnswers, question._id]);
+
+	// First-time open-ended: when all 3 rounds used, show last saved answer in the disabled field.
+	useEffect(() => {
+		if (!isOpenEndedQuestion || isLessonCompleted) return;
+		if (aiFeedbackCount < AI_FEEDBACK_LIMIT) return;
+		const saved = existingUserAnswerForAi?.userAnswer;
+		if (saved !== undefined && saved !== null) setValue(saved);
+	}, [isOpenEndedQuestion, isLessonCompleted, aiFeedbackCount, existingUserAnswerForAi?.userAnswer]);
+
+	// When loading a question that already has AI feedback (count >= 1), show "View" not "Receive". Do not set when user just saved after Refresh (they need to see "Receive").
+	useEffect(() => {
+		if (!isOpenEndedFirstTime || !openEndedAiRequestEnabled || aiFeedbackCount < 1) return;
+		if (prevUnlockedForNextRoundRef.current) return; // They were unlocked last render (e.g. just saved after Refresh) → show "Receive"
+		hasInitializedAiRoundRef.current = true;
+		setHasRequestedAiThisRound(true);
+	}, [isOpenEndedFirstTime, openEndedAiRequestEnabled, aiFeedbackCount]);
+	useEffect(() => {
+		prevUnlockedForNextRoundRef.current = unlockedForNextRound;
+	});
 
 	// Save translate answers to store whenever they change (only during active practice, not when lesson is completed)
 	useEffect(() => {
@@ -323,7 +380,7 @@ const PracticeQuestion = ({
 
 	const createUserQuestion = async (answerOverride?: string) => {
 		const answerToPersist = (answerOverride ?? userAnswer ?? '').trim();
-		const existingUserAnswer = userAnswers?.find((data) => data.questionId === question._id);
+		const existingUserAnswer = userAnswers?.find((data) => String(data.questionId) === String(question._id));
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== answerToPersist) {
 			try {
@@ -331,7 +388,7 @@ const PracticeQuestion = ({
 					const res = await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: question._id,
-						userId,
+						userId: user?._id,
 						lessonId,
 						courseId,
 						isCompleted: true,
@@ -347,10 +404,10 @@ const PracticeQuestion = ({
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer: answerToPersist });
 						setUserAnswers((prevData) => {
 							const currentData = prevData || [];
-							const hasExistingQuestion = currentData.some((data) => data.questionId === question._id);
+							const hasExistingQuestion = currentData.some((data) => String(data.questionId) === String(question._id));
 							if (hasExistingQuestion) {
 								return currentData.map((data) =>
-									data.questionId === question._id ? { ...data, userAnswer: answerToPersist } : data
+									String(data.questionId) === String(question._id) ? { ...data, userAnswer: answerToPersist } : data
 								);
 							}
 							return [
@@ -388,6 +445,7 @@ const PracticeQuestion = ({
 					setIsOpenEndedAnswerSubmitted(true);
 					setValue(answerToPersist);
 					playSubmitSound();
+					setUnlockedForNextRound(false); // Lock input/save after each save (feedback phase until Refresh)
 				}
 
 				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
@@ -523,6 +581,7 @@ const PracticeQuestion = ({
 									rows={4}
 									resizable
 									value={value}
+									disabled={isLessonCompleted || (isOpenEndedFirstTime && !openEndedInputEnabled)}
 									onChange={(e) => {
 										setValue(e.target.value);
 										setUserAnswer(e.target.value);
@@ -948,27 +1007,74 @@ const PracticeQuestion = ({
 						)}
 
 						{!isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate && !isMultipleChoiceQuestion && !isTrueFalseQuestion && (
-							<LoadingButton
-								loading={isSubmittingOpenEnded}
+							<Box
 								sx={{
-									'mt': isMobileSize ? '2rem' : '3rem',
-									'width': isMobileSize ? 'fit-content' : '10rem',
-									'alignSelf': 'center',
-									'fontSize': isMobileSize ? '0.7rem' : undefined,
-									'textTransform': 'capitalize',
-									'boxShadow': '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.2)',
-									'border': 'none',
-									':hover': {
-										boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
-										border: 'none',
-									},
-									'mb': '2rem',
-								}}
-								disabled={isLessonCompleted || isSubmittingOpenEnded}
-								type='submit'
-								variant='outlined'>
-								Submit Answer
-							</LoadingButton>
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									gap: 2,
+									mt: isMobileSize ? '2rem' : '3rem',
+									mb: '2rem',
+									flexWrap: 'wrap',
+								}}>
+								<LoadingButton
+									loading={isSubmittingOpenEnded}
+									type='submit'
+									variant='contained'
+									size='small'
+									disabled={
+										isLessonCompleted ||
+										(isOpenEndedFirstTime && !openEndedSaveEnabled) ||
+										isSubmittingOpenEnded
+									}
+									sx={{
+										minWidth: isMobileSize ? 120 : 140,
+										py: isMobileSize ? 1 : 1,
+										px: isMobileSize ? 1.5 : 2.5,
+										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+										fontWeight: 500,
+										textTransform: 'none',
+										borderRadius: 2,
+										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+										'&:hover': {
+											boxShadow: '0 4px 14px rgba(1, 67, 90, 0.35)',
+										},
+										'&.Mui-disabled': {
+											opacity: 0.7,
+										},
+									}}>
+									Save Answer
+								</LoadingButton>
+								{openEndedShowRefresh && (
+									<Button
+										variant='outlined'
+										size='small'
+										startIcon={<Refresh fontSize='small' />}
+										onClick={() => {
+											setUnlockedForNextRound(true);
+											setHasRequestedAiThisRound(false);
+										}}
+										sx={{
+											minWidth: isMobileSize ? 120 : 140,
+											py: isMobileSize ? 0.75 : 0.75,
+											px: isMobileSize ? 1.5 : 2,
+											fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											fontWeight: 500,
+											textTransform: 'none',
+											borderRadius: 2,
+											borderWidth: 2,
+											color: 'primary.main',
+											borderColor: 'primary.main',
+											'&:hover': {
+												borderWidth: 2,
+												borderColor: 'primary.dark',
+												backgroundColor: 'rgba(1, 67, 90, 0.06)',
+											},
+										}}>
+										Edit Answer
+									</Button>
+								)}
+							</Box>
 						)}
 					</FormControl>
 				</form>
@@ -1268,21 +1374,65 @@ const PracticeQuestion = ({
 					!isTranslate &&
 					!isTrueFalseQuestion &&
 					!isMultipleChoiceQuestion ? (
-					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
-						<Tooltip title='Receive feedback from AI' placement='left' arrow>
+					isLessonCompleted ? (
+						<Tooltip title={savedLastAiFeedback ? 'View last AI feedback' : 'No AI feedback yet'} placement='left' arrow>
+							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
+								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
+							</IconButton>
+						</Tooltip>
+					) : hasReachedAiLimit ? (
+						<Tooltip title={`View last AI feedback (${AI_FEEDBACK_LIMIT}/${AI_FEEDBACK_LIMIT})`} placement='left' arrow>
+							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
+								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
+							</IconButton>
+						</Tooltip>
+					) : openEndedAiRequestEnabled && hasRequestedAiThisRound ? (
+						<Tooltip title='View AI feedback' placement='left' arrow>
+							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
+								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
+							</IconButton>
+						</Tooltip>
+					) : openEndedAiRequestEnabled ? (
+						<Tooltip title={`Receive feedback from AI (${aiFeedbackCount + 1}/${AI_FEEDBACK_LIMIT})`} placement='left' arrow>
 							<IconButton
 								onClick={async () => {
-									if (isAiFeedbackLoading) return; // Prevent multiple calls
+									if (isAiFeedbackLoading) return;
+									if (!existingUserAnswerForAi?.userQuestionId) return;
 
 									setIsAiFeedbackLoading(true);
 									setHasRequestedAiFeedback(true);
 									openAiResponseDrawer(index);
 
+									const promptWithSavedAnswer: QuestionPrompt = {
+										...questionPrompt,
+										userInput: existingUserAnswerForAi?.userAnswer ?? questionPrompt.userInput ?? '',
+									};
+
 									try {
-										await handleInitialSubmit(questionPrompt);
-									} catch (error) {
-										console.error('AI feedback error:', error);
-										// Reset state if there's an error so user can try again
+										const responseText = await handleInitialSubmit(promptWithSavedAnswer);
+										if (responseText) {
+											const res = await axios.patch(
+												`${base_url}/userQuestions/${existingUserAnswerForAi.userQuestionId}`,
+												{ aiFeedbackResponse: responseText }
+											);
+											const updated = res.data?.data;
+											if (updated) {
+												setHasRequestedAiThisRound(true);
+												setUserAnswers((prev) =>
+													prev.map((data) =>
+														String(data.questionId) === String(question._id)
+															? {
+																...data,
+																aiFeedbackRequestCount: updated.aiFeedbackRequestCount ?? aiFeedbackCount + 1,
+																lastAiFeedback: updated.lastAiFeedback ?? responseText,
+															}
+															: data
+													)
+												);
+											}
+										}
+									} catch (err) {
+										console.error('AI feedback error:', err);
 										setHasRequestedAiFeedback(false);
 									} finally {
 										setIsAiFeedbackLoading(false);
@@ -1302,27 +1452,9 @@ const PracticeQuestion = ({
 								/>
 							</IconButton>
 						</Tooltip>
-					) : hasRequestedAiFeedback ? (
-						<Tooltip title='AI feedback already requested for this question' placement='left' arrow>
-							<IconButton
-								sx={{
-									':hover': {
-										backgroundColor: 'transparent',
-									},
-									'color': 'gray',
-								}}
-								disabled>
-								<AutoAwesome fontSize={isMobileSize ? 'small' : 'medium'} />
-							</IconButton>
-						</Tooltip>
 					) : (
-						<Tooltip title='Submit answer to receive feedback from AI' placement='left' arrow>
-							<IconButton
-								sx={{
-									':hover': {
-										backgroundColor: 'transparent',
-									},
-								}}>
+						<Tooltip title='Save answer first to receive feedback from AI' placement='left' arrow>
+							<IconButton sx={{ ':hover': { backgroundColor: 'transparent' }, color: 'gray' }} disabled>
 								<AutoAwesome fontSize={isMobileSize ? 'small' : 'medium'} />
 							</IconButton>
 						</Tooltip>
@@ -1366,7 +1498,7 @@ const PracticeQuestion = ({
 									<Typography
 										variant='body2'
 										sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
-										{aiResponse}
+										{savedLastAiFeedback || aiResponse}
 									</Typography>
 								)}
 							</Box>
