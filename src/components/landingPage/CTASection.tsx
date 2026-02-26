@@ -35,7 +35,7 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 		<Box
 			sx={{
 				position: 'relative',
-				background: 'linear-gradient(90deg, rgba(118, 75, 162, 0.5) 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%)',
+				background: 'linear-gradient(90deg, rgba(0, 82, 163, 0.18) 0%, rgba(0, 102, 204, 0.15) 50%, rgba(0, 102, 204, 0.06) 100%)',
 				py: responsiveStyles.spacing.section,
 				overflow: 'hidden',
 			}}>
@@ -51,7 +51,7 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 							sx={{
 								'mb': responsiveStyles.spacing.item,
 								'fontSize': responsiveStyles.typography.h2,
-								'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+								'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 								'WebkitBackgroundClip': 'text',
 								'WebkitTextFillColor': 'transparent',
 								'backgroundClip': 'text',
@@ -92,13 +92,13 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 								size='large'
 								sx={{
 									...responsiveStyles.components.button,
-									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+									'background': '#FF6B3D',
 									'color': '#FFFFFF',
 									'fontFamily': 'Varela Round',
 									'fontWeight': 500,
 									'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 									'&:hover': {
-										background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+										background: '#ff7d55',
 										transform: 'translateY(-3px)',
 										boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 									},
@@ -122,20 +122,21 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 								size='large'
 								sx={{
 									...responsiveStyles.components.button,
-									'border': 'none',
-									'color': 'white',
+									'border': '1px solid rgba(0, 76, 153, 0.35)',
+									'color': '#fff',
 									'fontFamily': 'Varela Round',
-									'fontWeight': 800,
-									'letterSpacing': '0.03em',
-									'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+									'fontWeight': 700,
+									'letterSpacing': '0.02em',
 									'textTransform': 'capitalize',
-									'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+									'background': '#0052a3',
+									'boxShadow': '0 4px 14px rgba(0, 76, 153, 0.4)',
 									'&:hover': {
-										background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-										transform: 'translateY(-3px)',
-										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+										background: '#0066CC',
+										borderColor: 'rgba(0, 82, 163, 0.5)',
+										transform: 'translateY(-2px)',
+										boxShadow: '0 6px 20px rgba(0, 76, 153, 0.5)',
 									},
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'transition': 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
 									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',

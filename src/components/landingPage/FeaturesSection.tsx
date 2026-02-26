@@ -9,7 +9,7 @@ const features = [
 		icon: <School sx={{ fontSize: '3rem', fontWeight: 600 }} />,
 		title: 'Expert Instructors',
 		description: 'Learn from certified English teachers with years of experience.',
-		color: '#FF6B6B',
+		color: '#004c99',
 	},
 	{
 		icon: <Psychology sx={{ fontSize: '3rem', fontWeight: 600 }} />,
@@ -21,13 +21,13 @@ const features = [
 		icon: <Devices sx={{ fontSize: '3rem', fontWeight: 700, strokeWidth: 1.5 }} />,
 		title: 'Learn Anywhere',
 		description: 'Access your courses on any device, anytime, anywhere.',
-		color: '#FF8C42',
+		color: '#0066CC',
 	},
 	{
 		icon: <EmojiEvents sx={{ fontSize: '3rem', fontWeight: 600 }} />,
 		title: 'Track Progress',
 		description: 'Monitor your improvement with detailed progress reports.',
-		color: '#FF6B6B',
+		color: '#4ECDC4',
 	},
 ];
 
@@ -39,7 +39,7 @@ const FeaturesSection = () => {
 		<Box
 			sx={{
 				py: responsiveStyles.spacing.section,
-				backgroundColor: 'transparent',
+				backgroundColor: '#E8EEF4',
 				px: responsiveStyles.spacing.container,
 				position: 'relative',
 			}}>
@@ -54,7 +54,7 @@ const FeaturesSection = () => {
 						sx={{
 							'mb': responsiveStyles.spacing.item,
 							'fontSize': responsiveStyles.typography.h2,
-							'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+							'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 							'WebkitBackgroundClip': 'text',
 							'WebkitTextFillColor': 'transparent',
 							'backgroundClip': 'text',
@@ -92,8 +92,7 @@ const FeaturesSection = () => {
 									'textAlign': 'center',
 									'p': responsiveStyles.components.card.padding,
 									'height': '100%',
-									'background': 'rgba(255, 255, 255, 0.9)',
-									'backdropFilter': 'blur(10px)',
+									'backgroundColor': '#FFFFFF',
 									'borderRadius': responsiveStyles.components.card.borderRadius,
 									'border': `2px solid ${feature.color}20`,
 									'boxShadow': '0 4px 20px rgba(91, 141, 239, 0.1)',

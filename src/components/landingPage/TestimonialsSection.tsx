@@ -64,7 +64,7 @@ const TestimonialsSection = () => {
 						sx={{
 							'fontSize': responsiveStyles.typography.h2,
 							'mb': responsiveStyles.spacing.section,
-							'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+							'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 							'WebkitBackgroundClip': 'text',
 							'WebkitTextFillColor': 'transparent',
 							'backgroundClip': 'text',

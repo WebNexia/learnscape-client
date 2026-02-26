@@ -421,7 +421,7 @@ const Auth = () => {
 					zIndex: 0,
 					pointerEvents: 'none',
 				},
-				// Subtle gradient accent overlay
+				// Subtle gradient accent overlay (Aden blue)
 				'&::after': {
 					content: '""',
 					position: 'fixed',
@@ -430,7 +430,7 @@ const Auth = () => {
 					right: 0,
 					bottom: 0,
 					background:
-						'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+						'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.08) 0%, transparent 50%)',
 					zIndex: 0,
 					pointerEvents: 'none',
 				},
@@ -443,7 +443,7 @@ const Auth = () => {
 					fontWeight: 400,
 				},
 				'& .gradient-text': {
-					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+					'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 					'WebkitBackgroundClip': 'text',
 					'WebkitTextFillColor': 'transparent',
 					'backgroundClip': 'text',
@@ -459,7 +459,7 @@ const Auth = () => {
 					color: '#1e293b',
 				},
 				'& .secondary-color': {
-					color: '#6366f1',
+					color: '#0066CC',
 				},
 				'& .tertiary-color': {
 					color: '#64748b',
@@ -567,7 +567,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_IN ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: 'rgba(91, 33, 182, 0.7)',
+											backgroundColor: '#0052a3',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -614,7 +614,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_UP ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: 'rgba(91, 33, 182, 0.7)',
+											backgroundColor: '#0052a3',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -1380,7 +1380,7 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
-							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'backgroundColor': '#0052a3',
 							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
 								color: theme.textColor?.common.main,
@@ -1400,7 +1400,7 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
-							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'backgroundColor': '#0052a3',
 							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
 								color: theme.textColor?.common.main,

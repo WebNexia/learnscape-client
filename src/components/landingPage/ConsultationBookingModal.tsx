@@ -378,8 +378,8 @@ export default function ConsultationBookingModal({
 										'& .MuiDayCalendar-weekDayLabel': { fontFamily: 'Varela Round' },
 										'& .MuiPickersDay-root': { fontFamily: 'Varela Round' },
 										'& .MuiPickersDay-root.Mui-selected': {
-											background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
-											'&:hover': { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)' },
+											background: '#FF6B3D',
+											'&:hover': { background: '#ff7d55' },
 										},
 										'& .MuiPickersDay-root:not(.Mui-selected):hover': {
 											backgroundColor: 'rgba(255, 107, 61, 0.12)',
@@ -885,9 +885,9 @@ export default function ConsultationBookingModal({
 							sx={{
 								fontFamily: 'Varela Round',
 								textTransform: 'capitalize',
-								background: isSlotInCart && !isFree ? 'grey.300' : 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								background: isSlotInCart && !isFree ? 'grey.300' : '#FF6B3D',
 								color: 'white',
-								'&:hover': !isSlotInCart || isFree ? { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)' } : {},
+								'&:hover': !isSlotInCart || isFree ? { background: '#ff7d55' } : {},
 								'&.Mui-disabled': { background: 'action.disabledBackground', color: 'action.disabled' },
 							}}
 						>
@@ -901,9 +901,9 @@ export default function ConsultationBookingModal({
 							sx={{
 								width: 36,
 								height: 36,
-								background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								background: '#FF6B3D',
 								color: 'white',
-								'&:hover': { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)' },
+								'&:hover': { background: '#ff7d55' },
 								'&.Mui-disabled': { background: 'action.disabledBackground', color: 'action.disabled' },
 							}}
 						>

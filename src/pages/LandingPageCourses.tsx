@@ -1,7 +1,7 @@
 import { Box, Typography, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
@@ -16,6 +16,14 @@ const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const location = useLocation();
+	const [isScrolled, setIsScrolled] = useState(false);
+
+	useEffect(() => {
+		const handleScroll = () => setIsScrolled(window.scrollY > 10);
+		handleScroll();
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, []);
 
 	const {
 		courses,
@@ -95,7 +103,6 @@ const LandingPageCourses = () => {
 			<Box
 				sx={{
 					'position': 'relative',
-					'overflow': 'hidden',
 					'minHeight': '100vh',
 					// Fixed background image - London cityscape
 					'backgroundImage': `url(${LondonBg})`,
@@ -115,7 +122,7 @@ const LandingPageCourses = () => {
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
-					// Subtle gradient accent overlay
+					// Subtle gradient accent overlay (Aden blue)
 					'&::after': {
 						content: '""',
 						position: 'fixed',
@@ -124,7 +131,7 @@ const LandingPageCourses = () => {
 						right: 0,
 						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.06) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -137,7 +144,7 @@ const LandingPageCourses = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -153,7 +160,7 @@ const LandingPageCourses = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0052a3',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',
@@ -165,14 +172,18 @@ const LandingPageCourses = () => {
 				}}>
 				<Box sx={{ position: 'relative', zIndex: 2 }}>
 					<LandingPageLayout>
+						{/* Spacer for fixed header */}
+						<Box sx={{ height: isMobileSize ? '10vh' : '13vh', flexShrink: 0 }} />
 						<Box
 							sx={{
 								position: 'sticky',
-								top: 0,
+								top: isMobileSize ? '10vh' : '13vh',
 								zIndex: 1000,
-								paddingTop: isMobileSize ? '10vh' : '13vh',
+								paddingTop: isScrolled ? 0 : isMobileSize ? '1rem' : '1.25rem',
+								paddingBottom: isScrolled ? 0 : '0.25rem',
 								width: '100%',
 								backgroundColor: 'transparent',
+								transition: 'padding 0.25s ease',
 							}}>
 							<Box
 								sx={{
@@ -183,7 +194,7 @@ const LandingPageCourses = () => {
 									width: '100%',
 								}}>
 								{/* Search and Filter Component */}
-								<Box sx={{ width: '85%', mt: '0.5rem' }}>
+								<Box sx={{ width: '85%', mt: '0rem' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}
@@ -200,6 +211,7 @@ const LandingPageCourses = () => {
 										totalCount={total}
 										isCoursesPage={true}
 										hasActiveSearchOrFilter={!!(searchedValue || activeFilter)}
+										isScrolled={isScrolled}
 									/>
 								</Box>
 							</Box>
@@ -255,12 +267,21 @@ const LandingPageCourses = () => {
 														'color': 'white',
 														'fontFamily': 'Varela Round',
 														'fontSize': '1rem',
-														'fontWeight': 500,
-														'padding': '0.5rem 1rem',
+														'fontWeight': 600,
+														'padding': '0.5rem 1.5rem',
 														'textTransform': 'capitalize',
-														'borderRadius': '0.5rem',
+														'borderRadius': '0.75rem',
+														'background': '#FF6B3D',
+														'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+														'transition': 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+														'&:hover': {
+															background: '#ff7d55',
+															transform: 'translateY(-2px)',
+															boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+														},
 														'&:disabled': {
-															backgroundColor: '#ccc',
+															backgroundColor: 'rgba(0, 0, 0, 0.12)',
+															color: 'rgba(0, 0, 0, 0.26)',
 														},
 													}}>
 													{loading ? 'Yükleniyor...' : 'Daha Fazla Yükle'}

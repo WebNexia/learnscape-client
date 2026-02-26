@@ -57,11 +57,11 @@ const LandingPage = () => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
+						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.90) 0%, rgba(255, 255, 255, 0.80) 100%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
-					// Subtle gradient accent overlay
+					// Subtle gradient accent overlay (Academy light blue)
 					'&::after': {
 						content: '""',
 						position: 'fixed',
@@ -70,7 +70,7 @@ const LandingPage = () => {
 						right: 0,
 						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 204, 255, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 204, 255, 0.08) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -83,7 +83,7 @@ const LandingPage = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -99,7 +99,7 @@ const LandingPage = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0066CC',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',
@@ -113,11 +113,11 @@ const LandingPage = () => {
 					<LandingPageLayout coursesRef={coursesRef}>
 						<HeroSection />
 						<FeaturesSection />
-						<StatisticsSection />
-						<TestimonialsSection />
+						{/* <StatisticsSection />
+						<TestimonialsSection /> */}
 						<LandingPageLatestCourses ref={coursesRef} />
 						<UpcomingEvents />
-						<LandingPageFAQ />
+						{/* <LandingPageFAQ /> */}
 						<CTASection coursesRef={coursesRef} />
 					</LandingPageLayout>
 					<ScrollToTopButton />

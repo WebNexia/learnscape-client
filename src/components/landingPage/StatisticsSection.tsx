@@ -20,7 +20,7 @@ const StatisticsSection = () => {
 		<Box
 			sx={{
 				position: 'relative',
-				background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
+				background: 'linear-gradient(90deg, rgba(0, 204, 255, 0.15) 0%, rgba(0, 102, 204, 0.12) 50%, transparent 100%)',
 			}}>
 			<Box
 				sx={{
@@ -37,7 +37,7 @@ const StatisticsSection = () => {
 						'right': 0,
 						'bottom': 0,
 						'opacity': 0.15,
-						'background': 'radial-gradient(circle, rgba(91, 141, 239, 0.15) 1px, transparent 1px)',
+						'background': 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 1px, transparent 1px)',
 						'backgroundSize': '40px 40px',
 						'animation': 'floatPattern 20s linear infinite',
 						'@keyframes floatPattern': {
@@ -62,7 +62,7 @@ const StatisticsSection = () => {
 												'fontWeight': 700,
 												'mb': 1,
 												'fontSize': { xs: '1.75rem', sm: '2.75rem' },
-												'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+												'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 												'WebkitBackgroundClip': 'text',
 												'WebkitTextFillColor': 'transparent',
 												'backgroundClip': 'text',

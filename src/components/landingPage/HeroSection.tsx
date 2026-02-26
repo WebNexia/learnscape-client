@@ -176,7 +176,7 @@ const HeroSection = () => {
 					<Box>
 						<Typography
 							variant='h2'
-							className='gradient-text kaizen-title'
+							className='kaizen-title'
 							sx={{
 								fontSize: isSmallMobilePortrait
 									? '1.35rem'
@@ -200,6 +200,10 @@ const HeroSection = () => {
 								letterSpacing: '-0.02em',
 								lineHeight: 1.2,
 								fontFamily: 'Varela Round',
+								background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
+								WebkitBackgroundClip: 'text',
+								WebkitTextFillColor: 'transparent',
+								backgroundClip: 'text',
 							}}>
 							Ezber değil, akıcı iletişim
 						</Typography>
@@ -224,7 +228,7 @@ const HeroSection = () => {
 															: isDesktopLandscape
 																? '2.5rem'
 																: '3rem',
-								color: '#1e293b',
+								color: '#152238',
 								fontWeight: 600,
 								lineHeight: 1.3,
 							}}>
@@ -233,7 +237,7 @@ const HeroSection = () => {
 						<Typography
 							variant='h5'
 							sx={{
-								color: '#334155',
+								color: '#1e3a5f',
 								fontSize: isSmallMobilePortrait
 									? '0.8rem'
 									: isSmallMobileLandscape
@@ -283,17 +287,19 @@ const HeroSection = () => {
 							onClick={() => setIsIntroVideoModalOpen(true)}
 							sx={{
 								'fontFamily': 'Varela Round',
-								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'border': '1px solid rgba(0, 76, 153, 0.35)',
 								'color': '#FFFFFF',
+								'background': '#0052a3',
 								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 								'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
 								'fontSize': { xs: '0.8rem', sm: '0.85rem', md: '0.9rem', lg: '1rem' },
 								'fontWeight': 500,
-								'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+								'boxShadow': '0 4px 14px rgba(0, 76, 153, 0.4)',
 								'&:hover': {
-									background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+									background: '#0066CC',
+									borderColor: 'rgba(0, 82, 163, 0.5)',
 									transform: 'translateY(-3px)',
-									boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+									boxShadow: '0 6px 20px rgba(0, 76, 153, 0.5)',
 								},
 								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 								'textTransform': 'capitalize',
@@ -310,27 +316,25 @@ const HeroSection = () => {
 							Tanıtımı İzle
 						</Button>
 						<Button
-							variant='outlined'
-							// endIcon={<ContactPage />}
+							variant='contained'
 							onClick={() => setIsGetMoreDetailsModalOpen(true)}
 							sx={{
-								'border': 'none',
-								'color': 'white',
+								'fontFamily': 'Varela Round',
+								'background': '#FF6B3D',
+								'color': '#FFFFFF',
 								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 								'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
 								'fontSize': { xs: '0.8rem', sm: '0.85rem', md: '0.9rem', lg: '1rem' },
-								'fontFamily': 'Varela Round',
-								'fontWeight': 800,
-								'letterSpacing': '0.03em',
-								'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+								'fontWeight': 700,
+								'letterSpacing': '0.02em',
 								'textTransform': 'capitalize',
-								'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+								'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 								'&:hover': {
-									background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-									transform: 'translateY(-3px)',
-									boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+									background: '#ff7d55',
+									transform: 'translateY(-2px)',
+									boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 								},
-								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+								'transition': 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 								'height': isSmallMobilePortrait
 									? '2rem'
 									: isSmallMobileLandscape
@@ -376,7 +380,7 @@ const HeroSection = () => {
 								'width': { xs: '250px', sm: '250px', md: '400px' },
 								'height': { xs: '250px', sm: '250px', md: '400px' },
 								'borderRadius': '50%',
-								'background': 'radial-gradient(circle, rgba(91, 141, 239, 0.15) 0%, transparent 70%)',
+								'background': 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
 								'filter': 'blur(40px)',
 								'animation': 'pulseGlow 3s ease-in-out infinite',
 								'@keyframes pulseGlow': {

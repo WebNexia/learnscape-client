@@ -1,6 +1,6 @@
 import { Box, Typography, Grid, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { LandingPageResourcesContext } from '../contexts/LandingPageResourcesContextProvider';
 import { useLocation } from 'react-router-dom';
 import DocumentCard from '../components/landingPage/DocumentCard';
@@ -32,6 +32,14 @@ const LandingPageResources = () => {
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const [isScrolled, setIsScrolled] = useState(false);
+
+	useEffect(() => {
+		const handleScroll = () => setIsScrolled(window.scrollY > 10);
+		handleScroll();
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, []);
 
 	// Cleanup search state function
 	const cleanupSearchState = () => {
@@ -109,7 +117,6 @@ const LandingPageResources = () => {
 			<Box
 				sx={{
 					'position': 'relative',
-					'overflow': 'hidden',
 					'minHeight': '100vh',
 					// Fixed background image - London cityscape
 					'backgroundImage': `url(${LondonBg})`,
@@ -129,7 +136,7 @@ const LandingPageResources = () => {
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
-					// Subtle gradient accent overlay
+					// Subtle gradient accent overlay (Aden blue)
 					'&::after': {
 						content: '""',
 						position: 'fixed',
@@ -138,7 +145,7 @@ const LandingPageResources = () => {
 						right: 0,
 						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.06) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -151,7 +158,7 @@ const LandingPageResources = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -167,7 +174,7 @@ const LandingPageResources = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0052a3',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',
@@ -180,19 +187,24 @@ const LandingPageResources = () => {
 				<Box sx={{ position: 'relative', zIndex: 2 }}>
 					<LandingPageLayout>
 						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+							{/* Spacer for fixed header */}
+							<Box sx={{ height: isMobileSize ? '10vh' : '13vh', flexShrink: 0 }} />
 							<Box
 								sx={{
 									display: 'flex',
-									justifyContent: 'center',
+									flexDirection: 'column',
 									alignItems: 'center',
-									position: 'sticky',
-									top: 0,
-									zIndex: 1000,
-									paddingTop: isMobileSize ? '10vh' : '13vh',
+									justifyContent: 'center',
 									width: '100%',
+									position: 'sticky',
+									top: isMobileSize ? '10vh' : '13vh',
+									zIndex: 1000,
+									paddingTop: isScrolled ? 0 : isMobileSize ? '1rem' : '1.25rem',
+									paddingBottom: isScrolled ? 0 : '0.25rem',
 									backgroundColor: 'transparent',
+									transition: 'padding 0.25s ease',
 								}}>
-								<Box sx={{ width: '85%', mt: '0.5rem', position: 'relative' }}>
+								<Box sx={{ width: '85%', mt: '0rem' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}
@@ -208,7 +220,8 @@ const LandingPageResources = () => {
 										onRemoveSearch={onRemoveSearch}
 										totalCount={total}
 										hasActiveSearchOrFilter={!!(searchedValue || activeFilter)}
-										isCoursesPage={false}
+										transparentSearchBox
+										isScrolled={isScrolled}
 									/>
 								</Box>
 							</Box>
@@ -251,10 +264,22 @@ const LandingPageResources = () => {
 													color: 'white',
 													fontFamily: 'Varela Round',
 													fontSize: '1rem',
-													fontWeight: 500,
-													padding: '0.5rem 1rem',
+													fontWeight: 600,
+													padding: '0.5rem 1.5rem',
 													textTransform: 'capitalize',
-													borderRadius: '0.5rem',
+													borderRadius: '0.75rem',
+													background: '#FF6B3D',
+													boxShadow: '0 4px 15px rgba(255, 107, 61, 0.35)',
+													transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+													'&:hover': {
+														background: '#ff7d55',
+														transform: 'translateY(-2px)',
+														boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+													},
+													'&:disabled': {
+														backgroundColor: 'rgba(0, 0, 0, 0.12)',
+														color: 'rgba(0, 0, 0, 0.26)',
+													},
 												}}>
 												{loading ? 'Yükleniyor...' : 'Daha Fazla Kaynak Yükle'}
 											</Button>

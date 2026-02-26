@@ -418,7 +418,7 @@ const ContactFormDialog = ({
 						submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}
 						cancelBtnText='Kapat'
 						submitBtnSx={{
-							'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+							'background': '#FF6B3D !important',
 							'backgroundColor': 'transparent !important',
 							'fontFamily': 'Varela Round',
 							'color': 'white !important',

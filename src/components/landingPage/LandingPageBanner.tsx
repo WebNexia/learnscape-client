@@ -116,10 +116,10 @@ const LandingPageBanner = () => {
 					<CustomDialogActions
 						submitBtnText={/* 'Send' */ 'Gönder'}
 						submitBtnSx={{
-							'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+							'background': '#FF6B3D',
 							'fontFamily': 'Varela Round',
 							'&:hover': {
-								background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+								background: '#ff7d55',
 							},
 							'&.Mui-disabled': {
 								background: 'rgba(0, 0, 0, 0.12)',
