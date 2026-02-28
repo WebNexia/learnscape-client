@@ -109,8 +109,8 @@ export default function UpcomingEvents() {
 		const scrollRef = useRef<HTMLDivElement>(null);
 		const CARD_HEIGHT = 360;
 		const IMAGE_HEIGHT = 120;
-		const DOT_SIZE = 20;
-		const LINE_THICKNESS = 4;
+		const DOT_SIZE = 8;
+		const LINE_THICKNESS = 2;
 		const DOT_OFFSET = CARD_HEIGHT + 16;
 		const GAP = 32; // 4 * 8px (theme.spacing(4))
 		const CONTAINER_WIDTH = 1180;
@@ -181,15 +181,31 @@ export default function UpcomingEvents() {
 					disabled={!canScrollLeft}
 					sx={{
 						position: 'absolute',
-						left: 10,
+						left: 16,
 						top: '50%',
 						zIndex: 10,
 						transform: 'translateY(-50%)',
-						background: 'white',
-						boxShadow: 2,
+						width: 48,
+						height: 48,
+						background: 'rgba(255, 255, 255, 0.92)',
+						backdropFilter: 'blur(10px)',
+						WebkitBackdropFilter: 'blur(10px)',
+						border: '1px solid rgba(0, 82, 163, 0.18)',
+						borderRadius: '50%',
+						boxShadow: '0 4px 20px rgba(0, 82, 163, 0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
+						color: '#0052a3',
 						display: { xs: 'none', md: 'flex' },
-						opacity: canScrollLeft ? 1 : 0.3,
+						opacity: canScrollLeft ? 1 : 0.35,
 						pointerEvents: canScrollLeft ? 'auto' : 'none',
+						transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+						'&:hover': canScrollLeft
+							? {
+									background: 'rgba(255, 255, 255, 0.98)',
+									borderColor: 'rgba(0, 82, 163, 0.35)',
+									boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
+									transform: 'translateY(-50%) scale(1.05)',
+								}
+							: {},
 					}}
 					aria-label='Sola kaydır'>
 					<KeyboardArrowLeft />
@@ -234,13 +250,47 @@ export default function UpcomingEvents() {
 									width: CARD_WIDTH,
 									minHeight: CARD_HEIGHT,
 									maxHeight: CARD_HEIGHT,
-									borderRadius: 4,
-									boxShadow: 3,
+									borderRadius: '0.75rem',
+									border: '1px solid rgba(0, 82, 163, 0.12)',
+									boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
 									mb: 2,
 									position: 'relative',
 									zIndex: 2,
+									overflow: 'hidden',
 									display: 'flex',
 									flexDirection: 'column',
+									transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'&::before': {
+										content: '""',
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										right: 0,
+										height: '4px',
+										background: 'linear-gradient(90deg, #0052a3 0%, #0066CC 100%)',
+										transform: 'scaleX(0)',
+										transformOrigin: 'left',
+										transition: 'transform 0.3s ease',
+										zIndex: 1,
+									},
+									'&:hover': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:active': {
+										transform: 'translateY(-2px)',
+										boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:focus-within': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
 								}}>
 								<CardMedia
 									component='img'
@@ -256,15 +306,34 @@ export default function UpcomingEvents() {
 								/>
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
-										<Chip label={event.type} color={event.type === 'Webinar' ? 'primary' : 'secondary'} size='small' sx={{ mr: 1 }} />
-										<Typography variant='body2' sx={{ color: '#5A6C7D', fontSize: '0.8rem' }}>
+										<Chip
+											label={event.type}
+											size='small'
+											sx={{
+												mr: 1,
+												fontFamily: 'Varela Round',
+												backgroundColor: event.type === 'Webinar' ? 'rgba(0, 82, 163, 0.12)' : 'rgba(78, 205, 196, 0.2)',
+												color: event.type === 'Webinar' ? '#0052a3' : '#2c9c94',
+											}}
+										/>
+										<Typography variant='body2' sx={{ color: 'rgba(0, 82, 163, 0.7)', fontSize: '0.8rem', fontFamily: 'Varela Round' }}>
 											{dateTimeFormatter(event.start)}
 										</Typography>
 									</Box>
-									<Typography variant='h6' fontWeight={600} gutterBottom>
+									<Typography variant='h6' fontWeight={600} gutterBottom sx={{ color: '#0052a3', fontFamily: 'Varela Round' }}>
 										{event.title}
 									</Typography>
-									<Typography variant='body2' sx={{ color: '#334155', mb: 2 }}>
+									<Typography
+										variant='body2'
+										sx={{
+											color: '#334155',
+											mb: 2,
+											fontSize: '0.85rem',
+											display: '-webkit-box',
+											WebkitLineClamp: 3,
+											WebkitBoxOrient: 'vertical',
+											overflow: 'hidden',
+										}}>
 										{event.description}
 									</Typography>
 									<Button
@@ -272,22 +341,21 @@ export default function UpcomingEvents() {
 										size='small'
 										sx={{
 											'fontFamily': 'Varela Round',
-											'fontWeight': 800,
-											'letterSpacing': '0.03em',
-											'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+											'fontWeight': 700,
+											'letterSpacing': '0.02em',
 											'textTransform': 'capitalize',
-											'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+											'background': '#FF6B3D',
 											'color': '#FFFFFF',
 											'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 											'padding': isMobile ? '0.4rem 1rem' : '0.5rem 1.75rem',
 											'fontSize': isMobile ? '0.85rem' : '1rem',
-											'boxShadow': '0 4px 15px rgba(79, 70, 229, 0.4)',
+											'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 											'&:hover': {
-												background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-												transform: 'translateY(-3px)',
-												boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+												background: '#ff7d55',
+												transform: 'translateY(-2px)',
+												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 											},
-											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+											'transition': 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 											'height': '2rem',
 										}}
 										onClick={() => handleOpenRegisterDialog(event._id)}>
@@ -295,23 +363,21 @@ export default function UpcomingEvents() {
 									</Button>
 								</CardContent>
 							</Card>
-							{/* Timeline dot (below the card) */}
+							{/* Timeline dot (below the card) – Aden blue */}
 							<Box
 								sx={{
 									width: DOT_SIZE,
 									height: DOT_SIZE,
-									background: '#8ec5fc',
+									backgroundColor: 'rgba(0, 82, 163, 0.4)',
 									borderRadius: '50%',
-									border: '4px solid white',
 									position: 'absolute',
 									left: '50%',
 									top: DOT_OFFSET,
 									transform: 'translateX(-50%)',
 									zIndex: 3,
-									boxShadow: 2,
 								}}
 							/>
-							{/* Timeline line segment (except after last card) */}
+							{/* Timeline line segment (except after last card) – Aden blue */}
 							{idx < upcomingEvents.length - 1 && (
 								<Box
 									sx={{
@@ -320,9 +386,9 @@ export default function UpcomingEvents() {
 										top: DOT_OFFSET + DOT_SIZE / 2 - LINE_THICKNESS / 2,
 										width: GAP + CARD_WIDTH - DOT_SIZE,
 										height: LINE_THICKNESS,
-										background: 'linear-gradient(90deg, #e0e7ef 0%, #c3dafe 100%)',
+										backgroundColor: 'rgba(0, 82, 163, 0.15)',
 										zIndex: 1,
-										borderRadius: 2,
+										borderRadius: 1,
 									}}
 								/>
 							)}
@@ -334,15 +400,31 @@ export default function UpcomingEvents() {
 					disabled={!canScrollRight}
 					sx={{
 						position: 'absolute',
-						right: 10,
+						right: 16,
 						top: '50%',
 						zIndex: 10,
 						transform: 'translateY(-50%)',
-						background: 'white',
-						boxShadow: 2,
+						width: 48,
+						height: 48,
+						background: 'rgba(255, 255, 255, 0.92)',
+						backdropFilter: 'blur(10px)',
+						WebkitBackdropFilter: 'blur(10px)',
+						border: '1px solid rgba(0, 82, 163, 0.18)',
+						borderRadius: '50%',
+						boxShadow: '0 4px 20px rgba(0, 82, 163, 0.12), 0 0 0 1px rgba(255,255,255,0.5) inset',
+						color: '#0052a3',
 						display: { xs: 'none', md: 'flex' },
-						opacity: canScrollRight ? 1 : 0.3,
+						opacity: canScrollRight ? 1 : 0.35,
 						pointerEvents: canScrollRight ? 'auto' : 'none',
+						transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+						'&:hover': canScrollRight
+							? {
+									background: 'rgba(255, 255, 255, 0.98)',
+									borderColor: 'rgba(0, 82, 163, 0.35)',
+									boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
+									transform: 'translateY(-50%) scale(1.05)',
+								}
+							: {},
 					}}
 					aria-label='Sağa kaydır'>
 					<KeyboardArrowRight />
@@ -359,31 +441,65 @@ export default function UpcomingEvents() {
 		const handleStepChange = (step: number) => setActiveStep(step);
 
 		return (
-			<Box sx={{ maxWidth: 360, position: 'relative', backgroundColor: 'transparent' }}>
+			<Box sx={{ maxWidth: 360, position: 'relative', backgroundColor: '#F6F9FC' }}>
 				<SwipeableViews
 					index={activeStep}
 					onChangeIndex={handleStepChange}
 					enableMouseEvents
 					resistance
-					style={{ backgroundColor: 'transparent' }}
-					containerStyle={{ backgroundColor: 'transparent' }}>
+					style={{ backgroundColor: '#F6F9FC' }}
+					containerStyle={{ backgroundColor: '#F6F9FC' }}>
 					{upcomingEvents?.map((event, _) => (
-						<div key={event._id} style={{ backgroundColor: 'transparent' }}>
+						<div key={event._id} style={{ backgroundColor: '#F6F9FC' }}>
 							<Card
 								sx={{
 									mt: '1.5rem',
 									mb: '1rem',
 									mx: 'auto',
 									width: 250,
-									borderRadius: 4,
-									boxShadow: 3,
+									borderRadius: '0.75rem',
+									border: '1px solid rgba(0, 82, 163, 0.12)',
+									boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
 									height: 360,
 									minHeight: 360,
 									maxHeight: 360,
 									position: 'relative',
 									zIndex: 2,
+									overflow: 'hidden',
 									display: 'flex',
 									flexDirection: 'column',
+									transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'&::before': {
+										content: '""',
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										right: 0,
+										height: '4px',
+										background: 'linear-gradient(90deg, #0052a3 0%, #0066CC 100%)',
+										transform: 'scaleX(0)',
+										transformOrigin: 'left',
+										transition: 'transform 0.3s ease',
+										zIndex: 1,
+									},
+									'&:hover': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:active': {
+										transform: 'translateY(-2px)',
+										boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:focus-within': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
 								}}>
 								<CardMedia
 									component='img'
@@ -394,31 +510,53 @@ export default function UpcomingEvents() {
 								/>
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
-										<Chip label={event?.type} size='small' sx={{ mr: 1, fontSize: '0.7rem' }} />
-										<Typography variant='body2' sx={{ color: '#334155', fontSize: '0.7rem' }}>
+										<Chip
+											label={event?.type}
+											size='small'
+											sx={{
+												mr: 1,
+												fontSize: '0.7rem',
+												fontFamily: 'Varela Round',
+												backgroundColor: event?.type === 'Webinar' ? 'rgba(0, 82, 163, 0.12)' : 'rgba(78, 205, 196, 0.2)',
+												color: event?.type === 'Webinar' ? '#0052a3' : '#2c9c94',
+											}}
+										/>
+										<Typography variant='body2' sx={{ color: 'rgba(0, 82, 163, 0.7)', fontSize: '0.7rem', fontFamily: 'Varela Round' }}>
 											{dateTimeFormatter(event.start)}
 										</Typography>
 									</Box>
-									<Typography variant='h6' fontWeight={600} gutterBottom sx={{ fontSize: '0.9rem' }}>
+									<Typography variant='h6' fontWeight={600} gutterBottom sx={{ fontSize: '0.9rem', color: '#0052a3', fontFamily: 'Varela Round' }}>
 										{event.title}
 									</Typography>
-									<Typography variant='body2' sx={{ color: '#334155', mb: 2, fontSize: '0.75rem' }}>
+									<Typography
+										variant='body2'
+										sx={{
+											color: '#334155',
+											mb: 2,
+											fontSize: '0.75rem',
+											display: '-webkit-box',
+											WebkitLineClamp: 3,
+											WebkitBoxOrient: 'vertical',
+											overflow: 'hidden',
+										}}>
 										{event.description}
 									</Typography>
 									<Button
 										variant='contained'
 										size='small'
 										sx={{
-											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+											'background': '#FF6B3D',
 											'color': '#FFFFFF',
-											'borderRadius': 2,
-											'textTransform': 'none',
+											'borderRadius': '0.75rem',
+											'textTransform': 'capitalize',
 											'float': 'right',
 											'fontSize': '0.75rem',
 											'fontFamily': 'Varela Round',
+											'fontWeight': 700,
 											'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 											'&:hover': {
-												background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+												background: '#ff7d55',
+												transform: 'translateY(-2px)',
 												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 											},
 											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -449,7 +587,21 @@ export default function UpcomingEvents() {
 							<KeyboardArrowLeft />
 						</IconButton>
 					}
-					sx={{ justifyContent: 'center', mt: 2, background: 'transparent' }}
+					sx={{
+						justifyContent: 'center',
+						mt: 2,
+						backgroundColor: '#F6F9FC',
+						'& .MuiMobileStepper-dot': {
+							width: 6,
+							height: 6,
+							backgroundColor: 'rgba(0, 82, 163, 0.25)',
+						},
+						'& .MuiMobileStepper-dotActive': {
+							backgroundColor: '#0052a3',
+							width: 6,
+							height: 6,
+						},
+					}}
 				/>
 			</Box>
 		);
@@ -464,13 +616,13 @@ export default function UpcomingEvents() {
 				flexDirection: 'column',
 				alignItems: 'center',
 				py: 6,
-				backgroundColor: 'transparent',
+				backgroundColor: '#F6F9FC',
 			}}>
 			<Typography
 				sx={{
 					'fontSize': responsiveStyles.typography.h2,
 					'fontFamily': 'Varela Round',
-					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+					'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 					'WebkitBackgroundClip': 'text',
 					'WebkitTextFillColor': 'transparent',
 					'backgroundClip': 'text',
@@ -611,16 +763,14 @@ export default function UpcomingEvents() {
 							disableBtn={isRegisterForEventSending}
 							disableCancelBtn={isRegisterForEventSending}
 							submitBtnSx={{
-								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
-								'backgroundColor': 'transparent !important',
+								'background': '#FF6B3D !important',
+								'backgroundColor': '#FF6B3D !important',
 								'fontFamily': 'Varela Round',
 								'color': 'white !important',
-								'transition': 'all 0.2s ease !important',
+								'transition': 'background 0.2s ease !important',
 								'&:hover': {
-									background: 'white !important',
-									backgroundColor: 'white !important',
-									color: '#FF6B3D !important',
-									border: '1px solid #FF6B3D !important',
+									background: '#ff7d55 !important',
+									backgroundColor: '#ff7d55 !important',
 								},
 								'&.Mui-disabled': {
 									background: 'rgba(0, 0, 0, 0.12) !important',
@@ -652,7 +802,8 @@ export default function UpcomingEvents() {
 						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
 						color: theme.palette.common.white,
-						backgroundColor: 'rgba(147, 51, 234, 1)',
+						backgroundColor: '#059669',
+						'& .MuiAlert-icon': { color: 'inherit' },
 					}}>
 					Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
 				</Alert>

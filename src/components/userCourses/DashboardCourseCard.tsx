@@ -41,13 +41,46 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				'display': !isEnrolled && displayMyCourses ? 'none' : 'block',
 				'height': isMobileSize ? '21rem' : '25rem',
 				'width': isMobileSize ? '15rem' : '19rem',
-				'borderRadius': '0.65rem',
+				'borderRadius': '0.75rem',
 				'position': 'relative',
+				'overflow': 'hidden',
 				'margin': '0 1rem 2rem 1rem',
-				'boxShadow': '0.1rem 0rem 0.4rem 0.1rem rgba(0,0,0,0.15)',
-				'transition': '0.3s',
+				'backgroundColor': '#FFFFFF',
+				'border': '1px solid rgba(0, 82, 163, 0.12)',
+				'boxShadow': '0 12px 30px rgba(0, 82, 163, 0.08)',
+				'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+				'&::before': {
+					content: '""',
+					position: 'absolute',
+					top: 0,
+					left: 0,
+					right: 0,
+					height: '4px',
+					background: 'linear-gradient(90deg, #0052a3 0%, #0066CC 100%)',
+					transform: 'scaleX(0)',
+					transformOrigin: 'left',
+					transition: 'transform 0.3s ease',
+					zIndex: 1,
+				},
 				':hover': {
-					boxShadow: '0.1rem 0.2rem 0.4rem 0.2rem rgba(0,0,0,0.25)',
+					transform: 'translateY(-4px)',
+					boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+					borderColor: 'rgba(0, 82, 163, 0.25)',
+					'&::before': {
+						transform: 'scaleX(1)',
+					},
+				},
+				':active': {
+					transform: 'translateY(-2px)',
+					boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+					borderColor: 'rgba(0, 82, 163, 0.25)',
+					'&::before': { transform: 'scaleX(1)' },
+				},
+				':focus-within': {
+					transform: 'translateY(-4px)',
+					boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+					borderColor: 'rgba(0, 82, 163, 0.25)',
+					'&::before': { transform: 'scaleX(1)' },
 				},
 				'cursor': 'pointer',
 			}}
@@ -105,7 +138,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 			)}
 
 			<CardMedia
-				sx={{ height: isMobileSize ? '7rem' : '10rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'contain' }}
+				sx={{ height: isMobileSize ? '7rem' : '10rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'cover' }}
 				image={
 					course.imageUrl ||
 					'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
@@ -121,8 +154,9 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							lg: course?.title?.length > 35 ? '0.9rem' : '1rem',
 						},
 						textAlign: 'center',
-						color: theme.palette.primary.main,
+						color: fromHomePage ? '#0052a3' : theme.palette.primary.main,
 						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+						fontWeight: fromHomePage ? 600 : 400,
 					}}>
 					{course.title}
 				</Typography>
@@ -170,41 +204,79 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						display: 'flex',
 						justifyContent: 'space-between',
 						alignItems: 'center',
-						padding: '1rem',
+						padding: '1rem 1.25rem',
+						borderTop: '1px solid rgba(0, 82, 163, 0.1)',
+						backgroundColor: 'rgba(0, 82, 163, 0.04)',
+						borderRadius: '0 0 0.75rem 0.75rem',
 					}}>
-					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-						<Avatar src={course?.instructor?.imageUrl} sx={{ width: '1.5rem', height: '1.5rem', objectFit: 'cover' }} />
-						<Typography
-							variant='body2'
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1, minWidth: 0 }}>
+						<Avatar
+							src={course?.instructor?.imageUrl}
 							sx={{
-								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-								visibility: isEnrolled ? 'hidden' : 'visible',
-								color: theme.palette.primary.main,
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-							}}>
-							{course?.instructor?.name}
-						</Typography>
+								width: '1.75rem',
+								height: '1.75rem',
+								objectFit: 'cover',
+								border: '2px solid #fff',
+								boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+							}}
+						/>
+						<Box sx={{ display: 'flex', flexDirection: 'column', visibility: isEnrolled ? 'hidden' : 'visible' }}>
+							<Typography
+								sx={{
+									fontSize: '0.65rem',
+									letterSpacing: '0.5px',
+									textTransform: 'uppercase',
+									color: 'rgba(0, 82, 163, 0.65)',
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								}}>
+								Eğitmen
+							</Typography>
+							<Typography
+								variant='body2'
+								sx={{
+									fontSize: isMobileSize ? '0.72rem' : '0.8rem',
+									fontWeight: 600,
+									color: fromHomePage ? '#0052a3' : theme.palette.primary.main,
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+									lineHeight: 1.2,
+								}}>
+								{course?.instructor?.name}
+							</Typography>
+						</Box>
 					</Box>
 
 					{fromHomePage && (
-						<Typography
+						<Box
 							sx={{
+								px: 1,
+								py: 0.375,
+								borderRadius: '999px',
+								backgroundColor: isCourseFree ? 'rgba(5, 150, 105, 0.12)' : 'rgba(0, 82, 163, 0.12)',
+								fontFamily: 'Varela Round',
+								fontWeight: 600,
 								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								color: isCourseFree ? '#059669' : '#0052a3',
+								transition: 'transform 0.2s ease',
+								'&:hover': { transform: 'scale(1.02)' },
 							}}>
 							{isCourseFree
 								? 'Ücretsiz'
 								: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
-						</Typography>
+						</Box>
 					)}
 
 					{!fromHomePage && (
-						<Typography
+						<Box
+							component='span'
 							sx={{
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								width: '100%',
-								textAlign: 'right',
+								px: 1,
+								py: 0.375,
+								borderRadius: '999px',
+								backgroundColor: isEnrolled ? 'rgba(0, 82, 163, 0.1)' : 'rgba(0, 82, 163, 0.12)',
+								fontFamily: theme.fontFamily?.main,
+								fontWeight: 600,
+								fontSize: isMobileSize ? '0.72rem' : '0.8rem',
+								color: theme.palette.primary.main,
 							}}>
 							{isEnrolled && isCourseCompleted
 								? 'Review Course'
@@ -213,7 +285,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 									: isCourseFree
 										? 'Free'
 										: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
-						</Typography>
+						</Box>
 					)}
 				</Box>
 			</Box>

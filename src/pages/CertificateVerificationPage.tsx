@@ -5,7 +5,6 @@ import { CheckCircle, Cancel, CalendarToday, School, Person, Verified } from '@m
 import axiosInstance from '../utils/axiosInstance';
 import theme from '../themes';
 import logo from '../assets/logo.png';
-import LondonBg from '../assets/london-bg.jpg';
 
 interface VerificationData {
 	valid: boolean;
@@ -83,13 +82,9 @@ const CertificateVerificationPage = () => {
 				'alignItems': 'center',
 				'justifyContent': 'center',
 				'padding': { xs: 1, sm: 2 },
-				// Fixed background image - London cityscape (same as Landing Page)
-				'backgroundImage': `url(${LondonBg})`,
-				'backgroundSize': 'cover',
-				'backgroundPosition': 'center',
-				'backgroundRepeat': 'no-repeat',
-				'backgroundAttachment': 'fixed',
-				// Overlay for better content readability
+				// Aden solid gradient (no image - cleaner UX)
+				'background':
+					'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 				'&::before': {
 					content: '""',
 					position: 'fixed',
@@ -97,20 +92,8 @@ const CertificateVerificationPage = () => {
 					left: 0,
 					right: 0,
 					bottom: 0,
-					background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-					zIndex: 0,
-					pointerEvents: 'none',
-				},
-				// Subtle gradient accent overlay
-				'&::after': {
-					content: '""',
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
 					background:
-						'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+						'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 					zIndex: 0,
 					pointerEvents: 'none',
 				},

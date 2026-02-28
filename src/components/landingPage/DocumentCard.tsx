@@ -14,7 +14,7 @@ interface DocumentCardProps {
 	onAddedToCart?: () => void;
 }
 
-const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardProps) => {
+const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: DocumentCardProps) => {
 	const theme = useTheme();
 	const { items: documentCartItems, addItem: addToDocumentCart } = useDocumentCart();
 	const isInCart = documentCartItems.some((item) => item.documentId === document._id);
@@ -49,19 +49,52 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 
 	return (
 		<>
-			<motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }} style={{ width: '100%', maxWidth: '17.5rem' }}>
+			<motion.div transition={{ duration: 0.3 }} style={{ width: '100%', maxWidth: '17.5rem' }}>
 				<Card
 					sx={{
 						height: { xs: '22rem', sm: '22rem', md: '24rem', lg: '24rem' },
 						display: 'flex',
 						flexDirection: 'column',
-						borderRadius: '1rem',
-						boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+						borderRadius: '0.75rem',
+						border: '1px solid rgba(0, 82, 163, 0.12)',
+						boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
 						overflow: 'hidden',
 						backgroundColor: theme.palette.background.paper,
 						position: 'relative',
 						width: { xs: '15.5rem', sm: '15.5rem', md: '17.5rem', lg: '17.5rem' },
 						maxWidth: '17.5rem',
+						transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+						'&::before': {
+							content: '""',
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							right: 0,
+							height: '4px',
+							background: 'linear-gradient(90deg, #0052a3 0%, #0066CC 100%)',
+							transform: 'scaleX(0)',
+							transformOrigin: 'left',
+							transition: 'transform 0.3s ease',
+							zIndex: 1,
+						},
+						'&:hover': {
+							transform: 'translateY(-4px)',
+							boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+							borderColor: 'rgba(0, 82, 163, 0.25)',
+							'&::before': { transform: 'scaleX(1)' },
+						},
+						'&:active': {
+							transform: 'translateY(-2px)',
+							boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+							borderColor: 'rgba(0, 82, 163, 0.25)',
+							'&::before': { transform: 'scaleX(1)' },
+						},
+						'&:focus-within': {
+							transform: 'translateY(-4px)',
+							boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+							borderColor: 'rgba(0, 82, 163, 0.25)',
+							'&::before': { transform: 'scaleX(1)' },
+						},
 					}}>
 					{/* Cover Image */}
 					<Box
@@ -127,12 +160,13 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 								position: 'absolute',
 								top: '0.75rem',
 								right: '0.75rem',
-								backgroundColor: theme.palette.primary.main,
+								backgroundColor: 'rgba(0, 82, 163, 0.9)',
 								color: 'white',
-								padding: '0.5rem 1rem',
-								borderRadius: '1.25rem',
-								fontWeight: 'bold',
-								boxShadow: '0 0.25rem 0.5rem rgba(0, 0, 0, 0.2)',
+								px: 1,
+								py: 0.375,
+								borderRadius: '999px',
+								fontWeight: 600,
+								boxShadow: '0 2px 8px rgba(0, 82, 163, 0.3)',
 								fontFamily: "'Varela Round', sans-serif",
 								fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 							}}>
@@ -148,7 +182,7 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 								fontFamily: "'Varela Round', sans-serif",
 								fontWeight: 'bold',
 								marginBottom: { xs: '0.5rem', sm: '0.5rem', md: '0.75rem', lg: '0.75rem' },
-								color: theme.palette.text.primary,
+								color: fromHomePage ? '#0052a3' : theme.palette.text.primary,
 								fontSize: {
 									xs: document?.name?.length > 35 ? '0.7rem' : '0.8rem',
 									sm: document?.name?.length > 35 ? '0.725rem' : '0.8rem',
@@ -219,11 +253,11 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 								fullWidth
 								onClick={handleOpenSample}
 								sx={{
-									'borderColor': theme.palette.primary.main,
-									'color': theme.palette.primary.main,
+									'borderColor': '#0052a3',
+									'color': '#0052a3',
 									'&:hover': {
-										borderColor: theme.palette.primary.dark,
-										backgroundColor: 'rgba(25, 118, 210, 0.04)',
+										borderColor: '#004c99',
+										backgroundColor: 'rgba(0, 82, 163, 0.06)',
 									},
 									'fontFamily': "'Varela Round', sans-serif",
 									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
@@ -238,11 +272,11 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 									fullWidth
 									onClick={() => window.open(document.documentUrl, '_blank')}
 									sx={{
-										'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+										'background': 'linear-gradient(135deg, rgba(0, 82, 163, 0.9) 0%, rgba(0, 102, 204, 0.9) 100%)',
 										'color': 'white',
 										'&:hover': {
-											background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
-											boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+											background: 'linear-gradient(135deg, rgba(0, 82, 163, 1) 0%, rgba(0, 102, 204, 1) 100%)',
+											boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
 										},
 										'fontFamily': "'Varela Round', sans-serif",
 										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
@@ -259,9 +293,9 @@ const DocumentCard = ({ document, userCurrency, onAddedToCart }: DocumentCardPro
 									disabled={isInCart}
 									onClick={handleAddToCart}
 									sx={{
-										'background': isInCart ? 'grey.300' : 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+										'background': isInCart ? 'grey.300' : '#FF6B3D',
 										'color': 'white',
-										'&:hover': !isInCart ? { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
+										'&:hover': !isInCart ? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
 										'fontFamily': "'Varela Round', sans-serif",
 										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 										'textTransform': 'none',

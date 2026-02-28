@@ -27,7 +27,6 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { useRef } from 'react';
-import LondonBg from '../assets/london-bg.jpg';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const team = [
@@ -221,15 +220,10 @@ const AboutUs = () => {
 			<Box
 				sx={{
 					'position': 'relative',
-					'overflow': 'hidden',
 					'minHeight': '100vh',
-					// Fixed background image - London cityscape
-					'backgroundImage': `url(${LondonBg})`,
-					'backgroundSize': 'cover',
-					'backgroundPosition': 'center',
-					'backgroundRepeat': 'no-repeat',
-					'backgroundAttachment': 'fixed',
-					// Overlay for better content readability
+					// Aden solid gradient (no image - cleaner UX)
+					'background':
+						'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 					'&::before': {
 						content: '""',
 						position: 'fixed',
@@ -237,20 +231,8 @@ const AboutUs = () => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-						zIndex: 0,
-						pointerEvents: 'none',
-					},
-					// Subtle gradient accent overlay
-					'&::after': {
-						content: '""',
-						position: 'fixed',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -263,7 +245,7 @@ const AboutUs = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -279,7 +261,7 @@ const AboutUs = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0052a3',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',
@@ -296,8 +278,15 @@ const AboutUs = () => {
 							<Grid container spacing={4}>
 								<Grid item xs={12} md={6}>
 									<Paper
-										elevation={3}
-										sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, height: '100%', background: 'linear-gradient(135deg, #1ec28b 0%, #27ae60 100%)' }}>
+										elevation={0}
+										sx={{
+											p: { xs: 2, md: 4 },
+											borderRadius: '0.75rem',
+											height: '100%',
+											background: 'linear-gradient(135deg, #0052a3 0%, #0066CC 100%)',
+											border: '1px solid rgba(0, 82, 163, 0.2)',
+											boxShadow: '0 12px 30px rgba(0, 82, 163, 0.15)',
+										}}>
 										<Typography variant='h6' sx={{ color: '#0A1A2F', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
 											Misyonumuz
 										</Typography>
@@ -308,8 +297,15 @@ const AboutUs = () => {
 								</Grid>
 								<Grid item xs={12} md={6}>
 									<Paper
-										elevation={3}
-										sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, height: '100%', background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)' }}>
+										elevation={0}
+										sx={{
+											p: { xs: 2, md: 4 },
+											borderRadius: '0.75rem',
+											height: '100%',
+											background: 'linear-gradient(135deg, #4ECDC4 0%, #2c9c94 100%)',
+											border: '1px solid rgba(78, 205, 196, 0.3)',
+											boxShadow: '0 12px 30px rgba(78, 205, 196, 0.2)',
+										}}>
 										<Typography variant='h6' sx={{ color: '#0A1A2F', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
 											Vizyonumuz
 										</Typography>
@@ -337,15 +333,16 @@ const AboutUs = () => {
 
 								<TableContainer
 									component={Paper}
-									elevation={8}
+									elevation={0}
 									sx={{
-										borderRadius: 3,
+										borderRadius: '0.75rem',
 										overflow: 'hidden',
-										boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+										border: '1px solid rgba(0, 82, 163, 0.12)',
+										boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
 									}}>
 									<Table sx={{ minWidth: 200 }}>
 										<TableHead>
-											<TableRow sx={{ background: 'linear-gradient(135deg, #1ec28b 0%, #3498db 100%)' }}>
+											<TableRow sx={{ background: 'linear-gradient(135deg, #0052a3 0%, #4ECDC4 100%)' }}>
 												<TableCell
 													sx={{
 														color: 'white',
@@ -404,7 +401,7 @@ const AboutUs = () => {
 															backgroundColor: '#f8fafc',
 														},
 														'&:hover': {
-															backgroundColor: '#e8f4fd',
+															backgroundColor: 'rgba(0, 82, 163, 0.04)',
 															transform: 'scale(1.01)',
 															transition: 'all 0.2s ease-in-out',
 														},
@@ -452,17 +449,19 @@ const AboutUs = () => {
 						{/* CTA Section */}
 						<Container maxWidth='md' sx={{ textAlign: 'center', py: { xs: 5, md: 8 } }}>
 							<Paper
-								elevation={2}
+								elevation={0}
 								sx={{
 									p: { xs: 3, md: 5 },
-									borderRadius: 3,
-									background: 'rgba(102, 126, 234, 0.5)',
+									borderRadius: '0.75rem',
+									border: '1px solid rgba(0, 82, 163, 0.15)',
+									background: 'rgba(0, 82, 163, 0.08)',
+									boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
 									color: '#fff',
 								}}>
 								<Typography variant='h5' sx={{ fontWeight: 700, mb: 2, fontFamily: 'Varela Round', color: '#1E293B' }}>
 									Bizimle İletişime Geçin
 								</Typography>
-								<Typography sx={{ mb: 3, fontFamily: 'Varela Round', color: '#fff', fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>
+								<Typography sx={{ mb: 3, fontFamily: 'Varela Round', color: '#334155', fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>
 									Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşmaktan çekinmeyin.
 								</Typography>
 								<Button
@@ -470,17 +469,17 @@ const AboutUs = () => {
 									size='large'
 									sx={{
 										'fontFamily': 'Varela Round',
-										'fontWeight': 800,
+										'fontWeight': 700,
 										'letterSpacing': '0.03em',
-										'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
 										'textTransform': 'capitalize',
-										'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+										'background': '#FF6B3D',
 										'color': '#FFFFFF',
 										'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+										'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 										'&:hover': {
-											background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+											background: '#ff7d55',
 											transform: 'translateY(-3px)',
-											boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
+											boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 										},
 										'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 										'height': '3rem',

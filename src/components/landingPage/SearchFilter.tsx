@@ -38,6 +38,8 @@ interface SearchFilterProps {
 	totalCount?: number; // Total number of items
 	hasActiveSearchOrFilter?: boolean; // Whether there's an active search or filter
 	isCoursesPage?: boolean;
+	transparentSearchBox?: boolean; // Transparent Paper style (Courses + Resources landing)
+	isScrolled?: boolean; // When true + transparent: Paper gets white bg (only the bordered box)
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
@@ -56,7 +58,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 	totalCount = 0,
 	hasActiveSearchOrFilter = false,
 	isCoursesPage,
+	transparentSearchBox,
+	isScrolled,
 }) => {
+	const useTransparentStyle = isCoursesPage || transparentSearchBox;
 	const [localSearchValue, setLocalSearchValue] = useState(searchValue);
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
@@ -109,15 +114,21 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 				'p': 1.75,
 				'mb': 2,
 				'borderRadius': '1rem',
-				'backgroundColor': 'rgba(255, 255, 255, 0.9)',
-				'backdropFilter': 'blur(20px)',
-				'border': '2px solid rgba(91, 141, 239, 0.15)',
-				'boxShadow': '0 4px 20px rgba(91, 141, 239, 0.1)',
-				'transition': 'all 0.3s ease',
-				'&:hover': {
-					boxShadow: '0 6px 25px rgba(91, 141, 239, 0.15)',
-					borderColor: 'rgba(91, 141, 239, 0.25)',
-				},
+				'backgroundColor': useTransparentStyle
+					? isScrolled
+						? '#FFFFFF'
+						: 'transparent'
+					: 'rgba(255, 255, 255, 0.9)',
+				'backdropFilter': useTransparentStyle ? 'none' : 'blur(20px)',
+				'border': useTransparentStyle ? '1px solid rgba(0, 82, 163, 0.12)' : '2px solid rgba(91, 141, 239, 0.15)',
+				'boxShadow': useTransparentStyle && isScrolled ? '0 2px 12px rgba(0, 82, 163, 0.08)' : useTransparentStyle ? 'none' : '0 4px 20px rgba(91, 141, 239, 0.1)',
+				'transition': 'all 0.25s ease',
+				'&:hover': useTransparentStyle
+					? {}
+					: {
+							boxShadow: '0 6px 25px rgba(91, 141, 239, 0.15)',
+							borderColor: 'rgba(91, 141, 239, 0.25)',
+						},
 			}}>
 			<Grid container spacing={2} alignItems='center'>
 				{/* Search Input */}
@@ -226,7 +237,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 							sx={{
 								'fontFamily': 'Varela Round',
 								'fontWeight': 500,
-								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'background': '#FF6B3D',
 								'color': '#FFFFFF',
 								'boxShadow': '0 4px 15px rgba(249, 115, 22, 0.35)',
 								'&:hover': {

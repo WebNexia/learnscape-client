@@ -1,7 +1,7 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, Badge } from '@mui/material';
 import theme from '../../themes';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { useConsultationCart } from '../../contexts/ConsultationCartContextProvider';
@@ -16,7 +16,15 @@ const Header = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const navigate = useNavigate();
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+	const [isScrolled, setIsScrolled] = useState<boolean>(false);
 	const location = useLocation();
+
+	useEffect(() => {
+		const handleScroll = () => setIsScrolled(window.scrollY > 10);
+		handleScroll();
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, []);
 	const { count: documentCartCount } = useDocumentCart();
 	const { count: consultationCartCount } = useConsultationCart();
 	const cartCount = documentCartCount + consultationCartCount;
@@ -88,14 +96,13 @@ const Header = () => {
 									: isSmallScreen
 										? '10vh'
 										: { md: '13vh', lg: '13vh' },
-						background: 'linear-gradient(270deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
-						backdropFilter: 'blur(20px)',
-						borderBottom: '1px solid rgba(91, 141, 239, 0.15)',
-						boxShadow: '0 2px 20px rgba(91, 141, 239, 0.12)',
+						backgroundColor: isScrolled ? '#FFFFFF' : 'transparent',
+						boxShadow: isScrolled ? '0 1px 8px rgba(0, 0, 0, 0.04)' : 'none',
+						borderBottom: isScrolled ? '1px solid rgba(0, 0, 0, 0.04)' : '1px solid transparent',
 						position: 'fixed',
 						top: 0,
 						px: isMobileSizeSmall ? '0.35rem' : '0.75rem',
-						transition: 'all 0.3s ease',
+						transition: 'background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
 						zIndex: 1201,
 					}}>
 					<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -212,13 +219,13 @@ const Header = () => {
 								'textTransform': 'capitalize',
 								'fontSize': isMobileSizeSmall ? '0.7rem' : isMobileSize ? '0.85rem' : '1rem',
 								'color': '#FFFFFF',
-								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'background': '#FF6B3D',
 								'padding': isMobileSize ? '0.4rem 1rem' : '0.5rem 1.75rem',
 								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 								'fontWeight': 500,
 								'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 								'&:hover': {
-									background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+									background: '#ff7d55',
 									transform: 'translateY(-2px)',
 									boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 								},

@@ -25,7 +25,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 			ref={ref}
 			sx={{
 				position: 'relative',
-				background: 'linear-gradient(270deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
+				backgroundColor: '#F0F4F8',
 				padding: '3rem 0',
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
@@ -33,7 +33,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					sx={{
 						'fontSize': responsiveStyles.typography.h2,
 						'fontFamily': DIALOG_FONT,
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -54,7 +54,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					size='small'
 					sx={{
 						'ml': { xs: '0.5rem', sm: '0.75rem' },
-						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, color: '#fff' },
+						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, },
 						'&:hover': {
 							backgroundColor: 'rgba(91, 141, 239, 0.1)',
 							transform: 'scale(1.1)',

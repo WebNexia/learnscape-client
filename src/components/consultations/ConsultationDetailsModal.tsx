@@ -1,5 +1,6 @@
 import { Avatar, Box, DialogActions, DialogContent, Grid, Typography } from '@mui/material';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { decodeHtmlEntities } from '../../utils/utilText';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { dateTimeFormatter } from '../../utils/dateFormatter';
 import { Consultation } from '../../interfaces/consultation';
@@ -149,7 +150,7 @@ const ConsultationDetailsModal = ({ consultation, isConsultationInfoDialogOpen, 
 								</Grid>
 								<Grid item xs={9}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{consultation.description}
+										{decodeHtmlEntities(consultation.description)}
 									</Typography>
 								</Grid>
 							</>

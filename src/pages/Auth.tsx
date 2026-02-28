@@ -21,7 +21,6 @@ import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
-import LondonBg from '../assets/london-bg.jpg';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -403,13 +402,9 @@ const Auth = () => {
 				'minHeight': '100vh',
 				'display': 'flex',
 				'flexDirection': 'column',
-				// Fixed background image - London cityscape
-				'backgroundImage': `url(${LondonBg})`,
-				'backgroundSize': 'cover',
-				'backgroundPosition': 'center',
-				'backgroundRepeat': 'no-repeat',
-				'backgroundAttachment': 'fixed',
-				// Overlay for better content readability
+				// Aden solid gradient (no image - cleaner UX)
+				'background':
+					'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 				'&::before': {
 					content: '""',
 					position: 'fixed',
@@ -417,20 +412,8 @@ const Auth = () => {
 					left: 0,
 					right: 0,
 					bottom: 0,
-					background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-					zIndex: 0,
-					pointerEvents: 'none',
-				},
-				// Subtle gradient accent overlay
-				'&::after': {
-					content: '""',
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
 					background:
-						'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+						'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 					zIndex: 0,
 					pointerEvents: 'none',
 				},
@@ -443,7 +426,7 @@ const Auth = () => {
 					fontWeight: 400,
 				},
 				'& .gradient-text': {
-					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+					'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 					'WebkitBackgroundClip': 'text',
 					'WebkitTextFillColor': 'transparent',
 					'backgroundClip': 'text',
@@ -459,7 +442,7 @@ const Auth = () => {
 					color: '#1e293b',
 				},
 				'& .secondary-color': {
-					color: '#6366f1',
+					color: '#0066CC',
 				},
 				'& .tertiary-color': {
 					color: '#64748b',
@@ -567,7 +550,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_IN ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: 'rgba(91, 33, 182, 0.7)',
+											backgroundColor: '#0052a3',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -614,7 +597,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_UP ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: 'rgba(91, 33, 182, 0.7)',
+											backgroundColor: '#0052a3',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -1380,7 +1363,7 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
-							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'backgroundColor': '#0052a3',
 							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
 								color: theme.textColor?.common.main,
@@ -1400,7 +1383,7 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
-							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'backgroundColor': '#0052a3',
 							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
 								color: theme.textColor?.common.main,

@@ -13,7 +13,6 @@ import type { CartPaymentItem } from '../components/landingPage/CartPaymentDialo
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale/tr';
-import LondonBg from '../assets/london-bg.jpg';
 import axios from 'axios';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -220,8 +219,12 @@ export default function LandingPageCart() {
 
 	if (isEmpty) {
 		return (
-			<Box sx={{ minHeight: '100vh', background: `url(${LondonBg}) center/cover`, position: 'relative' }}>
-				<Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.92)', zIndex: 0 }} />
+			<Box
+				sx={{
+					minHeight: '100vh',
+					position: 'relative',
+					background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
+				}}>
 				<Box sx={{ position: 'relative', zIndex: 1 }}>
 					<LandingPageLayout>
 						<Box sx={{ py: 10, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -274,9 +277,9 @@ export default function LandingPageCart() {
 										px: 3,
 										py: 1.25,
 										borderRadius: 2,
-										borderColor: '#6366f1',
-										color: '#6366f1',
-										'&:hover': { borderColor: '#4f46e5', bgcolor: 'rgba(99, 102, 241, 0.04)' },
+										borderColor: '#0052a3',
+										color: '#0052a3',
+										'&:hover': { borderColor: '#004c99', bgcolor: 'rgba(0, 82, 163, 0.06)' },
 									}}
 								>
 									Danışmanlıklara Git
@@ -290,8 +293,12 @@ export default function LandingPageCart() {
 	}
 
 	return (
-		<Box sx={{ minHeight: '100vh', background: `url(${LondonBg}) center/cover`, position: 'relative' }}>
-			<Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.92)', zIndex: 0 }} />
+		<Box
+			sx={{
+				minHeight: '100vh',
+				position: 'relative',
+				background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
+			}}>
 			<Box sx={{ position: 'relative', zIndex: 1 }}>
 				<LandingPageLayout>
 					<Box sx={{ maxWidth: 1100, mx: 'auto', py: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
@@ -343,7 +350,7 @@ export default function LandingPageCart() {
 									sx={{
 										borderRadius: 3,
 										boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-										border: '1px solid rgba(91, 141, 239, 0.12)',
+										border: '1px solid rgba(0, 82, 163, 0.12)',
 										overflow: 'hidden',
 										height: '100%',
 									}}
@@ -352,12 +359,12 @@ export default function LandingPageCart() {
 										sx={{
 											px: 2.5,
 											py: 2,
-											background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
-											borderBottom: '1px solid rgba(91, 141, 239, 0.1)',
+											background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.12) 0%, rgba(0, 102, 204, 0.08) 100%)',
+											borderBottom: '1px solid rgba(0, 82, 163, 0.1)',
 										}}
 									>
 										<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', display: 'flex', alignItems: 'center', gap: 1 }}>
-											<ContactPhone sx={{ color: '#6366f1', fontSize: 22 }} /> İletişim bilgileriniz
+											<ContactPhone sx={{ color: '#0052a3', fontSize: 22 }} /> İletişim bilgileriniz
 										</Typography>
 										<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
 											Kaynak veya danışmanlık ödemesi için kullanılacaktır.
@@ -463,17 +470,17 @@ export default function LandingPageCart() {
 															size="small"
 															sx={{
 																'color': 'rgba(0, 0, 0, 0.6)',
-																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#6366f1' },
+																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' },
 															}}
 														/>
 													}
 													label={
 														<Typography component="span" sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: 'text.secondary' }}>
-															<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#6366f1', textDecoration: 'underline' }}>
+															<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>
 																Kullanıcı Sözleşmesi
 															</Link>
 															{' ve '}
-															<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#6366f1', textDecoration: 'underline' }}>
+															<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>
 																Gizlilik Politikası
 															</Link>
 															{' nı okudum ve kabul ediyorum. *'}
@@ -489,7 +496,7 @@ export default function LandingPageCart() {
 															size="small"
 															sx={{
 																'color': 'rgba(0, 0, 0, 0.6)',
-																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#6366f1' },
+																'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' },
 															}}
 														/>
 													}
@@ -516,7 +523,7 @@ export default function LandingPageCart() {
 												sx={{
 													borderRadius: 3,
 													boxShadow: '0 12px 40px rgba(10, 26, 47, 0.08), 0 2px 8px rgba(10, 26, 47, 0.04)',
-													border: '1px solid rgba(91, 141, 239, 0.14)',
+													border: '1px solid rgba(0, 82, 163, 0.12)',
 													overflow: 'hidden',
 													flexShrink: 0,
 												}}
@@ -533,13 +540,13 @@ export default function LandingPageCart() {
 														display: 'flex',
 														alignItems: 'center',
 														gap: 1.5,
-														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
-														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+														background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.12) 0%, rgba(0, 102, 204, 0.08) 100%)',
+														borderBottom: '2px solid rgba(0, 82, 163, 0.15)',
 														cursor: 'pointer',
-														'&:hover': { background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(99, 102, 241, 0.18) 100%)' },
+														'&:hover': { background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.16) 0%, rgba(0, 102, 204, 0.1) 100%)' },
 													}}
 												>
-													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 														<Description sx={{ color: 'white', fontSize: 20 }} />
 													</Box>
 													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
@@ -556,11 +563,11 @@ export default function LandingPageCart() {
 													<Table size="small">
 														<TableBody>
 															{documentItems.map((item) => (
-																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(0, 82, 163, 0.04)' } }}>
 																	<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1 }}>
 																		<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-																				<Description sx={{ color: '#6366f1', fontSize: isMobileSize ? 15 : 20 }} />
+																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.12) 0%, rgba(0, 102, 204, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0, 82, 163, 0.2)' }}>
+																				<Description sx={{ color: '#0052a3', fontSize: isMobileSize ? 15 : 20 }} />
 																			</Box>
 																			<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.9rem', color: '#0A1A2F' }}>{item.title}</Typography>
 																		</Box>
@@ -586,7 +593,7 @@ export default function LandingPageCart() {
 												sx={{
 													borderRadius: 3,
 													boxShadow: '0 12px 40px rgba(10, 26, 47, 0.08), 0 2px 8px rgba(10, 26, 47, 0.04)',
-													border: '1px solid rgba(91, 141, 239, 0.14)',
+													border: '1px solid rgba(0, 82, 163, 0.12)',
 													overflow: 'hidden',
 													flexShrink: 0,
 												}}
@@ -603,13 +610,13 @@ export default function LandingPageCart() {
 														display: 'flex',
 														alignItems: 'center',
 														gap: 1.5,
-														background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.18) 0%, rgba(99, 102, 241, 0.14) 100%)',
-														borderBottom: '2px solid rgba(99, 102, 241, 0.15)',
+														background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.12) 0%, rgba(0, 102, 204, 0.08) 100%)',
+														borderBottom: '2px solid rgba(0, 82, 163, 0.15)',
 														cursor: 'pointer',
-														'&:hover': { background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.22) 0%, rgba(99, 102, 241, 0.18) 100%)' },
+														'&:hover': { background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.16) 0%, rgba(0, 102, 204, 0.1) 100%)' },
 													}}
 												>
-													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+													<Box sx={{ width: 34, height: 34, borderRadius: 2, background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 														<Assignment sx={{ color: 'white', fontSize: isMobileSize ? 15 : 20 }} />
 													</Box>
 													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
@@ -626,11 +633,11 @@ export default function LandingPageCart() {
 													<Table size="small">
 														<TableBody>
 															{consultationItems.map((item) => (
-																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' } }}>
+																<TableRow key={item.id} sx={{ '&:last-child td': { border: 0 }, '&:hover': { bgcolor: 'rgba(0, 82, 163, 0.04)' } }}>
 																	<TableCell sx={{ fontFamily: 'Varela Round', verticalAlign: 'middle', py: 1 }}>
 																		<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-																				<Assignment sx={{ color: '#6366f1', fontSize: isMobileSize ? 15 : '1.25rem' }} />
+																			<Box sx={{ width: 30, height: 30, borderRadius: 2, background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.12) 0%, rgba(0, 102, 204, 0.08) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(0, 82, 163, 0.2)' }}>
+																				<Assignment sx={{ color: '#0052a3', fontSize: isMobileSize ? 15 : '1.25rem' }} />
 																			</Box>
 																			<Box>
 																				<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: '0.9rem' }}>{item.consultationTitle}</Typography>
@@ -732,12 +739,13 @@ export default function LandingPageCart() {
 														letterSpacing: '0.03em',
 														textTransform: 'capitalize',
 														textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-														background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+														background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+														boxShadow: '0 4px 15px rgba(255, 107, 61, 0.35)',
 														'&:hover': {
-															background: 'white !important',
-															backgroundColor: 'white !important',
-															color: ' rgba(91, 33, 182, 0.7) !important',
-															border: '1px solid  rgba(91, 33, 182, 0.7)!important',
+															background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%) !important',
+															backgroundColor: 'transparent !important',
+															color: 'white !important',
+															boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 														},
 														'&.Mui-disabled': { background: 'grey.300', color: 'white', border: 'none' },
 														transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
