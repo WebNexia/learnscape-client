@@ -52,21 +52,14 @@ const FeaturesSection = () => {
 					}}>
 					<Typography
 						sx={{
-							'mb': responsiveStyles.spacing.item,
-							'fontSize': responsiveStyles.typography.h2,
-							'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-							'WebkitBackgroundClip': 'text',
-							'WebkitTextFillColor': 'transparent',
-							'backgroundClip': 'text',
-							'backgroundSize': '200% 200%',
-							'animation': 'gradientShift 5s ease infinite',
-							'fontWeight': 700,
-							'fontFamily': 'Varela Round',
-							'@keyframes gradientShift': {
-								'0%': { backgroundPosition: '0% 50%' },
-								'50%': { backgroundPosition: '100% 50%' },
-								'100%': { backgroundPosition: '0% 50%' },
-							},
+							mb: responsiveStyles.spacing.item,
+							fontSize: responsiveStyles.typography.h2,
+							background: 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
+							WebkitBackgroundClip: 'text',
+							WebkitTextFillColor: 'transparent',
+							backgroundClip: 'text',
+							fontWeight: 700,
+							fontFamily: 'Varela Round',
 						}}>
 						Neden Aden Academy?
 					</Typography>
@@ -86,19 +79,19 @@ const FeaturesSection = () => {
 						<Grid item xs={12} sm={6} md={3} key={index} sx={{ mb: { xs: 2 } }}>
 							<Box
 								sx={{
-									'display': 'flex',
-									'flexDirection': 'column',
-									'alignItems': 'center',
-									'textAlign': 'center',
-									'p': responsiveStyles.components.card.padding,
-									'height': '100%',
-									'backgroundColor': '#FFFFFF',
-									'borderRadius': responsiveStyles.components.card.borderRadius,
-									'border': `2px solid ${feature.color}20`,
-									'boxShadow': '0 4px 20px rgba(91, 141, 239, 0.1)',
-									'transition': 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-									'position': 'relative',
-									'overflow': 'hidden',
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									textAlign: 'center',
+									p: responsiveStyles.components.card.padding,
+									height: '100%',
+									backgroundColor: '#FFFFFF',
+									borderRadius: responsiveStyles.components.card.borderRadius,
+									border: `2px solid ${feature.color}20`,
+									boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+									transition: 'transform 0.2s ease-out',
+									position: 'relative',
+									overflow: 'hidden',
 									'&::before': {
 										content: '""',
 										position: 'absolute',
@@ -109,33 +102,30 @@ const FeaturesSection = () => {
 										background: `linear-gradient(90deg, ${feature.color} 0%, ${feature.color}80 100%)`,
 										transform: 'scaleX(0)',
 										transformOrigin: 'left',
-										transition: 'transform 0.4s ease',
+										transition: 'transform 0.2s ease-out',
+										zIndex: 1,
 									},
 									'&:hover': {
-										'transform': 'translateY(-8px)',
-										'boxShadow': `0 8px 30px ${feature.color}25`,
-										'borderColor': `${feature.color}40`,
-										'&::before': {
-											transform: 'scaleX(1)',
-										},
+										transform: 'translate3d(0, -4px, 0)',
+										'&::before': { transform: 'scaleX(1)' },
 									},
-									'mb': { xs: 2 },
+									mb: { xs: 2 },
 								}}>
 								<Box
 									sx={{
-										'color': feature.color,
-										'mb': 2,
-										'p': 3,
-										'borderRadius': '50%',
-										'background':
+										color: feature.color,
+										mb: 2,
+										p: 3,
+										borderRadius: '50%',
+										background:
 											feature.title === 'Learn Anywhere'
 												? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
 												: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
-										'boxShadow': feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
-										'transition': 'all 0.4s ease',
-										'display': 'flex',
-										'alignItems': 'center',
-										'justifyContent': 'center',
+										boxShadow: feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
+										transition: 'transform 0.2s ease-out',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
 										'& svg': {
 											filter:
 												feature.title === 'Learn Anywhere'
@@ -143,12 +133,7 @@ const FeaturesSection = () => {
 													: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
 										},
 										'&:hover': {
-											transform: 'scale(1.1) rotate(5deg)',
-											boxShadow: feature.title === 'Learn Anywhere' ? `0 6px 25px ${feature.color}70` : `0 6px 25px ${feature.color}45`,
-											background:
-												feature.title === 'Learn Anywhere'
-													? `linear-gradient(135deg, ${feature.color}60, ${feature.color}50)`
-													: `linear-gradient(135deg, ${feature.color}40, ${feature.color}30)`,
+											transform: 'scale(1.05)',
 										},
 									}}>
 									{feature.icon}
