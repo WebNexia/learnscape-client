@@ -31,35 +31,24 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
 				<Typography
 					sx={{
-						'fontSize': responsiveStyles.typography.h2,
-						'fontFamily': DIALOG_FONT,
-						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-						'WebkitBackgroundClip': 'text',
-						'WebkitTextFillColor': 'transparent',
-						'backgroundClip': 'text',
-						'backgroundSize': '200% 200%',
-						'animation': 'gradientShift 5s ease infinite',
-						'letterSpacing': '-0.02em',
-						'lineHeight': 1.2,
-						'fontWeight': 700,
-						'@keyframes gradientShift': {
-							'0%': { backgroundPosition: '0% 50%' },
-							'50%': { backgroundPosition: '100% 50%' },
-							'100%': { backgroundPosition: '0% 50%' },
-						},
+						fontSize: responsiveStyles.typography.h2,
+						fontFamily: DIALOG_FONT,
+						background: 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
+						WebkitBackgroundClip: 'text',
+						WebkitTextFillColor: 'transparent',
+						backgroundClip: 'text',
+						letterSpacing: '-0.02em',
+						lineHeight: 1.2,
+						fontWeight: 700,
 					}}>
 					Son Eklenen Kurslar
 				</Typography>
 				<IconButton
 					size='small'
 					sx={{
-						'ml': { xs: '0.5rem', sm: '0.75rem' },
-						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, },
-						'&:hover': {
-							backgroundColor: 'rgba(91, 141, 239, 0.1)',
-							transform: 'scale(1.1)',
-						},
-						'transition': 'all 0.3s ease',
+						ml: { xs: '0.5rem', sm: '0.75rem' },
+						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' } },
+						'&:hover': { backgroundColor: 'rgba(91, 141, 239, 0.1)' },
 					}}
 					onClick={() => setIsInfoDialogOpen(true)}>
 					<InfoOutlined />
@@ -73,9 +62,9 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 							<Box
 								key={course._id}
 								sx={{
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									transition: 'transform 0.2s ease-out',
 									'&:hover': {
-										transform: 'translateY(-5px)',
+										transform: 'translate3d(0, -4px, 0)',
 									},
 								}}>
 								<DashboardCourseCard course={course} fromHomePage />
