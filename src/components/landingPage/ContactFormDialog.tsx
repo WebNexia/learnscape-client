@@ -451,7 +451,7 @@ const ContactFormDialog = ({
 				onClose={() => {
 					setShowSuccess(false);
 				}}
-				sx={{ mt: '6rem' }}>
+				sx={{ mt: { xs: '10vh', md: '13vh' }, zIndex: 1400 }}>
 				<Alert
 					severity='success'
 					variant='filled'
@@ -460,8 +460,9 @@ const ContactFormDialog = ({
 						fontFamily: 'Varela Round',
 						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
-						color: theme.textColor?.common.main,
-						backgroundColor: 'rgba(147, 51, 234, 1)',
+						color: theme.palette.common.white,
+						backgroundColor: '#059669',
+						'& .MuiAlert-icon': { color: 'inherit' },
 					}}>
 					Bilgileriniz alınmıştır, lütfen email'inizi kontrol edin
 				</Alert>

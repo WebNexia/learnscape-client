@@ -10,7 +10,6 @@ import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import { SEO, StructuredData } from '../components/seo';
-import LondonBg from '../assets/london-bg.jpg';
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
 	// Ensure URLs have proper protocol
@@ -233,13 +232,9 @@ const LandingPageCourse = () => {
 					'position': 'relative',
 					'overflow': 'hidden',
 					'minHeight': '100vh',
-					// Fixed background image - London cityscape
-					'backgroundImage': `url(${LondonBg})`,
-					'backgroundSize': 'cover',
-					'backgroundPosition': 'center',
-					'backgroundRepeat': 'no-repeat',
-					'backgroundAttachment': 'fixed',
-					// Overlay for better content readability
+					// Aden solid gradient (no image - cleaner UX)
+					'background':
+						'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 					'&::before': {
 						content: '""',
 						position: 'fixed',
@@ -247,20 +242,8 @@ const LandingPageCourse = () => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-						zIndex: 0,
-						pointerEvents: 'none',
-					},
-					// Subtle gradient accent overlay
-					'&::after': {
-						content: '""',
-						position: 'fixed',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -273,7 +256,7 @@ const LandingPageCourse = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -289,7 +272,7 @@ const LandingPageCourse = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0052a3',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',

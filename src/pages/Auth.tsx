@@ -21,7 +21,6 @@ import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
-import LondonBg from '../assets/london-bg.jpg';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -403,13 +402,9 @@ const Auth = () => {
 				'minHeight': '100vh',
 				'display': 'flex',
 				'flexDirection': 'column',
-				// Fixed background image - London cityscape
-				'backgroundImage': `url(${LondonBg})`,
-				'backgroundSize': 'cover',
-				'backgroundPosition': 'center',
-				'backgroundRepeat': 'no-repeat',
-				'backgroundAttachment': 'fixed',
-				// Overlay for better content readability
+				// Aden solid gradient (no image - cleaner UX)
+				'background':
+					'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 				'&::before': {
 					content: '""',
 					position: 'fixed',
@@ -417,20 +412,8 @@ const Auth = () => {
 					left: 0,
 					right: 0,
 					bottom: 0,
-					background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-					zIndex: 0,
-					pointerEvents: 'none',
-				},
-				// Subtle gradient accent overlay (Aden blue)
-				'&::after': {
-					content: '""',
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
 					background:
-						'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.08) 0%, transparent 50%)',
+						'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 					zIndex: 0,
 					pointerEvents: 'none',
 				},

@@ -279,6 +279,18 @@ export default function UpcomingEvents() {
 										borderColor: 'rgba(0, 82, 163, 0.25)',
 										'&::before': { transform: 'scaleX(1)' },
 									},
+									'&:active': {
+										transform: 'translateY(-2px)',
+										boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:focus-within': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
 								}}>
 								<CardMedia
 									component='img'
@@ -471,6 +483,18 @@ export default function UpcomingEvents() {
 										zIndex: 1,
 									},
 									'&:hover': {
+										transform: 'translateY(-4px)',
+										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:active': {
+										transform: 'translateY(-2px)',
+										boxShadow: '0 16px 36px rgba(0, 82, 163, 0.1)',
+										borderColor: 'rgba(0, 82, 163, 0.25)',
+										'&::before': { transform: 'scaleX(1)' },
+									},
+									'&:focus-within': {
 										transform: 'translateY(-4px)',
 										boxShadow: '0 20px 40px rgba(0, 82, 163, 0.12)',
 										borderColor: 'rgba(0, 82, 163, 0.25)',

@@ -1,6 +1,5 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Typography } from '@mui/material';
 import { responsiveStyles } from '../../styles/responsiveStyles';
-import theme from '../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
@@ -28,7 +27,8 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 			onClose={() => setIsDrawerOpen(false)}
 			PaperProps={{
 				sx: {
-					'backgroundColor': 'rgba(190, 170, 210)',
+					'background': 'linear-gradient(180deg, #004c99 0%, #0052a3 100%)',
+					'borderRight': '1px solid rgba(255, 255, 255, 0.15)',
 					'width': { xs: !isRotatedMedium ? '40vw' : '30vw', sm: !isRotatedMedium ? '13rem' : '20vw' },
 					'@media (max-width:600px) and (orientation: landscape)': {
 						width: '12rem',
@@ -50,7 +50,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 					variant='h5'
 					sx={{
 						mb: responsiveStyles.spacing.section,
-						color: theme.textColor?.common.main,
+						color: '#fff',
 						fontSize: '1rem',
 						fontFamily: 'Varela Round',
 						textAlign: 'center',
@@ -65,7 +65,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 								sx={{
 									'py': responsiveStyles.spacing.item,
 									'&:hover': {
-										backgroundColor: 'rgba(44, 62, 80, 0.05)',
+										backgroundColor: 'rgba(255, 255, 255, 0.1)',
 									},
 								}}>
 								<ListItemText
@@ -74,7 +74,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 										'& .MuiTypography-root': {
 											fontFamily: 'Varela Round',
 											fontSize: '0.9rem',
-											color: theme.textColor?.common.main,
+											color: '#fff',
 											textDecoration: item.isActive ? 'underline' : 'none',
 										},
 									}}

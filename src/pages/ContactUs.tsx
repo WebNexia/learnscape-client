@@ -11,7 +11,6 @@ import axios from 'axios';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
-import LondonBg from '../assets/london-bg.jpg';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 
 const ContactUs = () => {
@@ -125,15 +124,10 @@ const ContactUs = () => {
 			<Box
 				sx={{
 					'position': 'relative',
-					'overflow': 'hidden',
 					'minHeight': '100vh',
-					// Fixed background image - London cityscape
-					'backgroundImage': `url(${LondonBg})`,
-					'backgroundSize': 'cover',
-					'backgroundPosition': 'center',
-					'backgroundRepeat': 'no-repeat',
-					'backgroundAttachment': 'fixed',
-					// Overlay for better content readability
+					// Aden solid gradient (no image - cleaner UX)
+					'background':
+						'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 					'&::before': {
 						content: '""',
 						position: 'fixed',
@@ -141,20 +135,8 @@ const ContactUs = () => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-						zIndex: 0,
-						pointerEvents: 'none',
-					},
-					// Subtle gradient accent overlay
-					'&::after': {
-						content: '""',
-						position: 'fixed',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -167,7 +149,7 @@ const ContactUs = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -183,7 +165,7 @@ const ContactUs = () => {
 						color: '#1e293b',
 					},
 					'& .secondary-color': {
-						color: '#6366f1',
+						color: '#0052a3',
 					},
 					'& .tertiary-color': {
 						color: '#64748b',
@@ -213,7 +195,7 @@ const ContactUs = () => {
 									variant='h5'
 									sx={{
 										fontFamily: 'Varela Round',
-										fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1.15rem' },
+										fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
 									}}>
 									Bize ulaşmak için aşağıdaki formu doldurun. Size en kısa sürede geri döneceğiz.
 								</Typography>
@@ -222,7 +204,15 @@ const ContactUs = () => {
 
 						{/* Contact Form Section */}
 						<Container maxWidth='sm' sx={{ mt: 2, mb: 4 }}>
-							<Paper elevation={3} sx={{ p: { xs: 3, md: 5 }, borderRadius: '0.75rem' }}>
+							<Paper
+								elevation={0}
+								sx={{
+									p: { xs: 3, md: 5 },
+									borderRadius: '0.75rem',
+									border: '1px solid rgba(0, 82, 163, 0.12)',
+									boxShadow: '0 12px 30px rgba(0, 82, 163, 0.08)',
+									backgroundColor: '#FFFFFF',
+								}}>
 								<form onSubmit={handleInquiry}>
 									<Grid container spacing={1}>
 										<Grid item xs={12}>
@@ -474,9 +464,8 @@ const ContactUs = () => {
 														boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 													},
 													'&:disabled': {
-														backgroundColor: '#ccc',
-														color: '#666',
-														background: '#ccc',
+														backgroundColor: 'rgba(0, 0, 0, 0.12)',
+														color: 'rgba(0, 0, 0, 0.26)',
 													},
 													'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 													'height': '2.25rem',
@@ -493,7 +482,7 @@ const ContactUs = () => {
 										onClose={() => {
 											setShowSuccess(false);
 										}}
-										sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+										sx={{ mt: { xs: '10vh', md: '13vh' }, zIndex: 1400 }}>
 										<Alert
 											severity='success'
 											variant='filled'

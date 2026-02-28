@@ -8,8 +8,8 @@ import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 const ConsultationBookingModal = React.lazy(() => import('../components/landingPage/ConsultationBookingModal'));
 import { SEO, StructuredData } from '../components/seo';
-import LondonBg from '../assets/london-bg.jpg';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
+import { decodeHtmlEntities } from '../utils/utilText';
 import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_COVER_PLACEHOLDER = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop';
@@ -73,11 +73,9 @@ const LandingPageConsultations = () => {
 					'position': 'relative',
 					'overflow': 'hidden',
 					'minHeight': '100vh',
-					'backgroundImage': `url(${LondonBg})`,
-					'backgroundSize': 'cover',
-					'backgroundPosition': 'center',
-					'backgroundRepeat': 'no-repeat',
-					'backgroundAttachment': 'fixed',
+					// Aden solid gradient (no image - cleaner UX)
+					'background':
+						'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 					'&::before': {
 						content: '""',
 						position: 'fixed',
@@ -85,19 +83,8 @@ const LandingPageConsultations = () => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
-						zIndex: 0,
-						pointerEvents: 'none',
-					},
-					'&::after': {
-						content: '""',
-						position: 'fixed',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
 						background:
-							'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+							'radial-gradient(circle at 20% 30%, rgba(0, 82, 163, 0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(0, 102, 204, 0.04) 0%, transparent 50%)',
 						zIndex: 0,
 						pointerEvents: 'none',
 					},
@@ -110,7 +97,7 @@ const LandingPageConsultations = () => {
 						fontWeight: 400,
 					},
 					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
 						'WebkitBackgroundClip': 'text',
 						'WebkitTextFillColor': 'transparent',
 						'backgroundClip': 'text',
@@ -142,13 +129,18 @@ const LandingPageConsultations = () => {
 							</Box>
 						</Box>
 
-						<Box sx={{ width: '85%', maxWidth: 1000, mx: 'auto', pb: 4 }}>
+						<Box sx={{ width: '90%', maxWidth: 960, mx: 'auto', pb: '3rem' }}>
 							{error ? (
 								<Typography sx={{ textAlign: 'center', fontSize: '1.25rem', color: 'error.main', fontFamily: 'Varela Round', mt: 5 }}>
 									{error}
 								</Typography>
 							) : consultations && consultations.length > 0 ? (
-								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+								<Box
+									sx={{
+										display: 'grid',
+										gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+										gap: isMobileSize ? 5 : 3,
+									}}>
 									{consultations.map((c: Consultation) => {
 										return (
 											<Card
@@ -156,22 +148,44 @@ const LandingPageConsultations = () => {
 												sx={{
 													display: 'flex',
 													flexDirection: isMobileSize ? 'column' : 'row',
-													width: '100%',
-													borderRadius: 2,
+													width: isMobileSize ? '90%' : '100%',
+													mx: isMobileSize ? 'auto' : 0,
+													maxWidth: { md: 480 },
+													minHeight: isMobileSize ? undefined : 280,
+													borderRadius: '0.75rem',
 													overflow: 'hidden',
-													boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-													'&:hover': { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' },
-													transition: 'box-shadow 0.3s ease',
+													position: 'relative',
+													border: '1px solid rgba(0, 82, 163, 0.15)',
+													boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+													transition: 'transform 0.2s ease-out',
+													'&::before': {
+														content: '""',
+														position: 'absolute',
+														top: 0,
+														left: 0,
+														right: 0,
+														height: '3px',
+														background: '#0052a3',
+														transform: 'scaleX(0)',
+														transformOrigin: 'left',
+														transition: 'transform 0.2s ease-out',
+														zIndex: 1,
+													},
+													'&:hover': {
+														transform: 'translate3d(0, -4px, 0)',
+														'&::before': { transform: 'scaleX(1)' },
+													},
 												}}>
 												<CardMedia
 													component='img'
 													image={c.coverImageUrl || DEFAULT_COVER_PLACEHOLDER}
 													alt={c.title}
 													sx={{
-														width: isMobileSize ? '100%' : 280,
-														minWidth: isMobileSize ? undefined : 280,
-														height: isMobileSize ? 180 : 220,
+														width: isMobileSize ? '100%' : 220,
+														minWidth: isMobileSize ? undefined : 220,
+														height: isMobileSize ? 200 : 280,
 														objectFit: 'cover',
+														flexShrink: 0,
 													}}
 												/>
 												<CardContent
@@ -180,10 +194,12 @@ const LandingPageConsultations = () => {
 														display: 'flex',
 														flexDirection: 'column',
 														justifyContent: 'space-between',
-														py: 2,
+														py: 2.5,
 														px: 2.5,
+														minHeight: 0,
+														overflow: 'hidden',
 													}}>
-													<Box>
+													<Box sx={{ minHeight: 0, overflow: 'hidden', flex: 1 }}>
 														<Typography
 															variant='h6'
 															component='h2'
@@ -192,7 +208,11 @@ const LandingPageConsultations = () => {
 																fontWeight: 600,
 																color: '#0f172a',
 																mb: 0.5,
-																fontSize: { xs: '1.1rem', sm: '1.25rem' },
+																fontSize: { xs: '0.95rem', sm: '1rem' },
+																display: '-webkit-box',
+																WebkitLineClamp: 2,
+																WebkitBoxOrient: 'vertical',
+																overflow: 'hidden',
 															}}>
 															{c.title}
 														</Typography>
@@ -201,53 +221,73 @@ const LandingPageConsultations = () => {
 																sx={{
 																	fontFamily: 'Varela Round',
 																	color: '#64748b',
-																	fontSize: '0.9rem',
-																	lineHeight: 1.5,
+																	fontSize: { xs: '0.75rem', sm: '0.8rem' },
+																	lineHeight: 1.45,
 																	display: '-webkit-box',
-																	WebkitLineClamp: 5,
+																	WebkitLineClamp: 7,
 																	WebkitBoxOrient: 'vertical',
-																	overflow: 'auto',
+																	overflow: 'hidden',
+																	wordBreak: 'break-word',
 																}}>
-																{c.description}
+																{decodeHtmlEntities(c.description)}
 															</Typography>
 														)}
-
 													</Box>
 													<Box
 														sx={{
 															display: 'flex',
 															flexWrap: 'wrap',
 															alignItems: 'center',
-															gap: 1.5,
-															mt: '2rem',
+															gap: 1,
+															mt: 1.5,
 														}}>
+														{getDisplayPrice(c.prices).label !== 'Ücretsiz' && (
+															<Typography
+																sx={{
+																	fontFamily: 'Varela Round',
+																	fontWeight: 700,
+																	color: '#0052a3',
+																	fontSize: '0.9rem',
+																	px: 1,
+																	py: 0.25,
+																	borderRadius: '0.5rem',
+																	bgcolor: 'rgba(0, 82, 163, 0.1)',
+																}}>
+																{getDisplayPrice(c.prices).label}
+															</Typography>
+														)}
 														{getDisplayPrice(c.prices).label === 'Ücretsiz' && (
 															<Typography
 																sx={{
 																	fontFamily: 'Varela Round',
 																	fontWeight: 600,
-																	color: 'text.primary',
-																	fontSize: '0.95rem',
-																	mt: 1,
-																	textDecoration: 'underline',
-																	textUnderlineOffset: '2px',
+																	color: '#059669',
+																	fontSize: '0.9rem',
 																}}>
 																Ücretsiz
 															</Typography>
 														)}
 														<Button
 															variant='contained'
-															size='medium'
+															size='small'
 															onClick={() => openBookingModal(c)}
 															sx={{
 																ml: 'auto',
 																fontFamily: 'Varela Round',
+																fontWeight: 600,
 																textTransform: 'capitalize',
+																fontSize: '0.8rem',
+																py: 0.5,
+																px: 1.5,
+																borderRadius: '0.75rem',
 																background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+																boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
 																'&:hover': {
 																	background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
-																	boxShadow: '0 4px 14px rgba(255, 107, 61, 0.4)',
+																	boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+																	transform: 'translateY(-2px)',
 																},
+																transition: 'all 0.25s ease',
 															}}>
 															Randevu Al
 														</Button>
@@ -280,13 +320,24 @@ const LandingPageConsultations = () => {
 									<Button
 										onClick={loadMore}
 										disabled={loading}
-										variant='outlined'
+										variant='contained'
 										sx={{
 											fontFamily: 'Varela Round',
+											fontWeight: 600,
 											textTransform: 'capitalize',
-											borderColor: '#6366f1',
-											color: '#6366f1',
-											'&:hover': { borderColor: '#4f46e5', backgroundColor: 'rgba(99, 102, 241, 0.04)' },
+											borderRadius: '0.75rem',
+											background: '#FF6B3D',
+											boxShadow: '0 4px 15px rgba(255, 107, 61, 0.35)',
+											'&:hover': {
+												background: '#ff7d55',
+												transform: 'translateY(-2px)',
+												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+											},
+											'&:disabled': {
+												backgroundColor: 'rgba(0, 0, 0, 0.12)',
+												color: 'rgba(0, 0, 0, 0.26)',
+											},
+											transition: 'all 0.25s ease',
 										}}>
 										{loading ? 'Yükleniyor...' : 'Daha Fazla Yükle'}
 									</Button>
