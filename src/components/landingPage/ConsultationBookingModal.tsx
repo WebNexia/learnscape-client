@@ -546,7 +546,7 @@ export default function ConsultationBookingModal({
 			const rows: { label: string; value: string }[] = [
 				{ label: 'Tarih / Oturum', value: selectedSlot ? format(new Date(selectedSlot.slotStart), 'dd.MM.yyyy HH:mm') : '—' },
 				{ label: 'Danışman', value: selectedConsultant ? [selectedConsultant.firstName, selectedConsultant.lastName].filter(Boolean).join(' ') || '—' : '—' },
-				{ label: 'Süre', value: `${consultation?.duration ?? 60} dk` },
+				{ label: 'Süre', value: `${selectedSlot?.duration ?? consultation?.duration ?? 60} dk` },
 				{ label: 'Tutar', value: priceObj ? (priceObj.amount === '0' ? 'Ücretsiz' : `${setCurrencySymbol(priceObj.currency ?? 'try')}${priceObj.amount}`) : '—' },
 				{ label: 'İletişim', value: isFree ? 'Aşağıda girin' : 'Ödeme sayfasında girilecek' },
 			];

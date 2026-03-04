@@ -6,7 +6,6 @@ import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useConsultationCart } from '../contexts/ConsultationCartContextProvider';
 import { useDocumentCart } from '../contexts/DocumentCartContextProvider';
-import { consultationsService } from '../services/consultationsService';
 import { feedbackFormsService } from '../services/feedbackFormsService';
 import CartPaymentDialogWrapper from '../components/landingPage/CartPaymentDialogWrapper';
 import type { CartPaymentItem } from '../components/landingPage/CartPaymentDialog';
@@ -74,6 +73,7 @@ export default function LandingPageCart() {
 
 	const [cartPaymentOpen, setCartPaymentOpen] = useState(false);
 	const [paymentQueue, setPaymentQueue] = useState<CartPaymentItem[]>([]);
+	const [consultationAppointmentIds, setConsultationAppointmentIds] = useState<string[]>([]);
 	const [payAllLoading, setPayAllLoading] = useState(false);
 
 	const [error, setError] = useState<string | null>(null);
@@ -110,54 +110,52 @@ export default function LandingPageCart() {
 		}
 		setPayAllLoading(true);
 		try {
-			const queue: CartPaymentItem[] = [];
 			const guestName = `${firstName} ${lastName}`.trim();
+			const items: Array<
+				| { type: 'document'; documentId: string; orgId: string; amount: number; currency: string }
+				| { type: 'consultation'; consultationId: string; slotId: string; consultantId: string; price: { amount: string; currency: string }; guestEmail: string; guestName: string; guestPhone?: string }
+			> = [];
 
 			for (const item of documentItems) {
-				const res = await axios.post(`${base_url}/payments`, {
-					amount: parseAmount(item.amount),
-					currency: item.currency,
+				items.push({
+					type: 'document',
 					documentId: item.documentId,
 					orgId: item.orgId,
-					email,
-					firstName,
-					lastName,
-					paymentType: 'document',
-				});
-				const { clientSecret, paymentIntentId } = res.data;
-				queue.push({
-					type: 'document',
-					clientSecret,
-					paymentIntentId,
-					capturePayload: { documentId: item.documentId, orgId: item.orgId, firstName, lastName, email, paymentType: 'document' },
+					amount: parseAmount(item.amount),
+					currency: item.currency || 'usd',
 				});
 			}
-
 			for (const item of consultationItems) {
-				const { clientSecret, paymentIntentId, appointmentId } = await consultationsService.createAppointment(item.consultationId, {
+				items.push({
+					type: 'consultation',
+					consultationId: item.consultationId,
 					slotId: item.slotId,
 					consultantId: item.consultantId,
+					price: item.price,
 					guestName,
 					guestEmail: email,
 					guestPhone: checkoutGuestPhone.trim() || undefined,
-					price: item.price,
-				});
-				queue.push({
-					type: 'consultation',
-					clientSecret,
-					paymentIntentId,
-					capturePayload: {
-						consultationId: item.consultationId,
-						paymentType: 'consultation',
-						firstName,
-						lastName,
-						email
-					},
-					formSubmissionId: item.formSubmissionId,
-					appointmentId,
 				});
 			}
 
+			const res = await axios.post(`${base_url}/payments/cart/create`, {
+				items,
+				firstName,
+				lastName,
+				email,
+			});
+			const { paymentIntents, consultationAppointmentIds: appointmentIds } = res.data;
+
+			const queue: CartPaymentItem[] = (paymentIntents || []).map(
+				(pi: { clientSecret: string; paymentIntentId: string }) => ({
+					type: 'document' as const,
+					clientSecret: pi.clientSecret,
+					paymentIntentId: pi.paymentIntentId,
+					capturePayload: { firstName, lastName, email },
+				})
+			);
+
+			setConsultationAppointmentIds(appointmentIds || []);
 			setPaymentQueue(queue);
 			setCartPaymentOpen(true);
 		} catch (e: unknown) {
@@ -173,14 +171,16 @@ export default function LandingPageCart() {
 		const firstName = checkoutGuestFirstName.trim();
 		const lastName = checkoutGuestLastName.trim();
 		const email = checkoutGuestEmail.trim();
-		for (const item of paymentQueue) {
-			if (item.type === 'consultation' && item.formSubmissionId && item.appointmentId) {
+		for (let i = 0; i < consultationItems.length; i++) {
+			const item = consultationItems[i];
+			const appointmentId = consultationAppointmentIds[i];
+			if (item.formSubmissionId && appointmentId) {
 				try {
 					await feedbackFormsService.linkSubmissionToAppointment(item.formSubmissionId, {
 						firstName,
 						lastName,
 						userEmail: email,
-						consultationAppointmentId: item.appointmentId,
+						consultationAppointmentId: appointmentId,
 					});
 				} catch (_e) {
 					// Non-blocking: submission stays unlinked; admin can still see form responses
@@ -208,6 +208,7 @@ export default function LandingPageCart() {
 		clearConsultationCart();
 		setCartPaymentOpen(false);
 		setPaymentQueue([]);
+		setConsultationAppointmentIds([]);
 		setSuccessMessage('Ödemeniz başarıyla tamamlandı. Kaynaklar ve randevu onayları e-posta ile gönderilecektir.');
 		setSuccessSnack(true);
 	};

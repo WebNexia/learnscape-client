@@ -64,10 +64,10 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 				sx: {
 					width: '8.5rem',
 					backgroundColor: hasAdminAccess
-						? '#004c99'
+						? theme.bgColor?.adminSidebar
 						: user?.role === Roles.INSTRUCTOR
-							? '#0052a3'
-							: '#0052a3',
+							? theme.bgColor?.instructorSidebar
+							: theme.palette.primary.main,
 					touchAction: 'pan-y', // Enable touch scrolling on iOS
 					WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
 				},

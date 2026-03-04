@@ -95,22 +95,30 @@ export default function CartPaymentDialog({
 		}
 		setIsProcessing(true);
 		try {
-			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
-				type: 'card',
-				card: cardNumber,
-				billing_details: { name: holderName, email },
-			});
-			if (methodError) {
-				setErrorMessage(methodError.message ?? 'Kart doğrulanamadı.');
-				setIsProcessing(false);
-				return;
-			}
-
 			for (let i = 0; i < queue.length; i++) {
 				setCurrentIndex(i + 1);
 				const item = queue[i];
+
+				// Create a NEW PaymentMethod for each item - Stripe does not allow reusing a PaymentMethod
+				// across multiple PaymentIntents without Customer attachment
+				const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+					type: 'card',
+					card: cardNumber,
+					billing_details: { name: holderName, email },
+				});
+				if (methodError) {
+					setErrorMessage(methodError.message ?? 'Kart doğrulanamadı.');
+					setIsProcessing(false);
+					return;
+				}
+				if (!paymentMethod) {
+					setErrorMessage('Kart doğrulanamadı.');
+					setIsProcessing(false);
+					return;
+				}
+
 				const { error } = await stripe.confirmCardPayment(item.clientSecret, {
-					payment_method: paymentMethod!.id,
+					payment_method: paymentMethod.id,
 					return_url: typeof window !== 'undefined' ? window.location.href : undefined,
 				});
 				if (error) {

@@ -72,4 +72,9 @@ export const consultationsService = {
 		const response = await axios.post(`${base_url}/consultations/${consultationId}/appointments/free`, body);
 		return { appointmentId: response.data.data.appointmentId };
 	},
+
+	/** Delete appointment (owner, super-admin, admin only) */
+	deleteAppointment: async (appointmentId: string): Promise<void> => {
+		await axios.delete(`${base_url}/consultations/appointments/${appointmentId}`);
+	},
 };

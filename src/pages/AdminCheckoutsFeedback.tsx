@@ -115,18 +115,18 @@ const AdminCheckoutsFeedback = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'username', label: 'Username' },
-					{ key: 'chapter', label: 'Chapter' },
-					{ key: 'feedback', label: 'Feedback' },
-					{ key: 'actions', label: 'Actions' },
-				]
+				{ key: 'username', label: 'Username' },
+				{ key: 'chapter', label: 'Chapter' },
+				{ key: 'feedback', label: 'Feedback' },
+				{ key: 'actions', label: 'Actions' },
+			]
 			: [
-					{ key: 'username', label: 'Username' },
-					{ key: 'chapter', label: 'Chapter' },
-					{ key: 'feedback', label: 'Feedback' },
-					{ key: 'createdAt', label: 'Submitted On' },
-					{ key: 'actions', label: 'Actions' },
-				];
+				{ key: 'username', label: 'Username' },
+				{ key: 'chapter', label: 'Chapter' },
+				{ key: 'feedback', label: 'Feedback' },
+				{ key: 'createdAt', label: 'Submitted On' },
+				{ key: 'actions', label: 'Actions' },
+			];
 	};
 
 	const pageSize = 50;
@@ -425,12 +425,12 @@ const AdminCheckoutsFeedback = () => {
 						actionButtons={[
 							...(courseId
 								? [
-										{
-											label: 'Back',
-											onClick: () => navigate(`/admin/course-edit/course/${courseId}`),
-											startIcon: isMobileSize ? undefined : <ArrowBack />,
-										},
-									]
+									{
+										label: 'Back',
+										onClick: () => navigate(`/admin/course-edit/course/${courseId}`),
+										startIcon: isMobileSize ? undefined : <ArrowBack />,
+									},
+								]
 								: []),
 							{
 								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Feedback`,

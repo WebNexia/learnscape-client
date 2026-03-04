@@ -6,13 +6,15 @@ import {
 	TableRow,
 	Snackbar,
 	Alert,
+	DialogContent,
+	Typography,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState, useCallback } from 'react';
-import { KeyboardBackspaceOutlined, Visibility } from '@mui/icons-material';
+import { KeyboardBackspaceOutlined, Visibility, Delete } from '@mui/icons-material';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axios from '../utils/axiosInstance';
@@ -25,6 +27,9 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import AppointmentDetailModal from '../components/consultations/AppointmentDetailModal';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { consultationsService } from '../services/consultationsService';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 const pageSize = 100;
@@ -52,6 +57,8 @@ const AdminConsultationAppointments = () => {
 	});
 	const [detailOpen, setDetailOpen] = useState(false);
 	const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
+	const [appointmentIdToDelete, setAppointmentIdToDelete] = useState<string | null>(null);
+	const [deleting, setDeleting] = useState(false);
 	const [orderBy, setOrderBy] = useState<string>('appointmentDate');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -131,6 +138,30 @@ const AdminConsultationAppointments = () => {
 
 	const onDetailUpdated = () => {
 		fetchAppointments();
+	};
+
+	const openDeleteConfirm = (appointmentId: string) => setAppointmentIdToDelete(appointmentId);
+	const closeDeleteConfirm = () => {
+		if (!deleting) setAppointmentIdToDelete(null);
+	};
+
+	const handleDeleteAppointment = async () => {
+		if (!appointmentIdToDelete) return;
+		setDeleting(true);
+		try {
+			await consultationsService.deleteAppointment(appointmentIdToDelete);
+			setSnackbar({ open: true, message: 'Appointment deleted successfully.', severity: 'success' });
+			closeDeleteConfirm();
+			fetchAppointments();
+		} catch (err: any) {
+			setSnackbar({
+				open: true,
+				message: err.response?.data?.message || 'Failed to delete appointment.',
+				severity: 'error',
+			});
+		} finally {
+			setDeleting(false);
+		}
 	};
 
 	const getColumns = () => [
@@ -306,6 +337,11 @@ const AdminConsultationAppointments = () => {
 													onClick={() => openDetail(apt._id)}
 													icon={<Visibility fontSize='small' />}
 												/>
+												<CustomActionBtn
+													title='Delete'
+													onClick={() => openDeleteConfirm(apt._id)}
+													icon={<Delete fontSize='small' />}
+												/>
 											</TableCell>
 										</TableRow>
 									))}
@@ -330,6 +366,28 @@ const AdminConsultationAppointments = () => {
 						onClose={closeDetail}
 						onUpdated={onDetailUpdated}
 					/>
+
+					<CustomDialog
+						openModal={!!appointmentIdToDelete}
+						closeModal={closeDeleteConfirm}
+						title='Delete appointment'
+						content=''
+						maxWidth='xs'
+					>
+						<DialogContent>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+								Are you sure you want to delete this appointment?
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>This cannot be undone.</Typography>
+						</DialogContent>
+						<CustomDialogActions
+							onCancel={closeDeleteConfirm}
+							deleteBtn={true}
+							onDelete={handleDeleteAppointment}
+							actionSx={{ mb: '0.5rem' }}
+							isDeleting={deleting}
+						/>
+					</CustomDialog>
 
 					<Snackbar
 						open={snackbar.open}
