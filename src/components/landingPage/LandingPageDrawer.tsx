@@ -2,6 +2,10 @@ import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Typography }
 import { responsiveStyles } from '../../styles/responsiveStyles';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { useAuth } from '../../hooks/useAuth';
+import theme from '../../themes';
+import { Roles } from '../../interfaces/enums';
 
 interface LandingPageDrawerProps {
 	isDrawerOpen: boolean;
@@ -13,6 +17,8 @@ interface LandingPageDrawerProps {
 	}>;
 }
 
+const ADEN_BLUE_GRADIENT = 'linear-gradient(180deg, #004c99 0%, #0052a3 100%)';
+
 const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingPageDrawerProps) => {
 	const handleNavItemClick = (action: () => void) => {
 		action();
@@ -20,6 +26,16 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 	};
 
 	const { isRotatedMedium } = useContext(MediaQueryContext);
+	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
+
+	const drawerBackground = user
+		? hasAdminAccess
+			? theme.bgColor?.adminSidebar
+			: user.role === Roles.INSTRUCTOR
+				? theme.bgColor?.instructorSidebar
+				: theme.palette.primary.main
+		: ADEN_BLUE_GRADIENT;
 
 	return (
 		<Drawer
@@ -27,7 +43,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 			onClose={() => setIsDrawerOpen(false)}
 			PaperProps={{
 				sx: {
-					'background': 'linear-gradient(180deg, #004c99 0%, #0052a3 100%)',
+					'background': drawerBackground,
 					'borderRight': '1px solid rgba(255, 255, 255, 0.15)',
 					'width': { xs: !isRotatedMedium ? '40vw' : '30vw', sm: !isRotatedMedium ? '13rem' : '20vw' },
 					'@media (max-width:600px) and (orientation: landscape)': {

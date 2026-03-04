@@ -1,4 +1,25 @@
-import { createContext, ReactNode, useContext, useState, useCallback } from 'react';
+import { createContext, ReactNode, useContext, useState, useCallback, useEffect } from 'react';
+
+const CONSULTATION_CART_STORAGE_KEY = 'learnscape_consultation_cart';
+
+function loadConsultationCartFromStorage(): ConsultationCartItem[] {
+	try {
+		const raw = localStorage.getItem(CONSULTATION_CART_STORAGE_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch {
+		return [];
+	}
+}
+
+function saveConsultationCartToStorage(items: ConsultationCartItem[]) {
+	try {
+		localStorage.setItem(CONSULTATION_CART_STORAGE_KEY, JSON.stringify(items));
+	} catch (e) {
+		console.warn('Failed to persist consultation cart', e);
+	}
+}
 
 export interface ConsultationCartItem {
 	id: string;
@@ -35,7 +56,11 @@ const ConsultationCartContext = createContext<ConsultationCartContextTypes>({
 });
 
 export function ConsultationCartProvider({ children }: { children: ReactNode }) {
-	const [items, setItems] = useState<ConsultationCartItem[]>([]);
+	const [items, setItems] = useState<ConsultationCartItem[]>(loadConsultationCartFromStorage);
+
+	useEffect(() => {
+		saveConsultationCartToStorage(items);
+	}, [items]);
 
 	const addItem = useCallback((item: Omit<ConsultationCartItem, 'id'>) => {
 		setItems((prev) => {
