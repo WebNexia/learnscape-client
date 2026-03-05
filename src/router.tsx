@@ -37,6 +37,7 @@ const Auth = React.lazy(() => import('./pages/Auth'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingPageResources = React.lazy(() => import('./pages/LandingPageResources'));
 const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
+const LandingPageCoursePayment = React.lazy(() => import('./pages/LandingPageCoursePayment'));
 const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
 const LandingPageConsultations = React.lazy(() => import('./pages/LandingPageConsultations'));
 const LandingPageCart = React.lazy(() => import('./pages/LandingPageCart'));
@@ -123,6 +124,14 @@ export const router = createBrowserRouter([
 					<LandingPageResourcesContextProvider>
 						<LandingPageResources />
 					</LandingPageResourcesContextProvider>
+				),
+			},
+			{
+				path: 'landing-page-course/:title/:courseId/payment',
+				element: (
+					<AllPublicCoursesContextProvider>
+						<LandingPageCoursePayment />
+					</AllPublicCoursesContextProvider>
 				),
 			},
 			{

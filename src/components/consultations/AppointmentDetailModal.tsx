@@ -2,12 +2,12 @@ import {
 	Box,
 	Typography,
 	DialogContent,
-	TextField,
 	Button,
 	Snackbar,
 	Alert,
 	Link,
 	CircularProgress,
+	DialogActions,
 } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -18,6 +18,9 @@ import { useContext, useEffect, useState } from 'react';
 import axios from '../../utils/axiosInstance';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import ContentCopy from '@mui/icons-material/ContentCopy';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
+import CustomTextField from '../forms/customFields/CustomTextField';
 
 interface AppointmentDetailModalProps {
 	appointmentId: string | null;
@@ -28,6 +31,27 @@ interface AppointmentDetailModalProps {
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
+const InfoRow = ({
+	label,
+	value,
+	isMobileSize,
+	capitalize,
+}: {
+	label: string;
+	value: string | undefined;
+	isMobileSize: boolean;
+	capitalize?: boolean;
+}) => (
+	<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+		<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+			{label}
+		</Typography>
+		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem', textTransform: capitalize ? 'capitalize' : undefined }}>
+			{value ?? '—'}
+		</Typography>
+	</Box>
+);
+
 const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: AppointmentDetailModalProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -37,6 +61,7 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 	const [notesValue, setNotesValue] = useState('');
 	const [savingNotes, setSavingNotes] = useState(false);
 	const [cancelling, setCancelling] = useState(false);
+	const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 	const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
 		open: false,
 		message: '',
@@ -98,12 +123,17 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 		}
 	};
 
-	const handleCancelAppointment = async () => {
+	const handleCancelAppointment = () => {
 		if (!appointmentId || appointment?.status === 'cancelled') return;
-		if (!window.confirm('Cancel this appointment? The slot will become available again.')) return;
+		setCancelConfirmOpen(true);
+	};
+
+	const confirmCancelAppointment = async () => {
+		if (!appointmentId) return;
 		setCancelling(true);
 		try {
 			await axios.patch(`${base_url}/consultations/appointments/${appointmentId}/cancel`, {});
+			setCancelConfirmOpen(false);
 			setSnackbar({ open: true, message: 'Appointment cancelled.', severity: 'success' });
 			onUpdated();
 			onClose();
@@ -124,7 +154,7 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 	};
 
 	return (
-		<CustomDialog openModal={open} closeModal={onClose} title='Appointment details' maxWidth='sm'>
+		<CustomDialog openModal={open} closeModal={onClose} title='Appointment Details' maxWidth='sm'>
 			<DialogContent>
 				{loading ? (
 					<Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
@@ -135,114 +165,106 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 						Could not load appointment.
 					</Typography>
 				) : (
-					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-								Consultation
+					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+						{/* Appointment info */}
+						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
+								Appointment
 							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
-								{consultationTitle}
-							</Typography>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+								<InfoRow label='Consultation' value={consultationTitle} isMobileSize={isMobileSize} />
+								<InfoRow label='Date & time' value={dateTimeFormatter(appointment.appointmentDate)} isMobileSize={isMobileSize} />
+								<InfoRow label='Consultant' value={consultantName} isMobileSize={isMobileSize} />
+								<InfoRow label='Status' value={appointment.status} isMobileSize={isMobileSize} capitalize />
+							</Box>
 						</Box>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-								Date & time
-							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
-								{dateTimeFormatter(appointment.appointmentDate)}
-							</Typography>
-						</Box>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+
+						{/* Guest */}
+						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
 								Guest
 							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
-								{appointment.guestName || '—'} {appointment.guestEmail && `(${appointment.guestEmail})`}
-							</Typography>
-							{appointment.guestPhone && (
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: 0.25 }}>
-									{appointment.guestPhone}
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem', fontWeight: 500 }}>
+									{appointment.guestName || '—'}
 								</Typography>
-							)}
+								{appointment.guestEmail && (
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.palette.text.secondary }}>
+										{appointment.guestEmail}
+									</Typography>
+								)}
+								{appointment.guestPhone && (
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.palette.text.secondary }}>
+										{appointment.guestPhone}
+									</Typography>
+								)}
+							</Box>
 						</Box>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-								Consultant
-							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
-								{consultantName}
-							</Typography>
-						</Box>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-								Status
-							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', textTransform: 'capitalize' }}>
-								{appointment.status}
-							</Typography>
-						</Box>
-						<Box>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+
+						{/* Payment */}
+						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
 								Payment
 							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem', textTransform: 'capitalize' }}>
 								{paymentStatus}
 							</Typography>
 						</Box>
 
 						{appointment.zoomJoinUrl && appointment.status !== 'cancelled' && (
-							<Box sx={{ mt: 1 }}>
-								<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-									Zoom link (guest)
+							<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
+									Meeting link
 								</Typography>
-								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
-									<Link href={appointment.zoomJoinUrl} target='_blank' rel='noopener noreferrer' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+									<Link href={appointment.zoomJoinUrl} target='_blank' rel='noopener noreferrer' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins' }}>
 										Join meeting
 									</Link>
 									<Button size='small' startIcon={<ContentCopy fontSize='small' />} onClick={handleCopyZoomLink}>
-										{copySuccess ? 'Copied' : 'Copy'}
+										{copySuccess ? 'Copied' : 'Copy link'}
 									</Button>
 								</Box>
 							</Box>
 						)}
 
-						<Box sx={{ mt: 1 }}>
-							<Typography variant='caption' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+						{/* Admin notes */}
+						<Box>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
 								Admin notes
 							</Typography>
-							<TextField
+							<CustomTextField
 								multiline
-								minRows={2}
-								maxRows={6}
+								rows={3}
 								value={notesValue}
 								onChange={(e) => setNotesValue(e.target.value)}
 								placeholder='Add internal notes...'
 								fullWidth
 								size='small'
-								sx={{ mt: 0.5, backgroundColor: theme.bgColor?.common }}
+								sx={{ backgroundColor: theme.bgColor?.common }}
 							/>
-							<Button
-								variant='outlined'
-								size='small'
-								onClick={handleSaveNotes}
-								disabled={savingNotes}
-								sx={{ mt: 1 }}
-							>
+							<CustomSubmitButton onClick={handleSaveNotes} disabled={savingNotes} sx={{ mt: 1 }}>
 								{savingNotes ? 'Saving...' : 'Save notes'}
-							</Button>
+							</CustomSubmitButton>
 						</Box>
 
-						{appointment.status !== 'cancelled' && (
-							<Box sx={{ mt: 1 }}>
-								<Button variant='outlined' color='error' size='small' onClick={handleCancelAppointment} disabled={cancelling}>
-									{cancelling ? 'Cancelling...' : 'Cancel appointment'}
-								</Button>
-							</Box>
-						)}
+
 					</Box>
 				)}
 			</DialogContent>
-			<CustomDialogActions onCancel={onClose} hideSubmit cancelBtnText='Close' />
+			<DialogActions sx={{ justifyContent: appointment?.status !== 'cancelled' ? 'space-between' : 'flex-end', alignItems: 'center' }}>
+
+				{appointment?.status !== 'cancelled' && (
+					<Box sx={{ mb: '1.25rem' }}>
+						<CustomDeleteButton size='small' onClick={handleCancelAppointment} disabled={cancelling}>
+							{cancelling ? 'Cancelling...' : 'Cancel appointment'}
+						</CustomDeleteButton>
+					</Box>
+				)}
+
+				<CustomDialogActions onCancel={onClose} hideSubmit cancelBtnText='Close' actionSx={{ margin: '0.5rem 1.25rem 0.5rem -0.9rem' }} />
+
+			</DialogActions>
+
 			<Snackbar
 				open={snackbar.open}
 				autoHideDuration={4000}
@@ -253,6 +275,25 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 					{snackbar.message}
 				</Alert>
 			</Snackbar>
+
+			<CustomDialog
+				openModal={cancelConfirmOpen}
+				closeModal={() => setCancelConfirmOpen(false)}
+				title='Cancel Appointment'
+				content='The slot will become available again.'
+				maxWidth='xs'
+			>
+				<CustomDialogActions
+					onCancel={() => setCancelConfirmOpen(false)}
+					onDelete={confirmCancelAppointment}
+					cancelBtnText='Keep'
+					deleteBtnText='Yes, cancel'
+					deleteBtn
+					isDeleting={cancelling}
+					disableBtn={cancelling}
+					actionSx={{ mb: '0.5rem' }}
+				/>
+			</CustomDialog>
 		</CustomDialog>
 	);
 };

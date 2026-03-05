@@ -33,11 +33,50 @@ const AdminPaymentsTab = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { isOwner, isSuperAdmin } = useAuth();
 
-	const mappedCourses = useMemo(() => {
-		const courseTitles = courses?.map((course) => course.title) || [];
-		// Remove duplicates while preserving order for filter options
-		return [...new Set(courseTitles)];
-	}, [courses]);
+	const [documents, setDocuments] = useState<{ name: string }[]>([]);
+	const [consultations, setConsultations] = useState<{ title: string }[]>([]);
+
+	useEffect(() => {
+		if (!orgId) return;
+		Promise.all([
+			axios.get(`${base_url}/documents/organisation/${orgId}?limit=500`).then((r) => r.data?.data || []),
+			axios.get(`${base_url}/consultations/organisation/${orgId}?limit=500`).then((r) => r.data?.data || []),
+		])
+			.then(([docs, cons]) => {
+				setDocuments(Array.isArray(docs) ? docs : []);
+				setConsultations(Array.isArray(cons) ? cons : []);
+			})
+			.catch(() => {});
+	}, [orgId, base_url]);
+
+	const filterOptions = useMemo(() => {
+		const courseTitles = courses?.map((c) => c.title).filter(Boolean) || [];
+		const documentNames = documents?.map((d) => d.name).filter(Boolean) || [];
+		const consultationTitles = consultations?.map((c) => c.title).filter(Boolean) || [];
+		const all = [
+			{ value: '', label: 'All Payments' },
+			...courseTitles.map((title) => ({
+				value: title,
+				label: title?.length > 30 ? `${title.substring(0, 27)}...` : title,
+			})),
+			...documentNames.map((name) => ({
+				value: name,
+				label: name?.length > 30 ? `${name.substring(0, 27)}...` : name,
+			})),
+			...consultationTitles.map((title) => ({
+				value: title,
+				label: title?.length > 30 ? `${title.substring(0, 27)}...` : title,
+			})),
+		];
+		// Dedupe by value so same name (e.g. in course and doc) appears once
+		const seen = new Set<string>();
+		return all.filter((o) => {
+			if (o.value === '') return true;
+			if (seen.has(o.value)) return false;
+			seen.add(o.value);
+			return true;
+		});
+	}, [courses, documents, consultations]);
 
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -143,13 +182,7 @@ const AdminPaymentsTab = () => {
 			<FilterSearchRow
 				filterValue={filterValue}
 				onFilterChange={handleFilterChange}
-				filterOptions={[
-					{ value: '', label: 'All Payments' },
-					...(mappedCourses?.map((course) => ({
-						value: course?.toLowerCase(),
-						label: course?.length > 30 ? `${course.substring(0, 20)}...` : course,
-					})) || []),
-				]}
+				filterOptions={filterOptions}
 				filterPlaceholder='Filter Payments'
 				searchValue={searchValue}
 				onSearchChange={setSearchValue}

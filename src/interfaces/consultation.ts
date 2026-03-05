@@ -62,6 +62,15 @@ export interface ConsultationSlot {
 		appointmentDate: string;
 		status: string;
 	} | null;
+	/** All non-cancelled appointments for this slot (who booked which consultant) */
+	appointments?: Array<{
+		_id: string;
+		guestName?: string;
+		guestEmail?: string;
+		appointmentDate?: string;
+		status?: string;
+		assignedConsultantId?: string | { _id: string; firstName?: string; lastName?: string };
+	}>;
 	createdAt: string;
 	updatedAt: string;
 }

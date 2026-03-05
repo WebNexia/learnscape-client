@@ -74,10 +74,8 @@ const ConsultationSlotsCalendar = ({ slots, onSlotClick }: ConsultationSlotsCale
 
 	const handleSelectEvent = (event: any) => {
 		if (onSlotClick && event.resource) {
-			// Only allow editing/deleting available slots (not booked ones)
-			if (!event.isBooked) {
-				onSlotClick(event.resource);
-			}
+			// Allow opening the edit dialog for both available and booked slots
+			onSlotClick(event.resource);
 		}
 	};
 

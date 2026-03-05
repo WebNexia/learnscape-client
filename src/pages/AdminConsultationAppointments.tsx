@@ -164,14 +164,17 @@ const AdminConsultationAppointments = () => {
 		}
 	};
 
-	const getColumns = () => [
-		{ key: 'appointmentDate', label: 'Date & time' },
-		{ key: 'guestName', label: 'Guest' },
-		{ key: 'assignedConsultantId', label: 'Consultant' },
-		{ key: 'status', label: 'Status' },
-		{ key: 'payment', label: 'Payment' },
-		{ key: 'actions', label: 'Actions' },
-	];
+	const getColumns = () => {
+		const cols = [
+			{ key: 'appointmentDate', label: 'Date & time' },
+			{ key: 'guestName', label: 'Guest' },
+			{ key: 'assignedConsultantId', label: 'Consultant' },
+			{ key: 'status', label: 'Status' },
+			...(isMobileSize ? [] : [{ key: 'payment', label: 'Payment' }]),
+			{ key: 'actions', label: 'Actions' },
+		];
+		return cols;
+	};
 
 	const consultantDisplay = (apt: ConsultationAppointment) => {
 		const c = apt.assignedConsultantId;
@@ -330,17 +333,17 @@ const AdminConsultationAppointments = () => {
 											<CustomTableCell value={`${apt.guestName || '—'} ${apt.guestEmail ? `(${apt.guestEmail})` : ''}`.trim()} />
 											<CustomTableCell value={consultantDisplay(apt)} />
 											<CustomTableCell value={apt.status ? apt.status.charAt(0).toUpperCase() + apt.status.slice(1) : '—'} />
-											<CustomTableCell value={paymentDisplay(apt)} />
+											{!isMobileSize && <CustomTableCell value={paymentDisplay(apt)} />}
 											<TableCell sx={{ textAlign: 'center' }}>
 												<CustomActionBtn
 													title='View'
 													onClick={() => openDetail(apt._id)}
-													icon={<Visibility fontSize='small' />}
+													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 												<CustomActionBtn
 													title='Delete'
 													onClick={() => openDeleteConfirm(apt._id)}
-													icon={<Delete fontSize='small' />}
+													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 											</TableCell>
 										</TableRow>

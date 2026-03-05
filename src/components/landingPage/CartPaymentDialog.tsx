@@ -1,9 +1,10 @@
 import { Box, Typography, LinearProgress } from '@mui/material';
+import { Lock } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -56,6 +57,13 @@ export default function CartPaymentDialog({
 	const [cardComplete, setCardComplete] = useState({ number: false, expiry: false, cvc: false });
 	const [cardBrand, setCardBrand] = useState<string>('unknown');
 	const [currentIndex, setCurrentIndex] = useState(0);
+	const contentScrollRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (errorMessage && contentScrollRef.current) {
+			contentScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}, [errorMessage]);
 
 	const getCardIcon = (brand: string) => {
 		switch (brand) {
@@ -164,7 +172,7 @@ export default function CartPaymentDialog({
 					fontFamily: DIALOG_FONT,
 				},
 			}}>
-			<Box sx={{ px: 3.5, pb: 1, mb: 2 }}>
+			<Box ref={contentScrollRef} sx={{ overflow: 'auto', maxHeight: '70vh', px: 3.5, pb: 1, mb: 2 }}>
 				{isProcessing && currentIndex > 0 && (
 					<Box sx={{ mt: 1, mb: 1 }}>
 						<Typography variant="body2" sx={{ fontFamily: DIALOG_FONT, mb: 0.5 }}>
@@ -321,39 +329,55 @@ export default function CartPaymentDialog({
 					</Box>
 				</Box>
 				{errorMessage && (
-					<CustomErrorMessage sx={{ mt: 2, fontFamily: DIALOG_FONT }}>{errorMessage}</CustomErrorMessage>
+					<Box sx={{ mt: 2 }}>
+						<CustomErrorMessage sx={{ fontFamily: DIALOG_FONT }}>{errorMessage}</CustomErrorMessage>
+					</Box>
 				)}
 			</Box>
-			<CustomDialogActions
-				onCancel={() => !isProcessing && onClose()}
-				cancelBtnText="İptal"
-				onSubmit={handlePayment}
-				submitBtnText="Ödeme Yap"
-				disableBtn={isProcessing}
-				isSubmitting={isProcessing}
-				cancelBtnSx={{
-					fontFamily: DIALOG_FONT,
-				}}
-				submitBtnSx={{
-					'background': '#FF6B3D !important',
-					'backgroundColor': 'transparent !important',
-					'fontFamily': 'Varela Round',
-					'color': 'white !important',
-					'transition': 'all 0.2s ease !important',
-					'&:hover': {
-						background: 'white !important',
-						backgroundColor: 'white !important',
-						color: '#FF6B3D !important',
-						border: '1px solid #FF6B3D !important',
-					},
-					'&.Mui-disabled': {
-						background: 'rgba(0, 0, 0, 0.12) !important',
-						backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
-						color: 'rgba(0, 0, 0, 0.26) !important',
-					},
-				}}
-				actionSx={{ padding: '0 1.25rem' }}
-			/>
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, pb: 1 }}>
+				<CustomDialogActions
+					onCancel={() => !isProcessing && onClose()}
+					cancelBtnText="İptal"
+					onSubmit={handlePayment}
+					submitBtnText="Ödeme Yap"
+					disableBtn={isProcessing}
+					isSubmitting={isProcessing}
+					cancelBtnSx={{
+						fontFamily: DIALOG_FONT,
+					}}
+					submitBtnSx={{
+						'background': '#FF6B3D !important',
+						'backgroundColor': 'transparent !important',
+						'fontFamily': 'Varela Round',
+						'color': 'white !important',
+						'transition': 'all 0.2s ease !important',
+						'&:hover': {
+							background: 'white !important',
+							backgroundColor: 'white !important',
+							color: '#FF6B3D !important',
+							border: '1px solid #FF6B3D !important',
+						},
+						'&.Mui-disabled': {
+							background: 'rgba(0, 0, 0, 0.12) !important',
+							backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+							color: 'rgba(0, 0, 0, 0.26) !important',
+						},
+					}}
+					actionSx={{ padding: '0 1.25rem' }}
+				/>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25 }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', justifyContent: 'center' }}>
+						<Lock sx={{ fontSize: 12, opacity: 0.8, color: 'text.secondary' }} />
+						<Typography sx={{ fontFamily: DIALOG_FONT, fontSize: '0.75rem', color: 'text.secondary' }}>
+							Güvenli ödeme (Stripe)
+						</Typography>
+
+					</Box>
+					<Typography sx={{ fontFamily: DIALOG_FONT, fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
+						Kart bilgileriniz saklanmaz
+					</Typography>
+				</Box>
+			</Box>
 		</CustomDialog>
 	);
 }

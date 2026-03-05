@@ -306,15 +306,15 @@ const FeedbackFormSubmissions = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'submitter', label: 'Submitter' },
-					{ key: 'submittedAt', label: 'Submitted' },
-					{ key: 'actions', label: 'Actions' },
-				]
+				{ key: 'submitter', label: 'Submitter' },
+				{ key: 'submittedAt', label: 'Submitted' },
+				{ key: 'actions', label: 'Actions' },
+			]
 			: [
-					{ key: 'submitter', label: 'Submitter' },
-					{ key: 'submittedAt', label: 'Submitted At' },
-					{ key: 'actions', label: 'Actions' },
-				];
+				{ key: 'submitter', label: 'Submitter' },
+				{ key: 'submittedAt', label: 'Submitted At' },
+				{ key: 'actions', label: 'Actions' },
+			];
 	};
 
 	const handleSort = (property: keyof FeedbackFormSubmission | string) => {
@@ -529,12 +529,14 @@ const FeedbackFormSubmissions = () => {
 								</Table>
 							</Box>
 
-							{paginatedSubmissions.length === 0 && (
-								<CustomInfoMessageAlignedLeft
-									message='No submissions found for this form.'
-									sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
-								/>
-							)}
+							<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+								{paginatedSubmissions.length === 0 && (
+									<CustomInfoMessageAlignedLeft
+										message='No submissions found for this form.'
+										sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+									/>
+								)}
+							</Box>
 
 							{totalPages > 1 && <CustomTablePagination count={totalPages} page={currentPage} onChange={(page) => setCurrentPage(page)} />}
 						</>

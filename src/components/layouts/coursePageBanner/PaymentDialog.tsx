@@ -1,8 +1,7 @@
 import { Box, Checkbox, FormControlLabel, Typography, Button, Card, CardActionArea, CardContent, Collapse, IconButton } from '@mui/material';
-import { ExpandMore,  } from '@mui/icons-material';
+import { ExpandMore, } from '@mui/icons-material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
-import TermsConditions from './TermsConditions';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useState, useRef } from 'react';
@@ -14,7 +13,7 @@ import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
 import { SingleCourse } from '../../../interfaces/course';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -86,7 +85,6 @@ const PaymentDialog = ({
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
-	const [termsConditionsModalOpen, setTermsConditionsModalOpen] = useState<boolean>(false);
 	const [agreed, setAgreed] = useState<boolean>(false);
 	const [cardBrand, setCardBrand] = useState<string>('unknown');
 	const [errorMessage, setErrorMessage] = useState<string>('');
@@ -191,6 +189,14 @@ const PaymentDialog = ({
 
 		// Lock the price during payment processing to prevent changes
 		const lockedAmount = discountedAmount;
+
+		// Validate agreement to User Agreement and Privacy Policy
+		if (!agreed) {
+			setErrorMessage(fromHomePage ? 'Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.' : 'Please accept the User Agreement and Privacy Policy.');
+			setIsProcessing(false);
+			setIsSubmitted(false);
+			return;
+		}
 
 		// Validate reCAPTCHA only for paid courses
 		if (!isCourseFree && !validateRecaptchaToken()) {
@@ -332,7 +338,7 @@ const PaymentDialog = ({
 			if (isCourseFree && !fromHomePage) {
 				try {
 					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
-					
+
 					setIsPaymentDialogOpen(false);
 					resetForm();
 					setIsProcessing(false);
@@ -691,29 +697,29 @@ const PaymentDialog = ({
 			maxWidth='sm'
 			{...(fromHomePage
 				? {
-						titleSx: {
-							fontSize: '1.5rem',
-							fontWeight: 600,
+					titleSx: {
+						fontSize: '1.5rem',
+						fontWeight: 600,
+						fontFamily: DIALOG_FONT,
+						color: '#2C3E50',
+						ml: '0.5rem',
+						textAlign: 'center',
+						mb: 1,
+					},
+					PaperProps: {
+						sx: {
+							height: 'auto',
+							maxHeight: '100vh',
+							overflow: 'auto',
+							borderRadius: DIALOG_BORDERRADIUS,
+							background: DIALOG_BG,
+							boxShadow: DIALOG_BOXSHADOW,
+							backdropFilter: 'blur(8px)',
+							border: DIALOG_BORDER,
 							fontFamily: DIALOG_FONT,
-							color: '#2C3E50',
-							ml: '0.5rem',
-							textAlign: 'center',
-							mb: 1,
 						},
-						PaperProps: {
-							sx: {
-								height: 'auto',
-								maxHeight: '100vh',
-								overflow: 'auto',
-								borderRadius: DIALOG_BORDERRADIUS,
-								background: DIALOG_BG,
-								boxShadow: DIALOG_BOXSHADOW,
-								backdropFilter: 'blur(8px)',
-								border: DIALOG_BORDER,
-								fontFamily: DIALOG_FONT,
-							},
-						},
-					}
+					},
+				}
 				: {})}>
 			<form
 				onSubmit={async (e) => {
@@ -725,18 +731,18 @@ const PaymentDialog = ({
 						margin: { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },
 						...(fromHomePage
 							? {
-									'& .MuiOutlinedInput-root': {
-										'&:hover fieldset': {
-											borderColor: '#3498DB',
-										},
-										'&.Mui-focused fieldset': {
-											borderColor: '#3498DB',
-										},
+								'& .MuiOutlinedInput-root': {
+									'&:hover fieldset': {
+										borderColor: '#3498DB',
 									},
-								}
+									'&.Mui-focused fieldset': {
+										borderColor: '#3498DB',
+									},
+								},
+							}
 							: {}),
 					}}>
-					
+
 
 					{/* Group Selection */}
 					{course?.groups && course.groups.length > 0 && (
@@ -762,20 +768,20 @@ const PaymentDialog = ({
 									sx={
 										fromHomePage
 											? {
-													fontFamily: 'Varela Round',
-													fontWeight: 500,
-													fontSize: isMobileSize ? '0.85rem' : '0.95rem',
-													color: 'white',
-													textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-													ml: '0.5rem',
-												}
-											: { 
-													fontSize:isMobileSize ? '0.85rem' : '0.9rem', 
-													fontWeight: 500,
-													color: 'white',
-													textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-													ml: '0.5rem',
-												}
+												fontFamily: 'Varela Round',
+												fontWeight: 500,
+												fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+												color: 'white',
+												textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+												ml: '0.5rem',
+											}
+											: {
+												fontSize: isMobileSize ? '0.85rem' : '0.9rem',
+												fontWeight: 500,
+												color: 'white',
+												textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+												ml: '0.5rem',
+											}
 									}>
 									{selectedGroupName
 										? `${fromHomePage ? 'Seçilen Grup: ' : 'Selected Group: '}${selectedGroupName}`
@@ -800,41 +806,41 @@ const PaymentDialog = ({
 							</Box>
 							<Collapse in={isGroupSelectionExpanded}>
 								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-								{course.groups.map((group) => (
-									<Card
-										key={group.name}
-										sx={{
-											border: selectedGroupName === group.name ? '2px solid' : '1px solid',
-											borderColor: selectedGroupName === group.name 
-												? theme.palette.primary.main 
-												: group.isFull 
-													? '#ef4444' 
-													: theme.palette.divider,
-											borderRadius: '0.75rem',
-											transition: 'all 0.2s ease',
-											backgroundColor: selectedGroupName === group.name 
-												? 'rgba(25, 118, 210, 0.04)' 
-												: group.isFull 
-													? 'rgba(239, 68, 68, 0.04)' 
-													: 'transparent',
-											opacity: group.isFull ? 0.7 : 1,
-											'&:hover': {
-												borderColor: group.isFull ? '#ef4444' : theme.palette.primary.main,
-												boxShadow: group.isFull ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.1)',
-											},
-										}}>
-										<CardActionArea
-											onClick={() => {
-												if (!group.isFull) {
-													setSelectedGroupName(group.name);
-													setErrorMessage('');
-													setIsGroupSelectionExpanded(false); // Collapse after selection
-												}
-											}}
-											disabled={group.isFull}
-											sx={{ p: 0, cursor: group.isFull ? 'not-allowed' : 'pointer' }}>
-											<CardContent sx={{ p: '1rem !important', '&:last-child': { pb: '1rem' } }}>
-												<Box sx={{ flex: 1, minWidth: 0 }}>
+									{course.groups.map((group) => (
+										<Card
+											key={group.name}
+											sx={{
+												border: selectedGroupName === group.name ? '2px solid' : '1px solid',
+												borderColor: selectedGroupName === group.name
+													? theme.palette.primary.main
+													: group.isFull
+														? '#ef4444'
+														: theme.palette.divider,
+												borderRadius: '0.75rem',
+												transition: 'all 0.2s ease',
+												backgroundColor: selectedGroupName === group.name
+													? 'rgba(25, 118, 210, 0.04)'
+													: group.isFull
+														? 'rgba(239, 68, 68, 0.04)'
+														: 'transparent',
+												opacity: group.isFull ? 0.7 : 1,
+												'&:hover': {
+													borderColor: group.isFull ? '#ef4444' : theme.palette.primary.main,
+													boxShadow: group.isFull ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+												},
+											}}>
+											<CardActionArea
+												onClick={() => {
+													if (!group.isFull) {
+														setSelectedGroupName(group.name);
+														setErrorMessage('');
+														setIsGroupSelectionExpanded(false); // Collapse after selection
+													}
+												}}
+												disabled={group.isFull}
+												sx={{ p: 0, cursor: group.isFull ? 'not-allowed' : 'pointer' }}>
+												<CardContent sx={{ p: '1rem !important', '&:last-child': { pb: '1rem' } }}>
+													<Box sx={{ flex: 1, minWidth: 0 }}>
 														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
 															<Typography
 																variant='subtitle1'
@@ -887,18 +893,18 @@ const PaymentDialog = ({
 																	: `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? `  (${group.remainingSeats} remaining)` : ''}`}
 															</Typography>
 														)}
-														
+
 													</Box>
-											</CardContent>
-										</CardActionArea>
-									</Card>
-								))}
+												</CardContent>
+											</CardActionArea>
+										</Card>
+									))}
 								</Box>
 							</Collapse>
 						</Box>
 					)}
 
-{fromHomePage && (
+					{fromHomePage && (
 						<Box>
 							<CustomTextField
 								label={fromHomePage ? 'E-posta Adresi' : 'Email Address'}
@@ -951,9 +957,9 @@ const PaymentDialog = ({
 								size='small'
 								required={false}
 								disabled={isCourseFree}
-							sx={
-								fromHomePage
-									? {
+								sx={
+									fromHomePage
+										? {
 											'fontFamily': 'Varela Round',
 											'mb': 2,
 											'& .MuiOutlinedInput-root': {
@@ -973,32 +979,32 @@ const PaymentDialog = ({
 												fontSize: '0.85rem',
 											},
 										}
-									: {}
-							}
-							value={promoCode}
-							onChange={(e) => {
-								setPromoCode(e.target.value);
-								setErrorMessage('');
-								setIsGroupSelectionExpanded(false); 
-								setIsPromoCodeApplied(false);
-								if (!course) return;
-								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
-								setDiscountedAmount(isNaN(amount) ? 0 : amount);
-								setUsersUsedPromoCode((prevData) => prevData?.filter((id) => id !== resolvedUserId) || []);
-							}}
-							InputProps={{
-								inputProps: {
-									maxLength: 25,
-								},
-							}}
-						/>
-						<CustomSubmitButton
-							size='small'
-							type='button'
-							disabled={isCourseFree}
-							sx={
-								fromHomePage
-									? {
+										: {}
+								}
+								value={promoCode}
+								onChange={(e) => {
+									setPromoCode(e.target.value);
+									setErrorMessage('');
+									setIsGroupSelectionExpanded(false);
+									setIsPromoCodeApplied(false);
+									if (!course) return;
+									const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+									setDiscountedAmount(isNaN(amount) ? 0 : amount);
+									setUsersUsedPromoCode((prevData) => prevData?.filter((id) => id !== resolvedUserId) || []);
+								}}
+								InputProps={{
+									inputProps: {
+										maxLength: 25,
+									},
+								}}
+							/>
+							<CustomSubmitButton
+								size='small'
+								type='button'
+								disabled={isCourseFree}
+								sx={
+									fromHomePage
+										? {
 											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
 											'backgroundColor': 'transparent !important',
 											'fontFamily': 'Varela Round',
@@ -1016,11 +1022,11 @@ const PaymentDialog = ({
 												color: 'rgba(0, 0, 0, 0.26) !important',
 											},
 										}
-									: undefined
-							}
-							onClick={handleApplyPromoCode}>
-							{fromHomePage ? 'Uygula' : 'Apply'}
-						</CustomSubmitButton>
+										: undefined
+								}
+								onClick={handleApplyPromoCode}>
+								{fromHomePage ? 'Uygula' : 'Apply'}
+							</CustomSubmitButton>
 						</Box>
 					)}
 
@@ -1032,12 +1038,12 @@ const PaymentDialog = ({
 									sx={
 										fromHomePage
 											? {
-													fontFamily: 'Varela Round',
-													fontWeight: 500,
-													mb: '-1rem',
-													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-													color: '#2C3E50',
-												}
+												fontFamily: 'Varela Round',
+												fontWeight: 500,
+												mb: '-1rem',
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+												color: '#2C3E50',
+											}
 											: { fontSize: '0.9rem', mb: '-1rem' }
 									}>
 									{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
@@ -1047,38 +1053,38 @@ const PaymentDialog = ({
 										sx={
 											fromHomePage
 												? {
-														border:
-															isSubmitted &&
+													border:
+														isSubmitted &&
 															!isCourseFree &&
 															isUserAccountExist &&
 															!isAlreadyEnrolled &&
 															!cardNumberComplete &&
 															isEmailVerified &&
 															recaptchaToken
-																? '1px solid red'
-																: '1px solid #ccc',
-														padding: '0.6rem',
-														borderRadius: '8px',
-														backgroundColor: '#fff',
-														width: '100%',
-														fontFamily: 'Varela Round',
-													}
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '8px',
+													backgroundColor: '#fff',
+													width: '100%',
+													fontFamily: 'Varela Round',
+												}
 												: {
-														border:
-															isSubmitted &&
+													border:
+														isSubmitted &&
 															!isCourseFree &&
 															isUserAccountExist &&
 															!isAlreadyEnrolled &&
 															!cardNumberComplete &&
 															isEmailVerified &&
 															recaptchaToken
-																? '1px solid red'
-																: '1px solid #ccc',
-														padding: '0.6rem',
-														borderRadius: '4px',
-														backgroundColor: '#fff',
-														width: '100%',
-													}
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '4px',
+													backgroundColor: '#fff',
+													width: '100%',
+												}
 										}>
 										<CardNumberElement
 											options={{
@@ -1114,259 +1120,250 @@ const PaymentDialog = ({
 										sx={
 											fromHomePage
 												? {
-														fontFamily: 'Varela Round',
-														fontWeight: 500,
-														mb: 0.5,
-														fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-														color: '#2C3E50',
-													}
+													fontFamily: 'Varela Round',
+													fontWeight: 500,
+													mb: 0.5,
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+													color: '#2C3E50',
+												}
 												: { fontSize: '0.9rem', mb: 0.5 }
 										}>
 										{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
 									</Typography>
-							<Box
-								sx={
-									fromHomePage
-										? {
-												border:
-													isSubmitted &&
-													!cardExpiryComplete &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '8px',
-												backgroundColor: '#fff',
-												fontFamily: 'Varela Round',
-											}
-										: {
-												border:
-													isSubmitted &&
-													!cardExpiryComplete &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '4px',
-												backgroundColor: '#fff',
-											}
-								}>
-								<CardExpiryElement
-									options={{
-										disabled: isCourseFree,
-										style: {
-											base: {
-												'fontSize': isMobileSize ? '11px' : '14px',
-												'color': '#223354',
-												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': { color: '#aab7c4' },
-											},
-											invalid: { color: '#9e2146' },
-										},
-									}}
-									onChange={(event) => {
-										setCardExpiryComplete(event.complete);
-										setErrorMessage('');
-										setIsGroupSelectionExpanded(false);
-									}}
-								/>
-							</Box>
-						</Box>
-						<Box sx={{ width: '50%' }}>
-							<Typography
-								variant='h6'
-								sx={
-									fromHomePage
-										? {
-												fontFamily: 'Varela Round',
-												color: '#2C3E50',
-												fontWeight: 500,
-												mb: 0.5,
-												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-											}
-										: { fontSize: '0.9rem', mb: 0.5 }
-								}>
-								CVC*
-							</Typography>
-							<Box
-								sx={
-									fromHomePage
-										? {
-												border:
-													isSubmitted &&
-													!cardCvcComplete &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '8px',
-												backgroundColor: '#fff',
-												fontFamily: 'Varela Round',
-											}
-										: {
-												border:
-													isSubmitted &&
-													!cardCvcComplete &&
-													!isCourseFree &&
-													isUserAccountExist &&
-													!isAlreadyEnrolled &&
-													isEmailVerified &&
-													recaptchaToken
-														? '1px solid red'
-														: '1px solid #ccc',
-												padding: '0.6rem',
-												borderRadius: '4px',
-												backgroundColor: '#fff',
-											}
-								}>
-								<CardCvcElement
-									options={{
-										disabled: isCourseFree,
-										style: {
-											base: {
-												'fontSize': isMobileSize ? '11px' : '14px',
-												'color': '#223354',
-												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': { color: '#aab7c4' },
-											},
-											invalid: { color: '#9e2146' },
-										},
-									}}
-									onChange={(event) => {
-										setCardCvcComplete(event.complete);
-										setErrorMessage('');
-										setIsGroupSelectionExpanded(false);
-									
-									}}
-								/>
-							</Box>
-						</Box>
-					</Box>
+									<Box
+										sx={
+											fromHomePage
+												? {
+													border:
+														isSubmitted &&
+															!cardExpiryComplete &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															isEmailVerified &&
+															recaptchaToken
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '8px',
+													backgroundColor: '#fff',
+													fontFamily: 'Varela Round',
+												}
+												: {
+													border:
+														isSubmitted &&
+															!cardExpiryComplete &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															isEmailVerified &&
+															recaptchaToken
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '4px',
+													backgroundColor: '#fff',
+												}
+										}>
+										<CardExpiryElement
+											options={{
+												disabled: isCourseFree,
+												style: {
+													base: {
+														'fontSize': isMobileSize ? '11px' : '14px',
+														'color': '#223354',
+														'fontFamily': 'Arial, sans-serif',
+														'::placeholder': { color: '#aab7c4' },
+													},
+													invalid: { color: '#9e2146' },
+												},
+											}}
+											onChange={(event) => {
+												setCardExpiryComplete(event.complete);
+												setErrorMessage('');
+												setIsGroupSelectionExpanded(false);
+											}}
+										/>
+									</Box>
+								</Box>
+								<Box sx={{ width: '50%' }}>
+									<Typography
+										variant='h6'
+										sx={
+											fromHomePage
+												? {
+													fontFamily: 'Varela Round',
+													color: '#2C3E50',
+													fontWeight: 500,
+													mb: 0.5,
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+												}
+												: { fontSize: '0.9rem', mb: 0.5 }
+										}>
+										CVC*
+									</Typography>
+									<Box
+										sx={
+											fromHomePage
+												? {
+													border:
+														isSubmitted &&
+															!cardCvcComplete &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															isEmailVerified &&
+															recaptchaToken
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '8px',
+													backgroundColor: '#fff',
+													fontFamily: 'Varela Round',
+												}
+												: {
+													border:
+														isSubmitted &&
+															!cardCvcComplete &&
+															!isCourseFree &&
+															isUserAccountExist &&
+															!isAlreadyEnrolled &&
+															isEmailVerified &&
+															recaptchaToken
+															? '1px solid red'
+															: '1px solid #ccc',
+													padding: '0.6rem',
+													borderRadius: '4px',
+													backgroundColor: '#fff',
+												}
+										}>
+										<CardCvcElement
+											options={{
+												disabled: isCourseFree,
+												style: {
+													base: {
+														'fontSize': isMobileSize ? '11px' : '14px',
+														'color': '#223354',
+														'fontFamily': 'Arial, sans-serif',
+														'::placeholder': { color: '#aab7c4' },
+													},
+													invalid: { color: '#9e2146' },
+												},
+											}}
+											onChange={(event) => {
+												setCardCvcComplete(event.complete);
+												setErrorMessage('');
+												setIsGroupSelectionExpanded(false);
 
-					<Box
-						sx={{
-							display: 'flex',
-							alignItems: 'center',
-							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0rem',
-							fontFamily: DIALOG_FONT,
-							mt: '2rem',
-						}}>
-						<Typography
-							variant={isMobileSize ? 'body2' : 'h6'}
-							sx={{
-								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
-								borderRadius: INPUT_BORDERRADIUS,
-								padding: isMobileSize ? '0.5rem' : '0.75rem',
-								fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-								color: '#223354',
-							}}>
-							{fromHomePage ? 'Toplam Tutar: ' : 'Total Amount: '}
-							{course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
-							{discountedAmount}
-						</Typography>
-						{isPromoCodeApplied && (
-							<Typography
-								variant='body2'
+											}}
+										/>
+									</Box>
+								</Box>
+							</Box>
+
+							<Box
 								sx={{
-									color: theme.textColor?.greenPrimary.main,
-									ml: isMobileSize ? '1rem' : '2rem',
-									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+									display: 'flex',
+									alignItems: 'center',
+									width: '100%',
+									padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0rem',
+									fontFamily: DIALOG_FONT,
+									mt: '2rem',
 								}}>
-								{fromHomePage ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
-							</Typography>
-						)}
-					</Box>
-
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: isSmallScreen ? 'column' : 'row',
-							alignItems: 'center',
-							textAlign: 'left',
-							width: '100%',
-							mt: isSmallScreen ? '1rem' : '1.5rem',
-							mb: '1rem',
-						}}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: isSmallScreen ? 'row' : 'column',
-								alignItems: isSmallScreen ? 'center' : 'flex-start',
-								justifyContent: isSmallScreen ? 'flex-start' : 'space-between',
-								width: '100%',
-								height: '5rem',
-								flex: 2,
-								py: '0.5rem',
-							}}>
-							<FormControlLabel
-								required
-								control={
-									<Checkbox
-										checked={agreed}
-										onChange={(e) => {
-											setAgreed(e.target.checked);
-											setErrorMessage('');
-											resetRecaptcha();
-										}}
-										sx={{
-											'display': 'flex',
-											'alignItems': 'center',
-											'& .MuiSvgIcon-root': {
-												fontSize: isMobileSize ? '0.9rem' : '1.15rem',
-											},
-										}}
-									/>
-								}
-								label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
-								sx={{
-									'& .MuiFormControlLabel-label': {
-										fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+								<Typography
+									variant={isMobileSize ? 'body2' : 'h6'}
+									sx={{
+										boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
+										borderRadius: INPUT_BORDERRADIUS,
+										padding: isMobileSize ? '0.5rem' : '0.75rem',
 										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-									},
-								}}
-							/>
-							<Typography
-								sx={{
-									fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
-									cursor: 'pointer',
-									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-								}}
-								onClick={() => setTermsConditionsModalOpen(true)}>
-								(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
-							</Typography>
-						</Box>
-						<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
-							<ReCAPTCHA
-								ref={recaptchaRef}
-								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-								onChange={handleRecaptchaChange}
-								onExpired={() => setRecaptchaToken(null)}
-								key={isPaymentDialogOpen ? 'active' : 'inactive'}
-							/>
-						</Box>
-					</Box>
-					</>
-				)}
-			</Box>
+										color: '#223354',
+									}}>
+									{fromHomePage ? 'Toplam Tutar: ' : 'Total Amount: '}
+									{course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+									{discountedAmount}
+								</Typography>
+								{isPromoCodeApplied && (
+									<Typography
+										variant='body2'
+										sx={{
+											color: theme.textColor?.greenPrimary.main,
+											ml: isMobileSize ? '1rem' : '2rem',
+											fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+										}}>
+										{fromHomePage ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
+									</Typography>
+								)}
+							</Box>
 
-				<TermsConditions
-					termsConditionsModalOpen={termsConditionsModalOpen}
-					setTermsConditionsModalOpen={setTermsConditionsModalOpen}
-					fromHomePage={fromHomePage}
-				/>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: isSmallScreen ? 'column' : 'row',
+									alignItems: 'center',
+									textAlign: 'left',
+									width: '100%',
+									mt: isSmallScreen ? '1rem' : '1.5rem',
+									mb: '1rem',
+								}}>
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: isSmallScreen ? 'row' : 'column',
+										alignItems: isSmallScreen ? 'center' : 'flex-start',
+										justifyContent: isSmallScreen ? 'flex-start' : 'space-between',
+										width: '100%',
+										height: '5rem',
+										flex: 2,
+										py: '0.5rem',
+									}}>
+									<FormControlLabel
+										required
+										control={
+											<Checkbox
+												checked={agreed}
+												onChange={(e) => {
+													setAgreed(e.target.checked);
+													setErrorMessage('');
+													resetRecaptcha();
+												}}
+												size="small"
+												sx={{
+													'display': 'flex',
+													'alignItems': 'center',
+													'color': 'rgba(0,0,0,0.6)',
+													'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' },
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '0.9rem' : '1.15rem',
+													},
+												}}
+											/>
+										}
+										label={
+											<Typography component="span" sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main, color: 'text.secondary' }}>
+												{fromHomePage ? null : 'I have read and agree to the '}
+												<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{fromHomePage ? 'Kullanıcı Sözleşmesi' : 'User Agreement'}</Link>
+												{fromHomePage ? ' ve ' : ' and '}
+												<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{fromHomePage ? 'Gizlilik Politikası' : 'Privacy Policy'}</Link>
+												{fromHomePage ? " nı okudum ve kabul ediyorum." : '.'}
+											</Typography>
+										}
+										sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+									/>
+								</Box>
+								<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+									<ReCAPTCHA
+										ref={recaptchaRef}
+										sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+										onChange={handleRecaptchaChange}
+										onExpired={() => setRecaptchaToken(null)}
+										key={isPaymentDialogOpen ? 'active' : 'inactive'}
+									/>
+								</Box>
+							</Box>
+						</>
+					)}
+				</Box>
 
 				{errorMessage && (
 					<CustomErrorMessage
@@ -1454,29 +1451,29 @@ const PaymentDialog = ({
 					submitBtnSx={{
 						...(fromHomePage
 							? {
-									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
-									'backgroundColor': 'transparent !important',
-									'fontFamily': DIALOG_FONT,
-									'color': 'white !important',
-									'transition': 'all 0.2s ease !important',
-									'&:hover': {
-										background: 'white !important',
-										backgroundColor: 'white !important',
-										color: '#FF6B3D !important',
-										border: '1px solid #FF6B3D !important',
-									},
-									'&.Mui-disabled': {
-										background: 'rgba(0, 0, 0, 0.12) !important',
-										backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
-										color: 'rgba(0, 0, 0, 0.26) !important',
-									},
-								}
+								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+								'backgroundColor': 'transparent !important',
+								'fontFamily': DIALOG_FONT,
+								'color': 'white !important',
+								'transition': 'all 0.2s ease !important',
+								'&:hover': {
+									background: 'white !important',
+									backgroundColor: 'white !important',
+									color: '#FF6B3D !important',
+									border: '1px solid #FF6B3D !important',
+								},
+								'&.Mui-disabled': {
+									background: 'rgba(0, 0, 0, 0.12) !important',
+									backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+									color: 'rgba(0, 0, 0, 0.26) !important',
+								},
+							}
 							: {
-									fontFamily: '',
-									cursor: isProcessing ? 'not-allowed' : 'pointer',
-									cursorEvents: isProcessing ? 'none' : 'auto',
-									pointerEvents: isProcessing ? 'none' : 'auto',
-								}),
+								fontFamily: '',
+								cursor: isProcessing ? 'not-allowed' : 'pointer',
+								cursorEvents: isProcessing ? 'none' : 'auto',
+								pointerEvents: isProcessing ? 'none' : 'auto',
+							}),
 					}}
 					disableBtn={
 						isProcessing ||

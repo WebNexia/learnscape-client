@@ -14,6 +14,8 @@ export interface Payment {
 	courseTitle: string;
 	documentId: string;
 	documentName: string;
+	consultationId?: string;
+	consultationTitle?: string;
 	paymentType: string;
 	email: string;
 	transactionDetails?: TransactionDetails;

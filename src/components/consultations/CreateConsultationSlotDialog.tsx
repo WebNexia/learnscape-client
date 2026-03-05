@@ -8,6 +8,7 @@ import {
 	SelectChangeEvent,
 	FormControlLabel,
 	Checkbox,
+	Tooltip,
 } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -17,12 +18,13 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useMemo } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { SearchUser } from '../../interfaces/search';
 import ConsultantSearchSelect from '../ConsultantSearchSelect';
 import theme from '../../themes';
 import { Consultation, ConsultationSlot } from '../../interfaces/consultation';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CreateConsultationSlotDialogProps {
 	isOpen: boolean;
@@ -42,7 +44,19 @@ const CreateConsultationSlotDialog = ({
 	existingSlot,
 }: CreateConsultationSlotDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const { user } = useAuth();
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const currentUserId = user?._id;
+	// Consultants who have a booking on this slot cannot be removed
+	const bookedConsultantIds = useMemo(() => {
+		const appointments = existingSlot?.appointments ?? [];
+		return new Set(
+			appointments.map((a) => {
+				const c = a.assignedConsultantId;
+				return c && typeof c === 'object' ? (c._id ?? '') : (c ?? '');
+			}).filter(Boolean)
+		);
+	}, [existingSlot?.appointments]);
 
 	const [slotStart, setSlotStart] = useState<Dayjs | null>(null);
 	const [duration, setDuration] = useState<number>(consultation?.duration ?? 60);
@@ -60,8 +74,38 @@ const CreateConsultationSlotDialog = ({
 			if (existingSlot) {
 				setSlotStart(dayjs(existingSlot.slotStart));
 				setDuration(existingSlot.duration ?? consultation?.duration ?? 60);
-				setSelectedConsultants([]);
-				setAddMyselfAsConsultant(true);
+				// Populate selected consultants from slot (exclude current user — they use "Add myself" checkbox)
+				const consultants = existingSlot.availableConsultantIds;
+				if (Array.isArray(consultants) && consultants.length > 0) {
+					let myselfInSlot = false;
+					const list: SearchUser[] = consultants
+						.map((c: any) => {
+							if (c && typeof c === 'object' && c._id) {
+								const idStr = c._id.toString?.() ?? String(c._id);
+								if (currentUserId && (currentUserId.toString?.() ?? String(currentUserId)) === idStr) {
+									myselfInSlot = true;
+									return null; // do not add current user to chips; "Add myself" handles that
+								}
+								return {
+									_id: c._id,
+									firebaseUserId: '',
+									username: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.email || c._id,
+									firstName: c.firstName ?? '',
+									lastName: c.lastName ?? '',
+									email: c.email,
+									imageUrl: c.imageUrl ?? '',
+									role: '',
+								};
+							}
+							return null;
+						})
+						.filter(Boolean) as SearchUser[];
+					setSelectedConsultants(list);
+					setAddMyselfAsConsultant(myselfInSlot);
+				} else {
+					setSelectedConsultants([]);
+					setAddMyselfAsConsultant(true);
+				}
 			} else {
 				setSlotStart(dayjs().add(1, 'hour'));
 				setDuration(consultation?.duration ?? 60);
@@ -74,14 +118,23 @@ const CreateConsultationSlotDialog = ({
 	}, [isOpen, existingSlot, consultation]);
 
 	const handleConsultantSelect = (selectedUser: SearchUser) => {
-		if (!selectedConsultants.find((c) => c._id === selectedUser._id)) {
+		const idStr = selectedUser._id?.toString?.() ?? String(selectedUser._id);
+		const isSelf = currentUserId && (currentUserId.toString?.() ?? String(currentUserId)) === idStr;
+		if (isSelf) {
+			setAddMyselfAsConsultant(true);
+			setConsultantSearchValue('');
+			return;
+		}
+		if (!selectedConsultants.find((c) => (c._id?.toString?.() ?? String(c._id)) === idStr)) {
 			setSelectedConsultants([...selectedConsultants, selectedUser]);
 			setConsultantSearchValue('');
 		}
 	};
 
 	const removeConsultant = (userId: string) => {
-		setSelectedConsultants(selectedConsultants.filter((c) => c._id !== userId));
+		const idStr = userId?.toString?.() ?? String(userId);
+		if (bookedConsultantIds.has(idStr)) return; // cannot remove consultant who has a booking
+		setSelectedConsultants(selectedConsultants.filter((c) => (c._id?.toString?.() ?? String(c._id)) !== idStr));
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -259,31 +312,46 @@ const CreateConsultationSlotDialog = ({
 
 								{selectedConsultants.length > 0 && (
 									<Box sx={{ mt: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-										{selectedConsultants.map((consultant) => (
-											<Box
-												key={consultant._id}
-												sx={{
-													display: 'inline-flex',
-													alignItems: 'center',
-													padding: '0.25rem 0.75rem',
-													backgroundColor: theme.palette.primary.main,
-													color: 'white',
-													borderRadius: '1rem',
-													fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-												}}>
-												{consultant.firstName} {consultant.lastName}
-												<Box
-													component='span'
-													onClick={() => removeConsultant(consultant._id)}
-													sx={{
-														marginLeft: '0.5rem',
-														cursor: 'pointer',
-														'&:hover': { opacity: 0.7 },
-													}}>
-													×
-												</Box>
-											</Box>
-										))}
+										{selectedConsultants.map((consultant) => {
+											const cid = consultant._id?.toString?.() ?? String(consultant._id);
+											const isBooked = bookedConsultantIds.has(cid);
+											return (
+												<Tooltip
+													key={consultant._id}
+													title={isBooked ? 'Has booking – cannot remove' : 'Click × to remove'}
+													placement='top'
+													arrow
+												>
+													<Box
+														sx={{
+															display: 'inline-flex',
+															alignItems: 'center',
+															padding: '0.25rem 0.75rem',
+															backgroundColor: isBooked ? theme.palette.grey[500] : theme.palette.primary.main,
+															color: 'white',
+															borderRadius: '1rem',
+															fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+															fontFamily: theme.fontFamily?.main,
+														}}
+													>
+														{consultant.firstName} {consultant.lastName}
+														{!isBooked && (
+															<Box
+																component='span'
+																onClick={() => removeConsultant(consultant._id)}
+																sx={{
+																	marginLeft: '0.5rem',
+																	cursor: 'pointer',
+																	'&:hover': { opacity: 0.7 },
+																}}
+															>
+																×
+															</Box>
+														)}
+													</Box>
+												</Tooltip>
+											);
+										})}
 									</Box>
 								)}
 							</Box>
