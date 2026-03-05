@@ -280,7 +280,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							<AudioRecorder
 								uploadAudio={uploadAudio}
 								isAudioUploading={isAudioUploading}
-								maxRecordTime={300000}
+								maxRecordTime={120000}
 								fromCreateCommunityTopic={true}
 								audioUploadAttempts={audioUploadAttempts}
 								maxSessionAttempts={MAX_SESSION_ATTEMPTS}

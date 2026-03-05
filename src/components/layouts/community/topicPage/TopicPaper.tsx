@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import { Box, Button, DialogContent, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
@@ -45,6 +45,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const { isSticky, paperRef } = useStickyPaper(isMobileSize);
 
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
+	const [isDeletingTopic, setIsDeletingTopic] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
 	const [reportTopicModalOpen, setReportTopicModalOpen] = useState<boolean>(false);
 	const [closeTopicModalOpen, setLockTopicModalOpen] = useState<boolean>(false);
@@ -52,6 +53,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 
 	const deleteTopic = async () => {
+		setIsDeletingTopic(true);
 		try {
 			await axios.delete(`${base_url}/communityTopics/${topic?._id}`);
 
@@ -68,6 +70,8 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 			}, 1500);
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setIsDeletingTopic(false);
 		}
 	};
 
@@ -273,6 +277,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 											<Tooltip title='Delete Topic' placement='top' arrow>
 												<IconButton
 													sx={{
+														borderRadius: '50%',
 														':hover': {
 															backgroundColor: 'transparent',
 														},
@@ -345,9 +350,19 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					openModal={deleteTopicModalOpen}
 					closeModal={() => setDeleteTopicModalOpen(false)}
 					title='Delete Topic'
-					content={`Are you sure you want to delete "${topic.title}"?`}
 					maxWidth='xs'>
-					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} actionSx={{ mb: '0.5rem' }} />
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mb: '0.75rem' }}>
+							Are you sure you want to delete &quot;{topic.title}&quot;?
+						</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mb: '0.75rem' }}>
+							All messages in this topic, including all images and audio files, will be permanently deleted.
+						</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+							This action cannot be undone.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} actionSx={{ mb: '0.5rem' }} isDeleting={isDeletingTopic} />
 				</CustomDialog>
 
 				<EditTopicDialog topic={topic} setTopic={setTopic} editTopicModalOpen={editTopicModalOpen} setEditTopicModalOpen={setEditTopicModalOpen} />

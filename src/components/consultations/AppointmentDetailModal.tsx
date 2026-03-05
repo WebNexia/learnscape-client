@@ -79,10 +79,11 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 		setLoading(true);
 		axios
 			.get(`${base_url}/consultations/appointments/${appointmentId}`)
-			.then((res) => {
-				if (res.data?.data && !cancelled) {
-					setAppointment(res.data.data);
-					setNotesValue(res.data.data.adminNotes || '');
+			.then((appRes) => {
+				if (cancelled) return;
+				if (appRes.data?.data) {
+					setAppointment(appRes.data.data);
+					setNotesValue(appRes.data.data.adminNotes || '');
 				}
 			})
 			.catch(() => {
@@ -166,7 +167,7 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 					</Typography>
 				) : (
 					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-						{/* Appointment info */}
+						{/* Appointment — Consultation & Date */}
 						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
 							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
 								Appointment
@@ -174,41 +175,25 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 								<InfoRow label='Consultation' value={consultationTitle} isMobileSize={isMobileSize} />
 								<InfoRow label='Date & time' value={dateTimeFormatter(appointment.appointmentDate)} isMobileSize={isMobileSize} />
+							</Box>
+							{/* Consultant, Status, Payment — same row */}
+							<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: isMobileSize ? 1.5 : 2.5, mt: 1.5, justifyContent: 'space-between' }}>
 								<InfoRow label='Consultant' value={consultantName} isMobileSize={isMobileSize} />
 								<InfoRow label='Status' value={appointment.status} isMobileSize={isMobileSize} capitalize />
+								<InfoRow label='Payment' value={paymentStatus} isMobileSize={isMobileSize} />
 							</Box>
 						</Box>
 
-						{/* Guest */}
+						{/* Guest — name, email, phone on one row */}
 						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
 							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
 								Guest
 							</Typography>
-							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem', fontWeight: 500 }}>
-									{appointment.guestName || '—'}
-								</Typography>
-								{appointment.guestEmail && (
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.palette.text.secondary }}>
-										{appointment.guestEmail}
-									</Typography>
-								)}
-								{appointment.guestPhone && (
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: theme.palette.text.secondary }}>
-										{appointment.guestPhone}
-									</Typography>
-								)}
+							<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: isMobileSize ? 1 : 2, alignItems: 'baseline', justifyContent: 'space-between' }}>
+								<InfoRow label='Name' value={appointment.guestName || '—'} isMobileSize={isMobileSize} />
+								<InfoRow label='Email' value={appointment.guestEmail} isMobileSize={isMobileSize} />
+								<InfoRow label='Phone' value={appointment.guestPhone} isMobileSize={isMobileSize} />
 							</Box>
-						</Box>
-
-						{/* Payment */}
-						<Box sx={{ pb: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
-							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 600, color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
-								Payment
-							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem', textTransform: 'capitalize' }}>
-								{paymentStatus}
-							</Typography>
 						</Box>
 
 						{appointment.zoomJoinUrl && appointment.status !== 'cancelled' && (
@@ -234,7 +219,8 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 							</Typography>
 							<CustomTextField
 								multiline
-								rows={3}
+								resizable
+								rows={2}
 								value={notesValue}
 								onChange={(e) => setNotesValue(e.target.value)}
 								placeholder='Add internal notes...'
@@ -251,18 +237,13 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 					</Box>
 				)}
 			</DialogContent>
-			<DialogActions sx={{ justifyContent: appointment?.status !== 'cancelled' ? 'space-between' : 'flex-end', alignItems: 'center' }}>
-
+			<DialogActions sx={{ justifyContent: appointment?.status !== 'cancelled' ? 'space-between' : 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 1, py: '0rem' }}>
 				{appointment?.status !== 'cancelled' && (
-					<Box sx={{ mb: '1.25rem' }}>
-						<CustomDeleteButton size='small' onClick={handleCancelAppointment} disabled={cancelling}>
-							{cancelling ? 'Cancelling...' : 'Cancel appointment'}
-						</CustomDeleteButton>
-					</Box>
+					<CustomDeleteButton size='small' onClick={handleCancelAppointment} disabled={cancelling}>
+						{cancelling ? 'Cancelling...' : 'Cancel appointment'}
+					</CustomDeleteButton>
 				)}
-
-				<CustomDialogActions onCancel={onClose} hideSubmit cancelBtnText='Close' actionSx={{ margin: '0.5rem 1.25rem 0.5rem -0.9rem' }} />
-
+				<CustomDialogActions onCancel={onClose} hideSubmit cancelBtnText='Close' actionSx={{ margin: '0.5rem 0rem 0rem 0rem' }} />
 			</DialogActions>
 
 			<Snackbar

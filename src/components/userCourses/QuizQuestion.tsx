@@ -493,7 +493,7 @@ const QuizQuestion = ({
 								{recordOption === 'video' ? (
 									<VideoRecorder uploadVideo={uploadVideo} isVideoUploading={isVideoUploading} />
 								) : recordOption === 'audio' ? (
-									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} />
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={300000} />
 								) : null}
 							</Box>
 

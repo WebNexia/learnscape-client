@@ -60,6 +60,7 @@ const Message = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState<boolean>(false);
+	const [isDeletingMessage, setIsDeletingMessage] = useState<boolean>(false);
 	const [reportMsgModalOpen, setReportMsgModalOpen] = useState<boolean>(false);
 	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 	const [editMsgModalOpen, setEditMsgModalOpen] = useState<boolean>(false);
@@ -109,12 +110,16 @@ const Message = ({
 	}, []);
 
 	const deleteMessage = async () => {
+		setIsDeletingMessage(true);
 		try {
 			await axios.delete(`${base_url}/communityMessages/${message._id}`);
 
 			removeMessage(message._id);
+			setDeleteMessageModalOpen(false);
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setIsDeletingMessage(false);
 		}
 	};
 
@@ -503,6 +508,7 @@ const Message = ({
 										<IconButton
 											onClick={() => setDeleteMessageModalOpen(true)}
 											sx={{
+												borderRadius: '50%',
 												'&:hover': {
 													backgroundColor: 'rgba(1, 67, 90, 0.1)',
 												},
@@ -531,6 +537,7 @@ const Message = ({
 											<IconButton
 												onClick={() => setDeleteMessageModalOpen(true)}
 												sx={{
+													borderRadius: '50%',
 													'&:hover': {
 														backgroundColor: 'rgba(1, 67, 90, 0.1)',
 													},
@@ -673,7 +680,7 @@ const Message = ({
 				title='Delete Message'
 				content={`Are you sure you want to delete "${truncateText(stripHtml(decode(message.text)), 25)}"?`}
 				maxWidth='xs'>
-				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} actionSx={{ mb: '0.5rem' }} />
+				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} actionSx={{ mb: '0.5rem' }} isDeleting={isDeletingMessage} />
 			</CustomDialog>
 		</Box>
 	);

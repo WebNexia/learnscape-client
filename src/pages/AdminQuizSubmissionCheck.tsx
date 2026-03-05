@@ -613,7 +613,7 @@ const AdminQuizSubmissionCheck = () => {
 							</Typography>
 							<Box sx={{ width: '100%', marginTop: '1rem' }}>
 								{!userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
-									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} maxRecordTime={300000} />
 								) : (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
 										<Box sx={{ flex: 9, mt: '0.5rem' }}>
