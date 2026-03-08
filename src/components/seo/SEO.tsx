@@ -32,20 +32,20 @@ const getAbsoluteUrl = (url: string): string => {
 };
 
 const SEO = ({
-	title = 'LearnScape - Online Learning Platform',
-	description = 'LearnScape is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
-	keywords = 'online learning, courses, education, e-learning, LearnScape, interactive learning, online education',
+	title = 'Aden Academy - Online Learning Platform',
+	description = 'Aden Academy is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
+	keywords = 'online learning, courses, education, e-learning, Aden Academy, interactive learning, online education',
 	image = '/og-image.jpg',
 	url,
 	type = 'website',
-	author = 'LearnScape',
+	author = 'Aden Academy',
 	publishedTime,
 	modifiedTime,
 	section,
 	tags = [],
 }: SEOProps) => {
 	const baseUrl = getBaseUrl();
-	const fullTitle = title.includes('LearnScape') ? title : `${title} | LearnScape`;
+	const fullTitle = title.includes('Aden Academy') ? title : `${title} | Aden Academy`;
 	// Cleaner fullKeywords (no trailing comma if tags=[])
 	const fullKeywords = tags.length ? `${keywords}, ${tags.join(', ')}` : keywords;
 
@@ -71,7 +71,7 @@ const SEO = ({
 			<meta property='og:description' content={description} />
 			<meta property='og:image' content={absoluteImageUrl} />
 			<meta property='og:url' content={canonicalUrl} />
-			<meta property='og:site_name' content='LearnScape' />
+			<meta property='og:site_name' content='Aden Academy' />
 			<meta property='og:locale' content='en_US' />
 
 			{/* Twitter */}
@@ -79,8 +79,8 @@ const SEO = ({
 			<meta name='twitter:title' content={fullTitle} />
 			<meta name='twitter:description' content={description} />
 			<meta name='twitter:image' content={absoluteImageUrl} />
-			<meta name='twitter:site' content='@learnscape' />
-			<meta name='twitter:creator' content='@learnscape' />
+			<meta name='twitter:site' content='@adenacademy' />
+			<meta name='twitter:creator' content='@adenacademy' />
 
 			{/* Optional but nice: accessibility + richer preview */}
 			<meta property='og:image:alt' content={`${fullTitle} preview image`} />

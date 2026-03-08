@@ -295,34 +295,34 @@ export default function LandingPageCart() {
 						</Box>
 					</LandingPageLayout>
 				</Box>
-			<CartPaymentDialogWrapper
-				open={cartPaymentOpen}
-				onClose={() => { setCartPaymentOpen(false); setPaymentQueue([]); }}
-				queue={paymentQueue}
-				firstName={checkoutGuestFirstName.trim()}
-				lastName={checkoutGuestLastName.trim()}
-				email={checkoutGuestEmail.trim()}
-				onSuccess={handleCartPaymentSuccess}
-			/>
-			<Snackbar
-				open={successSnack}
-				autoHideDuration={6000}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				sx={{ mt: '4rem' }}
-				onClose={() => setSuccessSnack(false)}>
-				<Alert
-					onClose={() => setSuccessSnack(false)}
-					severity="success"
-					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						backgroundColor: theme.bgColor?.greenSecondary,
-						color: theme.textColor?.common.main,
-						'& .MuiAlert-icon': { color: 'white' },
-					}}>
-					{successMessage}
-				</Alert>
-			</Snackbar>
+				<CartPaymentDialogWrapper
+					open={cartPaymentOpen}
+					onClose={() => { setCartPaymentOpen(false); setPaymentQueue([]); }}
+					queue={paymentQueue}
+					firstName={checkoutGuestFirstName.trim()}
+					lastName={checkoutGuestLastName.trim()}
+					email={checkoutGuestEmail.trim()}
+					onSuccess={handleCartPaymentSuccess}
+				/>
+				<Snackbar
+					open={successSnack}
+					autoHideDuration={6000}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					sx={{ mt: '4rem' }}
+					onClose={() => setSuccessSnack(false)}>
+					<Alert
+						onClose={() => setSuccessSnack(false)}
+						severity="success"
+						sx={{
+							width: '100%',
+							fontFamily: 'Varela Round',
+							backgroundColor: theme.bgColor?.greenSecondary,
+							color: theme.textColor?.common.main,
+							'& .MuiAlert-icon': { color: 'white' },
+						}}>
+						{successMessage}
+					</Alert>
+				</Snackbar>
 			</Box>
 		);
 	}
@@ -370,17 +370,18 @@ export default function LandingPageCart() {
 							</Alert>
 						)}
 
-						{/* Two-column layout on md+: Contact left, Cart + Summary right */}
+
 						<Box
 							sx={{
-								display: 'flex',
-								flexDirection: { xs: 'column', md: 'row' },
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
 								gap: { xs: 3, md: 4 },
 								alignItems: 'stretch',
+								width: '100%',
 							}}
 						>
 							{/* Left: İletişim bilgileri */}
-							<Box sx={{ flex: 2, order: { xs: 1, md: 1 } }}>
+							<Box sx={{ minWidth: 0, order: { xs: 1, md: 1 } }}>
 								<Card
 									sx={{
 										borderRadius: 3,
@@ -401,9 +402,9 @@ export default function LandingPageCart() {
 										<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', display: 'flex', alignItems: 'center', gap: 1 }}>
 											<ContactPhone sx={{ color: '#0052a3', fontSize: 22 }} /> İletişim bilgileriniz
 										</Typography>
-										<Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
+										{/* <Typography variant="body2" sx={{ fontFamily: 'Varela Round', color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
 											Kaynak veya danışmanlık ödemesi için kullanılacaktır.
-										</Typography>
+										</Typography> */}
 									</Box>
 									<CardContent sx={{ p: 2.5 }}>
 										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -521,7 +522,7 @@ export default function LandingPageCart() {
 															{' nı okudum ve kabul ediyorum. *'}
 														</Typography>
 													}
-													sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+													sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' } }}
 												/>
 												<FormControlLabel
 													control={
@@ -540,7 +541,7 @@ export default function LandingPageCart() {
 															Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum.
 														</Typography>
 													}
-													sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+													sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' } }}
 												/>
 											</Box>
 										</Box>
@@ -548,10 +549,10 @@ export default function LandingPageCart() {
 								</Card>
 							</Box>
 
-							{/* Right: Cart items (docs + cons separate) + Summary – column scrolls, summary stays in view */}
-							<Box sx={{ flex: 2.5, minWidth: 0, order: { xs: 2, md: 2 }, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: { md: 'calc(100vh - 200px)' }, minHeight: 0 }}>
+
+							<Box sx={{ minWidth: 0, order: { xs: 2, md: 2 }, display: 'flex', flexDirection: 'column', gap: 2, minHeight: { md: '100%' } }}>
 								{totalCount > 0 && (
-									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}>
+									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 										{/* Kaynaklar (docs) – separate section, scrollable */}
 										{documentItems.length > 0 && (
 											<Card
@@ -762,13 +763,13 @@ export default function LandingPageCart() {
 													fullWidth
 													onClick={handlePayAll}
 													disabled={payAllLoading}
-													startIcon={!payAllLoading ? <Lock sx={{ fontSize: 18 }} /> : null}
+													// startIcon={!payAllLoading ? <Lock sx={{ fontSize: 18 }} /> : null}
 													sx={{
 														border: 'none',
 														color: 'white',
-														borderRadius: { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+														borderRadius: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
 														py: 0.75,
-														fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+														fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.9rem' },
 														fontFamily: 'Varela Round',
 														fontWeight: 800,
 														letterSpacing: '0.03em',
@@ -788,9 +789,15 @@ export default function LandingPageCart() {
 												>
 													{payAllLoading ? 'Hazırlanıyor...' : 'Ödemeyi Tamamla'}
 												</Button>
-												<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.75rem', color: 'text.secondary', textAlign: 'center', mt: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-													<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme
-												</Typography>
+
+												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25, mt: '2rem' }}>
+													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.75rem', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+														<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme (Stripe)
+													</Typography>
+													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
+														Kart bilgileriniz saklanmaz
+													</Typography>
+												</Box>
 											</CardContent>
 										</Card>
 									</Box>

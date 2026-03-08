@@ -188,13 +188,13 @@ const Header = () => {
 							anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
 							sx={{
 								'& .MuiBadge-badge': {
-									fontSize: isMobileSizeSmall ? '0.6rem' : '0.7rem',
-									width: isMobileSizeSmall ? 2 : 10,
-									height: isMobileSizeSmall ? 16 : 18,
+									fontSize: isMobileSizeSmall ? '0.5rem' : '0.55rem',
+									minWidth: isMobileSizeSmall ? 12 : 14,
+									height: isMobileSizeSmall ? 12 : 14,
 									padding: 0,
 									borderRadius: '50%',
-									top: isMobileSizeSmall ? 4 : 6,
-									right: 6,
+									top: isMobileSizeSmall ? 8 : 8,
+									right: isMobileSizeSmall ? 8 : 8,
 									transition: 'background-color 0.3s',
 								},
 								'&:hover .MuiBadge-badge': {

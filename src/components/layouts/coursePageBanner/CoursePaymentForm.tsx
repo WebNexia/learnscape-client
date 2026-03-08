@@ -513,9 +513,9 @@ export default function CoursePaymentForm({
 							<Typography sx={{ fontFamily: FONT, fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', display: 'flex', alignItems: 'center', gap: 1 }}>
 								<Person sx={{ color: '#0052a3', fontSize: 22 }} /> Kayıt ve Katılım Bilgileri
 							</Typography>
-							<Typography variant="body2" sx={{ fontFamily: FONT, color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
+							{/* <Typography variant="body2" sx={{ fontFamily: FONT, color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
 								Grup, e-posta ve sözleşme onayı.
-							</Typography>
+							</Typography> */}
 						</Box>
 						<Box sx={{ p: 2.5, flex: 1 }}>
 							{course?.groups && course.groups.length > 0 && (
@@ -714,7 +714,7 @@ export default function CoursePaymentForm({
 									/>
 								}
 								label={
-									<Typography component="span" sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: 'text.secondary' }}>
+									<Typography component="span" sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.7rem' : '0.75rem', color: 'text.secondary' }}>
 										<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>Kullanıcı Sözleşmesi</Link>
 										{' ve '}
 										<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>Gizlilik Politikası</Link>
@@ -754,9 +754,9 @@ export default function CoursePaymentForm({
 							<Typography sx={{ fontFamily: FONT, fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', display: 'flex', alignItems: 'center', gap: 1 }}>
 								<ReceiptLong sx={{ color: '#FF6B3D', fontSize: 22 }} /> Sipariş Özeti
 							</Typography>
-							<Typography variant="body2" sx={{ fontFamily: FONT, color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
+							{/* <Typography variant="body2" sx={{ fontFamily: FONT, color: 'text.secondary', mt: 0.5, fontSize: '0.8rem' }}>
 								Kurs ve ödeme bilgileri.
-							</Typography>
+							</Typography> */}
 						</Box>
 						<Box sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
 							<Box
