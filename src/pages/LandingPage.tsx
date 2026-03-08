@@ -21,9 +21,9 @@ const LandingPage = () => {
 	return (
 		<>
 			<SEO
-				title='LearnScape - Online Learning Platform | Courses & Education'
-				description='Discover thousands of online courses, interactive quizzes, and educational content. Join LearnScape for the best e-learning experience with expert instructors and comprehensive learning materials.'
-				keywords='online learning, e-learning, education platform, interactive learning, LearnScape, online courses, educational content, learning management system, student portal, course platform'
+				title='Aden Academy - Online Learning Platform | Courses & Education'
+				description='Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.'
+				keywords='online learning, e-learning, education platform, interactive learning, Aden Academy, online courses, educational content, learning management system, student portal, course platform'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -33,9 +33,9 @@ const LandingPage = () => {
 				type='WebPage'
 				data={{
 					url: baseUrl,
-					name: 'LearnScape - Online Learning Platform',
+					name: 'Aden Academy - Online Learning Platform',
 					description:
-						'Discover thousands of online courses, interactive quizzes, and educational content. Join LearnScape for the best e-learning experience with expert instructors and comprehensive learning materials.',
+						'Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.',
 				}}
 			/>
 			<Box

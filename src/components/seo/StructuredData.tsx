@@ -29,11 +29,11 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 				return {
 					'@context': 'https://schema.org',
 					'@type': 'Organization',
-					'name': 'LearnScape',
+					'name': 'Aden Academy',
 					'url': baseUrl,
 					'logo': `${baseUrl}/logo.png`,
 					'description':
-						'LearnScape is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
+						'Aden Academy is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
 					'foundingDate': '2024',
 					'contactPoint': {
 						'@type': 'ContactPoint',
@@ -41,14 +41,14 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 						'contactType': 'customer service',
 						'availableLanguage': 'English',
 					},
-					'sameAs': ['https://twitter.com/learnscape', 'https://linkedin.com/company/learnscape', 'https://facebook.com/learnscape'],
+					'sameAs': ['https://twitter.com/adenacademy', 'https://linkedin.com/company/adenacademy', 'https://facebook.com/adenacademy'],
 				};
 
 			case 'WebSite':
 				return {
 					'@context': 'https://schema.org',
 					'@type': 'WebSite',
-					'name': 'LearnScape',
+					'name': 'Aden Academy',
 					'url': baseUrl,
 					'description': 'Online learning platform with courses, quizzes, and interactive content',
 					'potentialAction': {
@@ -67,10 +67,10 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'@type': 'Course',
 					'@id': data?.url || `${baseUrl}/course/${data?.slug}`,
 					'name': data?.title || 'Course',
-					'description': data?.description || 'Online course on LearnScape',
+					'description': data?.description || 'Online course on Aden Academy',
 					'provider': {
 						'@type': 'Organization',
-						'name': 'LearnScape',
+						'name': 'Aden Academy',
 						'url': baseUrl,
 					},
 					'courseCode': data?.courseCode,
@@ -83,7 +83,7 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'dateModified': data?.updatedAt,
 					'author': {
 						'@type': 'Person',
-						'name': data?.instructor || 'LearnScape Instructor',
+						'name': data?.instructor || 'Aden Academy Instructor',
 					},
 					'sameAs': data?.extraLinks || [],
 				};
@@ -122,13 +122,13 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'@context': 'https://schema.org',
 					'@type': 'ContactPage',
 					'@id': data?.url || `${baseUrl}/contact-us`,
-					'name': 'Contact LearnScape',
+					'name': 'Contact Aden Academy',
 					'description':
-						'Get in touch with LearnScape for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
+						'Get in touch with Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
 					'url': data?.url || `${baseUrl}/contact-us`,
 					'mainEntity': {
 						'@type': 'Organization',
-						'name': 'LearnScape',
+						'name': 'Aden Academy',
 						'url': baseUrl,
 						'contactPoint': [
 							{
@@ -157,19 +157,19 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'@context': 'https://schema.org',
 					'@type': 'WebPage',
 					'@id': data?.url || baseUrl,
-					'name': data?.name || 'LearnScape Page',
-					'description': data?.description || 'LearnScape online learning platform',
+					'name': data?.name || 'Aden Academy Page',
+					'description': data?.description || 'Aden Academy online learning platform',
 					'url': data?.url || baseUrl,
 					'isPartOf': {
 						'@type': 'WebSite',
-						'name': 'LearnScape',
+						'name': 'Aden Academy',
 						'url': baseUrl,
 					},
 					'datePublished': data?.datePublished,
 					'dateModified': data?.dateModified,
 					'author': {
 						'@type': 'Organization',
-						'name': 'LearnScape',
+						'name': 'Aden Academy',
 					},
 				};
 

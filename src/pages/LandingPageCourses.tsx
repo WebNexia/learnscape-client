@@ -74,9 +74,9 @@ const LandingPageCourses = () => {
 	return (
 		<>
 			<SEO
-				title='Browse All Courses - LearnScape'
+				title='Browse All Courses - Aden Academy'
 				description='Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.'
-				keywords='online courses, course catalog, programming courses, business courses, design courses, LearnScape courses, educational content, skill development'
+				keywords='online courses, course catalog, programming courses, business courses, design courses, Aden Academy courses, educational content, skill development'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -94,7 +94,7 @@ const LandingPageCourses = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/landing-page-courses`,
-					name: 'Browse All Courses - LearnScape',
+					name: 'Browse All Courses - Aden Academy',
 					description:
 						'Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.',
 				}}

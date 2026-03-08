@@ -193,9 +193,9 @@ const AboutUs = () => {
 	return (
 		<>
 			<SEO
-				title='About LearnScape - Online Learning Platform'
-				description="Learn about LearnScape's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide."
-				keywords='about LearnScape, online education company, learning platform team, educational technology, e-learning mission, LearnScape values'
+				title='About Aden Academy - Online Learning Platform'
+				description="Learn about Aden Academy's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide."
+				keywords='about Aden Academy, online education company, learning platform team, educational technology, e-learning mission, Aden Academy values'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -212,9 +212,9 @@ const AboutUs = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/about-us`,
-					name: 'About LearnScape - Online Learning Platform',
+					name: 'About Aden Academy - Online Learning Platform',
 					description:
-						"Learn about LearnScape's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide.",
+						"Learn about Aden Academy's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide.",
 				}}
 			/>
 			<Box

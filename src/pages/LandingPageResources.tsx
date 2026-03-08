@@ -88,9 +88,9 @@ const LandingPageResources = () => {
 	return (
 		<>
 			<SEO
-				title='Learning Resources - LearnScape'
+				title='Learning Resources - Aden Academy'
 				description='Access free learning resources, documents, and educational materials. Download PDFs, guides, and study materials to enhance your learning experience.'
-				keywords='learning resources, educational documents, study materials, PDF downloads, free resources, educational content, learning guides, LearnScape resources'
+				keywords='learning resources, educational documents, study materials, PDF downloads, free resources, educational content, learning guides, Aden Academy resources'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -108,7 +108,7 @@ const LandingPageResources = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/resources`,
-					name: 'Learning Resources - LearnScape',
+					name: 'Learning Resources - Aden Academy',
 					description:
 						'Access free learning resources, documents, and educational materials. Download PDFs, guides, and study materials to enhance your learning experience.',
 				}}

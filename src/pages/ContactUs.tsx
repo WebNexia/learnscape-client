@@ -96,9 +96,9 @@ const ContactUs = () => {
 	return (
 		<>
 			<SEO
-				title='Contact LearnScape - Get in Touch'
-				description='Contact LearnScape for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.'
-				keywords='contact LearnScape, customer support, technical support, business inquiries, LearnScape help, customer service, contact form'
+				title='Contact Aden Academy - Get in Touch'
+				description='Contact Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.'
+				keywords='contact Aden Academy, customer support, technical support, business inquiries, Aden Academy help, customer service, contact form'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -116,9 +116,9 @@ const ContactUs = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/contact-us`,
-					name: 'Contact LearnScape - Get in Touch',
+					name: 'Contact Aden Academy - Get in Touch',
 					description:
-						'Contact LearnScape for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
+						'Contact Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
 				}}
 			/>
 			<Box
