@@ -18,6 +18,7 @@ export interface BaseCourse {
 	activeEnrollmentCount?: number;
 	clonedFromId: string;
 	clonedFromTitle: string;
+	cohortOfCourseId?: string;
 	versionNote: string;
 	createdByName: string;
 	createdByImageUrl: string;

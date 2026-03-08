@@ -69,7 +69,7 @@ const Submissions = () => {
 		resetFilter,
 		resetAll,
 	} = useFilterSearch<QuizSubmission>({
-		getEndpoint: () => `${base_url}/quizSubmissions/user/${user?._id}`,
+		getEndpoint: () => `${base_url}/quizsubmissions/user/${user?._id}`,
 		limit: 150,
 		pageSize,
 		contextData: userQuizSubmissions || [],

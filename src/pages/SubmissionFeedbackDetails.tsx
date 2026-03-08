@@ -106,15 +106,12 @@ const SubmissionFeedbackDetails = () => {
 						: null;
 				if (courseIdForFetch && lessonIdToFetch) {
 					try {
-						const courseRes = await axios.get(`${base_url}/courses/activelessons/${courseIdForFetch}`);
-						const courseData = courseRes.data?.data || courseRes.data;
-						const chapters = courseData?.chapters || [];
-						const chapter = chapters.find(
-							(ch: { lessonIds?: string[] }) => ch?.lessonIds && Array.isArray(ch.lessonIds) && ch.lessonIds.some((id: string) => String(id) === String(lessonIdToFetch))
+						const chapterRes = await axios.get(
+							`${base_url}/courses/${courseIdForFetch}/chapter-for-lesson/${lessonIdToFetch}`
 						);
-						setChapterName(chapter?.title ?? '');
+						setChapterName(chapterRes.data?.data?.chapterName ?? '');
 					} catch (err) {
-						console.error('Error fetching course/chapter for feedback page:', err);
+						console.error('Error fetching chapter for feedback page:', err);
 					}
 				}
 			} catch (error) {

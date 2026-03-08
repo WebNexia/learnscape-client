@@ -997,7 +997,7 @@ const AdminCourseEditPage = () => {
 												}}
 											/>
 
-											<CustomDialogActions onCancel={closeCreateChapterModal} />
+											<CustomDialogActions onCancel={closeCreateChapterModal} actionSx={{ margin: '0.5rem 0rem 0.5rem 0' }} />
 										</form>
 									</CustomDialog>
 

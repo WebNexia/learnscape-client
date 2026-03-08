@@ -1,4 +1,9 @@
 import { Box, Container, Typography, Button, Rating, FormLabel, Alert, CircularProgress, Paper, Divider } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/tr';
 import { useContext, useEffect, useState, useRef, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { feedbackFormsService } from '../services/feedbackFormsService';
@@ -792,7 +797,7 @@ const PublicFeedbackFormPage = () => {
 
 			case 'date':
 				return (
-					<>
+					<Box sx={{ mb: '1.5rem' }}>
 						<FormLabel
 							required={isRequired}
 							sx={{
@@ -805,59 +810,50 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<CustomTextField
-							key={field.fieldId}
-							fullWidth
-							placeholder={field.placeholder}
-							required={isRequired}
-							type='date'
-							value={value || ''}
-							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
-							disableSanitization={true}
-							InputLabelProps={{
-								shrink: true,
-							}}
-							variant='outlined'
-							sx={{
-								'mb': '1.5rem',
-								'& .MuiOutlinedInput-root': {
-									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-									'borderRadius': '12px',
-									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-									'&:hover': {
-										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+						<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="tr">
+							<DatePicker
+								label={field.placeholder || 'DD.MM.YYYY'}
+								format="DD.MM.YYYY"
+								value={value && dayjs(value).isValid() ? dayjs(value) : null}
+								onChange={(d) => handleFieldChange(field.fieldId, d ? d.format('YYYY-MM-DD') : '')}
+								slotProps={{
+									actionBar: { actions: ['clear', 'today'] },
+									textField: {
+										required: isRequired,
+										fullWidth: true,
+										sx: {
+											fontFamily: 'Varela Round',
+											'& .MuiOutlinedInput-root': {
+												backgroundColor: 'rgba(255, 255, 255, 0.95)',
+												borderRadius: '12px',
+												boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+												'& fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)', borderWidth: '2px' },
+												'&:hover fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)' },
+												'&.Mui-focused fieldset': { borderColor: 'rgba(102, 126, 234, 0.8)', borderWidth: '2px' },
+											},
+										},
 									},
-									'&.Mui-focused': {
-										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+									desktopPaper: {
+										sx: {
+											fontFamily: 'Varela Round',
+											'& .MuiPickersCalendarHeader-label': { fontFamily: 'Varela Round', fontWeight: 600 },
+											'& .MuiDayCalendar-weekDayLabel': { fontFamily: 'Varela Round' },
+											'& .MuiPickersDay-root': { fontFamily: 'Varela Round' },
+											'& .MuiPickersDay-root.Mui-selected': {
+												backgroundColor: '#FF6B3D',
+												'&:hover': { backgroundColor: '#ff7d55' },
+											},
+											'& .MuiPickersDay-root:not(.Mui-selected):hover': {
+												backgroundColor: 'rgba(255, 107, 61, 0.12)',
+											},
+											'& .MuiPickersLayout-actionBar .MuiButton-root': { fontFamily: 'Varela Round', color: '#FF6B3D' },
+										},
 									},
-									'& fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.3)',
-										borderWidth: '2px',
-									},
-									'&:hover fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.3)',
-									},
-									'&.Mui-focused fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.8)',
-										borderWidth: '2px',
-									},
-								},
-								'& .MuiInputLabel-root': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									fontSize: '0.95rem',
-								},
-								'& .MuiInputBase-input': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-									fontSize: '0.95rem',
-									padding: '14px 16px',
-								},
-								'& .MuiInputBase-input::placeholder': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									opacity: 0.6,
-								},
-							}}
-						/>
-					</>
+								}}
+								sx={{ '& .MuiInputBase-root': { fontFamily: 'Varela Round' } }}
+							/>
+						</LocalizationProvider>
+					</Box>
 				);
 
 			default:

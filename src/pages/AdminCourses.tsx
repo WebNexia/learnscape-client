@@ -5,7 +5,7 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy, Info, Visibility, Person } from '@mui/icons-material';
+import { Delete, Edit, Event, FileCopy, Info, Visibility, Person } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -28,6 +28,7 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
 import CreateCourseDialog from '../components/forms/newCourse/CreateCourseDialog';
 import CloneCourseDialog from '../components/layouts/courses/CloneCourseDialog';
+import CreateCohortDialog from '../components/layouts/courses/CreateCohortDialog';
 import { useAuth } from '../hooks/useAuth';
 
 const AdminCourses = () => {
@@ -137,6 +138,9 @@ const AdminCourses = () => {
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
 	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+	const [isCreateCohortModalOpen, setIsCreateCohortModalOpen] = useState<boolean[]>([]);
+	const [isCreatingCohort, setIsCreatingCohort] = useState<boolean>(false);
+	const [isCourseCohortCreated, setIsCourseCohortCreated] = useState<boolean>(false);
 
 	// Snackbar states for delete operation
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -154,6 +158,7 @@ const AdminCourses = () => {
 			prevLengthRef.current = paginatedCourses.length;
 			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
 			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
+			setIsCreateCohortModalOpen(Array(paginatedCourses.length).fill(false));
 		}
 	}, [displayCourses, coursesPageNumber]);
 
@@ -188,6 +193,18 @@ const AdminCourses = () => {
 		const updatedState = [...isCourseCloneModalOpen];
 		updatedState[index] = false;
 		setIsCourseCloneModalOpen(updatedState);
+	};
+
+	const openCreateCohortModal = (index: number) => {
+		const updatedState = [...isCreateCohortModalOpen];
+		updatedState[index] = true;
+		setIsCreateCohortModalOpen(updatedState);
+	};
+
+	const closeCreateCohortModal = (index: number) => {
+		const updatedState = [...isCreateCohortModalOpen];
+		updatedState[index] = false;
+		setIsCreateCohortModalOpen(updatedState);
 	};
 
 	const openDeleteCourseModal = (index: number) => {
@@ -255,6 +272,58 @@ const AdminCourses = () => {
 			setSnackbarOpen(true);
 		} finally {
 			setIsCloning(false);
+		}
+	};
+
+	const handleCreateCohort = async (
+		courseId: string,
+		index: number,
+		payload: { startingDate: string; title?: string },
+	) => {
+		setIsCreatingCohort(true);
+		try {
+			const response = await axios.post(
+				`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}/cohort`,
+				payload,
+			);
+			closeCreateCohortModal(index);
+
+			addNewCourse({
+				_id: response.data.cohortCourse._id,
+				title: response.data.cohortCourse.title,
+				startingDate: response.data.cohortCourse.startingDate,
+				instructor: response.data.cohortCourse.instructor,
+				cohortOfCourseId: response.data.cohortCourse.cohortOfCourseId,
+				courseManagement: response.data.cohortCourse.courseManagement,
+				isActive: response.data.cohortCourse.isActive,
+				createdAt: response.data.cohortCourse.createdAt,
+				updatedAt: response.data.cohortCourse.updatedAt,
+				createdBy: response.data.cohortCourse.createdBy,
+				updatedBy: response.data.cohortCourse.updatedBy,
+				createdByName: response.data.cohortCourse.createdByName,
+				updatedByName: response.data.cohortCourse.updatedByName,
+				createdByImageUrl: response.data.cohortCourse.createdByImageUrl,
+				updatedByImageUrl: response.data.cohortCourse.updatedByImageUrl,
+				createdByRole: response.data.cohortCourse.createdByRole,
+				updatedByRole: response.data.cohortCourse.updatedByRole,
+			} as unknown as SingleCourse);
+
+			setIsCourseCohortCreated(true);
+		} catch (error: any) {
+			console.error('Create cohort error:', error);
+			let errorMessage = 'Failed to create cohort. Please try again.';
+			if (error.response?.status === 400) {
+				errorMessage = error.response.data?.message || 'Invalid data. Please check the starting date.';
+			} else if (error.response?.status === 403) {
+				errorMessage = 'You do not have permission to create a cohort for this course.';
+			} else if (error.response?.status === 404) {
+				errorMessage = 'Course not found. It may have been deleted.';
+			}
+			setSnackbarMessage(errorMessage);
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
+		} finally {
+			setIsCreatingCohort(false);
 		}
 	};
 
@@ -464,29 +533,29 @@ const AdminCourses = () => {
 							columns={
 								isMobileSize
 									? [
-											{ key: 'title', label: 'Title' },
-											{ key: 'isActive', label: 'Status' },
-											{ key: 'startingDate', label: 'Start' },
-											{ key: 'actions', label: 'Actions' },
-										]
+										{ key: 'title', label: 'Title' },
+										{ key: 'isActive', label: 'Status' },
+										{ key: 'startingDate', label: 'Start' },
+										{ key: 'actions', label: 'Actions' },
+									]
 									: isInstructor
 										? [
-												{ key: 'isExternal', label: 'Type' },
-												{ key: 'title', label: 'Title' },
-												{ key: 'isActive', label: 'Status' },
-												{ key: 'startingDate', label: 'Starting Date' },
-												{ key: 'updatedAt', label: 'Updated On' },
-												{ key: 'actions', label: 'Actions' },
-											]
+											{ key: 'isExternal', label: 'Type' },
+											{ key: 'title', label: 'Title' },
+											{ key: 'isActive', label: 'Status' },
+											{ key: 'startingDate', label: 'Starting Date' },
+											{ key: 'updatedAt', label: 'Updated On' },
+											{ key: 'actions', label: 'Actions' },
+										]
 										: [
-												{ key: 'isExternal', label: 'Type' },
-												{ key: 'title', label: 'Title' },
-												{ key: 'isActive', label: 'Status' },
-												{ key: 'instructor.name', label: 'Instructor' },
-												{ key: 'startingDate', label: 'Starting Date' },
-												{ key: 'updatedAt', label: 'Updated On' },
-												{ key: 'actions', label: 'Actions' },
-											]
+											{ key: 'isExternal', label: 'Type' },
+											{ key: 'title', label: 'Title' },
+											{ key: 'isActive', label: 'Status' },
+											{ key: 'instructor.name', label: 'Instructor' },
+											{ key: 'startingDate', label: 'Starting Date' },
+											{ key: 'updatedAt', label: 'Updated On' },
+											{ key: 'actions', label: 'Actions' },
+										]
 							}
 						/>
 						<TableBody>
@@ -515,11 +584,21 @@ const AdminCourses = () => {
 												sx={{
 													textAlign: 'center',
 												}}>
-												<CustomActionBtn
+												{/* <CustomActionBtn
 													title='Clone'
 													onClick={() => openCloneCourseModal(index)}
 													icon={
 														<FileCopy
+															fontSize='small'
+															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
+														/>
+													}
+												/> */}
+												<CustomActionBtn
+													title='New cohort'
+													onClick={() => openCreateCohortModal(index)}
+													icon={
+														<Event
 															fontSize='small'
 															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
 														/>
@@ -615,6 +694,14 @@ const AdminCourses = () => {
 													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 
+												<CreateCohortDialog
+													isCourseCreateCohortModalOpen={isCreateCohortModalOpen}
+													index={index}
+													closeCreateCohortModal={closeCreateCohortModal}
+													isCreatingCohort={isCreatingCohort}
+													handleCreateCohort={handleCreateCohort}
+													course={course}
+												/>
 												<CoursesInfoModal
 													singleCourse={course}
 													isCourseInfoDialogOpen={isCourseInfoModalOpen[index]}
@@ -704,6 +791,24 @@ const AdminCourses = () => {
 															fontSize: isMobileSize ? '0.75rem' : undefined,
 														}}>
 														Course is cloned successfully!
+													</Alert>
+												</Snackbar>
+
+												<Snackbar
+													open={isCourseCohortCreated}
+													autoHideDuration={2500}
+													anchorOrigin={{ vertical, horizontal }}
+													sx={{ mt: '5rem' }}
+													onClose={() => setIsCourseCohortCreated(false)}>
+													<Alert
+														severity='success'
+														variant='filled'
+														sx={{
+															width: isMobileSize ? '60%' : '100%',
+															color: theme.textColor?.common.main,
+															fontSize: isMobileSize ? '0.75rem' : undefined,
+														}}>
+														Cohort created successfully!
 													</Alert>
 												</Snackbar>
 
