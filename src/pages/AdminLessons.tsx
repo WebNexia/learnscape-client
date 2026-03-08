@@ -36,28 +36,28 @@ const AdminLessons = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
+				{ key: 'type', label: 'Type' },
+				{ key: 'title', label: 'Title' },
+				{ key: 'isActive', label: 'Status' },
+				{ key: 'actions', label: 'Actions' },
+			]
+			: isInstructor
+				? [
 					{ key: 'type', label: 'Type' },
 					{ key: 'title', label: 'Title' },
 					{ key: 'isActive', label: 'Status' },
+					{ key: 'createdAt', label: 'Created On' },
+					{ key: 'updatedAt', label: 'Updated On' },
 					{ key: 'actions', label: 'Actions' },
 				]
-			: isInstructor
-				? [
-						{ key: 'type', label: 'Type' },
-						{ key: 'title', label: 'Title' },
-						{ key: 'isActive', label: 'Status' },
-						{ key: 'createdAt', label: 'Created On' },
-						{ key: 'updatedAt', label: 'Updated On' },
-						{ key: 'actions', label: 'Actions' },
-					]
 				: [
-						{ key: 'type', label: 'Type' },
-						{ key: 'title', label: 'Title' },
-						{ key: 'isActive', label: 'Status' },
-						{ key: 'createdByName', label: 'Created By' },
-						{ key: 'updatedAt', label: 'Updated On' },
-						{ key: 'actions', label: 'Actions' },
-					];
+					{ key: 'type', label: 'Type' },
+					{ key: 'title', label: 'Title' },
+					{ key: 'isActive', label: 'Status' },
+					{ key: 'createdByName', label: 'Created By' },
+					{ key: 'updatedAt', label: 'Updated On' },
+					{ key: 'actions', label: 'Actions' },
+				];
 	};
 
 	const { lessons, loading, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, enableLessonsFetch, setLessonsPageNumber } =

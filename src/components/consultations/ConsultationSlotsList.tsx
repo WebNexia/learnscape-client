@@ -6,8 +6,6 @@ import {
 	TableCell,
 	TableHead,
 	TableRow,
-	IconButton,
-	Tooltip,
 	Chip,
 	FormControl,
 	MenuItem,
@@ -82,13 +80,6 @@ const ConsultationSlotsList = ({
 
 	const isSlotBooked = (slot: ConsultationSlot) => {
 		return !!slot.appointmentRef;
-	};
-
-	const getAppointmentInfo = (slot: ConsultationSlot) => {
-		if (!slot.appointmentRef || typeof slot.appointmentRef === 'string') {
-			return null;
-		}
-		return slot.appointmentRef;
 	};
 
 	const sectionSx = {
@@ -169,7 +160,6 @@ const ConsultationSlotsList = ({
 						<TableBody>
 							{filteredSlots.map((slot) => {
 								const isBooked = isSlotBooked(slot);
-								const appointment = getAppointmentInfo(slot);
 
 								return (
 									<TableRow key={slot._id} hover>
@@ -199,37 +189,26 @@ const ConsultationSlotsList = ({
 													color: isBooked ? theme.palette.text.secondary : theme.palette.success.main,
 												}}
 											/>
-											{appointment && (
-												<Tooltip
-													title={`Booked by: ${appointment.guestName || appointment.guestEmail || 'Guest'}`}
-													arrow>
-													<IconButton size='small' sx={{ ml: '0.5rem', padding: '0.25rem' }}>
-														<Visibility fontSize='small' />
-													</IconButton>
-												</Tooltip>
-											)}
 										</TableCell>
 										<TableCell>
 											<Box sx={{ display: 'flex', gap: '0.5rem' }}>
-												{!isBooked && (
-													<>
-														<CustomActionBtn
-															title='Edit'
-															onClick={() => onEdit(slot)}
-															icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														/>
-														<CustomActionBtn
-															title='Delete'
-															onClick={() => onDelete(slot._id)}
-															icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														/>
-													</>
-												)}
+												<CustomActionBtn
+													title='Edit'
+													onClick={() => onEdit(slot)}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
 												{isBooked && onViewAppointment && (
 													<CustomActionBtn
-														title='View Appointment'
+														title='View'
 														onClick={() => onViewAppointment(slot)}
 														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+												)}
+												{!isBooked && (
+													<CustomActionBtn
+														title='Delete'
+														onClick={() => onDelete(slot._id)}
+														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 												)}
 											</Box>

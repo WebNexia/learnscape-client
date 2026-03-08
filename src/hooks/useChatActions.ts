@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { doc, collection, writeBatch, arrayUnion, arrayRemove, getDocs, getDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
+import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
 import { User } from '../interfaces/user';
 import { Chat, Message } from '../pages/Messages';
 
@@ -332,15 +333,18 @@ export const useChatActions = ({
 				const chatRef = doc(db, 'chats', chatId);
 				const messagesRef = collection(db, 'chats', chatId, 'messages');
 
-				const batch = writeBatch(db);
-
-				// ✅ Delete all messages (get ONLY doc refs — no heavy data read)
 				const messagesSnapshot = await getDocs(messagesRef);
+				// Collect image/video URLs and delete from Firebase Storage before removing Firestore docs
+				const urls: string[] = [];
 				messagesSnapshot.forEach((msgDoc) => {
-					batch.delete(msgDoc.ref); // ✅ delete message ref
+					const data = msgDoc.data() || {};
+					if (data.imageUrl && typeof data.imageUrl === 'string') urls.push(data.imageUrl);
+					if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
 				});
+				if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
 
-				// ✅ Delete the chat itself
+				const batch = writeBatch(db);
+				messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
 				batch.delete(chatRef);
 
 				await batch.commit(); // ✅ ONE atomic write — deletes EVERYTHING
@@ -430,10 +434,18 @@ export const useChatActions = ({
 				// ✅ CASE 1: LAST active user → MUST DELETE ALL MESSAGES FIRST (rule-safe)
 				if (activeAfter.length === 0) {
 					const messagesSnapshot = await getDocs(messagesRef);
-					const batch = writeBatch(db);
+					// Delete uploaded files from Firebase Storage before removing Firestore docs
+					const urls: string[] = [];
+					messagesSnapshot.forEach((msgDoc) => {
+						const data = msgDoc.data() || {};
+						if (data.imageUrl && typeof data.imageUrl === 'string') urls.push(data.imageUrl);
+						if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
+					});
+					if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
 
-					messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref)); // delete ALL messages
-					batch.delete(chatRef); // then delete chat itself AFTER messages
+					const batch = writeBatch(db);
+					messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
+					batch.delete(chatRef);
 
 					await batch.commit();
 				} else {

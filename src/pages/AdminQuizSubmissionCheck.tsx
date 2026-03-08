@@ -60,6 +60,7 @@ const AdminQuizSubmissionCheck = () => {
 	const [username, setUsername] = useState<string>('');
 	const [quizName, setQuizName] = useState<string>('');
 	const [courseName, setCourseName] = useState<string>('');
+	const [chapterName, setChapterName] = useState<string>('');
 	const [studentFirebaseId, setStudentFirebaseId] = useState<string>('');
 	const [userResponseData, setUserResponseData] = useState<any>([]);
 	const [userResponseToFeedback, setUserResponseToFeedback] = useState<any>(null);
@@ -90,6 +91,19 @@ const AdminQuizSubmissionCheck = () => {
 				setQuizName(userCourseQuizData[0].lessonId.title);
 				setCourseName(userCourseQuizData[0].courseId.title);
 				setUserResponseToFeedback(userCourseQuizData[0]);
+				const courseId = userCourseQuizData[0].courseId?._id ?? userCourseQuizData[0].courseId;
+				const lessonIdForChapter = lessonId ?? userCourseQuizData[0].lessonId?._id ?? userCourseQuizData[0].lessonId;
+				if (courseId && lessonIdForChapter) {
+					try {
+						const chapterRes = await axios.get(
+							`${base_url}/courses/${courseId}/chapter-for-lesson/${lessonIdForChapter}`
+						);
+						const name = chapterRes.data?.data?.chapterName ?? '';
+						setChapterName(name);
+					} catch (err) {
+						console.error('Error fetching chapter name:', err);
+					}
+				}
 				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
 				setManualScore(userCourseQuizData[0]?.pointsEarned);
 
@@ -311,6 +325,7 @@ const AdminQuizSubmissionCheck = () => {
 				{[
 					{ label: 'Username', value: username },
 					{ label: isMobileSize ? 'Quiz' : 'Quiz Name', value: quizName },
+					{ label: isMobileSize ? 'Chapter' : 'Chapter Name', value: chapterName || '—' },
 					{ label: isMobileSize ? 'Course' : 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
 				]?.map(({ label, value }, index) => (
@@ -613,7 +628,7 @@ const AdminQuizSubmissionCheck = () => {
 							</Typography>
 							<Box sx={{ width: '100%', marginTop: '1rem' }}>
 								{!userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
-									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} maxRecordTime={300000} />
 								) : (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
 										<Box sx={{ flex: 9, mt: '0.5rem' }}>

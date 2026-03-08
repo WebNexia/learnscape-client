@@ -321,14 +321,14 @@ const ChatHeader = ({
 
 					<Box component='ul' sx={{ pl: 5, m: 0 }}>
 						<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-							Messages older than 21 days will be automatically deleted
+							Messages older than 30 days will be automatically deleted
 						</Typography>
 
 						<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 							You can download chat history before it gets deleted
 						</Typography>
 						<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-							Recent messages (within 21 days) will always be available
+							Recent messages (within 30 days) will always be available
 						</Typography>
 					</Box>
 				</DialogContent>

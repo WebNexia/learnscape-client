@@ -72,10 +72,11 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 			],
 		},
 		{
-			title: 'Course/Document Information',
+			title: 'Course/Document/Consultation Information',
 			details: [
 				{ label: 'Course', value: payment.courseTitle },
 				{ label: 'Document', value: payment.documentName },
+				{ label: 'Consultation', value: payment.consultationTitle },
 			],
 		},
 		{

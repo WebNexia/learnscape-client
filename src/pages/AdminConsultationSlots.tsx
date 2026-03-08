@@ -20,6 +20,7 @@ import { Consultation, ConsultationSlot } from '../interfaces/consultation';
 import SlotStatistics from '../components/consultations/SlotStatistics';
 import ConsultationSlotsList from '../components/consultations/ConsultationSlotsList';
 import ConsultationSlotsCalendar from '../components/consultations/ConsultationSlotsCalendar';
+import SlotBookingsDialog from '../components/consultations/SlotBookingsDialog';
 import CreateConsultationSlotDialog from '../components/consultations/CreateConsultationSlotDialog';
 import BulkSlotCreationDialog from '../components/consultations/BulkSlotCreationDialog';
 import { exportSlotsToCSV } from '../utils/exportSlots';
@@ -61,6 +62,8 @@ const AdminConsultationSlots = () => {
 	const [isDeletingUnbooked, setIsDeletingUnbooked] = useState<boolean>(false);
 	type DeleteUnbookedOption = 'my' | 'all' | 'my_days' | 'all_days';
 	const [deleteUnbookedOption, setDeleteUnbookedOption] = useState<DeleteUnbookedOption>('my');
+	const [slotForBookingsView, setSlotForBookingsView] = useState<ConsultationSlot | null>(null);
+	const [isSlotBookingsDialogOpen, setIsSlotBookingsDialogOpen] = useState<boolean>(false);
 
 	// Fetch consultation data
 	useEffect(() => {
@@ -219,10 +222,8 @@ const AdminConsultationSlots = () => {
 							<ConsultationSlotsCalendar
 								slots={slots}
 								onSlotClick={(slot) => {
-									if (!slot.appointmentRef) {
-										setEditingSlot(slot);
-										setIsEditSlotDialogOpen(true);
-									}
+									setEditingSlot(slot);
+									setIsEditSlotDialogOpen(true);
 								}}
 							/>
 						) : (
@@ -235,6 +236,10 @@ const AdminConsultationSlots = () => {
 								onDelete={(slotId) => {
 									setSlotToDelete(slotId);
 									setIsDeleteSlotDialogOpen(true);
+								}}
+								onViewAppointment={(slot) => {
+									setSlotForBookingsView(slot);
+									setIsSlotBookingsDialogOpen(true);
 								}}
 								consultationDuration={consultation?.duration ?? 60}
 							/>
@@ -300,6 +305,16 @@ const AdminConsultationSlots = () => {
 					}}
 					consultation={consultation}
 					existingSlot={editingSlot}
+				/>
+
+				{/* Slot bookings dialog (who booked which consultant) */}
+				<SlotBookingsDialog
+					slot={slotForBookingsView}
+					open={isSlotBookingsDialogOpen}
+					onClose={() => {
+						setIsSlotBookingsDialogOpen(false);
+						setSlotForBookingsView(null);
+					}}
 				/>
 
 				{/* Bulk Slot Creation Dialog */}

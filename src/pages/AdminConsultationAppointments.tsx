@@ -8,13 +8,15 @@ import {
 	Alert,
 	DialogContent,
 	Typography,
+	CircularProgress,
+	Paper,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState, useCallback } from 'react';
-import { KeyboardBackspaceOutlined, Visibility, Delete } from '@mui/icons-material';
+import { KeyboardBackspaceOutlined, Visibility, Delete, Description, Person, Email, AccessTime, Star, StarBorder } from '@mui/icons-material';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axios from '../utils/axiosInstance';
@@ -57,6 +59,15 @@ const AdminConsultationAppointments = () => {
 	});
 	const [detailOpen, setDetailOpen] = useState(false);
 	const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
+	const [formDialogAppointmentId, setFormDialogAppointmentId] = useState<string | null>(null);
+	const [formDialogGuest, setFormDialogGuest] = useState<{ name?: string; email?: string }>({});
+	const [formSubmissionDetail, setFormSubmissionDetail] = useState<{
+		title: string;
+		fields: Array<{ fieldId: string; label: string; type: string; order: number }>;
+		responses: Array<{ fieldId: string; value: unknown }>;
+		submittedAt?: string;
+	} | null>(null);
+	const [formSubmissionLoading, setFormSubmissionLoading] = useState(false);
 	const [appointmentIdToDelete, setAppointmentIdToDelete] = useState<string | null>(null);
 	const [deleting, setDeleting] = useState(false);
 	const [orderBy, setOrderBy] = useState<string>('appointmentDate');
@@ -104,6 +115,45 @@ const AdminConsultationAppointments = () => {
 		fetchAppointments();
 	}, [fetchAppointments]);
 
+	useEffect(() => {
+		if (!formDialogAppointmentId) return;
+		setFormSubmissionLoading(true);
+		axios
+			.get(`${base_url}/consultations/appointments/${formDialogAppointmentId}/form-submissions`)
+			.then((subRes) => {
+				const list = subRes.data?.data;
+				if (!Array.isArray(list) || list.length === 0) {
+					setFormSubmissionDetail(null);
+					return;
+				}
+				const firstId = list[0]._id;
+				return axios.get(`${base_url}/feedback-forms/submissions/${firstId}`);
+			})
+			.then((detailRes) => {
+				if (!detailRes?.data?.data) return;
+				const data = detailRes.data.data;
+				const form = data.formId;
+				const title = (form && (typeof form === 'object' ? form.title : null)) || 'Form submission';
+				const fields = (form && typeof form === 'object' && Array.isArray(form.fields)) ? form.fields : [];
+				setFormSubmissionDetail({
+					title,
+					fields: fields.map((f: any) => ({ fieldId: f.fieldId, label: f.label, type: f.type || 'text', order: f.order ?? 0 })),
+					responses: Array.isArray(data.responses) ? data.responses : [],
+					submittedAt: data.submittedAt,
+				});
+			})
+			.catch(() => setFormSubmissionDetail(null))
+			.finally(() => setFormSubmissionLoading(false));
+	}, [formDialogAppointmentId]);
+
+	const formatSubmissionFieldValue = (field: { type: string }, value: unknown): string => {
+		if (value === undefined || value === null) return '—';
+		if (field.type === 'rating') return String(value);
+		if (field.type === 'checkbox') return Array.isArray(value) ? value.join(', ') : String(value);
+		if (field.type === 'date') return value ? new Date(value as string).toLocaleDateString() : '—';
+		return String(value);
+	};
+
 	const handlePageChange = (newPage: number) => {
 		setPage(newPage);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -136,6 +186,18 @@ const AdminConsultationAppointments = () => {
 		setSelectedAppointmentId(null);
 	};
 
+	const openFormDialog = (appointmentId: string, guestName?: string, guestEmail?: string) => {
+		setFormDialogAppointmentId(appointmentId);
+		setFormDialogGuest({ name: guestName, email: guestEmail });
+		setFormSubmissionDetail(null);
+	};
+
+	const closeFormDialog = () => {
+		setFormDialogAppointmentId(null);
+		setFormDialogGuest({});
+		setFormSubmissionDetail(null);
+	};
+
 	const onDetailUpdated = () => {
 		fetchAppointments();
 	};
@@ -164,14 +226,17 @@ const AdminConsultationAppointments = () => {
 		}
 	};
 
-	const getColumns = () => [
-		{ key: 'appointmentDate', label: 'Date & time' },
-		{ key: 'guestName', label: 'Guest' },
-		{ key: 'assignedConsultantId', label: 'Consultant' },
-		{ key: 'status', label: 'Status' },
-		{ key: 'payment', label: 'Payment' },
-		{ key: 'actions', label: 'Actions' },
-	];
+	const getColumns = () => {
+		const cols = [
+			{ key: 'appointmentDate', label: 'Date & time' },
+			{ key: 'guestName', label: 'Guest' },
+			{ key: 'assignedConsultantId', label: 'Consultant' },
+			{ key: 'status', label: 'Status' },
+			...(isMobileSize ? [] : [{ key: 'payment', label: 'Payment' }]),
+			{ key: 'actions', label: 'Actions' },
+		];
+		return cols;
+	};
 
 	const consultantDisplay = (apt: ConsultationAppointment) => {
 		const c = apt.assignedConsultantId;
@@ -330,18 +395,25 @@ const AdminConsultationAppointments = () => {
 											<CustomTableCell value={`${apt.guestName || '—'} ${apt.guestEmail ? `(${apt.guestEmail})` : ''}`.trim()} />
 											<CustomTableCell value={consultantDisplay(apt)} />
 											<CustomTableCell value={apt.status ? apt.status.charAt(0).toUpperCase() + apt.status.slice(1) : '—'} />
-											<CustomTableCell value={paymentDisplay(apt)} />
+											{!isMobileSize && <CustomTableCell value={paymentDisplay(apt)} />}
 											<TableCell sx={{ textAlign: 'center' }}>
-												<CustomActionBtn
-													title='View'
-													onClick={() => openDetail(apt._id)}
-													icon={<Visibility fontSize='small' />}
-												/>
-												<CustomActionBtn
-													title='Delete'
-													onClick={() => openDeleteConfirm(apt._id)}
-													icon={<Delete fontSize='small' />}
-												/>
+												<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.25 }}>
+													<CustomActionBtn
+														title='View'
+														onClick={() => openDetail(apt._id)}
+														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+													<CustomActionBtn
+														title='View Client Answers'
+														onClick={() => openFormDialog(apt._id, apt.guestName, apt.guestEmail)}
+														icon={<Description fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+													<CustomActionBtn
+														title='Delete'
+														onClick={() => openDeleteConfirm(apt._id)}
+														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+												</Box>
 											</TableCell>
 										</TableRow>
 									))}
@@ -366,6 +438,157 @@ const AdminConsultationAppointments = () => {
 						onClose={closeDetail}
 						onUpdated={onDetailUpdated}
 					/>
+
+					<CustomDialog
+						openModal={!!formDialogAppointmentId}
+						closeModal={closeFormDialog}
+						title='Client Answers'
+						maxWidth='sm'
+					>
+						<DialogContent sx={{ pt: 1 }}>
+							{formSubmissionLoading ? (
+								<Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+									<CircularProgress size={32} />
+								</Box>
+							) : formSubmissionDetail ? (
+								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+									{/* Submitter Information */}
+									<Paper
+										elevation={0}
+										sx={{
+											p: 2,
+											borderRadius: 1.5,
+											border: `1px solid ${theme.palette.divider}`,
+											backgroundColor: theme.bgColor?.secondary || theme.palette.grey[50],
+										}}
+									>
+										<Typography
+											variant='subtitle2'
+											sx={{
+												fontWeight: 700,
+												color: theme.palette.primary.main,
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+												mb: 1.5,
+											}}
+										>
+											Client Information
+										</Typography>
+										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+												<Person sx={{ fontSize: '1.1rem', color: theme.palette.text.secondary }} />
+												<Typography variant='body2' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+													Name:
+												</Typography>
+												<Typography variant='body2' sx={{ fontWeight: 500, color: theme.palette.primary.main, fontSize: isMobileSize ? '0.8rem' : '0.85rem' }}>
+													{formDialogGuest.name || '—'}
+												</Typography>
+											</Box>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+												<Email sx={{ fontSize: '1.1rem', color: theme.palette.text.secondary }} />
+												<Typography variant='body2' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+													Email:
+												</Typography>
+												<Typography variant='body2' sx={{ fontWeight: 500, color: theme.palette.primary.main, fontSize: isMobileSize ? '0.8rem' : '0.85rem' }}>
+													{formDialogGuest.email || '—'}
+												</Typography>
+											</Box>
+											{formSubmissionDetail.submittedAt && (
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+													<AccessTime sx={{ fontSize: '1.1rem', color: theme.palette.text.secondary }} />
+													<Typography variant='body2' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+														Submitted At:
+													</Typography>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.85rem' }}>
+														{dateTimeFormatter(formSubmissionDetail.submittedAt)}
+													</Typography>
+												</Box>
+											)}
+										</Box>
+									</Paper>
+
+									{/* Responses */}
+									<Box>
+										<Typography
+											variant='subtitle2'
+											sx={{
+												fontWeight: 700,
+												color: theme.palette.primary.main,
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+												mb: 1.25,
+											}}
+										>
+											Responses
+										</Typography>
+										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+											{[...formSubmissionDetail.fields]
+												.sort((a, b) => a.order - b.order)
+												.map((field) => {
+													const response = formSubmissionDetail.responses.find((r) => r.fieldId === field.fieldId);
+													const value = response?.value;
+													const isRating = field.type === 'rating';
+													const ratingNum = isRating ? Number(value) : 0;
+													const maxStars = 5;
+													return (
+														<Paper
+															key={field.fieldId}
+															elevation={0}
+															sx={{
+																p: 1.5,
+																borderRadius: 1.5,
+																border: `1px solid ${theme.palette.divider}`,
+																backgroundColor: theme.bgColor?.secondary || theme.palette.grey[50],
+															}}
+														>
+															<Typography
+																variant='body2'
+																sx={{
+																	mb: 0.75,
+																	fontSize: isMobileSize ? '0.75rem' : '0.8rem',
+																	fontWeight: 500,
+																	color: theme.palette.primary.main,
+																}}
+															>
+																{field.label}
+															</Typography>
+															{isRating ? (
+																<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+																	{Array.from({ length: maxStars }, (_, i) =>
+																		i < Math.floor(ratingNum) ? (
+																			<Star key={i} sx={{ fontSize: '1.25rem', color: '#ffc107' }} />
+																		) : (
+																			<StarBorder key={i} sx={{ fontSize: '1.25rem', color: theme.palette.text.secondary }} />
+																		)
+																	)}
+																	<Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.85rem', ml: 0.5 }}>
+																		{formatSubmissionFieldValue(field, value)}
+																	</Typography>
+																</Box>
+															) : (
+																<Typography
+																	variant='body2'
+																	sx={{
+																		fontSize: isMobileSize ? '0.85rem' : '0.9rem',
+																		color: theme.palette.text.primary,
+																		whiteSpace: 'pre-wrap',
+																	}}
+																>
+																	{formatSubmissionFieldValue(field, value)}
+																</Typography>
+															)}
+														</Paper>
+													);
+												})}
+										</Box>
+									</Box>
+								</Box>
+							) : (
+								<Typography variant='body2' color='text.secondary'>
+									{formDialogAppointmentId ? 'No form submission or could not load.' : ''}
+								</Typography>
+							)}
+						</DialogContent>
+						<CustomDialogActions onCancel={closeFormDialog} hideSubmit cancelBtnText='Close' actionSx={{ margin: '0.5rem 0.5rem 0rem 0rem' }} />
+					</CustomDialog>
 
 					<CustomDialog
 						openModal={!!appointmentIdToDelete}

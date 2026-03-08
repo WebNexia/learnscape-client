@@ -33,6 +33,7 @@ import { useUserBlocking } from '../hooks/useUserBlocking';
 import { useGroupChatManagement } from '../hooks/useGroupChatManagement';
 import { useChatNavigation } from '../hooks/useChatNavigation';
 import { useAuth } from '../hooks/useAuth';
+import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
 
 export interface Message {
 	id: string;
@@ -295,6 +296,15 @@ const Messages = () => {
 		if (!activeChat) return;
 
 		try {
+			// Delete uploaded image/video from Firebase Storage if present
+			const messageToDelete = messages?.find((m) => m.id === messageId);
+			if (messageToDelete) {
+				const urls = [messageToDelete.imageUrl, messageToDelete.videoUrl].filter(
+					(u): u is string => typeof u === 'string' && u.trim().length > 0
+				);
+				if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
+			}
+
 			const chatRef = doc(db, 'chats', activeChat.chatId);
 			const messageRef = doc(db, 'chats', activeChat.chatId, 'messages', messageId);
 

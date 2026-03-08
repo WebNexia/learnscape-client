@@ -102,6 +102,8 @@ const AdminQuizSubmissions = () => {
 	// For context data, use client-side pagination
 	const paginatedQuizSubmissions = sortedSubmissions;
 
+	console.log(paginatedQuizSubmissions)
+
 	// Enable admin quiz submissions fetching only once when component mounts
 	useEffect(() => {
 		enableAdminQuizSubmissionsFetch();
@@ -253,12 +255,13 @@ const AdminQuizSubmissions = () => {
 						<TableBody>
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-								<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '35%' : '25%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : '20%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '28%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '18%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '22%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
 								<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '10%' : '13%', padding: 0, border: 'none' }} />
 							</TableRow>
 						</TableBody>
 						<CustomTableHead<QuizSubmission>
@@ -268,6 +271,7 @@ const AdminQuizSubmissions = () => {
 							columns={[
 								{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
 								{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+								{ key: 'chapterName', label: isMobileSize ? 'Chapter' : 'Chapter Name' },
 								{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
 								{ key: 'score', label: 'Score' },
 								{ key: 'isChecked', label: 'Status' },
@@ -292,6 +296,7 @@ const AdminQuizSubmissions = () => {
 										<TableRow key={submission._id} hover>
 											<CustomTableCell value={submission.userName} />
 											<CustomTableCell value={submission.lessonName} />
+											<CustomTableCell value={submission.chapterName ?? '—'} />
 											<CustomTableCell value={submission.courseName} />
 											<TableCell sx={{ textAlign: 'center' }}>
 												{(() => {

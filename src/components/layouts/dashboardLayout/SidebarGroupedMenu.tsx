@@ -56,9 +56,14 @@ const SidebarGroupedMenu = ({
 	};
 
 	const handleMainClick = () => {
-		// Navigate to main path
-		onNavigate(mainPath);
-		setIsSubMenuOpen(false);
+		if (isMobileSize) {
+			// On mobile: tap opens/closes submenu instead of navigating
+			setIsSubMenuOpen((prev) => !prev);
+		} else {
+			// On desktop: click navigates to main path
+			onNavigate(mainPath);
+			setIsSubMenuOpen(false);
+		}
 	};
 
 	const handleSubItemClick = (path: string) => {
@@ -71,7 +76,8 @@ const SidebarGroupedMenu = ({
 	};
 
 	const handleOpenSubMenu = () => {
-		setIsSubMenuOpen(true);
+		// On mobile, submenu is opened by tap only (handleMainClick toggle)
+		if (!isMobileSize) setIsSubMenuOpen(true);
 	};
 
 	const handleCloseSubMenu = () => {
@@ -145,7 +151,7 @@ const SidebarGroupedMenu = ({
 							minWidth: '10rem',
 							padding: '0.5rem 0',
 							borderRadius: '0.5rem',
-							marginLeft: '0.5rem',
+							marginLeft: '0rem',
 						}}>
 						<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 							{subMenuItems.map((item, index) => (

@@ -82,6 +82,12 @@ export default function LandingPageCart() {
 	const [kaynaklarExpanded, setKaynaklarExpanded] = useState(true);
 	const [danismanliklarExpanded, setDanismanliklarExpanded] = useState(true);
 
+	useEffect(() => {
+		if (error) {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	}, [error]);
+
 	const handlePayAll = async () => {
 		setError(null);
 		const firstName = checkoutGuestFirstName.trim();
@@ -209,7 +215,7 @@ export default function LandingPageCart() {
 		setCartPaymentOpen(false);
 		setPaymentQueue([]);
 		setConsultationAppointmentIds([]);
-		setSuccessMessage('Ödemeniz başarıyla tamamlandı. Kaynaklar ve randevu onayları e-posta ile gönderilecektir.');
+		setSuccessMessage('Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin; kaynaklar ve randevu onayları e-posta ile gönderilir.');
 		setSuccessSnack(true);
 	};
 
@@ -289,6 +295,34 @@ export default function LandingPageCart() {
 						</Box>
 					</LandingPageLayout>
 				</Box>
+			<CartPaymentDialogWrapper
+				open={cartPaymentOpen}
+				onClose={() => { setCartPaymentOpen(false); setPaymentQueue([]); }}
+				queue={paymentQueue}
+				firstName={checkoutGuestFirstName.trim()}
+				lastName={checkoutGuestLastName.trim()}
+				email={checkoutGuestEmail.trim()}
+				onSuccess={handleCartPaymentSuccess}
+			/>
+			<Snackbar
+				open={successSnack}
+				autoHideDuration={6000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				sx={{ mt: '4rem' }}
+				onClose={() => setSuccessSnack(false)}>
+				<Alert
+					onClose={() => setSuccessSnack(false)}
+					severity="success"
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						backgroundColor: theme.bgColor?.greenSecondary,
+						color: theme.textColor?.common.main,
+						'& .MuiAlert-icon': { color: 'white' },
+					}}>
+					{successMessage}
+				</Alert>
+			</Snackbar>
 			</Box>
 		);
 	}
@@ -779,12 +813,23 @@ export default function LandingPageCart() {
 
 			<Snackbar
 				open={successSnack}
-				autoHideDuration={4000}
-				onClose={() => setSuccessSnack(false)}
-				message={successMessage}
-				anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-				ContentProps={{ sx: { fontFamily: 'Varela Round' } }}
-			/>
+				autoHideDuration={6000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				sx={{ mt: '4rem' }}
+				onClose={() => setSuccessSnack(false)}>
+				<Alert
+					onClose={() => setSuccessSnack(false)}
+					severity="success"
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						backgroundColor: theme.bgColor?.greenSecondary,
+						color: theme.textColor?.common.main,
+						'& .MuiAlert-icon': { color: 'white' },
+					}}>
+					{successMessage}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

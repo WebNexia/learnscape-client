@@ -146,14 +146,39 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 										value=''
 										displayEmpty
 										renderValue={() => `${usageInfo.courses.length} course(s)`}
-										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+										MenuProps={{
+											PaperProps: {
+												sx: { maxWidth: 'min(100vw - 32px, 400px)', width: '100%' },
+											},
+											sx: { '& .MuiList-root': { width: '100%' } },
+										}}>
 										{usageInfo.courses?.map((course) => (
 											<MenuItem
 												key={course.id}
 												value={course.id}
-												sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}
+												sx={{
+													fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+													whiteSpace: 'normal',
+													overflow: 'visible',
+													width: '100%',
+													boxSizing: 'border-box',
+												}}
 												onClick={() => handleCourseSelect(course.id)}>
-												{course.title}
+												<Box sx={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
+													<Typography component='span' sx={{ fontSize: 'inherit' }}>
+														{course.title}
+													</Typography>
+													{course.chapters && course.chapters.length > 0 && (
+														<Typography
+															component='div'
+															variant='caption'
+															color='text.secondary'
+															sx={{ display: 'block', whiteSpace: 'normal', wordBreak: 'break-word', fontSize: '0.8em', mt: 0.25 }}>
+															Chapters: {course.chapters.map((ch) => ch.title).join(', ')}
+														</Typography>
+													)}
+												</Box>
 											</MenuItem>
 										))}
 									</Select>

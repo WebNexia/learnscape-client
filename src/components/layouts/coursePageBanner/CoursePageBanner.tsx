@@ -147,6 +147,12 @@ const CoursePageBanner = ({
 	const handleEnroll = async () => {
 		if (isProcessing) return; // Prevent multiple clicks
 
+		// From LP course page: go to dedicated payment page (Header & Footer visible)
+		if (fromHomePage) {
+			navigate(`/landing-page-course/${encodeURIComponent(course?.title ?? '')}/${course?._id}/payment`);
+			return;
+		}
+
 		if (isCourseFree && !fromHomePage) {
 			setIsProcessing(true);
 			try {
@@ -304,6 +310,7 @@ const CoursePageBanner = ({
 				!course.isExpired &&
 				!isManuallyClosed &&
 				!isCapacityFull &&
+				!(fromHomePage && isCourseFree) &&
 				(isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
 					<CustomSubmitButton
 						variant='contained'
