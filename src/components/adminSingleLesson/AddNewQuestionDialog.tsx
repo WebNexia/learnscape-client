@@ -126,8 +126,8 @@ const AddNewQuestionDialog = ({
 			bValue = bValue.toLowerCase();
 		}
 
-		if (aValue < bValue) return order === 'asc' ? -1 : 1;
-		if (aValue > bValue) return order === 'asc' ? 1 : -1;
+		if (aValue && bValue && aValue < bValue) return order === 'asc' ? -1 : 1;
+		if (aValue && bValue && aValue > bValue) return order === 'asc' ? 1 : -1;
 		return 0;
 	});
 
