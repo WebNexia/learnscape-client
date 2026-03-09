@@ -298,14 +298,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										onClick={() => navigateWithPage(PageName.COURSES, `/courses`)}
 										active={selectedPage === PageName.COURSES}
 									/>
-
 									<SidebarBtn
 										btnText='Submissions'
 										IconName={LibraryAddCheck}
 										onClick={() => navigateWithPage(PageName.SUBMISSIONS, `/submissions`)}
 										active={selectedPage === PageName.SUBMISSIONS}
 									/>
-
 									<SidebarBtn
 										btnText='Calendar'
 										IconName={CalendarMonth}
@@ -326,16 +324,16 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										active={selectedPage === PageName.COMMUNITY}
 									/>
 									<SidebarBtn
-										btnText='Settings'
-										IconName={Settings}
-										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings`)}
-										active={selectedPage === PageName.SETTINGS}
-									/>
-									<SidebarBtn
 										btnText='Resources'
 										IconName={Folder}
 										onClick={() => navigateWithPage('Resources', `/resources`)}
 										active={window.location.pathname?.includes('/resources')}
+									/>
+									<SidebarBtn
+										btnText='Settings'
+										IconName={Settings}
+										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings`)}
+										active={selectedPage === PageName.SETTINGS}
 									/>
 								</>
 							)}
@@ -409,6 +407,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Folder}
 										onClick={() => navigateWithPage('Resources', `/instructor/resources`)}
 										active={window.location.pathname?.includes('/instructor/resources')}
+									/>
+									<SidebarBtn
+										btnText='Settings'
+										IconName={Settings}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_SETTINGS, `/instructor/settings`)}
+										active={selectedPage === PageName.INSTRUCTOR_SETTINGS || window.location.pathname?.includes('/instructor/settings')}
 									/>
 								</>
 							)}

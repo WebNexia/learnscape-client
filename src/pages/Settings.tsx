@@ -1,4 +1,4 @@
-import { Alert, Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Link, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useState, useEffect } from 'react';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
@@ -7,7 +7,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged, verifyBeforeUpdateEmail } from 'firebase/auth';
 import theme from '../themes';
-import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Info, SupportAgent, Visibility, VisibilityOff } from '@mui/icons-material';
 import { PasswordUpdateErrorMessages, Roles, TextFieldTypes } from '../interfaces/enums';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -15,7 +15,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { FirebaseError } from 'firebase/app';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { PhoneInput } from 'react-international-phone';
@@ -570,6 +570,40 @@ const Settings = () => {
 								Update Profile
 							</CustomSubmitButton>
 						</Box>
+						{user?.role === Roles.USER && (
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'flex-start',
+									gap: '0.5rem',
+									width: '90%',
+									mt: '3rem',
+									color: theme.textColor?.secondary.main,
+								}}>
+								<SupportAgent sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', mt: '0.15rem' }} color='error' />
+								<Typography
+									sx={{
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										lineHeight: 1.7,
+										color: theme.textColor?.secondary.main,
+									}}>
+									To request deletion of your account and learning data, please contact the organisation administrator or use our{' '}
+									<Link
+										component={RouterLink}
+										to='/contact-us'
+										underline='always'
+										rel='noopener noreferrer'
+										target='_blank'
+										sx={{
+											fontSize: 'inherit',
+											color: theme.palette.primary.main,
+										}}>
+										Contact page
+									</Link>
+									.
+								</Typography>
+							</Box>
+						)}
 						<Snackbar
 							open={isProfileUpdatedMsgDisplayed}
 							autoHideDuration={3000}

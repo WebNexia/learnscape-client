@@ -23,7 +23,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
-import { Cancel, InfoOutlined } from '@mui/icons-material';
+import { Cancel, InfoOutlined, ContentCopy } from '@mui/icons-material';
 import { User } from '../../../interfaces/user';
 import { useContext, useState, useRef, useEffect } from 'react';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
@@ -103,6 +103,7 @@ const EditEventDialog = ({
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [isStartingMeeting, setIsStartingMeeting] = useState<boolean>(false);
+	const [copyStartLinkSuccess, setCopyStartLinkSuccess] = useState<boolean>(false);
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
@@ -220,7 +221,7 @@ const EditEventDialog = ({
 		setSelectedCourseGroups((prev) => {
 			// Remove existing selections for this course
 			const otherCourses = prev.filter((item) => item.courseId !== selectedCourse._id);
-			
+
 			if (groupName === null) {
 				// Main course selected - remove all groups for this course, add main course
 				return [...otherCourses, { courseId: selectedCourse._id, groupName: null }];
@@ -487,7 +488,7 @@ const EditEventDialog = ({
 				Array.from(coursesMap.entries()).map(async ([courseId, groupNames]) => {
 					// If groupNames includes null, it means main course is selected (all groups)
 					const hasMainCourse = groupNames.includes(null);
-					
+
 					if (hasMainCourse) {
 						// Main course selected → all course (no groupNames parameter)
 						try {
@@ -536,7 +537,7 @@ const EditEventDialog = ({
 
 		try {
 			const uniqueAllAttendeesIds = [...new Set(allParticipantsIds)];
-			
+
 			// Convert selectedCourseGroups to courseGroupNames format
 			const courseGroupNames = selectedCourseGroups.reduce((acc, item) => {
 				const existing = acc.find((c) => c.courseId === item.courseId);
@@ -558,19 +559,19 @@ const EditEventDialog = ({
 			if (isEventUpdated) {
 				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 
-			updateResponse = await axios.patch(endpoint, {
-				...selectedEvent,
-				attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
-				allAttendeesIds: uniqueAllAttendeesIds,
-				isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
-				isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
-				courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
-				type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
-				coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
-				// Clear eventLinkUrl if Zoom is selected
-				eventLinkUrl: selectedEvent?.isZoomMeeting ? '' : selectedEvent?.eventLinkUrl,
-				isZoomMeeting: selectedEvent?.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
-			});
+				updateResponse = await axios.patch(endpoint, {
+					...selectedEvent,
+					attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
+					allAttendeesIds: uniqueAllAttendeesIds,
+					isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
+					isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
+					courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
+					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+					// Clear eventLinkUrl if Zoom is selected
+					eventLinkUrl: selectedEvent?.isZoomMeeting ? '' : selectedEvent?.eventLinkUrl,
+					isZoomMeeting: selectedEvent?.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
+				});
 
 				// Backend now creates Zoom meeting automatically if isZoomMeeting is true
 				// Update local state with Zoom data from response if it exists
@@ -596,8 +597,8 @@ const EditEventDialog = ({
 				const updatedEventData = isEventUpdated && updateResponse?.data?.data ? updateResponse.data.data : selectedEvent;
 
 				// Use courseGroupNames from backend response if available, otherwise use local one
-				const finalCourseGroupNames = updatedEventData?.courseGroupNames !== undefined 
-					? updatedEventData.courseGroupNames 
+				const finalCourseGroupNames = updatedEventData?.courseGroupNames !== undefined
+					? updatedEventData.courseGroupNames
 					: (courseGroupNames.length > 0 ? courseGroupNames : undefined);
 
 				updateEvent({
@@ -1375,7 +1376,7 @@ const EditEventDialog = ({
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedCourseGroups.map((item, index) => {
 								const course = courses?.find((course) => course._id === item.courseId);
-								const displayText = item.groupName === null 
+								const displayText = item.groupName === null
 									? course?.title || 'Unknown Course'
 									: `${truncateText(course?.title || 'Unknown Course', 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
 								return (
@@ -1395,7 +1396,7 @@ const EditEventDialog = ({
 											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
-												setSelectedCourseGroups((prev) => 
+												setSelectedCourseGroups((prev) =>
 													prev.filter((p, i) => !(p.courseId === item.courseId && p.groupName === item.groupName && i === index))
 												);
 											}}>
@@ -1533,8 +1534,30 @@ const EditEventDialog = ({
 						(() => {
 							const hasZoomMeeting = !!(selectedEvent?.zoomMeetingId || selectedEvent?.zoomMeetingNumber || selectedEvent?.zoomJoinUrl);
 							if (hasZoomMeeting) {
+								const startUrlToCopy = selectedEvent?.zoomStartUrl || selectedEvent?.zoomJoinUrl;
 								return (
-									<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: '0.75rem' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: '0.75rem' }}>
+										{startUrlToCopy && (
+											<Tooltip title={copyStartLinkSuccess ? 'Copied!' : 'Copy start link (opens in Zoom app)'} arrow placement='top'>
+												<Button
+													variant='outlined'
+													size='small'
+													startIcon={<ContentCopy fontSize='small' />}
+													onClick={() => {
+														if (!startUrlToCopy) return;
+														navigator.clipboard.writeText(startUrlToCopy).then(() => {
+															setCopyStartLinkSuccess(true);
+															setTimeout(() => setCopyStartLinkSuccess(false), 2000);
+														});
+													}}
+													sx={{
+														textTransform: 'capitalize',
+														fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+													}}>
+													{copyStartLinkSuccess ? 'Copied' : 'Copy Link'}
+												</Button>
+											</Tooltip>
+										)}
 										<Button
 											variant='contained'
 											disabled={!selectedEvent?._id || (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) || isStartingMeeting}
@@ -1569,7 +1592,6 @@ const EditEventDialog = ({
 												'&:hover': {
 													backgroundColor: '#2681F2',
 												},
-												'mt': '0.5rem',
 											}}>
 											Start Meeting
 										</Button>
