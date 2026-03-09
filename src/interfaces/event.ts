@@ -32,6 +32,7 @@ export interface Event {
 	zoomMeetingPassword?: string;
 	zoomMeetingNumber?: string;
 	zoomJoinUrl?: string;
+	zoomStartUrl?: string;
 	isZoomMeeting?: boolean; // Frontend-only: checkbox state
 	// Zoom recordings
 	hasRecordings?: boolean; // Frontend-only: indicates if recordings exist

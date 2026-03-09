@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Event } from '../../../interfaces/event';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../dialog/CustomDialog';
-import { Alert, Box, DialogActions, DialogContent, Link, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, DialogActions, DialogContent, Link, Snackbar, Tooltip, Typography } from '@mui/material';
+import ContentCopy from '@mui/icons-material/ContentCopy';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import theme from '../../../themes';
@@ -48,6 +49,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 		}>
 	>([]);
 	const [isLoadingRecordings, setIsLoadingRecordings] = useState<boolean>(false);
+	const [copyJoinLinkSuccess, setCopyJoinLinkSuccess] = useState<boolean>(false);
 
 	// Check if user is registered for the event (for public events)
 	useEffect(() => {
@@ -380,56 +382,97 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					)}
 					{registerErrorMsg && <CustomErrorMessage sx={{ mt: '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
 				</DialogContent>
-				<DialogActions sx={{ margin: '-1.5rem 1rem 1rem 0rem' }}>
-					<CustomCancelButton
-						onClick={() => {
-							setEventDetailsModalOpen(false);
-							setSelectedEvent(null);
-							setIsRegisterForEventSuccess(false);
-							setRegisterErrorMsg(null);
-						}}>
-						Close
-					</CustomCancelButton>
+				<DialogActions sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '-1.5rem 1rem 1rem 1.25rem' }}>
+
 					{/* For public events: show Join Meeting if registered and has Zoom, otherwise show Register */}
 					{/* Disable Join Meeting if recordings exist (YouTube or Zoom) */}
 					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
-						<CustomSubmitButton
-							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
-							sx={{
-								'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
-								'backgroundColor': 'transparent !important',
-								'color': 'white !important',
-								'&:hover': {
-									background: 'linear-gradient(135deg, #0066CC 0%, #2D8CFF 100%) !important',
-								},
-							}}>
-							Join Meeting
-						</CustomSubmitButton>
-					)}
-					{selectedEvent?.isPublic &&
-						(!selectedEvent?.zoomJoinUrl || !isUserRegistered) &&
-						!isEventEnded(selectedEvent) &&
-						!selectedEvent?.youtubeVideoId &&
-						recordings.length === 0 && (
-							<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
-								{isRegisterForEventSending ? 'Registering...' : 'Register'}
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, }}>
+							<CustomSubmitButton
+								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
+								sx={{
+									'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
+									'backgroundColor': 'transparent !important',
+									'color': 'white !important',
+									'&:hover': {
+										background: 'linear-gradient(135deg, #0066CC 0%, #2D8CFF 100%) !important',
+									},
+								}}>
+								Join Meeting
 							</CustomSubmitButton>
-						)}
+							<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'}>
+								<Button
+									variant='outlined'
+									size='small'
+									startIcon={<ContentCopy fontSize='small' />}
+									onClick={() => {
+										if (!selectedEvent?.zoomJoinUrl) return;
+										navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
+											setCopyJoinLinkSuccess(true);
+											setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
+										});
+									}}
+									sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+									{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
+								</Button>
+							</Tooltip>
+						</Box>
+					)}
+					<Box>
+						{selectedEvent?.isPublic &&
+							(!selectedEvent?.zoomJoinUrl || !isUserRegistered) &&
+							!isEventEnded(selectedEvent) &&
+							!selectedEvent?.youtubeVideoId &&
+							recordings.length === 0 && (
+								<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
+									{isRegisterForEventSending ? 'Registering...' : 'Register'}
+								</CustomSubmitButton>
+							)}
+					</Box>
 					{/* For non-public events: show Join Meeting if Zoom exists and no recordings (YouTube or Zoom) */}
 					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
-						<CustomSubmitButton
-							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
-							sx={{
-								'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
-								'backgroundColor': 'transparent !important',
-								'color': 'white !important',
-								'&:hover': {
-									background: 'linear-gradient(135deg, #0066CC 0%, #2D8CFF 100%) !important',
-								},
-							}}>
-							Join Meeting
-						</CustomSubmitButton>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+							<CustomSubmitButton
+								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
+								sx={{
+									'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
+									'backgroundColor': 'transparent !important',
+									'color': 'white !important',
+									'&:hover': {
+										background: 'linear-gradient(135deg, #0066CC 0%, #2D8CFF 100%) !important',
+									},
+								}}>
+								Join Meeting
+							</CustomSubmitButton>
+							<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'} arrow placement='top'>
+								<Button
+									variant='outlined'
+									size='small'
+									startIcon={<ContentCopy fontSize='small' />}
+									onClick={() => {
+										if (!selectedEvent?.zoomJoinUrl) return;
+										navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
+											setCopyJoinLinkSuccess(true);
+											setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
+										});
+									}}
+									sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+									{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
+								</Button>
+							</Tooltip>
+						</Box>
 					)}
+					<Box>
+						<CustomCancelButton
+							onClick={() => {
+								setEventDetailsModalOpen(false);
+								setSelectedEvent(null);
+								setIsRegisterForEventSuccess(false);
+								setRegisterErrorMsg(null);
+							}}>
+							Close
+						</CustomCancelButton>
+					</Box>
 				</DialogActions>
 			</CustomDialog>
 			{isRegisterForEventSuccess && (

@@ -282,16 +282,16 @@ const Sidebar = () => {
 								active={currentPath?.includes('/community')}
 							/>
 							<SidebarBtn
-								btnText='Settings'
-								IconName={Settings}
-								onClick={() => navigateWithPage(`/settings`)}
-								active={currentPath?.includes('/settings')}
-							/>
-							<SidebarBtn
 								btnText='Resources'
 								IconName={Folder}
 								onClick={() => navigateWithPage(`/resources`)}
 								active={currentPath?.includes('/resources')}
+							/>
+							<SidebarBtn
+								btnText='Settings'
+								IconName={Settings}
+								onClick={() => navigateWithPage(`/settings`)}
+								active={currentPath?.includes('/settings')}
 							/>
 						</>
 					)}
@@ -365,6 +365,12 @@ const Sidebar = () => {
 								IconName={Folder}
 								onClick={() => navigateWithPage(`/instructor/resources`)}
 								active={currentPath?.includes('/instructor/resources')}
+							/>
+							<SidebarBtn
+								btnText='Settings'
+								IconName={Settings}
+								onClick={() => navigateWithPage(`/instructor/settings`)}
+								active={currentPath?.includes('/instructor/settings')}
 							/>
 						</>
 					)}
