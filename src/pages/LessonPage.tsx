@@ -90,7 +90,7 @@ const LessonPage = () => {
 
 	const navigate = useNavigate();
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
-	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
 	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
 
 	// Check if there are more lessons in the course (in any chapter)
@@ -237,7 +237,9 @@ const LessonPage = () => {
 		const fetchData = async () => {
 			if (lessonId) {
 				try {
-					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
+					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`, {
+						params: courseId ? { courseId } : undefined,
+					});
 					const lessonData = lessonResponse.data;
 
 					setLesson({
@@ -285,7 +287,7 @@ const LessonPage = () => {
 		if (isQuiz && !isLessonCompleted && userQuizAnswers && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
-	}, [lessonId]);
+	}, [lessonId, courseId, isLessonCompleted]);
 
 
 	useEffect(() => {
@@ -299,6 +301,7 @@ const LessonPage = () => {
 					setUserLessonNotes(lessonData.notes || '');
 					setEditorContent(lessonData.notes || '');
 					setTeacherQuizFeedback(lessonData.teacherFeedback);
+					setIsLessonCompleted(Boolean(lessonData.isCompleted));
 				}
 			} catch (error) {
 				console.log('Error fetching user lesson data:', error);
@@ -1008,7 +1011,7 @@ const LessonPage = () => {
 						<Box
 							sx={{
 								width: isSmallMobilePortrait ? '85%' : isTabletLandscape ? '70%' : '60%',
-								mt: '2rem',
+								mt: isMobileSize ? '15vh' : '20vh',
 								mx: 'auto',
 								p: 3,
 								textAlign: 'center',
@@ -1021,7 +1024,7 @@ const LessonPage = () => {
 							<Typography variant='h6' sx={{ mb: 1.5, fontSize: isMobileSize ? '0.95rem' : '1.1rem' }}>
 								No questions in this lesson
 							</Typography>
-							<Typography variant='body2' sx={{ mb: 2, color: 'text.secondary', fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+							<Typography variant='body2' sx={{ my: '2rem', color: 'text.secondary', fontSize: isMobileSize ? '0.8rem' : '0.85rem' }}>
 								This lesson has no questions right now (they may have been removed). You can go back to the course or mark this lesson complete and continue.
 							</Typography>
 							<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'center' }}>

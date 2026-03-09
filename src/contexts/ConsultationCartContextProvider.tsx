@@ -7,7 +7,12 @@ function loadConsultationCartFromStorage(): ConsultationCartItem[] {
 		const raw = localStorage.getItem(CONSULTATION_CART_STORAGE_KEY);
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
-		return Array.isArray(parsed) ? parsed : [];
+		const arr = Array.isArray(parsed) ? parsed : [];
+		// Strip any user/client details (guestName, guestEmail, guestPhone) - never persist PII
+		return arr.map((item: Record<string, unknown>) => {
+			const { guestName, guestEmail, guestPhone, ...rest } = item;
+			return rest as unknown as ConsultationCartItem;
+		});
 	} catch {
 		return [];
 	}
@@ -32,9 +37,6 @@ export interface ConsultationCartItem {
 	slotDuration: number;
 	consultantId: string;
 	consultantName: string;
-	guestName: string;
-	guestEmail: string;
-	guestPhone: string;
 	price: { currency: string; amount: string };
 	formSubmissionId?: string;
 }
@@ -49,9 +51,9 @@ interface ConsultationCartContextTypes {
 
 const ConsultationCartContext = createContext<ConsultationCartContextTypes>({
 	items: [],
-	addItem: () => {},
-	removeItem: () => {},
-	clearCart: () => {},
+	addItem: () => { },
+	removeItem: () => { },
+	clearCart: () => { },
 	count: 0,
 });
 
@@ -98,9 +100,9 @@ export function useConsultationCart() {
 	if (!ctx) {
 		return {
 			items: [],
-			addItem: () => {},
-			removeItem: () => {},
-			clearCart: () => {},
+			addItem: () => { },
+			removeItem: () => { },
+			clearCart: () => { },
 			count: 0,
 		};
 	}

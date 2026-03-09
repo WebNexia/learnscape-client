@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
-import { MatchingPair } from '../../../interfaces/question';
+import { MatchingPair, QuizMatchingOption } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -92,6 +92,7 @@ interface MatchingPreviewProps {
 	isLessonCompleted?: boolean;
 	fromQuizQuestionUser?: boolean;
 	initialPairs: MatchingPair[];
+	quizMatchingOptions?: QuizMatchingOption[];
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
 	userMatchingPairsAfterSubmission?: UserMatchingPairAnswers[];
@@ -111,6 +112,7 @@ const MatchingPreview = ({
 	isLessonCompleted,
 	fromQuizQuestionUser,
 	initialPairs,
+	quizMatchingOptions,
 	displayedQuestionNumber,
 	numberOfQuestions,
 	userMatchingPairsAfterSubmission,
@@ -163,6 +165,12 @@ const MatchingPreview = ({
 			setResponses(unusedResponses);
 		} else if (!isLessonCompleted && fromQuizQuestionUser) {
 			const userAnswer = userQuizAnswers?.find((quiz) => quiz.questionId === questionId);
+			const availableQuizResponses =
+				quizMatchingOptions?.map((option, index) => ({
+					id: option.id || `quiz-matching-option-${index}`,
+					question: '',
+					answer: option.answer,
+				})) || [];
 
 			if (userAnswer && userAnswer.userMatchingPairAnswers) {
 				const matchedPairs = initialPairs?.map((pair) => {
@@ -175,11 +183,11 @@ const MatchingPreview = ({
 				setPairs(matchedPairs);
 
 				const usedAnswers = userAnswer.userMatchingPairAnswers?.map((match) => match.answer) || [];
-				const unusedResponses =
-					initialPairs
-						?.filter((pair) => !usedAnswers?.includes(pair.answer))
-						?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer })) || [];
+				const unusedResponses = availableQuizResponses.filter((pair) => !usedAnswers?.includes(pair.answer));
 				setResponses(unusedResponses);
+			} else if (!hasInteracted) {
+				setPairs(initialPairs?.map((pair) => ({ ...pair, answer: '' })) || []);
+				setResponses(availableQuizResponses);
 			}
 		} else if ((isLessonCompleted && !fromQuizQuestionUser && initialPairs) || (!isLessonCompleted && displayedQuestionNumber! < getLastQuestion())) {
 			const correctPairs = initialPairs?.map((pair) => ({
@@ -202,6 +210,7 @@ const MatchingPreview = ({
 		}
 	}, [
 		initialPairs,
+		quizMatchingOptions,
 		isLessonCompleted,
 		fromQuizQuestionUser,
 		userMatchingPairsAfterSubmission,

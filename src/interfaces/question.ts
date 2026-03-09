@@ -4,9 +4,19 @@ export interface MatchingPair {
 	answer: string;
 }
 
+export interface QuizMatchingOption {
+	id: string;
+	answer: string;
+}
+
 export interface BlankValuePair {
 	id: string;
 	blank: number;
+	value: string;
+}
+
+export interface QuizBlankValueOption {
+	id: string;
 	value: string;
 }
 
@@ -30,7 +40,9 @@ export interface QuestionInterface {
 	video: boolean;
 	isAiGenerated: boolean;
 	matchingPairs: MatchingPair[];
+	quizMatchingOptions?: QuizMatchingOption[];
 	blankValuePairs: BlankValuePair[];
+	quizBlankValueOptions?: QuizBlankValueOption[];
 	translatePairs: TranslatePair[];
 	createdAt: string;
 	updatedAt: string;

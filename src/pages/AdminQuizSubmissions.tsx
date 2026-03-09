@@ -102,8 +102,6 @@ const AdminQuizSubmissions = () => {
 	// For context data, use client-side pagination
 	const paginatedQuizSubmissions = sortedSubmissions;
 
-	console.log(paginatedQuizSubmissions)
-
 	// Enable admin quiz submissions fetching only once when component mounts
 	useEffect(() => {
 		enableAdminQuizSubmissionsFetch();

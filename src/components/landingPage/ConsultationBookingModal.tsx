@@ -39,15 +39,17 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import theme from '../../themes';
+import { getConsultationPriceForCountry } from '../../utils/getConsultationPriceForCountry';
 
 const STEP_LABELS = ['Tarih', 'Oturum', 'Danışman', 'Özet', 'Anket'];
 
-function getPriceForConsultation(c: Consultation): { currency: string; amount: string } | null {
-	if (!c.prices?.length) return { currency: 'try', amount: '0' };
-	const first = c.prices[0];
-	if (first.amount === '0' || first.amount?.toLowerCase() === 'free' || !first.amount?.trim())
-		return { currency: first.currency || 'try', amount: '0' };
-	return { currency: first.currency, amount: first.amount };
+function getPriceForConsultation(c: Consultation, countryCode?: string | null): { currency: string; amount: string } | null {
+	const selectedPrice = getConsultationPriceForCountry(c, countryCode);
+	if (!selectedPrice) return { currency: 'try', amount: '0' };
+	if (selectedPrice.amount === '0' || selectedPrice.amount?.toLowerCase() === 'free' || !selectedPrice.amount?.trim()) {
+		return { currency: selectedPrice.currency || 'try', amount: '0' };
+	}
+	return { currency: selectedPrice.currency, amount: selectedPrice.amount };
 }
 
 const FORM_ERROR_TR: Record<string, string> = {
@@ -120,7 +122,7 @@ export default function ConsultationBookingModal({
 	const [freeConfirmLoading, setFreeConfirmLoading] = useState(false);
 
 	const isSlotInCart = consultation && selectedSlot ? consultationCartItems.some((i) => i.consultationId === consultation._id && i.slotId === selectedSlot._id) : false;
-	const priceObj = consultation ? getPriceForConsultation(consultation) : null;
+	const priceObj = consultation ? getPriceForConsultation(consultation, location?.countryCode) : null;
 	const isFree = priceObj?.amount === '0';
 	const requireForm = Boolean(consultation?.requireFormSubmission && consultation?.feedbackFormId);
 	const feedbackForm = consultation?.feedbackFormId as unknown as { publicLink?: string } | undefined;
@@ -339,9 +341,6 @@ export default function ConsultationBookingModal({
 			slotDuration: selectedSlot.duration,
 			consultantId: selectedConsultant._id,
 			consultantName: [selectedConsultant.firstName, selectedConsultant.lastName].filter(Boolean).join(' ') || 'Danışman',
-			guestName: '',
-			guestEmail: '',
-			guestPhone: '',
 			price: { currency: priceObj.currency, amount: priceObj.amount },
 			formSubmissionId: formSubmissionId ?? undefined,
 		});
@@ -650,7 +649,16 @@ export default function ConsultationBookingModal({
 						<Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 							{form.fields.map((field) => (
 								<Box key={field.fieldId}>
-									<FormLabel required={field.required} sx={{ fontFamily: 'Varela Round', display: 'block', mb: 0.5 }}>
+									<FormLabel
+										required={field.required}
+										sx={{
+											fontFamily: 'Varela Round',
+											display: 'block',
+											mb: 0.5,
+											fontSize: isMobileSize ? '0.8rem' : '0.85rem',
+											lineHeight: 1.35,
+										}}
+									>
 										{field.label}
 									</FormLabel>
 									{renderFormField(field)}
@@ -797,13 +805,61 @@ export default function ConsultationBookingModal({
 				);
 			case 'date':
 				return (
-					<CustomTextField
-						fullWidth
-						type="date"
-						value={(value as string) ?? ''}
-						onChange={(e) => setValue(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-					/>
+					<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="tr">
+						<DatePicker
+							label={field.placeholder || 'DD.MM.YYYY'}
+							format="DD.MM.YYYY"
+							value={value && dayjs(value as string).isValid() ? dayjs(value as string) : null}
+							onChange={(d) => setValue(d ? d.format('YYYY-MM-DD') : '')}
+							slotProps={{
+								actionBar: { actions: ['clear', 'today'] },
+								textField: {
+									required: field.required,
+									size: 'small',
+									sx: {
+										fontFamily: 'Varela Round',
+										marginTop: '0.5rem',
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: 'rgba(255, 255, 255, 0.95)',
+											borderRadius: '12px',
+											boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+											minHeight: isMobileSize ? '2.9rem' : '3.05rem',
+											'& .MuiInputBase-input': {
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												padding: isMobileSize ? '0.72rem 0.85rem' : '0.78rem 0.9rem',
+											},
+											'& fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)', borderWidth: '2px' },
+											'&:hover fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)' },
+											'&.Mui-focused fieldset': { borderColor: 'rgba(102, 126, 234, 0.8)', borderWidth: '2px' },
+										},
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '1.25rem' : '1.35rem',
+										},
+									},
+								},
+								desktopPaper: {
+									sx: {
+										fontFamily: 'Varela Round',
+										'& .MuiPickersCalendarHeader-label': { fontFamily: 'Varela Round', fontWeight: 600 },
+										'& .MuiDayCalendar-weekDayLabel': { fontFamily: 'Varela Round' },
+										'& .MuiPickersDay-root': { fontFamily: 'Varela Round' },
+										'& .MuiPickersDay-root.Mui-selected': {
+											backgroundColor: '#FF6B3D',
+											'&:hover': { backgroundColor: '#ff7d55' },
+										},
+										'& .MuiPickersDay-root:not(.Mui-selected):hover': {
+											backgroundColor: 'rgba(255, 107, 61, 0.12)',
+										},
+										'& .MuiPickersLayout-actionBar .MuiButton-root': {
+											fontFamily: 'Varela Round',
+											color: '#FF6B3D',
+										},
+									},
+								},
+							}}
+							sx={{ '& .MuiInputBase-root': { fontFamily: 'Varela Round' } }}
+						/>
+					</LocalizationProvider>
 				);
 			default:
 				return (

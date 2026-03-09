@@ -2,6 +2,7 @@ import { Box, CircularProgress, IconButton, Paper, Popper, Tooltip, styled, Typo
 import { RecordVoiceOverOutlined } from '@mui/icons-material';
 import { useContext, useMemo, useRef, useState } from 'react';
 import theme from '../../../themes';
+import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -320,7 +321,7 @@ const FlipCardPreview = ({
 								},
 							}}
 							dangerouslySetInnerHTML={{
-								__html: (frontText || question?.question || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>'),
+								__html: sanitizeHtml((frontText || question?.question || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>')),
 							}}
 						/>
 					</Box>
@@ -354,7 +355,7 @@ const FlipCardPreview = ({
 							},
 						}}
 						dangerouslySetInnerHTML={{
-							__html: (backText || question?.correctAnswer || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>'),
+							__html: sanitizeHtml((backText || question?.correctAnswer || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>')),
 						}}
 					/>
 				</FlipCardBack>
