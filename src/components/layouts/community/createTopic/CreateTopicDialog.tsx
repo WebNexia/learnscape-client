@@ -413,16 +413,16 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 										: ''
 							}
 						/>
-						{topic.imageUrl && (
+						{
 							<ImageThumbnail
-								imgSource={topic.imageUrl}
+								imgSource={topic.imageUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
 								removeImage={() => {
 									setTopic((prevData) => {
 										return { ...prevData, imageUrl: '' };
 									});
 								}}
 							/>
-						)}
+						}
 					</>
 				)}
 				<CustomDialogActions

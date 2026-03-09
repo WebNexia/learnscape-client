@@ -779,7 +779,7 @@ const CommunityTopicPage = () => {
 											}}>
 											<Typography
 												sx={{
-													fontSize: isMobileSize ? '0.85rem' : '1rem',
+													fontSize: isMobileSize ? '0.85rem' : '0.9rem',
 													lineHeight: 1.6,
 													letterSpacing: '0.02em',
 												}}>
@@ -1294,8 +1294,10 @@ const CommunityTopicPage = () => {
 														? '(' + getRemainingImageUploads() + ' of ' + getImageLimit() + ' image uploads remaining today)'
 														: ''
 											}
+
 										/>
-										{imgUrl && <ImageThumbnail imgSource={imgUrl} removeImage={() => setImgUrl('')} />}
+										{<ImageThumbnail imgSource={imgUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'} removeImage={() => setImgUrl('')} />}
+
 									</DialogContent>
 									<CustomCancelButton
 										onClick={() => {

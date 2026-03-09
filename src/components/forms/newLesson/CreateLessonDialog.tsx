@@ -230,6 +230,7 @@ const CreateLessonDialog = ({
 					}}
 					cancelBtnSx={{ margin: '0.5rem 0.5rem 0.5rem 0' }}
 					submitBtnSx={{ margin: '0.5rem 1.5rem 0.5rem 0' }}
+					actionSx={{ margin: '0.5rem 0rem 0.5rem 0' }}
 				/>
 			</form>
 

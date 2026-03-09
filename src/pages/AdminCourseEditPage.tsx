@@ -1367,7 +1367,7 @@ const AdminCourseEditPage = () => {
 																title='Rename Video Title'
 																maxWidth='xs'>
 																<form
-																	style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
+																	style={{ display: 'flex', flexDirection: 'column', paddingTop: '1rem' }}
 																	onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 																		e.preventDefault();
 																	}}>
@@ -1376,7 +1376,7 @@ const AdminCourseEditPage = () => {
 																		required={true}
 																		label='Video Title'
 																		value={videoURL.title}
-																		sx={{ margin: '1rem' }}
+																		sx={{ margin: '0.25rem 1rem' }}
 																		onChange={(e) => {
 																			setSingleCourseBeforeSave((prevData) => {
 																				if (prevData) {

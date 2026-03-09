@@ -32,6 +32,7 @@ interface ChapterProps {
 export interface ChapterRef {
 	toggleExpanded: () => void;
 	setExpanded: (expanded: boolean) => void;
+	scrollIntoView: () => void;
 }
 
 const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId, isAlternateHeaderTone = false }, ref) => {
@@ -60,6 +61,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	// Get chapterId - standardize to use _id (backend format)
 	// ChapterLessonData has chapterId which maps to _id, BaseChapter has _id directly
 	const chapterId = (chapter as any)._id || (chapter as ChapterLessonData).chapterId;
+	const rootRef = useRef<HTMLDivElement | null>(null);
 
 	// Fetch user lessons for current course using the new hook
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
@@ -334,6 +336,9 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		setExpanded: (expanded: boolean) => {
 			setIsExpanded(expanded);
 		},
+		scrollIntoView: () => {
+			rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		},
 	}));
 
 	const validLessons = chapter?.lessons?.filter((lesson) => lesson !== null) || [];
@@ -341,6 +346,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 
 	return (
 		<Box
+			ref={rootRef}
 			sx={{
 				'marginBottom': isMobileSize ? '1rem' : '1rem',
 				'backgroundColor': '#ffffff',
@@ -348,6 +354,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 				'borderRadius': '0.35rem',
 				'overflow': 'hidden',
 				'boxShadow': '0 1px 3px rgba(0, 0, 0, 0.1)',
+				'scrollMarginTop': isMobileSize ? '7rem' : '9rem',
 				'transition': 'box-shadow 0.3s ease',
 				'&:hover': {
 					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',

@@ -410,7 +410,7 @@ const Settings = () => {
 								setEnterImageUrl={setEnterImageUrl}
 							/>
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', my: '1rem' }}>
 							<Box sx={{ flex: 1 }}>
 								<CustomTextField
 									label='First Name'
@@ -583,7 +583,7 @@ const Settings = () => {
 								<SupportAgent sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', mt: '0.15rem' }} color='error' />
 								<Typography
 									sx={{
-										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.75rem',
 										lineHeight: 1.7,
 										color: theme.textColor?.secondary.main,
 									}}>
@@ -644,7 +644,7 @@ const Settings = () => {
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							flex: isVerySmallScreen ? undefined : 3,
-							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '29rem',
+							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '31rem',
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();

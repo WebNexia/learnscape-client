@@ -122,6 +122,7 @@ const AdminLessons = () => {
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
 	const [isLessonInfoModalOpen, setIsLessonInfoModalOpen] = useState<boolean[]>([]);
+	const [isDeletingLesson, setIsDeletingLesson] = useState<boolean>(false);
 
 	// Snackbar states for delete operation
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -162,7 +163,8 @@ const AdminLessons = () => {
 		setIsLessonDeleteModalOpen(updatedState);
 	};
 
-	const deleteLesson = async (lessonId: string): Promise<void> => {
+	const deleteLesson = async (lessonId: string): Promise<boolean> => {
+		setIsDeletingLesson(true);
 		try {
 			const response = await axios.delete(`${base_url}/lessons/${lessonId}`);
 
@@ -179,11 +181,13 @@ const AdminLessons = () => {
 				setSnackbarMessage('Lesson deleted successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				return true;
 			} else {
 				console.error('Delete lesson failed:', response.data.message);
 				setSnackbarMessage(response.data.message || 'Failed to delete lesson');
 				setSnackbarSeverity('error');
 				setSnackbarOpen(true);
+				return false;
 			}
 		} catch (error: any) {
 			console.error('Delete lesson error:', error);
@@ -191,6 +195,9 @@ const AdminLessons = () => {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete lesson');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+			return false;
+		} finally {
+			setIsDeletingLesson(false);
 		}
 	};
 
@@ -219,6 +226,7 @@ const AdminLessons = () => {
 						{ value: 'instructional lessons', label: 'Instructional Lessons' },
 						{ value: 'practice lessons', label: 'Practice Lessons' },
 						{ value: 'quizzes', label: 'Quizzes' },
+						{ value: 'not used in any course', label: 'Not Used In Any Course' },
 					]}
 					filterPlaceholder='Filter Lessons'
 					searchValue={searchValue}
@@ -405,7 +413,11 @@ const AdminLessons = () => {
 												{isLessonDeleteModalOpen[index] !== undefined && !lesson.isActive && (
 													<CustomDialog
 														openModal={isLessonDeleteModalOpen[index]}
-														closeModal={() => closeDeleteLessonModal(index)}
+														closeModal={() => {
+															if (!isDeletingLesson) {
+																closeDeleteLessonModal(index);
+															}
+														}}
 														title='Delete Lesson'
 														maxWidth='xs'>
 														<DialogContent>
@@ -425,12 +437,20 @@ const AdminLessons = () => {
 															</Typography>
 														</DialogContent>
 														<CustomDialogActions
-															onCancel={() => closeDeleteLessonModal(index)}
-															deleteBtn={true}
-															onDelete={() => {
-																deleteLesson(lesson._id);
-																closeDeleteLessonModal(index);
+															onCancel={() => {
+																if (!isDeletingLesson) {
+																	closeDeleteLessonModal(index);
+																}
 															}}
+															deleteBtn={true}
+															onDelete={async () => {
+																const deleted = await deleteLesson(lesson._id);
+																if (deleted) {
+																	closeDeleteLessonModal(index);
+																}
+															}}
+															isDeleting={isDeletingLesson}
+															disableCancelBtn={isDeletingLesson}
 															actionSx={{ mb: '0.5rem' }}
 														/>
 													</CustomDialog>

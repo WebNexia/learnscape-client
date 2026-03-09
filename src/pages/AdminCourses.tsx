@@ -141,6 +141,7 @@ const AdminCourses = () => {
 	const [isCreateCohortModalOpen, setIsCreateCohortModalOpen] = useState<boolean[]>([]);
 	const [isCreatingCohort, setIsCreatingCohort] = useState<boolean>(false);
 	const [isCourseCohortCreated, setIsCourseCohortCreated] = useState<boolean>(false);
+	const [isDeletingCourse, setIsDeletingCourse] = useState<boolean>(false);
 
 	// Snackbar states for delete operation
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -327,7 +328,8 @@ const AdminCourses = () => {
 		}
 	};
 
-	const deleteCourse = async (courseId: string): Promise<void> => {
+	const deleteCourse = async (courseId: string): Promise<boolean> => {
+		setIsDeletingCourse(true);
 		try {
 			const response = await axios.delete(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`);
 
@@ -344,11 +346,13 @@ const AdminCourses = () => {
 				setSnackbarMessage('Course deleted successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				return true;
 			} else {
 				console.error('Delete course failed:', response.data.message);
 				setSnackbarMessage(response.data.message || 'Failed to delete course');
 				setSnackbarSeverity('error');
 				setSnackbarOpen(true);
+				return false;
 			}
 		} catch (error: any) {
 			console.error('Delete course error:', error);
@@ -356,6 +360,9 @@ const AdminCourses = () => {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete course');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+			return false;
+		} finally {
+			setIsDeletingCourse(false);
 		}
 	};
 
@@ -716,7 +723,11 @@ const AdminCourses = () => {
 												{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (
 													<CustomDialog
 														openModal={isCourseDeleteModalOpen[index]}
-														closeModal={() => closeDeleteCourseModal(index)}
+														closeModal={() => {
+															if (!isDeletingCourse) {
+																closeDeleteCourseModal(index);
+															}
+														}}
 														title='Delete Course'
 														maxWidth='xs'>
 														<DialogContent>
@@ -736,12 +747,20 @@ const AdminCourses = () => {
 															</Typography>
 														</DialogContent>
 														<CustomDialogActions
-															onCancel={() => closeDeleteCourseModal(index)}
-															deleteBtn={true}
-															onDelete={() => {
-																deleteCourse(course._id);
-																closeDeleteCourseModal(index);
+															onCancel={() => {
+																if (!isDeletingCourse) {
+																	closeDeleteCourseModal(index);
+																}
 															}}
+															deleteBtn={true}
+															onDelete={async () => {
+																const deleted = await deleteCourse(course._id);
+																if (deleted) {
+																	closeDeleteCourseModal(index);
+																}
+															}}
+															isDeleting={isDeletingCourse}
+															disableCancelBtn={isDeletingCourse}
 															actionSx={{ mb: '0.5rem' }}
 														/>
 													</CustomDialog>

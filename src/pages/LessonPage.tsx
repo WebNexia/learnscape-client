@@ -393,9 +393,23 @@ const LessonPage = () => {
 	};
 
 	const handleLessonNavigation = () => {
-		// Store current lesson ID in sessionStorage to expand the chapter containing this lesson
+		// Store current lesson/chapter so the course page can expand and scroll to the active chapter
 		if (lessonId) {
+			for (let i = sessionStorage.length - 1; i >= 0; i--) {
+				const key = sessionStorage.key(i);
+				if (key && (key.startsWith('expand-chapter-for-lesson-') || key.startsWith('expand-chapter-by-id-'))) {
+					sessionStorage.removeItem(key);
+				}
+			}
+
 			sessionStorage.setItem(`expand-chapter-for-lesson-${lessonId}`, 'true');
+
+			const targetChapter = singleCourseUser?.chapters?.find((chapter) => chapter?.lessons?.some((lesson) => lesson && lesson._id === lessonId));
+			const targetChapterId = (targetChapter as any)?._id || (targetChapter as any)?.chapterId;
+
+			if (targetChapterId) {
+				sessionStorage.setItem(`expand-chapter-by-id-${targetChapterId}`, 'true');
+			}
 		}
 		navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });

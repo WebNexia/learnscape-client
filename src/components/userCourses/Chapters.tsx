@@ -19,6 +19,17 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 
 	const validChapters = course?.chapters?.filter((chapter) => chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) || [];
 
+	const expandAndScrollToChapter = useCallback((index: number, storageKey: string) => {
+		const chapterRef = chapterRefs.current[index];
+		if (!chapterRef) return;
+
+		setTimeout(() => {
+			chapterRef.setExpanded(true);
+			chapterRef.scrollIntoView();
+			sessionStorage.removeItem(storageKey);
+		}, 100);
+	}, []);
+
 	const handleExpandAll = useCallback(() => {
 		// Set all chapters to expanded state
 		Object.values(chapterRefs.current).forEach((ref) => {
@@ -62,10 +73,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 				if (!chapter) return;
 				const currentChapterId = (chapter as any)._id || (chapter as any).chapterId;
 				if (currentChapterId === chapterIdToExpand && chapterRefs.current[index]) {
-					setTimeout(() => {
-						chapterRefs.current[index]?.setExpanded(true);
-						sessionStorage.removeItem(`expand-chapter-by-id-${chapterIdToExpand}`);
-					}, 100);
+					expandAndScrollToChapter(index, `expand-chapter-by-id-${chapterIdToExpand}`);
 				}
 			});
 			return;
@@ -105,15 +113,10 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 			if (!chapter || !chapter.lessons) return;
 			const hasNextLesson = chapter.lessons.some((lesson) => lesson && lesson._id === matchingRequest.lessonId);
 			if (hasNextLesson && chapterRefs.current[index]) {
-				// Small delay to ensure refs are registered
-				setTimeout(() => {
-					chapterRefs.current[index]?.setExpanded(true);
-					// Clear only the key that has been consumed
-					sessionStorage.removeItem(matchingRequest.key);
-				}, 100);
+				expandAndScrollToChapter(index, matchingRequest.key);
 			}
 		});
-	}, [course]);
+	}, [course, expandAndScrollToChapter]);
 
 	let visibleChapterIndex = -1;
 
