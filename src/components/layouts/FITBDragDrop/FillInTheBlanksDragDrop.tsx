@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
 import { Box, Typography } from '@mui/material';
-import { BlankValuePair } from '../../../interfaces/question';
+import { BlankValuePair, QuizBlankValueOption } from '../../../interfaces/question';
 import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { shuffle } from 'lodash';
@@ -138,6 +138,7 @@ interface FillInTheBlanksDragDropProps {
 	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
+	quizBlankValueOptions?: QuizBlankValueOption[];
 	onComplete?: (allCorrect: boolean) => void;
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
@@ -167,6 +168,7 @@ const FillInTheBlanksDragDrop = ({
 	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
+	quizBlankValueOptions,
 	onComplete,
 	displayedQuestionNumber,
 	numberOfQuestions,
@@ -268,12 +270,16 @@ const FillInTheBlanksDragDrop = ({
 		if (!isLessonCompleted && !responsesInitializedRef.current) {
 			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
 			const randomWords = shuffle(words)?.slice(0, wordCount) || [];
-			setResponses(shuffle([...blankValuePairs, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
+			const quizResponses = fromQuizQuestionUser
+				? quizBlankValueOptions?.map((pair) => ({ id: pair.id, value: pair.value, blank: -1 })) || []
+				: blankValuePairs;
+			setResponses(shuffle([...quizResponses, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
 			responsesInitializedRef.current = true;
 		}
 	}, [
 		textWithBlanks,
 		blankValuePairs,
+		quizBlankValueOptions,
 		isLessonCompleted,
 		userBlankValuePairsAfterSubmission,
 		displayedQuestionNumber,

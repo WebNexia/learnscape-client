@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import styled from 'styled-components';
 import { Box, Typography, TextField, TextFieldProps, IconButton, Tooltip } from '@mui/material';
-import { BlankValuePair } from '../../../interfaces/question';
-import { sanitizeHtml } from '../../../utils/sanitizeHtml';
+import { BlankValuePair, QuizBlankValueOption } from '../../../interfaces/question';
+import { sanitizeHtml, validateInputLength } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { shuffle } from 'lodash';
@@ -106,6 +106,7 @@ interface FillInTheBlanksTypingProps {
 	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
+	quizBlankValueOptions?: QuizBlankValueOption[];
 	onComplete?: (allCorrect: boolean) => void;
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
@@ -129,6 +130,7 @@ const FillInTheBlanksTyping = ({
 	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
+	quizBlankValueOptions,
 	onComplete,
 	displayedQuestionNumber,
 	numberOfQuestions,
@@ -231,7 +233,7 @@ const FillInTheBlanksTyping = ({
 			// Only set hints once, not on every update
 			if (!hintsInitializedRef.current) {
 				const randomWords = shuffle(words)?.slice(0, 15) || [];
-				const values = blankValuePairs?.map((pair) => pair.value) || [];
+				const values = quizBlankValueOptions?.map((pair) => pair.value) || [];
 				const hintWords = shuffle([...values, ...randomWords]);
 				setHints(hintWords);
 				hintsInitializedRef.current = true;
@@ -273,7 +275,10 @@ const FillInTheBlanksTyping = ({
 			if (!hintsInitializedRef.current) {
 				const randomWords =
 					lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice(0, 15) || [] : shuffle(words)?.slice(0, 5) || [];
-				const values = blankValuePairs?.map((pair) => pair.value) || [];
+				const values =
+					lessonType === LessonType.QUIZ && !fromAdminQuestions
+						? quizBlankValueOptions?.map((pair) => pair.value) || []
+						: blankValuePairs?.map((pair) => pair.value) || [];
 				const hintWords = shuffle([...values, ...randomWords]);
 				setHints(hintWords);
 				hintsInitializedRef.current = true;
@@ -290,6 +295,7 @@ const FillInTheBlanksTyping = ({
 		lessonType,
 		fromAdminQuestions,
 		userQuizAnswers,
+		quizBlankValueOptions,
 	]);
 
 	useEffect(() => {
@@ -353,7 +359,8 @@ const FillInTheBlanksTyping = ({
 
 		const newAnswers = { ...userAnswers };
 		const newStatus = { ...inputStatus };
-		const inputValue = event.target.value;
+		// Sanitize user input to plain text (strip HTML/script) and enforce max length
+		const inputValue = validateInputLength(event.target.value, 50);
 
 		newAnswers[id] = inputValue;
 

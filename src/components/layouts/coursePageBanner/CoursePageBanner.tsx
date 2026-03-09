@@ -110,22 +110,8 @@ const CoursePageBanner = ({
 
 			const userCourseId = response.data._id;
 
-			// Only create userLesson if course is NOT external
+			// The server creates the initial userLesson during enrollment.
 			if (!course.courseManagement?.isExternal) {
-				await axios.post(`${base_url}/userlessons`, {
-					lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
-					userId: resolvedUserId,
-					courseId,
-					userCourseId,
-					currentQuestion: 1,
-					isCompleted: false,
-					isInProgress: true,
-					notes: '',
-					orgId: resolvedOrgId,
-					teacherFeedback: '',
-					isFeedbackGiven: false,
-				});
-
 				// Invalidate user lessons cache to refresh lesson data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
 			}

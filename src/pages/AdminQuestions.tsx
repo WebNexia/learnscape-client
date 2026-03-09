@@ -79,7 +79,7 @@ const AdminQuestions = () => {
 		enableQuestionsFetch();
 	}, []);
 
-	const pageSize = 50;
+	const pageSize = 100;
 
 	// Use the filter search hook
 	const {
@@ -141,6 +141,7 @@ const AdminQuestions = () => {
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
 	const [isQuestionInfoModalOpen, setIsQuestionInfoModalOpen] = useState<boolean[]>([]);
+	const [isDeletingQuestion, setIsDeletingQuestion] = useState<boolean>(false);
 
 	// Snackbar states for delete operation
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -201,7 +202,8 @@ const AdminQuestions = () => {
 		setIsQuestionDeleteModalOpen(updatedState);
 	};
 
-	const deleteQuestion = async (questionId: string): Promise<void> => {
+	const deleteQuestion = async (questionId: string): Promise<boolean> => {
+		setIsDeletingQuestion(true);
 		try {
 			const response = await axios.delete(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${questionId}`);
 
@@ -218,17 +220,22 @@ const AdminQuestions = () => {
 				setSnackbarMessage('Question deleted successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				return true;
 			} else {
 				console.error('Delete question failed:', response.data.message);
 				setSnackbarMessage(response.data.message || 'Failed to delete question');
 				setSnackbarSeverity('error');
 				setSnackbarOpen(true);
+				return false;
 			}
 		} catch (error: any) {
 			console.error('Delete question error:', error);
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete question');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+			return false;
+		} finally {
+			setIsDeletingQuestion(false);
 		}
 	};
 
@@ -272,6 +279,7 @@ const AdminQuestions = () => {
 							{ value: 'non ai generated', label: 'Non-AI Generated' },
 							{ value: 'cloned', label: 'Cloned' },
 							{ value: 'original', label: 'Original' },
+							{ value: 'not used in any lesson', label: 'Not Used In Any Lesson' },
 							...(questionTypes?.map((type) => ({
 								value: type.name.toLowerCase(),
 								label: type.name,
@@ -529,7 +537,11 @@ const AdminQuestions = () => {
 													{isQuestionDeleteModalOpen[index] !== undefined && (
 														<CustomDialog
 															openModal={isQuestionDeleteModalOpen[index]}
-															closeModal={() => closeDeleteQuestionModal(index)}
+															closeModal={() => {
+																if (!isDeletingQuestion) {
+																	closeDeleteQuestionModal(index);
+																}
+															}}
 															title='Delete Question'
 															content={``}
 															maxWidth='xs'>
@@ -542,12 +554,20 @@ const AdminQuestions = () => {
 																</Typography>
 															</DialogContent>
 															<CustomDialogActions
-																onCancel={() => closeDeleteQuestionModal(index)}
-																deleteBtn={true}
-																onDelete={() => {
-																	deleteQuestion(question._id);
-																	closeDeleteQuestionModal(index);
+																onCancel={() => {
+																	if (!isDeletingQuestion) {
+																		closeDeleteQuestionModal(index);
+																	}
 																}}
+																deleteBtn={true}
+																onDelete={async () => {
+																	const deleted = await deleteQuestion(question._id);
+																	if (deleted) {
+																		closeDeleteQuestionModal(index);
+																	}
+																}}
+																isDeleting={isDeletingQuestion}
+																disableCancelBtn={isDeletingQuestion}
 																actionSx={{ mb: '0.5rem' }}
 															/>
 														</CustomDialog>

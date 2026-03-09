@@ -9,6 +9,7 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import SearchFilter from '../components/landingPage/SearchFilter';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
+import { useGeoLocation } from '../hooks/useGeoLocation';
 
 const LandingPageResources = () => {
 	const {
@@ -28,6 +29,7 @@ const LandingPageResources = () => {
 		isSearching,
 	} = useContext(LandingPageResourcesContext);
 	const location = useLocation();
+	const geoLocation = useGeoLocation();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -66,8 +68,8 @@ const LandingPageResources = () => {
 	];
 
 	const getUserCurrency = () => {
-		// Get user's country from URL or default to US
-		const country = new URLSearchParams(location.search).get('country') || 'US';
+		// URL param can still override when explicitly provided.
+		const country = new URLSearchParams(location.search).get('country') || geoLocation?.countryCode || 'US';
 
 		switch (country.toUpperCase()) {
 			case 'GB':

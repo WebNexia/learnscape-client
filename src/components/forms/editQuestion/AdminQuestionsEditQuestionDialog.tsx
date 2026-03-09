@@ -161,12 +161,12 @@ const AdminQuestionsEditQuestionDialog = ({
 	useEffect(() => {
 		setIsCorrectAnswerMissing(
 			correctAnswerIndex < 0 &&
-				question.correctAnswer === '' &&
-				!isOpenEndedQuestion &&
-				!isFITBDragDrop &&
-				!isMatching &&
-				!isFITBTyping &&
-				!isTranslate
+			question.correctAnswer === '' &&
+			!isOpenEndedQuestion &&
+			!isFITBDragDrop &&
+			!isMatching &&
+			!isFITBTyping &&
+			!isTranslate
 		);
 		resetVideoUpload();
 		resetImageUpload();

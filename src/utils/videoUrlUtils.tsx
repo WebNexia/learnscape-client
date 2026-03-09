@@ -155,3 +155,28 @@ export const extractVideoId = (url: string): string | null => {
 
 	return null;
 };
+
+/**
+ * Returns a thumbnail URL for supported video platforms when available.
+ * Falls back to null for unknown providers so the UI can render a generic card.
+ */
+export const getVideoThumbnailUrl = (url: string): string | null => {
+	if (!url) return null;
+
+	const videoId = extractVideoId(url);
+	if (!videoId) return null;
+
+	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
+		return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+	}
+
+	if (url?.includes('vimeo.com')) {
+		return `https://vumbnail.com/${videoId}.jpg`;
+	}
+
+	if (url?.includes('dailymotion.com')) {
+		return `https://www.dailymotion.com/thumbnail/video/${videoId}`;
+	}
+
+	return null;
+};

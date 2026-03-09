@@ -47,21 +47,7 @@ export default function LandingPageCoursePayment() {
 		});
 		if (!response.data?._id) throw new Error('User course creation failed: Missing ID');
 		const userCourseId = response.data._id;
-		if (!course?.courseManagement?.isExternal && firstLessonId) {
-			await axios.post(`${base_url}/userlessons`, {
-				lessonId: firstLessonId,
-				userId: resolvedUserId,
-				courseId,
-				userCourseId,
-				currentQuestion: 1,
-				isCompleted: false,
-				isInProgress: true,
-				notes: '',
-				orgId: resolvedOrgId,
-				teacherFeedback: '',
-				isFeedbackGiven: false,
-			});
-		}
+		// The server creates the initial userLesson during enrollment.
 		if (courseId) queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
 		queryClient.invalidateQueries(['userCourseData']);
 		queryClient.invalidateQueries(['singleCourseDataUser', courseId]);

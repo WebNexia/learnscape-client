@@ -160,6 +160,7 @@ const AdminDocuments = () => {
 	// Loading states for create/update operations
 	const [isCreating, setIsCreating] = useState<boolean>(false);
 	const [isUpdating, setIsUpdating] = useState<boolean>(false);
+	const [isDeletingDocument, setIsDeletingDocument] = useState<boolean>(false);
 
 	useEffect(() => {
 		enableDocumentsFetch();
@@ -437,7 +438,8 @@ const AdminDocuments = () => {
 		return false;
 	};
 
-	const deleteDocument = async (documentId: string): Promise<void> => {
+	const deleteDocument = async (documentId: string): Promise<boolean> => {
+		setIsDeletingDocument(true);
 		try {
 			const response = await axios.delete(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${documentId}`);
 
@@ -454,17 +456,22 @@ const AdminDocuments = () => {
 				setSnackbarMessage('Document deleted successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				return true;
 			} else {
 				console.error('Delete document failed:', response.data.message);
 				setSnackbarMessage(response.data.message || 'Failed to delete document');
 				setSnackbarSeverity('error');
 				setSnackbarOpen(true);
+				return false;
 			}
 		} catch (error: any) {
 			console.error('Delete document error:', error);
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete document');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+			return false;
+		} finally {
+			setIsDeletingDocument(false);
 		}
 	};
 
@@ -847,7 +854,11 @@ const AdminDocuments = () => {
 													{isDocumentDeleteModalOpen[index] !== undefined && (
 														<CustomDialog
 															openModal={isDocumentDeleteModalOpen[index]}
-															closeModal={() => closeDeleteDocumentModal(index)}
+															closeModal={() => {
+																if (!isDeletingDocument) {
+																	closeDeleteDocumentModal(index);
+																}
+															}}
 															title='Delete Document'
 															maxWidth='xs'>
 															<DialogContent>
@@ -860,14 +871,20 @@ const AdminDocuments = () => {
 															</DialogContent>
 															<CustomDialogActions
 																onCancel={() => {
-																	closeDeleteDocumentModal(index);
-																	setEnterDocUrl(true);
+																	if (!isDeletingDocument) {
+																		closeDeleteDocumentModal(index);
+																		setEnterDocUrl(true);
+																	}
 																}}
 																deleteBtn={true}
-																onDelete={() => {
-																	deleteDocument(document._id);
-																	closeDeleteDocumentModal(index);
+																onDelete={async () => {
+																	const deleted = await deleteDocument(document._id);
+																	if (deleted) {
+																		closeDeleteDocumentModal(index);
+																	}
 																}}
+																isDeleting={isDeletingDocument}
+																disableCancelBtn={isDeletingDocument}
 																actionSx={{ mb: '0.5rem' }}
 															/>
 														</CustomDialog>

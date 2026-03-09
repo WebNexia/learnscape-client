@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Document } from '../interfaces/document';
 import { useLocation } from 'react-router-dom';
+import { useGeoLocation } from '../hooks/useGeoLocation';
 
 interface LandingPageResourcesContextTypes {
 	resources: Document[];
@@ -50,6 +51,7 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
+	const geoLocation = useGeoLocation();
 
 	// Check if we're on the resources page (LP or legacy path)
 	const isResourcesPage = location.pathname === '/resources' || location.pathname === '/landing-page-resources';
@@ -65,8 +67,8 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const [isSearching, setIsSearching] = useState(false);
 
 	const getUserCurrency = () => {
-		// Get user's country from URL or default to US
-		const country = new URLSearchParams(location.search).get('country') || 'US';
+		// URL param can still override when explicitly provided.
+		const country = new URLSearchParams(location.search).get('country') || geoLocation?.countryCode || 'US';
 
 		switch (country.toUpperCase()) {
 			case 'GB':
@@ -113,7 +115,7 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 		data: resourcesData,
 		isLoading,
 		isError,
-	} = useQuery(['landingPageResources', orgId, currentPage, searchedValue, activeFilter, location.search], fetchResources, {
+	} = useQuery(['landingPageResources', orgId, currentPage, searchedValue, activeFilter, location.search, geoLocation?.countryCode], fetchResources, {
 		enabled: !!orgId && isResourcesPage,
 		staleTime: 60 * 60 * 1000, // 1 hour - data stays fresh
 		cacheTime: 60 * 60 * 1000, // 1 hour - data stays in cache

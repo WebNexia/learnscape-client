@@ -11,18 +11,19 @@ import { SEO, StructuredData } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { decodeHtmlEntities } from '../utils/utilText';
 import { useNavigate } from 'react-router-dom';
+import { useGeoLocation } from '../hooks/useGeoLocation';
+import { getConsultationPriceForCountry } from '../utils/getConsultationPriceForCountry';
 
 const DEFAULT_COVER_PLACEHOLDER = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop';
 
-function getDisplayPrice(prices: ConsultationPrice[] | undefined): { label: string; currency?: string; amount?: string } {
-	if (!prices?.length) return { label: 'Ücretsiz' };
-	const first = prices[0];
-	const amt = first?.amount?.trim();
+function getDisplayPrice(price: ConsultationPrice | null | undefined): { label: string; currency?: string; amount?: string } {
+	if (!price) return { label: 'Ücretsiz' };
+	const amt = price.amount?.trim();
 	if (amt === '' || amt === '0' || amt?.toLowerCase() === 'free') return { label: 'Ücretsiz' };
 	return {
-		label: `${setCurrencySymbol(first.currency)}${first.amount}`,
-		currency: first.currency,
-		amount: first.amount,
+		label: `${setCurrencySymbol(price.currency)}${price.amount}`,
+		currency: price.currency,
+		amount: price.amount,
 	};
 }
 
@@ -30,6 +31,7 @@ const LandingPageConsultations = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { consultations, loading, error, hasMore, loadMore } = useContext(LandingPageConsultationsContext);
+	const geoLocation = useGeoLocation();
 	const navigate = useNavigate();
 	const [bookingModalOpen, setBookingModalOpen] = useState(false);
 	const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
@@ -142,6 +144,7 @@ const LandingPageConsultations = () => {
 										gap: isMobileSize ? 5 : 3,
 									}}>
 									{consultations.map((c: Consultation) => {
+										const displayPrice = getDisplayPrice(getConsultationPriceForCountry(c, geoLocation?.countryCode));
 										return (
 											<Card
 												key={c._id}
@@ -241,7 +244,7 @@ const LandingPageConsultations = () => {
 															gap: 1,
 															mt: 1.5,
 														}}>
-														{getDisplayPrice(c.prices).label !== 'Ücretsiz' && (
+														{displayPrice.label !== 'Ücretsiz' && (
 															<Typography
 																sx={{
 																	fontFamily: 'Varela Round',
@@ -253,10 +256,10 @@ const LandingPageConsultations = () => {
 																	borderRadius: '0.5rem',
 																	bgcolor: 'rgba(0, 82, 163, 0.1)',
 																}}>
-																{getDisplayPrice(c.prices).label}
+																{displayPrice.label}
 															</Typography>
 														)}
-														{getDisplayPrice(c.prices).label === 'Ücretsiz' && (
+														{displayPrice.label === 'Ücretsiz' && (
 															<Typography
 																sx={{
 																	fontFamily: 'Varela Round',

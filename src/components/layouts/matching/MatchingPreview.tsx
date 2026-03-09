@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
-import { MatchingPair } from '../../../interfaces/question';
+import { MatchingPair, QuizMatchingOption } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -14,6 +14,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 const Container = styled(Box)`
 	display: flex;
 	justify-content: space-between;
+	align-items: stretch;
 	width: 100%;
 	margin: 0.5rem auto 0 auto;
 	flex-grow: 1;
@@ -32,9 +33,11 @@ const Item = styled.div<{
 	$isLessonCompleted?: boolean;
 	$lessonType?: string;
 	$isMobileSize?: boolean;
+	$isResponseItem?: boolean;
 }>`
 	padding: ${({ $isMobileSize }) => ($isMobileSize ? '0.5rem' : '0.75rem')};
-	margin: ${({ $isMobileSize }) => ($isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem')};
+	margin: ${({ $isMobileSize, $isResponseItem }) =>
+		$isResponseItem ? ($isMobileSize ? '1rem 0.6rem' : '1.1rem 0.75rem') : $isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem'};
 	background: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
@@ -63,12 +66,12 @@ const Item = styled.div<{
 	border-radius: 0.62rem;
 	cursor: ${({ $isLessonCompleted }) => ($isLessonCompleted ? 'default' : 'pointer')};
 	text-align: center;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+	transition: transform 0.16s ease, border-color 0.16s ease;
 
 	&:hover {
 		transform: translateY(-1px);
-		box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
+		border: 1.25px solid
 	}
 `;
 
@@ -77,9 +80,9 @@ const DropArea = styled(Box) <{ isMobileSize: boolean }>`
 	margin: 0.5rem 0;
 	background: rgba(255, 255, 255, 0.78);
 	border-radius: 0.8rem;
-	min-height: ${({ isMobileSize }) => (isMobileSize ? '5rem' : '6rem')};
-	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-	border: 1px solid rgba(1, 67, 90, 0.12);
+	min-height: ${({ isMobileSize }) => (isMobileSize ? '4rem' : '5rem')};
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+	border: 2px solid rgba(1, 67, 90, 0.1);
 	flex-grow: 1;
 `;
 
@@ -89,6 +92,7 @@ interface MatchingPreviewProps {
 	isLessonCompleted?: boolean;
 	fromQuizQuestionUser?: boolean;
 	initialPairs: MatchingPair[];
+	quizMatchingOptions?: QuizMatchingOption[];
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
 	userMatchingPairsAfterSubmission?: UserMatchingPairAnswers[];
@@ -108,6 +112,7 @@ const MatchingPreview = ({
 	isLessonCompleted,
 	fromQuizQuestionUser,
 	initialPairs,
+	quizMatchingOptions,
 	displayedQuestionNumber,
 	numberOfQuestions,
 	userMatchingPairsAfterSubmission,
@@ -160,6 +165,12 @@ const MatchingPreview = ({
 			setResponses(unusedResponses);
 		} else if (!isLessonCompleted && fromQuizQuestionUser) {
 			const userAnswer = userQuizAnswers?.find((quiz) => quiz.questionId === questionId);
+			const availableQuizResponses =
+				quizMatchingOptions?.map((option, index) => ({
+					id: option.id || `quiz-matching-option-${index}`,
+					question: '',
+					answer: option.answer,
+				})) || [];
 
 			if (userAnswer && userAnswer.userMatchingPairAnswers) {
 				const matchedPairs = initialPairs?.map((pair) => {
@@ -172,11 +183,11 @@ const MatchingPreview = ({
 				setPairs(matchedPairs);
 
 				const usedAnswers = userAnswer.userMatchingPairAnswers?.map((match) => match.answer) || [];
-				const unusedResponses =
-					initialPairs
-						?.filter((pair) => !usedAnswers?.includes(pair.answer))
-						?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer })) || [];
+				const unusedResponses = availableQuizResponses.filter((pair) => !usedAnswers?.includes(pair.answer));
 				setResponses(unusedResponses);
+			} else if (!hasInteracted) {
+				setPairs(initialPairs?.map((pair) => ({ ...pair, answer: '' })) || []);
+				setResponses(availableQuizResponses);
 			}
 		} else if ((isLessonCompleted && !fromQuizQuestionUser && initialPairs) || (!isLessonCompleted && displayedQuestionNumber! < getLastQuestion())) {
 			const correctPairs = initialPairs?.map((pair) => ({
@@ -199,6 +210,7 @@ const MatchingPreview = ({
 		}
 	}, [
 		initialPairs,
+		quizMatchingOptions,
 		isLessonCompleted,
 		fromQuizQuestionUser,
 		userMatchingPairsAfterSubmission,
@@ -346,7 +358,7 @@ const MatchingPreview = ({
 							<Droppable key={`prompt-${index}`} droppableId={`prompt-${index}`}>
 								{(provided) => (
 									<DropArea ref={provided.innerRef} {...provided.droppableProps} isMobileSize={isMobileSize}>
-												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600, color: theme.textColor?.secondary.main }}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600, color: theme.textColor?.secondary.main }}>
 											{pair.question}
 										</Typography>
 										{pair.answer ? (
@@ -363,10 +375,10 @@ const MatchingPreview = ({
 														<Typography
 															variant='body2'
 															sx={{
-														color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? theme.textColor?.secondary.main : '#fff',
+																color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? theme.textColor?.secondary.main : '#fff',
 																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 																margin: isMobileSize ? '-0.35rem 0rem' : '0rem',
-														fontWeight: 600,
+																fontWeight: 600,
 															}}>
 															{pair.answer}
 														</Typography>
@@ -390,50 +402,67 @@ const MatchingPreview = ({
 						))}
 					</Column>
 					<Column>
-						<Droppable droppableId='responses'>
-							{(provided) => (
-								<Box
-									ref={provided.innerRef}
-									{...provided.droppableProps}
-									sx={{
-										boxShadow: '0 10px 24px rgba(0, 0, 0, 0.08)',
-										borderRadius: '0.8rem',
-										display: 'flex',
-										flexDirection: 'column',
-										height: '100%',
-										margin: '0.5rem 0',
-										background: 'rgba(255, 255, 255, 0.78)',
-										border: '1px solid rgba(1, 67, 90, 0.12)',
-									}}>
-									{responses?.map((response, index) => (
-										<Draggable
-											key={`draggable-response-${response.id}-${index}`}
-											draggableId={`draggable-response-${response.id}-${index}`}
-											index={index}
-											isDragDisabled={isLessonCompleted && fromQuizQuestionUser}>
-											{(provided) => (
-												<Item
-													ref={provided.innerRef}
-													{...provided.draggableProps}
-													{...provided.dragHandleProps}
-													$isCorrect={null}
-													$fromQuizQuestionUser={fromQuizQuestionUser}
-													$lessonType={lessonType}
-													$isLessonCompleted={isLessonCompleted}
-													$isMobileSize={isMobileSize}>
-													<Typography
-														variant='body2'
-														sx={{ color: isLessonCompleted ? '#fff' : theme.textColor?.secondary.main, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600 }}>
-														{response.answer}
-													</Typography>
-												</Item>
-											)}
-										</Draggable>
-									))}
-									{provided.placeholder}
-								</Box>
-							)}
-						</Droppable>
+						<Box
+							sx={{
+								width: '100%',
+								display: 'flex',
+								flexDirection: 'column',
+								height: '100%',
+								alignItems: 'center',
+								justifyContent: 'center',
+							}}>
+							<Droppable droppableId='responses'>
+								{(provided) => (
+									<Box
+										ref={provided.innerRef}
+										{...provided.droppableProps}
+										sx={{
+											// boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
+											borderRadius: '0.8rem',
+											display: 'flex',
+											flexDirection: 'column',
+											width: '100%',
+											height: '100%',
+											minHeight: '100%',
+											justifyContent: 'center',
+											overflowY: 'auto',
+											scrollbarGutter: 'stable',
+											margin: '0.5rem 0',
+											padding: '0.5rem 0',
+											background: 'rgba(255, 255, 255, 0.78)',
+											// border: '0.75px solid rgba(1, 67, 90, 0.1)',
+										}}>
+										{responses?.map((response, index) => (
+											<Draggable
+												key={`draggable-response-${response.id}-${index}`}
+												draggableId={`draggable-response-${response.id}-${index}`}
+												index={index}
+												isDragDisabled={isLessonCompleted && fromQuizQuestionUser}>
+												{(provided) => (
+													<Item
+														ref={provided.innerRef}
+														{...provided.draggableProps}
+														{...provided.dragHandleProps}
+														$isCorrect={null}
+														$fromQuizQuestionUser={fromQuizQuestionUser}
+														$lessonType={lessonType}
+														$isLessonCompleted={isLessonCompleted}
+														$isMobileSize={isMobileSize}
+														$isResponseItem={true}>
+														<Typography
+															variant='body2'
+															sx={{ color: isLessonCompleted ? '#fff' : theme.textColor?.secondary.main, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600 }}>
+															{response.answer}
+														</Typography>
+													</Item>
+												)}
+											</Draggable>
+										))}
+										{provided.placeholder}
+									</Box>
+								)}
+							</Droppable>
+						</Box>
 					</Column>
 				</Container>
 				{isLessonCompleted && fromQuizQuestionUser && (

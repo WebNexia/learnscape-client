@@ -717,6 +717,8 @@ const AdminLessonEditPage = () => {
 				return false;
 			});
 
+			let oldToNewIdMap: Record<string, string> = {};
+
 			if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
 				setSingleLessonBeforeSave((prevData) => ({
 					...prevData,
@@ -780,6 +782,14 @@ const AdminLessonEditPage = () => {
 
 				updatedQuestions = updatedQuestionsWithNulls?.filter((question): question is QuestionInterface => question !== null);
 
+				// Build old ID -> new ID map (temp IDs become real IDs after question creation)
+				filteredQuestions?.forEach((q, i) => {
+					const result = updatedQuestionsWithNulls?.[i];
+					if (result && q?._id) {
+						oldToNewIdMap[q._id] = result._id;
+					}
+				});
+
 				await Promise.all(
 					updatedQuestions?.map(async (question) => {
 						const trackData = isQuestionUpdated?.find((data) => data.questionId === question._id);
@@ -803,6 +813,16 @@ const AdminLessonEditPage = () => {
 
 			const updatedQuestionIds = updatedQuestions?.map((question) => question._id).filter((id) => id && id !== null && id !== undefined) || [];
 
+			// Migrate questionScores: temp IDs -> real IDs (drops orphaned entries)
+			const rawScores = singleLessonBeforeSave.isGraded ? singleLessonBeforeSave.questionScores || {} : {};
+			const migratedQuestionScores: Record<string, number | { total: number; perBlank?: number; perMatch?: number }> = {};
+			Object.entries(rawScores).forEach(([key, score]) => {
+				const realId = (filteredQuestions && oldToNewIdMap) ? oldToNewIdMap[key] ?? (updatedQuestionIds.includes(key) ? key : undefined) : key;
+				if (realId) {
+					migratedQuestionScores[realId] = score;
+				}
+			});
+
 			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
 					// Handle assessmentGroupId: convert to string or undefined (not null)
@@ -823,7 +843,7 @@ const AdminLessonEditPage = () => {
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
 						text: editorContent?.trim() || '',
-						questionScores: singleLessonBeforeSave.isGraded ? singleLessonBeforeSave.questionScores || {} : {},
+						questionScores: migratedQuestionScores,
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
 						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
