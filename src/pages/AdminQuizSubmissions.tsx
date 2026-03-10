@@ -193,59 +193,66 @@ const AdminQuizSubmissions = () => {
 							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
 								borderRight: 'none',
 							},
-							// Column widths for header cells
+							// Mobile: 5 cols (Username, Quiz, Chapter, Status, Actions). Large: 7 cols (all)
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
-								minWidth: isMobileSize ? '100px' : '150px',
-								width: isMobileSize ? '25%' : '15%',
+								minWidth: isMobileSize ? '80px' : '120px',
+								width: isMobileSize ? '22%' : '12%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
-								minWidth: isMobileSize ? '120px' : '200px',
-								width: isMobileSize ? '35%' : '25%',
+								minWidth: isMobileSize ? '90px' : '180px',
+								width: isMobileSize ? '28%' : '20%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
-								minWidth: isMobileSize ? '0px' : '150px',
-								width: isMobileSize ? '0%' : '20%',
-								display: isMobileSize ? 'none' : 'table-cell',
+								minWidth: isMobileSize ? '90px' : '140px',
+								width: isMobileSize ? '28%' : '18%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
-								minWidth: isMobileSize ? '100px' : '100px',
-								width: isMobileSize ? '25%' : '15%',
+								minWidth: isMobileSize ? '0px' : '120px',
+								width: isMobileSize ? '0%' : '15%',
+								display: isMobileSize ? 'none' : 'table-cell',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
-								minWidth: isMobileSize ? '0px' : '100px',
-								width: isMobileSize ? '0%' : '10%',
+								minWidth: isMobileSize ? '0px' : '90px',
+								width: isMobileSize ? '0%' : '12%',
 								display: isMobileSize ? 'none' : 'table-cell',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
-								minWidth: isMobileSize ? '60px' : '80px',
-								width: isMobileSize ? '15%' : '15%',
+								minWidth: isMobileSize ? '60px' : '70px',
+								width: isMobileSize ? '11%' : '10%',
 							},
-							// Column widths for body cells
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+								minWidth: isMobileSize ? '50px' : '80px',
+								width: isMobileSize ? '11%' : '13%',
+							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
-								minWidth: isMobileSize ? '100px' : '150px',
-								width: isMobileSize ? '25%' : '15%',
+								minWidth: isMobileSize ? '80px' : '120px',
+								width: isMobileSize ? '22%' : '12%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
-								minWidth: isMobileSize ? '120px' : '200px',
-								width: isMobileSize ? '35%' : '25%',
+								minWidth: isMobileSize ? '90px' : '180px',
+								width: isMobileSize ? '28%' : '20%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
-								minWidth: isMobileSize ? '0px' : '150px',
-								width: isMobileSize ? '0%' : '20%',
-								display: isMobileSize ? 'none' : 'table-cell',
+								minWidth: isMobileSize ? '90px' : '140px',
+								width: isMobileSize ? '28%' : '18%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
-								minWidth: isMobileSize ? '100px' : '100px',
-								width: isMobileSize ? '25%' : '15%',
+								minWidth: isMobileSize ? '0px' : '120px',
+								width: isMobileSize ? '0%' : '15%',
+								display: isMobileSize ? 'none' : 'table-cell',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
-								minWidth: isMobileSize ? '0px' : '100px',
-								width: isMobileSize ? '0%' : '10%',
+								minWidth: isMobileSize ? '0px' : '90px',
+								width: isMobileSize ? '0%' : '12%',
 								display: isMobileSize ? 'none' : 'table-cell',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
-								minWidth: isMobileSize ? '60px' : '80px',
-								width: isMobileSize ? '15%' : '15%',
+								minWidth: isMobileSize ? '60px' : '70px',
+								width: isMobileSize ? '11%' : '10%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(7)': {
+								minWidth: isMobileSize ? '50px' : '80px',
+								width: isMobileSize ? '11%' : '13%',
 							},
 						}}
 						size='small'
@@ -253,13 +260,13 @@ const AdminQuizSubmissions = () => {
 						<TableBody>
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-								<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '22%' : '12%', padding: 0, border: 'none' }} />
 								<TableCell sx={{ width: isMobileSize ? '28%' : '20%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : '18%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '22%' : '15%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '10%' : '13%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '28%' : '18%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '11%' : '10%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '11%' : '13%', padding: 0, border: 'none' }} />
 							</TableRow>
 						</TableBody>
 						<CustomTableHead<QuizSubmission>
@@ -268,9 +275,9 @@ const AdminQuizSubmissions = () => {
 							handleSort={handleSort}
 							columns={[
 								{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
-								{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
-								{ key: 'chapterName', label: isMobileSize ? 'Chapter' : 'Chapter Name' },
-								{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
+								{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz' },
+								{ key: 'chapterName', label: isMobileSize ? 'Chapter' : 'Chapter' },
+								{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course' },
 								{ key: 'score', label: 'Score' },
 								{ key: 'isChecked', label: 'Status' },
 								{ key: 'actions', label: 'Actions' },
@@ -358,17 +365,9 @@ const AdminQuizSubmissions = () => {
 												<CustomActionBtn
 													title='Check Quiz'
 													onClick={() => {
-														if (isInstructor) {
-															window.open(
-																`/instructor/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
-																'_blank'
-															);
-														} else {
-															window.open(
-																`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
-																'_blank'
-															);
-														}
+														const base = isInstructor ? '/instructor/check-submission' : '/admin/check-submission';
+														const url = `${base}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`;
+														window.open(url, '_blank');
 														window.scrollTo({ top: 0, behavior: 'smooth' });
 													}}
 													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}

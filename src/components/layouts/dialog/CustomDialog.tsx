@@ -14,6 +14,7 @@ interface CustomDialogProps {
 	maxWidth?: 'xs' | 'sm' | 'md' | 'lg';
 	PaperProps?: object;
 	BackdropProps?: object;
+	disableScrollLock?: boolean;
 }
 
 const CustomDialog = ({
@@ -27,6 +28,7 @@ const CustomDialog = ({
 	maxWidth = 'md',
 	PaperProps,
 	BackdropProps,
+	disableScrollLock = false,
 }: CustomDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -37,6 +39,8 @@ const CustomDialog = ({
 			onClose={closeModal}
 			fullWidth
 			maxWidth={maxWidth}
+			disableScrollLock={disableScrollLock}
+			container={typeof document !== 'undefined' ? document.body : undefined}
 			PaperProps={{
 				style: {
 					backgroundColor: theme.palette.secondary.main,

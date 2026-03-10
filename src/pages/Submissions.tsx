@@ -350,11 +350,11 @@ const Submissions = () => {
 														}}>
 														<CustomActionBtn
 															title='See Details'
-															onClick={() => {
+															onClick={() =>
 																navigate(
-																	`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`
-																);
-															}}
+																	`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}`
+																)
+															}
 															icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />}
 														/>
 													</TableCell>

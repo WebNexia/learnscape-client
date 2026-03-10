@@ -53,65 +53,31 @@ const SubmissionFeedbackDetails = () => {
 					axios.get(`${base_url}/userlessons/${userLessonId}`),
 				]);
 
-				setIsChecked(lessonResponse.data.data[0].isFeedbackGiven);
-
-				const userCourseQuizData = quizResponse.data.response;
-				setUserResponseData(userCourseQuizData);
-
-				// Handle lessonId - it might be an array from lookup or an object
-				const lessonIdObj = userCourseQuizData[0]?.lessonId;
-				const lessonIdTitle = Array.isArray(lessonIdObj) ? lessonIdObj[0]?.title : lessonIdObj?.title;
-				setQuizName(lessonIdTitle || '');
-
-				// Handle courseId - it might be an array from lookup or an object
-				const courseIdObj = userCourseQuizData[0]?.courseId;
-				const courseIdTitle = Array.isArray(courseIdObj) ? courseIdObj[0]?.title : courseIdObj?.title;
-				setCourseName(courseIdTitle || '');
-
-				setQuizFeedback(lessonResponse.data.data[0].teacherFeedback);
-
-				// Fetch lesson data to get isGraded and questionScores for total score calculation
-				// Get lessonId from userCourseQuizData (populated object with _id and title)
-				let lessonIdToFetch = null;
-
-				if (userCourseQuizData && userCourseQuizData.length > 0) {
-					const firstResponse = userCourseQuizData[0];
-					// lessonId is populated, so it's an object with _id
-					if (firstResponse.lessonId) {
-						if (firstResponse.lessonId._id) {
-							lessonIdToFetch = firstResponse.lessonId._id;
-						} else if (typeof firstResponse.lessonId === 'string') {
-							lessonIdToFetch = firstResponse.lessonId;
-						}
-					}
+				const lessonData = lessonResponse.data?.data?.[0];
+				if (lessonData) {
+					setIsChecked(Boolean(lessonData.isFeedbackGiven));
+					setQuizFeedback(lessonData.teacherFeedback || '');
 				}
 
+				const userCourseQuizData = quizResponse.data?.response || [];
+				setUserResponseData(userCourseQuizData);
+				setQuizName(quizResponse.data?.lessonName ?? '');
+				setCourseName(quizResponse.data?.courseName ?? '');
+				setChapterName(quizResponse.data?.chapterName ?? '');
+
+				// Fetch lesson data to get isGraded and questionScores for total score calculation
+				let lessonIdToFetch: string | null = null;
+				if (userCourseQuizData?.length > 0) {
+					const first = userCourseQuizData[0];
+					lessonIdToFetch =
+						first.lessonId?._id ?? (typeof first.lessonId === 'string' ? first.lessonId : null);
+				}
 				if (lessonIdToFetch) {
 					try {
 						const lessonDataResponse = await axios.get(`${base_url}/lessons/${lessonIdToFetch}`);
-						// API response structure is lessonResponse.data (not data.data)
-						const lessonData = lessonDataResponse.data;
-						setLesson(lessonData);
+						setLesson(lessonDataResponse.data);
 					} catch (error) {
 						console.error('Error fetching lesson data:', error);
-					}
-				}
-
-
-				const courseIdForFetch =
-					userCourseQuizData?.[0]?.courseId != null
-						? typeof userCourseQuizData[0].courseId === 'object' && userCourseQuizData[0].courseId !== null && '_id' in userCourseQuizData[0].courseId
-							? (userCourseQuizData[0].courseId as { _id: string })._id
-							: String(userCourseQuizData[0].courseId)
-						: null;
-				if (courseIdForFetch && lessonIdToFetch) {
-					try {
-						const chapterRes = await axios.get(
-							`${base_url}/courses/${courseIdForFetch}/chapter-for-lesson/${lessonIdToFetch}`
-						);
-						setChapterName(chapterRes.data?.data?.chapterName ?? '');
-					} catch (err) {
-						console.error('Error fetching chapter for feedback page:', err);
 					}
 				}
 			} catch (error) {
@@ -119,7 +85,7 @@ const SubmissionFeedbackDetails = () => {
 			}
 		};
 
-		fetchData();
+		if (userLessonId) fetchData();
 	}, [base_url, userLessonId]);
 
 	const handleResponseNavigation = (direction: 'next' | 'prev') => {
@@ -130,7 +96,11 @@ const SubmissionFeedbackDetails = () => {
 	};
 
 	const renderFeedbackModal = () => (
-		<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
+		<CustomDialog
+			openModal={openQuestionFeedbackModal}
+			closeModal={() => setOpenQuestionFeedbackModal(false)}
+			titleSx={{ paddingTop: '0.5rem' }}
+			disableScrollLock>
 			<Box sx={{ width: '90%', margin: '1rem auto' }}>
 				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
 					Question ({fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId)})
