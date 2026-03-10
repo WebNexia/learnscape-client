@@ -51,7 +51,8 @@ const AdminQuizSubmissionCheck = () => {
 	const { refreshDashboard, refreshQuizSubmissions } = useDashboardSync();
 
 	const { search } = useLocation();
-	const isChecked = new URLSearchParams(search).get('isChecked');
+	const searchParams = new URLSearchParams(search);
+	const isChecked = searchParams.get('isChecked');
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -84,28 +85,20 @@ const AdminQuizSubmissionCheck = () => {
 					axios.get(`${base_url}/userlessons/${userLessonId}`),
 				]);
 
-				const userCourseQuizData = quizResponse.data.response;
+				const userCourseQuizData = quizResponse.data?.response || [];
 				setUserResponseData(userCourseQuizData);
-				setUsername(userCourseQuizData[0].userId.username);
-				setStudentFirebaseId(userCourseQuizData[0].userId.firebaseUserId);
-				setQuizName(userCourseQuizData[0].lessonId.title);
-				setCourseName(userCourseQuizData[0].courseId.title);
-				setUserResponseToFeedback(userCourseQuizData[0]);
-				const courseId = userCourseQuizData[0].courseId?._id ?? userCourseQuizData[0].courseId;
-				const lessonIdForChapter = lessonId ?? userCourseQuizData[0].lessonId?._id ?? userCourseQuizData[0].lessonId;
-				if (courseId && lessonIdForChapter) {
-					try {
-						const chapterRes = await axios.get(
-							`${base_url}/courses/${courseId}/chapter-for-lesson/${lessonIdForChapter}`
-						);
-						const name = chapterRes.data?.data?.chapterName ?? '';
-						setChapterName(name);
-					} catch (err) {
-						console.error('Error fetching chapter name:', err);
-					}
+				setQuizName(quizResponse.data?.lessonName ?? '');
+				setCourseName(quizResponse.data?.courseName ?? '');
+				setChapterName(quizResponse.data?.chapterName ?? '');
+				const first = userCourseQuizData[0];
+				if (first) {
+					setUsername(first.userId?.username || '');
+					setStudentFirebaseId(first.userId?.firebaseUserId || '');
+					setUserResponseToFeedback(first);
+					setManualScore(first.pointsEarned);
 				}
-				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
-				setManualScore(userCourseQuizData[0]?.pointsEarned);
+				const lessonData = lessonResponse.data?.data?.[0];
+				if (lessonData) setQuizFeedback(lessonData.teacherFeedback || '');
 
 				setUserQuestionsFeedbacks(
 					() =>
