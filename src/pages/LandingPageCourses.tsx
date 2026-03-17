@@ -235,7 +235,7 @@ const LandingPageCourses = () => {
 										}}>
 										{courses?.map((course: SingleCourse) => (
 											<Box key={course._id}>
-												<DashboardCourseCard course={course} fromHomePage />
+												<DashboardCourseCard course={course} fromHomePage={true} />
 											</Box>
 										))}
 

@@ -23,10 +23,12 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import { truncateText } from '../utils/utilText';
 import { useQuery, useQueryClient } from 'react-query';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminCheckoutsFeedback = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId, organisation } = useContext(OrganisationContext);
+	const { isInstructor } = useAuth();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const courseId = searchParams.get('courseId');
@@ -39,17 +41,20 @@ const AdminCheckoutsFeedback = () => {
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
-	// Build endpoint with courseId filter if present
+	// Build endpoint: instructor uses /instructor/course/:courseId, admin uses /organisation/:orgId/course/:courseId or /organisation/:orgId
 	const buildEndpoint = () => {
+		if (isInstructor && courseId) {
+			return `${base_url}/feedback/instructor/course/${courseId}`;
+		}
 		if (courseId) {
 			return `${base_url}/feedback/organisation/${orgId}/course/${courseId}`;
 		}
 		return `${base_url}/feedback/organisation/${orgId}`;
 	};
 
-	// Fetch feedbacks directly when page loads
+	// Fetch feedbacks directly when page loads (instructor needs courseId; admin needs orgId)
 	const fetchFeedbacks = async (page: number = 1) => {
-		if (!orgId) return [];
+		if (isInstructor ? !courseId : !orgId) return [];
 		try {
 			const endpoint = buildEndpoint();
 			const separator = endpoint.includes('?') ? '&' : '?';
@@ -68,7 +73,7 @@ const AdminCheckoutsFeedback = () => {
 	};
 
 	const fetchMoreFeedbacks = async (startPage: number, endPage: number) => {
-		if (!orgId) return;
+		if (isInstructor ? !courseId : !orgId) return;
 		const pagesToFetch: number[] = [];
 		for (let page = startPage; page <= endPage; page++) {
 			if (!loadedPages.includes(page)) pagesToFetch.push(page);
@@ -96,8 +101,8 @@ const AdminCheckoutsFeedback = () => {
 		data: feedbacks,
 		isLoading,
 		isError,
-	} = useQuery(['feedbacks', orgId, courseId, feedbacksPageNumber], () => fetchFeedbacks(feedbacksPageNumber), {
-		enabled: !!orgId,
+	} = useQuery(['feedbacks', orgId, courseId, feedbacksPageNumber, isInstructor], () => fetchFeedbacks(feedbacksPageNumber), {
+		enabled: isInstructor ? !!courseId : !!orgId,
 		staleTime: 0,
 		cacheTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -427,7 +432,7 @@ const AdminCheckoutsFeedback = () => {
 								? [
 									{
 										label: 'Back',
-										onClick: () => navigate(`/admin/course-edit/course/${courseId}`),
+										onClick: () => navigate(isInstructor ? `/instructor/course-edit/course/${courseId}` : `/admin/course-edit/course/${courseId}`),
 										startIcon: isMobileSize ? undefined : <ArrowBack />,
 									},
 								]
@@ -575,15 +580,19 @@ const AdminCheckoutsFeedback = () => {
 														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													<CustomActionBtn
-														title='Delete'
-														onClick={() => {
-															openDeleteFeedbackModal(index);
-														}}
-														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-													/>
+													{!isInstructor && (
+														<>
+															<CustomActionBtn
+																title='Delete'
+																onClick={() => {
+																	openDeleteFeedbackModal(index);
+																}}
+																icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+															/>
+														</>
+													)}
 
-													{isFeedbackDeleteModalOpen[index] !== undefined && (
+													{!isInstructor && isFeedbackDeleteModalOpen[index] !== undefined && (
 														<CustomDialog
 															openModal={isFeedbackDeleteModalOpen[index]}
 															closeModal={() => closeDeleteFeedbackModal(index)}

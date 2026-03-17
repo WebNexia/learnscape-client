@@ -303,44 +303,89 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(`/instructor/dashboard`)}
 								active={currentPath?.includes('/instructor/dashboard')}
 							/>
-							<SidebarBtn
-								btnText='Courses'
-								IconName={LibraryBooks}
-								onClick={() => navigateWithPage(`/instructor/courses`)}
-								active={
-									currentPath?.includes('/instructor/courses') || (currentPath?.includes('/instructor/course') && currentPath?.includes('/forms'))
+							<SidebarGroupedMenu
+								mainBtnText='Courses'
+								mainIconName={LibraryBooks}
+								mainPath='/instructor/courses'
+								mainIsActive={
+									(currentPath?.includes('/instructor/courses') ||
+										(currentPath?.includes('/instructor/course') && currentPath?.includes('/forms'))) &&
+									!currentPath?.includes('/instructor/lessons') &&
+									!currentPath?.includes('/instructor/lesson-edit') &&
+									!currentPath?.includes('/instructor/questions') &&
+									!currentPath?.includes('/instructor/documents') &&
+									!currentPath?.includes('/instructor/submissions')
 								}
+								subMenuItems={[
+									{
+										btnText: 'Courses',
+										IconName: LibraryBooks,
+										path: '/instructor/courses',
+										isActive:
+											(currentPath?.includes('/instructor/courses') ||
+												currentPath?.includes('/instructor/course-edit') ||
+												(currentPath?.includes('/instructor/course') && currentPath?.includes('/forms'))) &&
+											!currentPath?.includes('/instructor/submissions'),
+									},
+									{
+										btnText: 'Lessons',
+										IconName: AssignmentIndRounded,
+										path: '/instructor/lessons',
+										isActive: currentPath?.includes('/instructor/lessons') || currentPath?.includes('/instructor/lesson-edit'),
+									},
+									{
+										btnText: 'Questions',
+										IconName: QuizOutlined,
+										path: '/instructor/questions',
+										isActive: currentPath?.includes('/instructor/questions'),
+									},
+									{
+										btnText: 'Documents',
+										IconName: FilePresent,
+										path: '/instructor/documents',
+										isActive: currentPath?.includes('/instructor/documents'),
+									},
+									{
+										btnText: 'Submissions',
+										IconName: LibraryAddCheck,
+										path: '/instructor/submissions',
+										isActive: currentPath?.includes('/instructor/submissions'),
+									},
+								]}
+								onNavigate={navigateWithPage}
 							/>
-							<SidebarBtn
+							{(currentPath?.includes('/instructor/lessons') || currentPath?.includes('/instructor/lesson-edit')) && <SidebarBtn
 								btnText='Lessons'
 								IconName={AssignmentIndRounded}
 								onClick={() => navigateWithPage(`/instructor/lessons`)}
 								active={currentPath?.includes('/instructor/lessons')}
 							/>
-							<SidebarBtn
+							}
+							{currentPath?.includes('/instructor/questions') && <SidebarBtn
 								btnText='Questions'
 								IconName={QuizOutlined}
 								onClick={() => navigateWithPage(`/instructor/questions`)}
 								active={currentPath?.includes('/instructor/questions')}
-							/>
-							<SidebarBtn
+							/>}
+							{currentPath?.includes('/instructor/documents') && <SidebarBtn
 								btnText='Documents'
 								IconName={FilePresent}
 								onClick={() => navigateWithPage(`/instructor/documents`)}
 								active={currentPath?.includes('/instructor/documents')}
-							/>
+							/>}
+							{currentPath?.includes('/instructor/submissions') && <SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(`/instructor/submissions`)}
+								active={currentPath?.includes('/instructor/submissions')}
+							/>}
 							<SidebarBtn
 								btnText='Forms'
 								IconName={Ballot}
 								onClick={() => navigateWithPage(`/instructor/forms`)}
 								active={currentPath?.includes('/instructor/forms') && !currentPath?.includes('/instructor/course')}
 							/>
-							<SidebarBtn
-								btnText='Submissions'
-								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(`/instructor/submissions`)}
-								active={currentPath?.includes('/instructor/submissions')}
-							/>
+
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}

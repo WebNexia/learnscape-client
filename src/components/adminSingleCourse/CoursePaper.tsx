@@ -474,7 +474,8 @@ const CoursePaper = ({
 											<IconButton
 												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.5rem' : '0.25rem' }}
 												onClick={() => {
-													navigate(`/admin/feedbacks?courseId=${courseId}`);
+													const base = hasAdminAccess ? '/admin' : '/instructor';
+													navigate(`${base}/feedbacks?courseId=${courseId}`);
 												}}>
 												<RateReview sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>

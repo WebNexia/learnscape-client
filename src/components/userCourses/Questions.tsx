@@ -22,6 +22,10 @@ interface QuestionsProps {
 	onQuestionChange?: (questionNumber: number) => void;
 	practiceAgainMode?: boolean;
 	enableWordAssist?: boolean;
+	/** Lesson content (plain text) for open-ended AI context */
+	lessonText?: string;
+	/** Chapter name for open-ended AI context */
+	chapterName?: string;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -37,6 +41,8 @@ const Questions: React.FC<QuestionsProps> = ({
 	onQuestionChange,
 	practiceAgainMode = false,
 	enableWordAssist = true,
+	lessonText,
+	chapterName,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted, updateLastQuestion } = useUserCourseLessonData();
 	const filteredQuestions = questions?.filter((question) => question !== null && question !== undefined) ?? [];
@@ -152,6 +158,8 @@ const Questions: React.FC<QuestionsProps> = ({
 							isSoundMuted={isSoundMuted}
 							practiceAgainMode={practiceAgainMode}
 							enableWordAssist={enableWordAssist}
+							lessonText={lessonText}
+							chapterName={chapterName}
 						/>
 					) : isQuiz ? (
 						<QuizQuestion

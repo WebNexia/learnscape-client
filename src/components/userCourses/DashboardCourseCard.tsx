@@ -103,10 +103,10 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				</Box>
 			)}
 
-			{fromHomePage && course.courseManagement && (
+			{course?.courseManagement && (
 				<Chip
-					label={course.courseManagement.isExternal ? <span>Partner</span> : <span>Platform</span>}
-					color={course.courseManagement.isExternal ? 'info' : 'success'}
+					label={course?.courseManagement?.isExternal ? <span>Partner</span> : <span>Platform</span>}
+					color={course?.courseManagement?.isExternal ? 'info' : 'success'}
 					size='small'
 					sx={{
 						position: 'absolute',

@@ -330,14 +330,29 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		feedback,
 	]);
 
-	// Expose functions to parent component
+	// Expose functions to parent component (slow smooth scroll for scrollIntoView)
 	useImperativeHandle(ref, () => ({
 		toggleExpanded: handleToggleExpanded,
 		setExpanded: (expanded: boolean) => {
 			setIsExpanded(expanded);
 		},
 		scrollIntoView: () => {
-			rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			const el = rootRef.current;
+			if (!el) return;
+			const scrollMarginPx = isMobileSize ? 7 * 16 : 9 * 16; // 7rem / 9rem
+			const targetScrollY = window.scrollY + el.getBoundingClientRect().top - scrollMarginPx;
+			const clamped = Math.max(0, Math.min(targetScrollY, document.documentElement.scrollHeight - window.innerHeight));
+			const start = window.scrollY;
+			const durationMs = 1350;
+			const startTime = performance.now();
+			const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+			const tick = (now: number) => {
+				const elapsed = now - startTime;
+				const p = Math.min(1, elapsed / durationMs);
+				window.scrollTo(0, start + (clamped - start) * easeInOutCubic(p));
+				if (p < 1) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
 		},
 	}));
 

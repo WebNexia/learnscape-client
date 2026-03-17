@@ -187,7 +187,7 @@ const Courses = () => {
 									displayMyCourses={false}
 									userCourseId={userCourseId}
 									isCourseCompleted={isCourseCompleted}
-									fromHomePage={true}
+									fromHomePage={false}
 								/>
 							);
 						})}

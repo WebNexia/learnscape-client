@@ -1,18 +1,23 @@
-import { useContext, useEffect, useState, useMemo } from 'react';
-import { Box, Button, DialogActions, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import {
 	Article,
+	CheckCircle,
 	Close,
 	DoneAll,
+	ExpandMore,
 	GetApp,
 	HelpOutline,
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
+	Lock,
+	Menu,
 	MenuBook,
 	NotListedLocation,
+	PlayCircleOutline,
 	RecordVoiceOver,
 	RecordVoiceOverOutlined,
 	VolumeOff,
@@ -20,7 +25,6 @@ import {
 } from '@mui/icons-material';
 import theme from '../themes';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
@@ -41,6 +45,7 @@ import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interface
 import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
+import { stripHtml } from '../utils/stripHtml';
 import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
@@ -53,6 +58,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import InstructionalLessonsDialog from '../components/userCourses/InstructionalLessonsDialog';
 import { useWordAssist, wrapWordsForHover } from '../hooks/useWordAssist';
 import WordAssistPopper from '../components/userCourses/WordAssistPopper';
+import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -72,7 +78,6 @@ export interface QuizQuestionAnswer {
 const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, courseId, userCourseId } = useParams();
-	const { organisation } = useContext(OrganisationContext);
 	const {
 		isSmallScreen,
 		isRotatedMedium,
@@ -148,12 +153,26 @@ const LessonPage = () => {
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
 	const [isInstructionalLessonsDialogOpen, setIsInstructionalLessonsDialogOpen] = useState<boolean>(false);
 	const [selectedInstructionalLessonId, setSelectedInstructionalLessonId] = useState<string>('');
+	const [isChapterListDrawerOpen, setIsChapterListDrawerOpen] = useState<boolean>(false);
+	const currentChapterDrawerRef = useRef<HTMLDivElement>(null);
+	const drawerScrollContainerRef = useRef<HTMLDivElement>(null);
+	// Chapters expanded in the drawer: by default only the one containing the current lesson
+	const [drawerExpandedChapterIds, setDrawerExpandedChapterIds] = useState<Set<string>>(() => {
+		const initial = new Set<string>();
+		if (!lessonId || !singleCourseUser?.chapters) return initial;
+		const chapter = singleCourseUser.chapters.find((ch) => ch?.lessons?.some((l) => l?._id === lessonId));
+		const chapterId = (chapter as any)?._id ?? (chapter as any)?.chapterId;
+		if (chapterId) initial.add(String(chapterId));
+		return initial;
+	});
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
 		enabled: isWordAssistEnabled,
 		hoverDelayMs: 1000,
 	});
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const parsedUserLessonData = useMemo(() => userLessonsData ?? [], [userLessonsData]);
 
 	const [lesson, setLesson] = useState<Lesson>({
 		_id: '',
@@ -198,18 +217,17 @@ const LessonPage = () => {
 	const lessonTextColor = theme.textColor?.secondary.main || '#4D7B8B';
 	const lessonTextFontFamily = theme.fontFamily?.main || 'Poppins';
 
+	const currentChapter = useMemo(() => {
+		if (!singleCourseUser?.chapters || !lessonId) return null;
+		return (singleCourseUser.chapters || []).find((ch) => ch?.lessons?.some((l) => l?._id === lessonId)) ?? null;
+	}, [singleCourseUser?.chapters, lessonId]);
+
 	const instructionalLessonsInChapter = useMemo(() => {
-		if (!singleCourseUser || !lessonId) return [];
-
-		const currentChapter = (singleCourseUser.chapters || []).find(
-			(chapter) => chapter?.lessons?.some((chapterLesson) => chapterLesson?._id === lessonId)
-		);
 		if (!currentChapter?.lessons) return [];
-
 		return currentChapter.lessons.filter(
 			(chapterLesson) => chapterLesson !== null && chapterLesson.type === LessonType.INSTRUCTIONAL_LESSON
 		);
-	}, [singleCourseUser, lessonId]);
+	}, [currentChapter]);
 
 	useEffect(() => {
 		if (instructionalLessonsInChapter.length > 0) {
@@ -228,8 +246,46 @@ const LessonPage = () => {
 		localStorage.setItem('word-assist-enabled', String(isWordAssistEnabled));
 	}, [isWordAssistEnabled]);
 
-	// Reset practiceAgainMode when lessonId changes (on mount/navigation)
+	// When chapter list drawer opens, ensure the chapter containing the current lesson is expanded
 	useEffect(() => {
+		if (!isChapterListDrawerOpen || !lessonId || !singleCourseUser?.chapters) return;
+		const chapter = singleCourseUser.chapters.find((ch) => ch?.lessons?.some((l) => l?._id === lessonId));
+		const chapterId = chapter && ((chapter as any)._id ?? (chapter as any)?.chapterId);
+		if (chapterId) {
+			setDrawerExpandedChapterIds((prev) => new Set(prev).add(String(chapterId)));
+		}
+	}, [isChapterListDrawerOpen, lessonId, singleCourseUser?.chapters]);
+
+	// When drawer opens, scroll so the current chapter is vertically centered (slow smooth scroll)
+	useEffect(() => {
+		if (!isChapterListDrawerOpen) return;
+		const startDelay = 350;
+		const durationMs = 1500;
+		const t = setTimeout(() => {
+			const container = drawerScrollContainerRef.current;
+			const chapterEl = currentChapterDrawerRef.current;
+			if (!container || !chapterEl) return;
+			const targetScrollTop =
+				chapterEl.offsetTop - container.clientHeight / 2 + chapterEl.offsetHeight / 2;
+			const clamped = Math.max(0, Math.min(targetScrollTop, container.scrollHeight - container.clientHeight));
+			const start = container.scrollTop;
+			const startTime = performance.now();
+			const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+			const tick = (now: number) => {
+				const elapsed = now - startTime;
+				const p = Math.min(1, elapsed / durationMs);
+				container.scrollTop = start + (clamped - start) * easeInOutCubic(p);
+				if (p < 1) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}, startDelay);
+		return () => clearTimeout(t);
+	}, [isChapterListDrawerOpen]);
+
+
+
+	useEffect(() => {
+		setIsQuestionsVisible(false);
 		setPracticeAgainMode(false);
 	}, [lessonId]);
 
@@ -419,6 +475,22 @@ const LessonPage = () => {
 		if (isNotesUpdated) {
 			updateUserLessonNotes();
 		}
+	};
+
+	const handleDrawerLessonClick = (targetLessonId: string) => {
+		if (!courseId || !userCourseId || targetLessonId === lessonId) return;
+		setIsChapterListDrawerOpen(false);
+		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}`);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	const toggleDrawerChapter = (chapterId: string) => {
+		setDrawerExpandedChapterIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(chapterId)) next.delete(chapterId);
+			else next.add(chapterId);
+			return next;
+		});
 	};
 
 	return (
@@ -683,23 +755,162 @@ const LessonPage = () => {
 							</IconButton>
 						</Tooltip>
 					)}
-					<Button
-						variant='text'
-						endIcon={<Home fontSize='small' />}
-						sx={{
-							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-							'color': theme.textColor?.primary,
-							'width': 'fit-content',
-							'textTransform': 'inherit',
-							'fontFamily': theme.fontFamily?.main,
-							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-						}}
-						onClick={handleLessonNavigation}
-						disabled={isQuizInProgress}>
-						{isMobileSize ? '' : 'Course Home Page'}
-					</Button>
+
+					<Tooltip title='Course Home Page' placement='left' arrow>
+						<IconButton onClick={handleLessonNavigation} disabled={isQuizInProgress} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+							<Home fontSize='small' />
+						</IconButton>
+					</Tooltip>
+
+
+					<Tooltip title='Chapters & Lessons' placement='top' arrow>
+						<IconButton
+							onClick={() => setIsChapterListDrawerOpen(true)}
+							disabled={isQuizInProgress}
+							sx={{ color: theme.textColor?.primary, ':hover': { backgroundColor: 'transparent' } }}>
+							<Menu fontSize={'small'} />
+						</IconButton>
+					</Tooltip>
 				</Box>
 			</Box>
+
+			{/* Chapter & lesson list drawer */}
+			<Drawer
+				anchor='right'
+				open={isChapterListDrawerOpen}
+				onClose={() => setIsChapterListDrawerOpen(false)}
+				transitionDuration={{ enter: 1000, exit: 1000 }}
+				PaperProps={{
+					sx: {
+						width: isMobileSize ? '85%' : 360,
+						maxWidth: '100%',
+						backgroundColor: theme.bgColor?.common || '#faf9f6',
+					},
+				}}>
+				<Box sx={{ p: 2, pb: 3 }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.95rem' : '1.1rem' }}>
+							Chapters & Lessons
+						</Typography>
+						<IconButton onClick={() => setIsChapterListDrawerOpen(false)} size='small'>
+							<Close />
+						</IconButton>
+					</Box>
+					<Box ref={drawerScrollContainerRef} sx={{ overflow: 'auto', maxHeight: 'calc(100vh - 6rem)' }}>
+						{singleCourseUser?.chapters
+							?.filter((ch) => ch && ch.lessons && ch.lessons.length > 0)
+							.map((chapter, chapterIndex) => {
+								const chapterId = (chapter as any)?._id ?? (chapter as any)?.chapterId ?? '';
+								const validLessons = chapter.lessons?.filter((l) => l != null) ?? [];
+								const containsCurrentLesson = validLessons.some((l) => l?._id === lessonId);
+								const isExpanded = drawerExpandedChapterIds.has(String(chapterId)) || containsCurrentLesson;
+								const isAlternateHeaderTone = chapterIndex % 2 === 1;
+								const chapterHeaderBackground = isAlternateHeaderTone ? '#1a5a71' : theme.bgColor?.primary || theme.palette.primary.main;
+								return (
+									<Box
+										ref={containsCurrentLesson ? currentChapterDrawerRef : undefined}
+										key={chapterId}
+										sx={{
+											mb: 1,
+											border: '1px solid',
+											borderColor: 'divider',
+											borderRadius: 1,
+											overflow: 'hidden',
+											backgroundColor: '#fff',
+										}}>
+										<Box
+											onClick={() => toggleDrawerChapter(String(chapterId))}
+											sx={{
+												display: 'flex',
+												alignItems: 'center',
+												px: 0.5,
+												py: 0.75,
+												cursor: 'pointer',
+												backgroundColor: chapterHeaderBackground,
+												color: 'white',
+												'&:hover': { backgroundColor: chapterHeaderBackground },
+											}}
+											role='button'
+											tabIndex={0}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault();
+													toggleDrawerChapter(String(chapterId));
+												}
+											}}>
+											<IconButton
+												size='small'
+												sx={{
+													color: 'white',
+													padding: '0.25rem',
+													transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+													transition: 'transform 0.2s ease',
+												}}>
+												<ExpandMore fontSize='small' />
+											</IconButton>
+											<Typography sx={{ flex: 1, fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: 'white' }}>
+												{chapter.title}
+											</Typography>
+										</Box>
+										<Collapse in={isExpanded} timeout='auto' unmountOnExit>
+											<Box sx={{ py: 0.5 }}>
+												{validLessons.map((lesson) => {
+													const isCurrent = lesson._id === lessonId;
+													const isCompleted = parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.isCompleted);
+													// Same as CoursePage Lesson: accessible only if user has a userLesson record (unlocked)
+													const isAccessible = parsedUserLessonData.some(
+														(d) => d.lessonId === lesson._id && d.courseId === courseId
+													);
+													return (
+														<Box
+															key={lesson._id}
+															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id)}
+															sx={{
+																display: 'flex',
+																alignItems: 'center',
+																gap: 1,
+																px: 2,
+																py: 1,
+																cursor: isAccessible ? 'pointer' : 'default',
+																backgroundColor: isCurrent ? theme.palette.primary.light + '25' : 'transparent',
+																borderLeft: 3,
+																borderLeftColor: isCurrent ? theme.palette.primary.main : 'transparent',
+																opacity: isAccessible ? 1 : 0.65,
+																'&:hover': isAccessible
+																	? { backgroundColor: theme.palette.action.hover }
+																	: {},
+															}}>
+															{!isAccessible ? (
+																<Lock sx={{ fontSize: '1.1rem', color: theme.palette.text.secondary }} />
+															) : isCurrent ? (
+																<PlayCircleOutline sx={{ fontSize: '1.1rem', color: theme.palette.primary.main }} />
+															) : isCompleted ? (
+																<CheckCircle sx={{ fontSize: '1.1rem', color: theme.palette.success.main }} />
+															) : (
+																<Box sx={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+																	<Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: theme.palette.text.secondary, opacity: 0.6 }} />
+																</Box>
+															)}
+															<Typography
+																sx={{
+																	fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+																	fontWeight: isCurrent ? 600 : 400,
+																	flex: 1,
+																	color: isAccessible ? undefined : 'text.secondary',
+																}}>
+																{truncateText(lesson.title ?? '', 40)}
+															</Typography>
+														</Box>
+													);
+												})}
+											</Box>
+										</Collapse>
+									</Box>
+								);
+							})}
+					</Box>
+				</Box>
+			</Drawer>
 
 			<Box
 				sx={{
@@ -717,7 +928,7 @@ const LessonPage = () => {
 						</IconButton>
 					</Tooltip>
 				)}
-				<Slide direction='right' in={isNotesDrawerOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
+				<Slide direction='right' in={isNotesDrawerOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 1000 }}>
 					<Box
 						sx={{
 							position: 'fixed',
@@ -1086,6 +1297,8 @@ const LessonPage = () => {
 							isSoundMuted={isSoundMuted}
 							practiceAgainMode={practiceAgainMode}
 							enableWordAssist={isWordAssistEnabled}
+							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
+							chapterName={currentChapter?.title}
 						/>
 					</Box>
 				);

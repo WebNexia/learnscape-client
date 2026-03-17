@@ -15,11 +15,32 @@ export const useUserCourseLessonData = () => {
 	const location = useLocation();
 	const { user } = useAuth();
 	const searchParams = new URLSearchParams(location.search);
-	const nextLessonId = searchParams.get('next');
+	const nextLessonIdFromUrl = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { userCoursesData, singleCourseUser } = useContext(UserCourseLessonDataContext);
 	const queryClient = useQueryClient();
+
+	// Resolve next lesson: from URL or derive from course structure (so "Next Lesson" shows even without ?next= in URL)
+	const nextLessonId = useMemo(() => {
+		if (nextLessonIdFromUrl) return nextLessonIdFromUrl;
+		if (!singleCourseUser?.chapters?.length || !lessonId) return null;
+		const chapters = singleCourseUser.chapters;
+		for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
+			const chapter = chapters[chapterIndex];
+			if (!chapter?.lessons?.length) continue;
+			const validLessons = chapter.lessons.filter((l) => l && l._id);
+			const currentIndex = validLessons.findIndex((l) => l && l._id === lessonId);
+			if (currentIndex === -1) continue;
+			if (currentIndex < validLessons.length - 1) return validLessons[currentIndex + 1]._id;
+			for (let j = chapterIndex + 1; j < chapters.length; j++) {
+				const first = chapters[j]?.lessons?.find((l) => l && l._id);
+				if (first?._id) return first._id;
+			}
+			return null;
+		}
+		return null;
+	}, [nextLessonIdFromUrl, singleCourseUser?.chapters, lessonId]);
 
 	// Use context data for userCourseData, use hook for userLessonData
 	const parsedUserCourseData = useMemo(() => {
@@ -52,6 +73,12 @@ export const useUserCourseLessonData = () => {
 	useEffect(() => {
 		const currentUserLessonData = parsedUserLessonData?.find((data) => data.lessonId === lessonId && data.courseId === courseId);
 		setUserLessonId(currentUserLessonData?.userLessonId);
+	}, [parsedUserLessonData, lessonId, courseId]);
+
+
+	useEffect(() => {
+		const current = parsedUserLessonData?.find((d) => d.lessonId === lessonId && d.courseId === courseId);
+		if (current?.isCompleted) setIsLessonCompleted(true);
 	}, [parsedUserLessonData, lessonId, courseId]);
 
 	// State for course completion status
