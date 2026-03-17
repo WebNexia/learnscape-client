@@ -4,7 +4,6 @@ import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
-import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { PageName, Roles } from '../../../interfaces/enums';
@@ -37,7 +36,6 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess, canAccessPayments } = useAuth();
-	const { organisation } = useContext(OrganisationContext);
 	const { isMobilePortrait } = useContext(MediaQueryContext);
 
 	const currentPage = window.location.pathname?.includes('admin')
@@ -345,44 +343,107 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_DASHBOARD, `/instructor/dashboard`)}
 										active={selectedPage === PageName.INSTRUCTOR_DASHBOARD}
 									/>
-									<SidebarBtn
-										btnText='Courses'
-										IconName={LibraryBooks}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COURSES, `/instructor/courses`)}
-										active={
-											selectedPage === PageName.INSTRUCTOR_COURSES ||
-											(window.location.pathname?.includes('/instructor/course') && window.location.pathname?.includes('/forms'))
+									<SidebarGroupedMenu
+										mainBtnText='Courses'
+										mainIconName={LibraryBooks}
+										mainPath='/instructor/courses'
+										mainIsActive={
+											(selectedPage === PageName.INSTRUCTOR_COURSES ||
+												(window.location.pathname?.includes('/instructor/course') && window.location.pathname?.includes('/forms'))) &&
+											selectedPage !== PageName.INSTRUCTOR_LESSONS &&
+											!window.location.pathname?.includes('/instructor/lesson-edit') &&
+											selectedPage !== PageName.INSTRUCTOR_QUESTIONS &&
+											selectedPage !== PageName.INSTRUCTOR_DOCUMENTS &&
+											selectedPage !== PageName.INSTRUCTOR_SUBMISSIONS
 										}
+										subMenuItems={[
+											{
+												btnText: 'Courses',
+												IconName: LibraryBooks,
+												path: '/instructor/courses',
+												isActive:
+													(selectedPage === PageName.INSTRUCTOR_COURSES ||
+														(window.location.pathname?.includes('/instructor/course') && window.location.pathname?.includes('/forms'))) &&
+													selectedPage !== PageName.INSTRUCTOR_SUBMISSIONS,
+											},
+											{
+												btnText: 'Lessons',
+												IconName: AssignmentIndRounded,
+												path: '/instructor/lessons',
+												isActive: selectedPage === PageName.INSTRUCTOR_LESSONS,
+											},
+											{
+												btnText: 'Questions',
+												IconName: QuizOutlined,
+												path: '/instructor/questions',
+												isActive: selectedPage === PageName.INSTRUCTOR_QUESTIONS,
+											},
+											{
+												btnText: 'Documents',
+												IconName: FilePresent,
+												path: '/instructor/documents',
+												isActive: selectedPage === PageName.INSTRUCTOR_DOCUMENTS,
+											},
+											{
+												btnText: 'Submissions',
+												IconName: LibraryAddCheck,
+												path: '/instructor/submissions',
+												isActive: selectedPage === PageName.INSTRUCTOR_SUBMISSIONS,
+											},
+										]}
+										onNavigate={(path) => {
+											const pageName = path.includes('submissions')
+												? PageName.INSTRUCTOR_SUBMISSIONS
+												: path.includes('courses')
+													? PageName.INSTRUCTOR_COURSES
+													: path.includes('lessons')
+														? PageName.INSTRUCTOR_LESSONS
+														: path.includes('questions')
+															? PageName.INSTRUCTOR_QUESTIONS
+															: path.includes('documents')
+																? PageName.INSTRUCTOR_DOCUMENTS
+																: '';
+											navigateWithPage(pageName, path);
+										}}
 									/>
-									<SidebarBtn
-										btnText='Lessons'
-										IconName={AssignmentIndRounded}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_LESSONS, `/instructor/lessons`)}
-										active={selectedPage === PageName.INSTRUCTOR_LESSONS}
-									/>
-									<SidebarBtn
-										btnText='Questions'
-										IconName={QuizOutlined}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_QUESTIONS, `/instructor/questions`)}
-										active={selectedPage === PageName.INSTRUCTOR_QUESTIONS}
-									/>
-									<SidebarBtn
-										btnText='Documents'
-										IconName={FilePresent}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_DOCUMENTS, `/instructor/documents`)}
-										active={selectedPage === PageName.INSTRUCTOR_DOCUMENTS}
-									/>
+
+									{(selectedPage === PageName.INSTRUCTOR_LESSONS || window.location.pathname?.includes('/instructor/lesson-edit')) && (
+										<SidebarBtn
+											btnText='Lessons'
+											IconName={AssignmentIndRounded}
+											onClick={() => navigateWithPage(PageName.INSTRUCTOR_LESSONS, `/instructor/lessons`)}
+											active={selectedPage === PageName.INSTRUCTOR_LESSONS}
+										/>
+									)}
+									{selectedPage === PageName.INSTRUCTOR_QUESTIONS && (
+										<SidebarBtn
+											btnText='Questions'
+											IconName={QuizOutlined}
+											onClick={() => navigateWithPage(PageName.INSTRUCTOR_QUESTIONS, `/instructor/questions`)}
+											active={selectedPage === PageName.INSTRUCTOR_QUESTIONS}
+										/>
+									)}
+									{selectedPage === PageName.INSTRUCTOR_DOCUMENTS && (
+										<SidebarBtn
+											btnText='Documents'
+											IconName={FilePresent}
+											onClick={() => navigateWithPage(PageName.INSTRUCTOR_DOCUMENTS, `/instructor/documents`)}
+											active={selectedPage === PageName.INSTRUCTOR_DOCUMENTS}
+										/>
+									)}
+									{selectedPage === PageName.INSTRUCTOR_SUBMISSIONS && (
+										<SidebarBtn
+											btnText='Submissions'
+											IconName={LibraryAddCheck}
+											onClick={() => navigateWithPage(PageName.INSTRUCTOR_SUBMISSIONS, `/instructor/submissions`)}
+											active={selectedPage === PageName.INSTRUCTOR_SUBMISSIONS}
+										/>
+									)}
 									<SidebarBtn
 										btnText='Forms'
 										IconName={Ballot}
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_FORMS, `/instructor/forms`)}
 										active={selectedPage === PageName.INSTRUCTOR_FORMS && !window.location.pathname?.includes('/instructor/course')}
-									/>
-									<SidebarBtn
-										btnText='Submissions'
-										IconName={LibraryAddCheck}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_SUBMISSIONS, `/instructor/submissions`)}
-										active={selectedPage === PageName.INSTRUCTOR_SUBMISSIONS}
 									/>
 									<SidebarBtn
 										btnText='Calendar'

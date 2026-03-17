@@ -67,7 +67,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 										transform: 'translate3d(0, -4px, 0)',
 									},
 								}}>
-								<DashboardCourseCard course={course} fromHomePage />
+								<DashboardCourseCard course={course} fromHomePage={true} />
 							</Box>
 						);
 					})

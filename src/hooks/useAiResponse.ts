@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { QuestionType } from '../interfaces/enums';
 import axiosInstance from '../utils/axiosInstance';
 
 export interface QuestionPrompt {
@@ -8,6 +7,10 @@ export interface QuestionPrompt {
 	options?: string[];
 	correctAnswer?: string;
 	userInput?: string;
+	/** Lesson content (plain text) for open-ended AI context */
+	lessonText?: string;
+	/** Chapter name for open-ended AI context */
+	chapterName?: string;
 }
 
 const useAiResponse = () => {
@@ -18,13 +21,16 @@ const useAiResponse = () => {
 		setIsLoadingAiResponse(true);
 
 		try {
-			const response = await axiosInstance.post('/ai/feedback', {
+			const body: Record<string, unknown> = {
 				question: userPrompt.question,
 				type: userPrompt.type,
 				options: userPrompt.options,
 				correctAnswer: userPrompt.correctAnswer,
 				userInput: userPrompt.userInput,
-			});
+			};
+			if (userPrompt.lessonText != null) body.lessonText = userPrompt.lessonText;
+			if (userPrompt.chapterName != null) body.chapterName = userPrompt.chapterName;
+			const response = await axiosInstance.post('/ai/feedback', body);
 			const responseText = response.data?.data ?? '';
 			setAiResponse(responseText);
 			return responseText;

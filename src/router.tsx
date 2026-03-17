@@ -689,6 +689,14 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
+				path: 'instructor/feedbacks',
+				element: (
+					<InstructorRouteGuard>
+						<AdminCheckoutsFeedback />
+					</InstructorRouteGuard>
+				),
+			},
+			{
 				path: 'instructor/calendar',
 				element: (
 					<InstructorRouteGuard>

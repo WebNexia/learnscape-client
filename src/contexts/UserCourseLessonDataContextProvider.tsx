@@ -52,12 +52,12 @@ export interface UserLessonDataStorage {
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
 	singleCourse: null,
-	setSingleCourse: () => {},
+	setSingleCourse: () => { },
 	singleCourseUser: null,
-	setSingleCourseUser: () => {},
-	fetchSingleCourseDataUser: () => {},
-	enableUserCourseLessonDataFetch: () => {},
-	disableUserCourseLessonDataFetch: () => {},
+	setSingleCourseUser: () => { },
+	fetchSingleCourseDataUser: () => { },
+	enableUserCourseLessonDataFetch: () => { },
+	disableUserCourseLessonDataFetch: () => { },
 	userCoursesData: [],
 });
 
