@@ -1693,6 +1693,8 @@ const AdminLessonEditPage = () => {
 													singleLessonBeforeSave.questions?.length !== 0 &&
 													singleLessonBeforeSave.questions?.map((question, index) => {
 														if (question !== null) {
+															const questionNumber =
+																(singleLessonBeforeSave.questions?.slice(0, index).filter((q) => q !== null && q !== undefined).length ?? 0) + 1;
 															return (
 																<Reorder.Item
 																	key={question._id}
@@ -1717,16 +1719,24 @@ const AdminLessonEditPage = () => {
 																			sx={{
 																				height: '3rem',
 																				width: '2rem',
+																				display: 'flex',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																				flexShrink: 0,
+																				borderRadius: '0.25rem 0 0 0.25rem',
+																				backgroundColor: theme.bgColor?.secondary,
 																			}}>
-																			<img
-																				src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
-																				alt='question_img'
-																				height='100%'
-																				width='100%'
-																				style={{
-																					borderRadius: '0.25rem 0 0 0.25rem',
-																				}}
-																			/>
+																			<Typography
+																				variant='subtitle2'
+																				component='span'
+																				sx={{
+																					fontWeight: 700,
+																					fontSize: isMobileSize ? '0.8rem' : '0.95rem',
+																					lineHeight: 1,
+																					color: 'text.primary',
+																				}}>
+																				{questionNumber}
+																			</Typography>
 																		</Box>
 																		<Box
 																			sx={{
