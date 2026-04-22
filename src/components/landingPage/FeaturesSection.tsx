@@ -151,10 +151,10 @@ const FeaturesSection = () => {
 									{feature.title === 'Expert Instructors'
 										? 'Uzman Eğitmenler'
 										: feature.title === 'Personalized Learning'
-											? 'Kişiselleştirilmiş Öğrenme'
+											? 'Sistemli Öğrenme'
 											: feature.title === 'Learn Anywhere'
-												? 'Her Yerde Öğren'
-												: 'İlerlemeyi Takip Et'}
+												? 'Canlı Dersler'
+												: 'Etüt Programları'}
 								</Typography>
 								<Typography
 									variant='body1'
@@ -165,12 +165,12 @@ const FeaturesSection = () => {
 										lineHeight: 1.6,
 									}}>
 									{feature.description === 'Learn from certified English teachers with years of experience.'
-										? 'Yılların deneyimine sahip sertifikalı İngilizce öğretmenlerinden öğrenin.'
+										? 'Yılların deneyimine sahip İngilizce öğretmenlerinden öğrenin'
 										: feature.description === 'Customized lessons tailored to your learning style and goals.'
-											? 'Öğrenme tarzınıza ve hedeflerinize uyarlanmış özel dersler.'
+											? 'Kendi hızınızda interaktif öğrenme deneyimi'
 											: feature.description === 'Access your courses on any device, anytime, anywhere.'
-												? 'Kurslarınıza herhangi bir cihazdan, istediğiniz zaman, istediğiniz yerden erişin.'
-												: 'Detaylı ilerleme raporlarıyla gelişiminizi takip edin.'}
+												? 'İnteraktif derslerle öğrendiklerinizi pekiştirme ve canlı pratik fırsatı'
+												: 'Etüt saatlerinde ders çalışma fırsatı ve ders planlama desteği'}
 								</Typography>
 							</Box>
 						</Grid>

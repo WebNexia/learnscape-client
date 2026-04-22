@@ -1,6 +1,9 @@
 import { ChapterLessonData } from '../pages/AdminCourseEditPage';
 import { Document } from './document';
 
+/** evergreen: start lessons right after enroll. cohort: lessons stay locked until course startingDate. */
+export type CourseAccessTiming = 'evergreen' | 'cohort';
+
 export interface BaseCourse {
 	_id: string;
 	title: string;
@@ -29,6 +32,8 @@ export interface BaseCourse {
 	publishedAt: string | null;
 	instructor: Instructor;
 	courseManagement: CourseManagement;
+	/** Defaults to evergreen when omitted (legacy API payloads). */
+	courseAccessTiming?: CourseAccessTiming;
 }
 
 export interface Course extends BaseCourse {
