@@ -391,11 +391,25 @@ const CoursePaper = ({
 												unsaved={hasUnsavedChanges}
 												sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
 												onClick={(e) => {
+													const isCohort = singleCourseBeforeSave?.courseAccessTiming === 'cohort';
+													const hasValidCohortStartDate = (() => {
+														if (!isCohort) return true;
+														const sd = singleCourseBeforeSave?.startingDate;
+														if (!sd) return false;
+														const selected = new Date(sd);
+														if (Number.isNaN(selected.getTime())) return false;
+														const today = new Date();
+														today.setHours(0, 0, 0, 0);
+														selected.setHours(0, 0, 0, 0);
+														return selected.getTime() >= today.getTime();
+													})();
+
 													if (
 														singleCourseBeforeSave?.title.trim() !== '' &&
 														singleCourseBeforeSave?.description.trim() !== '' &&
 														(isFree || !singleCourseBeforeSave?.prices?.some((price) => price.amount === '')) &&
-														!chapterLessonDataBeforeSave?.some((chapter) => chapter.title === '')
+														!chapterLessonDataBeforeSave?.some((chapter) => chapter.title === '') &&
+														hasValidCohortStartDate
 													) {
 														handleCourseUpdate(e as FormEvent<Element>);
 														setHasUnsavedChanges(false);

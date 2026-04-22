@@ -128,6 +128,16 @@ const CourseDetailsEditBox = ({
 		return new Date(`${year}-${month}-${day}`);
 	};
 
+	const todayDateString = (): string => {
+		const d = new Date();
+		const yyyy = d.getFullYear();
+		const mm = String(d.getMonth() + 1).padStart(2, '0');
+		const dd = String(d.getDate()).padStart(2, '0');
+		return `${yyyy}-${mm}-${dd}`;
+	};
+
+	const isCohort = singleCourseBeforeSave?.courseAccessTiming === 'cohort';
+
 	// Group management handlers
 	const openAddGroupDialog = () => {
 		setGroupFormData({ name: '', capacity: '', description: '' });
@@ -633,7 +643,7 @@ const CourseDetailsEditBox = ({
 								Starting Date
 							</Typography>
 							<CustomTextField
-								required={false}
+								required={isCohort}
 								sx={{ marginTop: '0.5rem' }}
 								value={
 									singleCourseBeforeSave && singleCourseBeforeSave.startingDate
@@ -651,7 +661,43 @@ const CourseDetailsEditBox = ({
 									}
 								}}
 								type='date'
+								InputProps={{
+									inputProps: { min: todayDateString() },
+								}}
 							/>
+						</Box>
+						<Box sx={{ display: 'flex', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+							<Tooltip title='Cohort courses stay locked for learners until the start date.' placement='top' arrow>
+								<FormControlLabel
+									labelPlacement='start'
+									control={
+										<Checkbox
+											checked={!!isCohort}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prevData) => {
+													if (!prevData) return prevData;
+													return {
+														...prevData,
+														courseAccessTiming: e.target.checked ? 'cohort' : 'evergreen',
+													};
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Cohort'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
 						</Box>
 					</Box>
 					<Box sx={{ display: !hasAdminAccess ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>

@@ -34,6 +34,9 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 
 	const [checked, setChecked] = useState<boolean>(false);
 	const [isExternal, setIsExternal] = useState<boolean>(false);
+	const [isCohort, setIsCohort] = useState<boolean>(false);
+	const [startingDate, setStartingDate] = useState<string>('');
+	const [startingDateError, setStartingDateError] = useState<string>('');
 
 	// Reset form when dialog opens
 	useEffect(() => {
@@ -42,6 +45,9 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 			setDescription('');
 			setChecked(false);
 			setIsExternal(false);
+			setIsCohort(false);
+			setStartingDate('');
+			setStartingDateError('');
 			setGBP({ amount: '', currency: 'gbp' });
 			setUSD({ amount: '', currency: 'usd' });
 			setEUR({ amount: '', currency: 'eur' });
@@ -49,7 +55,33 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 		}
 	}, [isCourseCreateModalOpen]);
 
+	const todayDateString = (): string => {
+		const d = new Date();
+		// Use local date so HTML date picker min matches user's locale day boundary
+		const yyyy = d.getFullYear();
+		const mm = String(d.getMonth() + 1).padStart(2, '0');
+		const dd = String(d.getDate()).padStart(2, '0');
+		return `${yyyy}-${mm}-${dd}`;
+	};
+
+	const isValidCohortStartingDate = (value: string): boolean => {
+		if (!value) return false;
+		const selected = new Date(`${value}T00:00:00`);
+		if (Number.isNaN(selected.getTime())) return false;
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		return selected.getTime() >= today.getTime();
+	};
+
 	const createCourse = async (): Promise<void> => {
+		if (isCohort) {
+			if (!isValidCohortStartingDate(startingDate)) {
+				setStartingDateError('Select a start date (today or later).');
+				return;
+			}
+			setStartingDateError('');
+		}
+
 		// For instructors, allow creating courses without prices
 		// For admins, always include prices
 		const prices: Price[] = isInstructor
@@ -65,7 +97,8 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 				title: title.trim(),
 				description: description.trim(),
 				prices,
-				startingDate: '',
+				startingDate: isCohort ? startingDate : '',
+				courseAccessTiming: isCohort ? 'cohort' : 'evergreen',
 				orgId,
 				imageUrl: '',
 				durationWeeks: null,
@@ -263,6 +296,62 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 							}}
 						/>
 					</Tooltip>
+				</Box>
+
+				<Box sx={{ margin: '0 2rem', display: 'flex', flexDirection: 'column' }}>
+					<Tooltip title='Cohort courses stay locked until the start date.' placement='top' arrow>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={isCohort}
+									onChange={(e) => {
+										setIsCohort(e.target.checked);
+										if (!e.target.checked) {
+											setStartingDate('');
+											setStartingDateError('');
+										}
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '1rem' : '1.25rem',
+										},
+									}}
+								/>
+							}
+							label='Cohort'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+								},
+							}}
+						/>
+					</Tooltip>
+
+					{isCohort && (
+						<Box sx={{ mt: '0.5rem' }}>
+							<CustomTextField
+								label='Starting Date'
+								required={true}
+								type='date'
+								value={startingDate}
+								onChange={(e) => {
+									setStartingDate(e.target.value);
+									if (startingDateError) setStartingDateError('');
+								}}
+								InputLabelProps={{
+									shrink: true,
+									sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
+								}}
+								InputProps={{
+									inputProps: { min: todayDateString() },
+								}}
+								sx={{ backgroundColor: '#fff' }}
+							/>
+							{startingDateError && (
+								<Typography sx={{ fontSize: '0.75rem', color: 'error.main', mt: '0.25rem' }}>{startingDateError}</Typography>
+							)}
+						</Box>
+					)}
 				</Box>
 
 				<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }} />

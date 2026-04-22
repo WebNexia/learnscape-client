@@ -3,7 +3,7 @@ import { ReactNode, createContext, useContext, useState, useEffect } from 'react
 import { SingleCourse } from '../interfaces/course';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -63,6 +63,7 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const queryClient = useQueryClient();
 	const { userId, userCourseData } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isLearner } = useAuth();
@@ -83,6 +84,10 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			const res = await axios.get(`${base_url}/courses/activelessons/${courseId}`);
 
 			setSingleCourseUser(res.data.data || null);
+			// activelessons may lazily create the first UserLesson (cohort after start); refresh lesson locks.
+			if (userId) {
+				void queryClient.invalidateQueries(['userLessonsForCourse', courseId, userId]);
+			}
 		}
 	};
 
