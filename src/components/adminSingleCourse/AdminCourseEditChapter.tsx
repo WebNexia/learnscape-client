@@ -23,6 +23,7 @@ import { useAuth } from '../../hooks/useAuth';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { truncateText } from '@utils/utilText';
+import LessonIconTile from '../lesson/LessonIconTile';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -724,7 +725,8 @@ const AdminCourseEditChapter = ({
 														width: '100%',
 														gap: isMobileSize ? 1 : 0,
 													}}>
-													<Box sx={{ flex: 4 }}>
+													<Box sx={{ flex: 4, display: 'flex', alignItems: 'center', gap: isMobileSize ? '0.35rem' : '0.65rem', minWidth: 0 }}>
+														<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
 														<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
 															{truncateText(lesson.title, isMobileSize ? 20 : 40)}
 														</Typography>

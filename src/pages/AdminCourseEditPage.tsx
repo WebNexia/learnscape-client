@@ -481,6 +481,7 @@ const AdminCourseEditPage = () => {
 										addNewLesson({
 											...lesson,
 											_id: lessonResponseData._id,
+											lessonIconKey: lessonResponseData.lessonIconKey || 'none',
 											createdAt: lessonResponseData.createdAt,
 											updatedAt: lessonResponseData.updatedAt,
 											createdByName: lessonResponseData.createdByName,
@@ -495,6 +496,7 @@ const AdminCourseEditPage = () => {
 										return {
 											...lesson,
 											_id: lessonResponseData._id,
+											lessonIconKey: lessonResponseData.lessonIconKey || 'none',
 										};
 									} catch (error) {
 										console.error('Error creating lesson:', error);

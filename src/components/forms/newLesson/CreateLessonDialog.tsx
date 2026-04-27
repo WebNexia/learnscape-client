@@ -66,6 +66,7 @@ const CreateLessonDialog = ({
 				_id: responseNewLessonData._id,
 				title: title.trim(),
 				type,
+				lessonIconKey: responseNewLessonData.lessonIconKey || 'none',
 				createdAt: responseNewLessonData.createdAt,
 				updatedAt: responseNewLessonData.updatedAt,
 				createdByName: responseNewLessonData.createdByName,

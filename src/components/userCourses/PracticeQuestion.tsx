@@ -863,6 +863,8 @@ const PracticeQuestion = ({
 												<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-1rem', mb: '-0.5rem' }}>
 													<CustomSubmitButton
 														onClick={async () => {
+															playSubmitSound();
+
 															const answer = translateAnswers[pairId]?.trim() || '';
 															if (!answer) {
 																return;

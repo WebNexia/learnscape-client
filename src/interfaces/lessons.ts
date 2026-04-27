@@ -29,6 +29,8 @@ interface BaseLesson {
 	updatedByImageUrl: string;
 	createdByRole: string;
 	updatedByRole: string;
+	/** Preset key for list tiles (see `lessonIconOptions` + server `lessonIconKeys`). */
+	lessonIconKey?: string;
 }
 
 export interface Lesson extends BaseLesson {

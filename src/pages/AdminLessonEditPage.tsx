@@ -6,6 +6,7 @@ import {
 	FormControl,
 	FormControlLabel,
 	IconButton,
+	InputLabel,
 	keyframes,
 	Link,
 	MenuItem,
@@ -30,6 +31,8 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
+import LessonIconTile from '../components/lesson/LessonIconTile';
+import { LESSON_ICON_SELECT_OPTIONS } from '../constants/lessonIconOptions';
 import LessonPaper from '../components/adminSingleLesson/LessonPaper';
 import QuestionDialogContentNonEdit from '../components/adminSingleLesson/QuestionDialogContentNonEdit';
 import QuestionsBoxNonEdit from '../components/adminSingleLesson/QuestionsBoxNonEdit';
@@ -173,6 +176,7 @@ const AdminLessonEditPage = () => {
 		updatedByImageUrl: '',
 		createdByRole: '',
 		updatedByRole: '',
+		lessonIconKey: 'none',
 	};
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(true);
@@ -352,19 +356,20 @@ const AdminLessonEditPage = () => {
 
 					const lessonsResponse = response?.data;
 
-					setSingleLesson(lessonsResponse);
-					setSingleLessonBeforeSave(lessonsResponse);
+					const normalizedLesson = { ...lessonsResponse, lessonIconKey: lessonsResponse.lessonIconKey || 'none' };
+					setSingleLesson(normalizedLesson);
+					setSingleLessonBeforeSave(normalizedLesson);
 
-					setEditorContent(lessonsResponse.text);
-					setPrevEditorContent(lessonsResponse.text);
+					setEditorContent(normalizedLesson.text);
+					setPrevEditorContent(normalizedLesson.text);
 
 					setIsActive(lessonsResponse.isActive);
 
-					setEditQuestionModalOpen(new Array(lessonsResponse?.questions?.length || 0).fill(false));
+					setEditQuestionModalOpen(new Array(normalizedLesson?.questions?.length || 0).fill(false));
 
-					setIsDocRenameModalOpen(new Array(lessonsResponse?.documents?.length || 0).fill(false));
+					setIsDocRenameModalOpen(new Array(normalizedLesson?.documents?.length || 0).fill(false));
 
-					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce(
+					const questionUpdateData: QuestionUpdateTrack[] = normalizedLesson?.questions?.reduce(
 						(acc: QuestionUpdateTrack[], value: QuestionInterface) => {
 							acc.push({ questionId: value?._id, isUpdated: false });
 							return acc;
@@ -373,7 +378,7 @@ const AdminLessonEditPage = () => {
 					);
 					setIsQuestionUpdated(questionUpdateData);
 
-					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
+					const documentUpdateData: DocumentUpdateTrack[] = normalizedLesson?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
 						acc.push({ documentId: value?._id, isUpdated: false });
 						return acc;
 					}, []);
@@ -416,7 +421,7 @@ const AdminLessonEditPage = () => {
 				setIsActive(false);
 				setSingleLesson((prevData) => ({ ...prevData, isActive: false }));
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: false }));
-				updateLesson({ ...singleLesson, isActive: false });
+				updateLesson({ ...singleLesson, isActive: false, lessonIconKey: singleLessonBeforeSave.lessonIconKey ?? singleLesson.lessonIconKey ?? 'none' });
 				if (lessonId) updateLessonPublishing(lessonId);
 
 				// Invalidate lessons cache to refresh AdminLessons table
@@ -450,11 +455,16 @@ const AdminLessonEditPage = () => {
 					orgId: singleLesson.orgId,
 					imageUrl: singleLesson.imageUrl,
 					videoUrl: singleLesson.videoUrl,
+					lessonIconKey: singleLessonBeforeSave.lessonIconKey ?? 'none',
 				});
 				setIsActive(true);
 				setSingleLesson((prevData) => ({ ...prevData, isActive: true }));
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: true }));
-				updateLesson({ ...singleLesson, isActive: true });
+				updateLesson({
+					...singleLesson,
+					isActive: true,
+					lessonIconKey: singleLessonBeforeSave.lessonIconKey ?? singleLesson.lessonIconKey ?? 'none',
+				});
 				if (lessonId) updateLessonPublishing(lessonId);
 
 				// Invalidate lessons cache to refresh AdminLessons table
@@ -823,7 +833,12 @@ const AdminLessonEditPage = () => {
 				}
 			});
 
-			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
+			const hasQuestionEdits = isQuestionUpdated?.some((data) => data.isUpdated === true) ?? false;
+			const hasDocumentEdits = isDocumentUpdated?.some((data) => data.isUpdated === true) ?? false;
+			const shouldPatchLesson =
+				isLessonUpdated || hasQuestionEdits || hasDocumentEdits || hasUnsavedChanges;
+
+			if (shouldPatchLesson) {
 				try {
 					// Handle assessmentGroupId: convert to string or undefined (not null)
 					const assessmentGroupIdValue = singleLessonBeforeSave.assessmentGroupId || singleLessonBeforeSave.usedInCourses?.[0];
@@ -842,6 +857,7 @@ const AdminLessonEditPage = () => {
 						isActive: singleLessonBeforeSave.isActive,
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
+						lessonIconKey: singleLessonBeforeSave.lessonIconKey ?? 'none',
 						text: editorContent?.trim() || '',
 						questionScores: migratedQuestionScores,
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
@@ -860,6 +876,7 @@ const AdminLessonEditPage = () => {
 						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
+						lessonIconKey: responseUpdatedData.lessonIconKey ?? singleLessonBeforeSave.lessonIconKey ?? 'none',
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -889,6 +906,7 @@ const AdminLessonEditPage = () => {
 						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
+						lessonIconKey: responseUpdatedData.lessonIconKey ?? singleLessonBeforeSave.lessonIconKey ?? 'none',
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -903,6 +921,7 @@ const AdminLessonEditPage = () => {
 							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent?.trim() || '',
 							documentIds: updatedDocumentIds,
 							documents: updatedDocuments,
+							lessonIconKey: responseUpdatedData.lessonIconKey ?? prevData.lessonIconKey ?? 'none',
 						};
 					});
 				} catch (error: any) {
@@ -1251,30 +1270,84 @@ const AdminLessonEditPage = () => {
 								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
 									Lesson Details
 								</Typography>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-								<Box sx={{ flex: 1, mr: isMobileSize ? '0rem' : '2rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '1rem', gap: isMobileSize ? 1 : 0 }}>
+								<Box sx={{ flex: 1, mr: isMobileSize ? '0rem' : '2rem', minWidth: 0 }}>
 									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 										Title*
 									</Typography>
-									<Tooltip title='Max 100 Characters' placement='top' arrow>
-										<CustomTextField
+									<Box
+										sx={{
+											display: 'flex',
+											flexDirection: isMobileSize ? 'column' : 'row',
+											alignItems: isMobileSize ? 'stretch' : 'flex-start',
+											gap: isMobileSize ? 1.25 : 1.5,
+											mt: '0.5rem',
+										}}>
+										<Tooltip title='Max 100 Characters' placement='top' arrow>
+											<CustomTextField
+												sx={{
+													flex: 1,
+													minWidth: 0,
+													width: isMobileSize ? '100%' : undefined,
+												}}
+												value={singleLessonBeforeSave?.title}
+												InputProps={{ inputProps: { maxLength: 100 } }}
+												placeholder='Enter title'
+												onChange={(e) => {
+													setIsLessonUpdated(true);
+													setHasUnsavedChanges(true);
+													setTitleError(false);
+													setSingleLessonBeforeSave(() => {
+														return { ...singleLessonBeforeSave, title: e.target.value };
+													});
+												}}
+												error={titleError}
+											/>
+										</Tooltip>
+										<FormControl
+											size='small'
 											sx={{
-												marginTop: '0.5rem',
-											}}
-											value={singleLessonBeforeSave?.title}
-											InputProps={{ inputProps: { maxLength: 100 } }}
-											placeholder='Enter title'
-											onChange={(e) => {
-												setIsLessonUpdated(true);
-												setHasUnsavedChanges(true);
-												setTitleError(false);
-												setSingleLessonBeforeSave(() => {
-													return { ...singleLessonBeforeSave, title: e.target.value };
-												});
-											}}
-											error={titleError}
-										/>
-									</Tooltip>
+												minWidth: isMobileSize ? '100%' : '10.5rem',
+												width: isMobileSize ? '100%' : 'auto',
+												flexShrink: 0,
+												mt: isMobileSize ? 0 : '0.125rem',
+											}}>
+											<InputLabel id='lesson-icon-select-label'>List icon</InputLabel>
+											<Select
+												labelId='lesson-icon-select-label'
+												label='List icon'
+												value={singleLessonBeforeSave.lessonIconKey ?? 'none'}
+												onChange={(e: SelectChangeEvent) => {
+													setSingleLessonBeforeSave((prev) => ({
+														...prev,
+														lessonIconKey: e.target.value,
+													}));
+													setIsLessonUpdated(true);
+													setHasUnsavedChanges(true);
+												}}
+												renderValue={(value) => {
+													const opt = LESSON_ICON_SELECT_OPTIONS.find((o) => o.value === value);
+													return (
+														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.125 }}>
+															<LessonIconTile lessonIconKey={value} size='small' />
+															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', lineHeight: 1.2 }} noWrap>
+																{opt?.label ?? 'Default / none'}
+															</Typography>
+														</Box>
+													);
+												}}
+												sx={{ backgroundColor: theme.bgColor?.common, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												{LESSON_ICON_SELECT_OPTIONS.map((opt) => (
+													<MenuItem value={opt.value} key={opt.value} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem' }}>
+														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+															<LessonIconTile lessonIconKey={opt.value} size='small' />
+															{opt.label}
+														</Box>
+													</MenuItem>
+												))}
+											</Select>
+										</FormControl>
+									</Box>
 									{titleError && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 								</Box>
 								<Box sx={{ flex: 1, textAlign: 'right', mb: '0.75rem' }}>
