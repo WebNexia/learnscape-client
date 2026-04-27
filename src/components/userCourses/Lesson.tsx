@@ -11,6 +11,7 @@ import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { SingleCourse, Price } from '../../interfaces/course';
 import { LessonType } from '../../interfaces/enums';
+import LessonIconTile from '../lesson/LessonIconTile';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -203,7 +204,8 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 					width: '100%',
 					px: isMobileSize ? '0.5rem' : '1rem',
 				}}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 8 }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', flex: 8, gap: isMobileSize ? '0.35rem' : '0.65rem', minWidth: 0 }}>
+					<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
 					<Typography
 						sx={{
 							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.7rem' : isSmallScreen ? '0.75rem' : '0.8rem',

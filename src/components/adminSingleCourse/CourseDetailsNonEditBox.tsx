@@ -36,6 +36,7 @@ import { LessonType } from '../../interfaces/enums';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
+import LessonIconTile from '../lesson/LessonIconTile';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -517,7 +518,15 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																				margin: isMobileSize ? '0 0.25rem 0 0.5rem' : '0 0.75rem',
 																				gap: isMobileSize ? 2 : 0,
 																			}}>
-																			<Box sx={{ flex: 4 }}>
+																			<Box
+																				sx={{
+																					flex: 4,
+																					display: 'flex',
+																					alignItems: 'center',
+																					gap: isMobileSize ? '0.35rem' : '0.65rem',
+																					minWidth: 0,
+																				}}>
+																				<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
 																				<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
 																					{lesson?.title}
 																				</Typography>

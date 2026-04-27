@@ -139,9 +139,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 	const updateEntity = (updatedEntity: T) => {
 		loadedPages?.forEach((page) => {
-			queryClient.setQueryData<T[]>(
-				[entityKey, orgId, page],
-				(old = []) => (old || [])?.map((item) => (item._id === updatedEntity._id ? updatedEntity : item)) || []
+			queryClient.setQueryData<T[]>([entityKey, orgId, page], (old = []) =>
+				(old || []).map((item) => (item._id === updatedEntity._id ? ({ ...item, ...updatedEntity } as T) : item))
 			);
 		});
 		// 👈 Removed cache invalidation to prevent multiple API calls
