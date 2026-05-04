@@ -1,4 +1,4 @@
-import { Avatar, Box, CircularProgress, Alert, Button, Paper, Typography } from '@mui/material';
+import { Avatar, Box, CircularProgress, Alert, Button, Paper, Typography, Skeleton } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -52,6 +52,8 @@ const CourseAnalytics = () => {
 		return `${value}%`;
 	};
 
+	const isPageLoading = isLoading || isCourseAnalyticsLoading || isRankLoading || isLeaderboardLoading;
+
 	const renderBar = (label: string, percent: number | null, color: string) => {
 		const safePercent = percent !== null && percent >= 0 ? Math.min(percent, 100) : 0;
 		const height = safePercent === 0 ? 4 : safePercent * 1.2; // px height, minimal bar if 0
@@ -98,6 +100,55 @@ const CourseAnalytics = () => {
 		<AdminPageErrorBoundary>
 			<DashboardPagesLayout pageName='Course Analytics' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<Box sx={{ width: '100%', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: 3 }}>
+					{isPageLoading && (
+						<Box sx={{ width: '100%' }}>
+							<Typography variant='h6' sx={{ mb: 2, fontWeight: 600 }}>
+								Preparing your analytics...
+							</Typography>
+
+							<Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap', justifyContent: 'center' }}>
+								{Array.from({ length: 3 }).map((_, idx) => (
+									<Paper
+										key={idx}
+										elevation={2}
+										sx={{
+											flex: '1 1 280px',
+											minWidth: 280,
+											maxWidth: 360,
+											p: 2.5,
+											borderRadius: 3,
+										}}>
+										<Skeleton variant='text' width='55%' height={28} />
+										<Skeleton variant='text' width='70%' height={54} sx={{ my: 1 }} />
+										<Skeleton variant='text' width='90%' />
+									</Paper>
+								))}
+							</Box>
+
+							<Paper elevation={2} sx={{ p: 3, borderRadius: 2, width: isMobileSize ? '100%' : '80%', margin: '1.5rem auto 0 auto' }}>
+								<Skeleton variant='text' width='40%' height={28} />
+								<Box sx={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'flex-end', mt: 2 }}>
+									<Skeleton variant='rounded' width={70} height={120} />
+									<Skeleton variant='rounded' width={70} height={145} />
+								</Box>
+							</Paper>
+
+							<Paper elevation={2} sx={{ borderRadius: 3, width: isMobileSize ? '100%' : '60%', margin: '2rem auto 0 auto', p: 2 }}>
+								<Skeleton variant='text' width='45%' height={28} sx={{ mb: 1 }} />
+								{Array.from({ length: 3 }).map((_, idx) => (
+									<Box key={idx} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25 }}>
+										<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+											<Skeleton variant='rounded' width={30} height={26} />
+											<Skeleton variant='circular' width={34} height={34} />
+											<Skeleton variant='text' width={120} />
+										</Box>
+										<Skeleton variant='text' width={90} />
+									</Box>
+								))}
+							</Paper>
+						</Box>
+					)}
+
 					{!isLoading && error && <Alert severity='error'>{error.message || 'Failed to load assessment analytics. Please try again later.'}</Alert>}
 
 					{!isCourseAnalyticsLoading && courseAnalyticsError && (
