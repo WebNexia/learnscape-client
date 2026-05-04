@@ -10,7 +10,7 @@ Disallow: /user/
 Disallow: /instructor/
 
 # Sitemap
-Sitemap: https://learnscape-qa.netlify.app/sitemap.xml
+Sitemap: https://adenacademy.co.uk/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1

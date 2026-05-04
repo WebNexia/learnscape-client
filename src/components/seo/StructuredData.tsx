@@ -5,7 +5,7 @@ interface StructuredDataProps {
 
 // Helper function to get base URL from environment variable
 const getBaseUrl = (): string => {
-	return import.meta.env.VITE_SITE_URL || 'https://learnscape-qa.netlify.app';
+	return import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 };
 
 // Helper function to convert relative URLs to absolute URLs

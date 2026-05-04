@@ -85,7 +85,7 @@ const LandingPageResources = () => {
 
 	const userCurrency = getUserCurrency();
 
-	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://learnscape-qa.netlify.app';
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 
 	return (
 		<>

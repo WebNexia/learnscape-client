@@ -16,7 +16,7 @@ import { SEO, StructuredData } from '../components/seo';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
-	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://learnscape-qa.netlify.app';
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 
 	return (
 		<>
