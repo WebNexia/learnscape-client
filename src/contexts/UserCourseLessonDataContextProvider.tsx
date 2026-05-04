@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { ReactNode, createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { SingleCourse } from '../interfaces/course';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -78,24 +78,28 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
+	const latestCourseRequestRef = useRef(0);
 
-	const fetchSingleCourseDataUser = async (courseId: string | undefined): Promise<void> => {
-		if (courseId) {
+	const fetchSingleCourseDataUser = useCallback(
+		async (courseId: string | undefined): Promise<void> => {
+			if (!courseId) return;
+
+			const requestId = ++latestCourseRequestRef.current;
 			const res = await axios.get(`${base_url}/courses/activelessons/${courseId}`);
+
+			// Ignore stale responses from older course navigations.
+			if (requestId !== latestCourseRequestRef.current) return;
 
 			setSingleCourseUser(res.data.data || null);
 			// activelessons may lazily create the first UserLesson (cohort after start); refresh lesson locks.
 			if (userId) {
 				void queryClient.invalidateQueries(['userLessonsForCourse', courseId, userId]);
 			}
-		}
-	};
+		},
+		[base_url, queryClient, userId]
+	);
 
-	const {
-		// data: singleCourseDataUser,
-		// isLoading: singleCourseDataUserLoading,
-		// error: singleCourseDataUserError,
-	} = useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
+	useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
 		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && !!courseId,
 	});
 
