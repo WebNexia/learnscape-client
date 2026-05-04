@@ -167,7 +167,7 @@ const LandingPageCourse = () => {
 	const isCourseFree = course?.prices && course.prices.every((price) => price.amount === '0' || price.amount === 'Free' || price.amount === '');
 
 	// Generate course URL (using title encoding since slug is not available)
-	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://learnscape-qa.netlify.app';
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 	const courseUrl = course ? `${baseUrl}/landing-page-course/${encodeURIComponent(course.title)}/${course._id}` : '';
 
 	// Get truncated description for SEO and StructuredData
