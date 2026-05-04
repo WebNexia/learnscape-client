@@ -7,6 +7,9 @@ interface GeoLocation {
 	query: string; // user's IP
 }
 
+let cachedLocation: GeoLocation | null = null;
+let inFlightLookup: Promise<GeoLocation | null> | null = null;
+
 function getBrowserFallbackLocation(): GeoLocation | null {
 	try {
 		const locale = Intl.DateTimeFormat().resolvedOptions().locale || '';
@@ -34,16 +37,41 @@ export function useGeoLocation() {
 	useEffect(() => {
 		let isMounted = true;
 		const browserFallback = getBrowserFallbackLocation();
+		const isLocalhost =
+			typeof window !== 'undefined' &&
+			(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 		// Prefer a local/browser-derived country immediately so forms and pricing
 		// keep working even if third-party IP APIs are blocked by the browser.
 		if (browserFallback) {
 			setLocation(browserFallback);
 		}
+		if (cachedLocation) {
+			setLocation(cachedLocation);
+		}
+
+		// Avoid third-party geo calls in local development because
+		// CORS/rate-limit errors from public APIs can add delay and console noise.
+		if (isLocalhost) {
+			return () => {
+				isMounted = false;
+			};
+		}
+
+		const fetchWithTimeout = async (url: string, timeoutMs = 1500) => {
+			const controller = new AbortController();
+			const timeout = setTimeout(() => controller.abort(), timeoutMs);
+			try {
+				const response = await fetch(url, { signal: controller.signal });
+				return response;
+			} finally {
+				clearTimeout(timeout);
+			}
+		};
 
 		const providers = [
 			async () => {
-				const response = await fetch('https://ipapi.co/json/');
+				const response = await fetchWithTimeout('https://ipapi.co/json/');
 				if (!response.ok) {
 					throw new Error(`ipapi failed with status ${response.status}`);
 				}
@@ -61,7 +89,7 @@ export function useGeoLocation() {
 				};
 			},
 			async () => {
-				const response = await fetch('https://ipwho.is/');
+				const response = await fetchWithTimeout('https://ipwho.is/');
 				if (!response.ok) {
 					throw new Error(`ipwho.is failed with status ${response.status}`);
 				}
@@ -81,26 +109,47 @@ export function useGeoLocation() {
 		];
 
 		const loadLocation = async () => {
-			for (const provider of providers) {
-				try {
-					const result = await provider();
-					if (isMounted) {
-						setLocation(result);
-					}
-					return;
-				} catch {
-					// Try the next provider silently. Public IP services commonly
-					// fail due to rate limits, CORS, or regional blocking.
+			if (inFlightLookup) {
+				const sharedResult = await inFlightLookup;
+				if (isMounted && sharedResult) {
+					setLocation(sharedResult);
 				}
+				return;
+			}
+
+			inFlightLookup = (async () => {
+				for (const provider of providers) {
+					try {
+						const result = await provider();
+						cachedLocation = result;
+						return result;
+					} catch {
+						// Try the next provider silently. Public IP services commonly
+						// fail due to rate limits, CORS, or regional blocking.
+					}
+				}
+				return null;
+			})();
+
+			const result = await inFlightLookup;
+			inFlightLookup = null;
+
+			if (result) {
+				if (isMounted) {
+					setLocation(result);
+				}
+				return;
 			}
 
 			if (isMounted && !browserFallback) {
-				setLocation({
+				const fallback = {
 					countryCode: 'US',
 					country: '',
 					city: '',
 					query: '',
-				});
+				};
+				cachedLocation = fallback;
+				setLocation(fallback);
 			}
 		};
 
