@@ -293,6 +293,7 @@ const AdminCourses = () => {
 				_id: response.data.cohortCourse._id,
 				title: response.data.cohortCourse.title,
 				startingDate: response.data.cohortCourse.startingDate,
+				courseAccessTiming: response.data.cohortCourse.courseAccessTiming ?? 'cohort',
 				instructor: response.data.cohortCourse.instructor,
 				cohortOfCourseId: response.data.cohortCourse.cohortOfCourseId,
 				courseManagement: response.data.cohortCourse.courseManagement,

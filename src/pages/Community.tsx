@@ -22,6 +22,7 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { useAuth } from '../hooks/useAuth';
+import { isSubscriptionsProductEnabled } from '../config/features';
 
 export interface NewTopic {
 	title: string;
@@ -207,7 +208,7 @@ const Community = () => {
 						{
 							label: isMobileSize ? 'Create' : 'Create Topic',
 							onClick: () => {
-								if (user?.hasRegisteredCourse || user?.isSubscribed || !isLearner) {
+								if (user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) || !isLearner) {
 									setCreateTopicModalOpen(true);
 								} else {
 									setMessageNonRegisteredModalOpen(true);
@@ -259,7 +260,9 @@ const Community = () => {
 										<Typography
 											variant='body2'
 											sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
-											You need to enroll in a paid course or subscribe to create a topic.
+											{isSubscriptionsProductEnabled
+												? 'You need to enroll in a paid course or subscribe to create a topic.'
+												: 'You need to enroll in a paid course to create a topic.'}
 										</Typography>
 									</Box>
 								</DialogContent>

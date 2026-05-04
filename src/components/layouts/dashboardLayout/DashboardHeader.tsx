@@ -17,6 +17,7 @@ import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
 import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
 import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
 import { useAuth } from '../../../hooks/useAuth';
+import { isSubscriptionsProductEnabled } from '../../../config/features';
 
 interface DashboardHeaderProps {
 	pageName: string;
@@ -244,7 +245,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					{/* Subscribe/Unsubscribe Button */}
-					{user?.role === Roles.USER && !user?.hasRegisteredCourse && (
+					{isSubscriptionsProductEnabled && user?.role === Roles.USER && !user?.hasRegisteredCourse && (
 						<>
 							{!hasActiveSubscriptionMemo(user) ? (
 								<Tooltip
@@ -527,38 +528,42 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			<ReportBugDialog open={bugReportDialogOpen} onClose={() => setBugReportDialogOpen(false)} />
 
 			{/* Subscription Dialog */}
-			<ConditionalStripeProvider>
-				<SubscriptionDialog
-					open={subscriptionDialogOpen}
-					onClose={() => setSubscriptionDialogOpen(false)}
-					onSuccess={async () => {
-						if (user) {
-							setUser((prevUser) => {
-								if (prevUser) {
-									// Calculate expiry date based on subscription type
-									// For now, we'll use a default 30 days, but this should ideally come from the subscription response
-									const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+			{isSubscriptionsProductEnabled && (
+				<>
+					<ConditionalStripeProvider>
+						<SubscriptionDialog
+							open={subscriptionDialogOpen}
+							onClose={() => setSubscriptionDialogOpen(false)}
+							onSuccess={async () => {
+								if (user) {
+									setUser((prevUser) => {
+										if (prevUser) {
+											// Calculate expiry date based on subscription type
+											// For now, we'll use a default 30 days, but this should ideally come from the subscription response
+											const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-									return {
-										...prevUser,
-										isSubscribed: true,
-										subscriptionStatus: 'active',
-										accessLevel: 'subscription',
-										subscriptionType: 'monthly', // This should ideally come from the subscription data
-										subscriptionValidUntil: expiryDate,
-										subscriptionExpiry: expiryDate,
-									};
+											return {
+												...prevUser,
+												isSubscribed: true,
+												subscriptionStatus: 'active',
+												accessLevel: 'subscription',
+												subscriptionType: 'monthly', // This should ideally come from the subscription data
+												subscriptionValidUntil: expiryDate,
+												subscriptionExpiry: expiryDate,
+											};
+										}
+										return prevUser;
+									});
 								}
-								return prevUser;
-							});
-						}
-						// Close the subscription dialog
-						setSubscriptionDialogOpen(false);
-					}}
-				/>
-			</ConditionalStripeProvider>
+								// Close the subscription dialog
+								setSubscriptionDialogOpen(false);
+							}}
+						/>
+					</ConditionalStripeProvider>
 
-			<UnsubscribeDialog open={unsubscribeDialogOpen} onClose={() => setUnsubscribeDialogOpen(false)} />
+					<UnsubscribeDialog open={unsubscribeDialogOpen} onClose={() => setUnsubscribeDialogOpen(false)} />
+				</>
+			)}
 		</AppBar>
 	);
 };

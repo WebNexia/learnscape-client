@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Roles } from '../interfaces/enums';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
+import { isSubscriptionsProductEnabled } from '../config/features';
 
 interface SubscriptionsContextTypes {
 	subscriptions: UserSubscription[];
@@ -58,7 +59,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 		orgId,
 		baseUrl: `${base_url}/subscriptions/organisation/${orgId}`,
 		entityKey: 'allSubscriptions',
-		enabled: isEnabled && isAuthenticated && canAccessPayments && !isLandingPageRoute,
+		enabled: isSubscriptionsProductEnabled && isEnabled && isAuthenticated && canAccessPayments && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

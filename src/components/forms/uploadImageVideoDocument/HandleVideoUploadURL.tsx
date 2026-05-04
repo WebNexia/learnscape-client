@@ -103,7 +103,13 @@ const HandleVideoUploadURL = ({
 			)}
 
 			{enterVideoUrl && (
-				<CustomTextField placeholder='Video URL' required={false} sx={{ marginTop: '0.5rem' }} value={videoUrlValue} onChange={onChangeVideoUrl} />
+				<CustomTextField
+					placeholder='Video URL'
+					required={false}
+					sx={{ marginTop: '0.5rem' }}
+					value={videoUrlValue ?? ''}
+					onChange={onChangeVideoUrl}
+				/>
 			)}
 		</FormControl>
 	);

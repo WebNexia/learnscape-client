@@ -12,6 +12,7 @@ import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { SingleCourse, Price } from '../../interfaces/course';
 import { LessonType } from '../../interfaces/enums';
 import LessonIconTile from '../lesson/LessonIconTile';
+import { isSubscriptionsProductEnabled } from '../../config/features';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -145,6 +146,8 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 
 		// Priority 1: If user has registered course, they have full access to everything (free content + all features)
 		if (user.hasRegisteredCourse) return true;
+
+		if (!isSubscriptionsProductEnabled) return false;
 
 		// Priority 2: If user is subscribed, they have access
 		if (user.isSubscribed) return true;
