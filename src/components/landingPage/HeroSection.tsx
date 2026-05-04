@@ -154,7 +154,7 @@ const HeroSection = () => {
 					animate={{ opacity: 1, x: 0 }}
 					transition={{ duration: 0.8 }}
 					style={{
-						flex: 2,
+						flex: 3,
 						display: 'flex',
 						flexDirection: 'column',
 						justifyContent: 'center',
@@ -232,7 +232,7 @@ const HeroSection = () => {
 								fontWeight: 600,
 								lineHeight: 1.3,
 							}}>
-							Artık konuşurken “nasıl söyleniyordu?” diye düşünmeyeceksin
+							Size hayal satmıyoruz. İngilizceyi öğrenirken karşınıza çıkan zorlukları ve problemleri biliyoruz.
 						</Typography>
 						<Typography
 							variant='h5'
@@ -260,7 +260,33 @@ const HeroSection = () => {
 								fontFamily: 'Varela Round',
 								margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0',
 							}}>
-							Geliştirdiğimiz eğitim modeliyle bir İngiliz gibi düşünecek ve doğal bir şekilde özgüvenle İngilizce konuşacaksın
+							Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik.
+						</Typography>
+						<Typography variant='h6' sx={{
+							color: '#1e3a5f',
+							fontSize: isSmallMobilePortrait
+								? '0.75rem'
+								: isSmallMobileLandscape
+									? '0.8rem'
+									: isMobilePortrait
+										? '0.9rem'
+										: isMobileLandscape
+											? '1.15rem'
+											: isTabletPortrait
+												? '1.15rem'
+												: isTabletLandscape
+													? '1.15rem'
+													: isDesktopPortrait
+														? '1.25rem'
+														: isDesktopLandscape
+															? '1.25rem'
+															: { sm: '1rem', md: '1rem' },
+							fontWeight: 400,
+							lineHeight: 1.7,
+							fontFamily: 'Varela Round',
+							margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0 1.5rem 0',
+						}}>
+							Kurslarımızı keşfedin!
 						</Typography>
 					</Box>
 
@@ -364,7 +390,7 @@ const HeroSection = () => {
 						position: 'relative',
 						zIndex: 2,
 					}}>
-					<Box
+					{/* <Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
@@ -421,7 +447,7 @@ const HeroSection = () => {
 								},
 							}}
 						/>
-					</Box>
+					</Box> */}
 				</motion.div>
 			</Box>
 
