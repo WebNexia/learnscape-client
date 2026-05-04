@@ -34,6 +34,7 @@ import EventInstructorSearchSelect from '../../EventInstructorSearchSelect';
 import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
 import { SearchCourse } from '../../../interfaces/search';
+import { isSubscriptionsProductEnabled } from '../../../config/features';
 
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { truncateText } from '../../../utils/utilText';
@@ -328,7 +329,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		}
 
 		// Handle "All Subscribers" selection - fetch from API to get ALL subscribers
-		if (newEvent.isAllSubscribersSelected) {
+		if (isSubscriptionsProductEnabled && newEvent.isAllSubscribersSelected) {
 			try {
 				const response = await axios.get(
 					`${base_url}/users/organisation/${orgId}?role=learner&isSubscribed=true&subscriptionStatus=active&limit=10000`
@@ -441,7 +442,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			allAttendeesIds: allParticipantsIds,
 			isAllLearnersSelected: newEvent.isAllLearnersSelected,
 			isAllInstructorsSelected: newEvent.isAllInstructorsSelected,
-			isAllSubscribersSelected: newEvent.isAllSubscribersSelected,
+			isAllSubscribersSelected: Boolean(isSubscriptionsProductEnabled && newEvent.isAllSubscribersSelected),
 			isAllCoursesSelected: newEvent.isAllCoursesSelected,
 			courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
 			createdBy: user?._id!,
@@ -1074,7 +1075,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</>
 					)}
 
-					{!newEvent.isPublic && hasAdminAccess && (
+					{!newEvent.isPublic && hasAdminAccess && isSubscriptionsProductEnabled && (
 						<>
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '-0.5rem', mb: '2rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
@@ -1365,7 +1366,9 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				<DialogContent>
 					{hasAdminAccess ? (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
-							This search is used to search for active learners (has registered course or subscriber) in the organization.
+							{isSubscriptionsProductEnabled
+								? 'This search is used to search for active learners (has registered course or subscriber) in the organization.'
+								: 'This search is used to search for active learners (has registered course) in the organization.'}
 						</Typography>
 					) : (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>

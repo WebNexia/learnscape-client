@@ -143,8 +143,7 @@ const TinyMceEditor = ({
 						tools: { title: 'Tools', items: 'wordcount' },
 						table: { title: 'Table', items: 'inserttable | cell row column | advtablesort | tableprops deletetable' },
 					},
-					plugins:
-						'lists bullist numlist link image media charmap print preview media searchreplace visualblocks code fullscreen insertdatetime table paste code help wordcount fontfamily',
+					plugins: 'lists link image media charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount',
 					toolbar:
 						'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
 					font_family_formats: 'System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',

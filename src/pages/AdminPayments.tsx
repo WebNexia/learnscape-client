@@ -10,6 +10,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { PaymentsContext } from '../contexts/PaymentsContextProvider';
 import { PromoCodesContext } from '../contexts/PromoCodesContextProvider';
 import { SubscriptionsContext } from '../contexts/SubscriptionsContextProvider';
+import { isSubscriptionsProductEnabled } from '../config/features';
 
 const AdminPayments = () => {
 	const [value, setValue] = useState<string>('Payments');
@@ -29,8 +30,16 @@ const AdminPayments = () => {
 	useEffect(() => {
 		enablePaymentsFetch(); // 👈 Enable payments fetching when component mounts
 		enablePromoCodesFetch(); // 👈 Enable promo codes fetching when component mounts
-		enableSubscriptionsFetch(); // 👈 Enable subscriptions fetching when component mounts
+		if (isSubscriptionsProductEnabled) {
+			enableSubscriptionsFetch(); // 👈 Enable subscriptions fetching when component mounts
+		}
 	}, []);
+
+	useEffect(() => {
+		if (!isSubscriptionsProductEnabled && value === 'Subscriptions') {
+			setValue('Payments');
+		}
+	}, [value]);
 
 	return (
 		<AdminPageErrorBoundary pageName='Payments'>
@@ -74,17 +83,19 @@ const AdminPayments = () => {
 								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}
 						/>
-						<Tab
-							value='Subscriptions'
-							label='Subscriptions'
-							sx={{
-								'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-								'textTransform': 'capitalize',
-								'fontFamily': 'Poppins',
-								'fontSize': isMobileSize ? '0.75rem' : undefined,
-								'&.MuiTab-root': { textTransform: 'capitalize' },
-							}}
-						/>
+						{isSubscriptionsProductEnabled && (
+							<Tab
+								value='Subscriptions'
+								label='Subscriptions'
+								sx={{
+									'&.Mui-selected': { color: theme.bgColor?.adminHeader },
+									'textTransform': 'capitalize',
+									'fontFamily': 'Poppins',
+									'fontSize': isMobileSize ? '0.75rem' : undefined,
+									'&.MuiTab-root': { textTransform: 'capitalize' },
+								}}
+							/>
+						)}
 						<Tab
 							value='PromoCodes'
 							label='Promo Codes'
@@ -110,7 +121,7 @@ const AdminPayments = () => {
 				{/* Content */}
 				<Box sx={{ padding: '0rem', width: '100%' }}>
 					{value === 'Payments' && <AdminPaymentsTab />}
-					{value === 'Subscriptions' && <AdminSubscriptionsTab />}
+					{value === 'Subscriptions' && isSubscriptionsProductEnabled && <AdminSubscriptionsTab />}
 					{value === 'PromoCodes' && <AdminPromoCodesTab />}
 				</Box>
 			</DashboardPagesLayout>

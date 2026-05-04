@@ -11,6 +11,7 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomCancelButton from '../../../forms/customButtons/CustomCancelButton';
 import theme from '../../../../themes';
 import { useAuth } from '../../../../hooks/useAuth';
+import { isSubscriptionsProductEnabled } from '../../../../config/features';
 
 interface TopicProps {
 	topic: CommunityTopic;
@@ -59,7 +60,11 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role !== Roles.USER) {
+								if (
+									user?.hasRegisteredCourse ||
+									(isSubscriptionsProductEnabled && user?.isSubscribed) ||
+									user?.role !== Roles.USER
+								) {
 									const basePath =
 										user?.role === Roles.USER
 											? 'community'
@@ -132,7 +137,9 @@ const Topic = ({ topic }: TopicProps) => {
 				<DialogContent>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 						<Typography variant='body2' sx={{ color: theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined, mt: '1rem' }}>
-							You need to enroll in a paid course or subscribe to join the community and topic discussions.
+							{isSubscriptionsProductEnabled
+								? 'You need to enroll in a paid course or subscribe to join the community and topic discussions.'
+								: 'You need to enroll in a paid course to join the community and topic discussions.'}
 						</Typography>
 					</Box>
 				</DialogContent>

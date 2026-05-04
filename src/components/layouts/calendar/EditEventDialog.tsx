@@ -49,6 +49,7 @@ import EventInstructorSearchSelect from '../../EventInstructorSearchSelect';
 import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
 import { SearchCourse } from '../../../interfaces/search';
+import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { useAuth } from '../../../hooks/useAuth';
 import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
 
@@ -447,7 +448,7 @@ const EditEventDialog = ({
 		}
 
 		// Handle "All Subscribers" selection - fetch from API to get ALL subscribers
-		if (selectedEvent?.isAllSubscribersSelected) {
+		if (isSubscriptionsProductEnabled && selectedEvent?.isAllSubscribersSelected) {
 			try {
 				const response = await axios.get(
 					`${base_url}/users/organisation/${orgId}?role=learner&isSubscribed=true&subscriptionStatus=active&limit=10000`
@@ -564,7 +565,7 @@ const EditEventDialog = ({
 					attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
 					allAttendeesIds: uniqueAllAttendeesIds,
 					isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
-					isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
+					isAllSubscribersSelected: Boolean(isSubscriptionsProductEnabled && selectedEvent?.isAllSubscribersSelected),
 					courseGroupNames: courseGroupNames.length > 0 ? courseGroupNames : undefined,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
@@ -1292,7 +1293,7 @@ const EditEventDialog = ({
 						</>
 					)}
 
-					{!selectedEvent?.isPublic && hasAdminAccess && (
+					{!selectedEvent?.isPublic && hasAdminAccess && isSubscriptionsProductEnabled && (
 						<>
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '-0.5rem', mb: '2rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
@@ -1804,7 +1805,9 @@ const EditEventDialog = ({
 			<CustomDialog maxWidth='xs' openModal={learnerSearchInfoOpen} closeModal={() => setLearnerSearchInfoOpen(false)} title='Learner Search Info'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
-						This search is used to search for active learners (has registered course or subscriber) in the organization.
+						{isSubscriptionsProductEnabled
+							? 'This search is used to search for active learners (has registered course or subscriber) in the organization.'
+							: 'This search is used to search for active learners (has registered course) in the organization.'}
 					</Typography>
 				</DialogContent>
 				<DialogActions>

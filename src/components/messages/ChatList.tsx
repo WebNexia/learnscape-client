@@ -5,6 +5,7 @@ import theme from '../../themes';
 import { formatMessageTime } from '../../utils/formatTime';
 import { Chat as ChatType } from '../../pages/Messages';
 import { useAuth } from '../../hooks/useAuth';
+import { isSubscriptionsProductEnabled } from '../../config/features';
 
 interface ChatListProps {
 	filteredChatList: ChatType[];
@@ -95,13 +96,21 @@ const ChatList = ({
 								placeholder='Username or Group Name'
 								value={searchChatValue}
 								onChange={onFilterChats}
-								disabled={!user?.hasRegisteredCourse && !hasAdminAccess && !user?.isSubscribed}
+								disabled={
+									!user?.hasRegisteredCourse &&
+									!hasAdminAccess &&
+									!(isSubscriptionsProductEnabled && user?.isSubscribed)
+								}
 							/>
 						</Box>
 						<Box sx={{ flex: 1 }}>
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
-									disabled={!user?.hasRegisteredCourse && user?.role === 'learner' && !user?.isSubscribed}
+									disabled={
+										!user?.hasRegisteredCourse &&
+										user?.role === 'learner' &&
+										!(isSubscriptionsProductEnabled && user?.isSubscribed)
+									}
 									sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />

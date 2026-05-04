@@ -4,6 +4,7 @@ import { Cancel, Chat, TurnLeftOutlined } from '@mui/icons-material';
 import { Chat as ChatType, Message } from '../../pages/Messages';
 import { formatMessageTime } from '../../utils/formatTime';
 import { renderMessageWithEmojis } from '../../utils/renderMessageWithEmojis';
+import { isSubscriptionsProductEnabled } from '../../config/features';
 
 interface MessageListProps {
 	messages: Message[];
@@ -45,13 +46,17 @@ const MessageList = ({
 					width: '100%',
 				}}>
 				<Box>
-					{user?.hasRegisteredCourse || user?.isSubscribed || user?.role !== 'learner' ? (
+					{user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) || user?.role !== 'learner' ? (
 						<>
 							<Chat sx={{ fontSize: '5rem', color: '#fff' }} />
 							<Typography sx={{ color: '#fff' }}>Select an existing chat or start a new chat by adding a user</Typography>
 						</>
 					) : (
-						<Typography sx={{ color: '#fff' }}>To use messages, you must first enroll in a paid course or subscribe</Typography>
+						<Typography sx={{ color: '#fff' }}>
+							{isSubscriptionsProductEnabled
+								? 'To use messages, you must first enroll in a paid course or subscribe'
+								: 'To use messages, you must first enroll in a paid course'}
+						</Typography>
 					)}
 				</Box>
 			</Box>

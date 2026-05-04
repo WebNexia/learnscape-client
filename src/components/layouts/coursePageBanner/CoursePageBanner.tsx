@@ -19,6 +19,7 @@ import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
 import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse';
+import { isSubscriptionsProductEnabled } from '../../../config/features';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -297,7 +298,7 @@ const CoursePageBanner = ({
 				!isManuallyClosed &&
 				!isCapacityFull &&
 				!(fromHomePage && isCourseFree) &&
-				(isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
+				(isCourseFree ? user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) : true) ? (
 					<CustomSubmitButton
 						variant='contained'
 						onClick={handleEnroll}
@@ -426,7 +427,9 @@ const CoursePageBanner = ({
 								color: theme.textColor?.common.main,
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							Subscribe to platform or register for a paid course to enroll in free courses
+							{isSubscriptionsProductEnabled
+								? 'Subscribe to platform or register for a paid course to enroll in free courses'
+								: 'Register for a paid course to enroll in free courses'}
 						</Typography>
 					)
 				)}
@@ -440,7 +443,9 @@ const CoursePageBanner = ({
 								fontSize: isMobileSize ? '0.65rem' : '0.8rem',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
+							{isSubscriptionsProductEnabled
+								? 'Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!'
+								: 'Ücretsiz kurslara kayıt olmak için ücretli bir kursa kayıt olun!'}
 						</Typography>
 					</Box>
 				)}

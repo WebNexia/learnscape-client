@@ -21,6 +21,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isSubscriptionsProductEnabled } from '../config/features';
 
 const locales = {
 	'en-US': enUS,
@@ -106,7 +107,10 @@ const EventCalendar = () => {
 	useEffect(() => {
 		if (selectedEvent && selectedEvent._id) {
 			if (user?.role === Roles.USER) {
-				if (selectedEvent.createdBy === user?._id && (user?.hasRegisteredCourse || user?.isSubscribed)) {
+				if (
+					selectedEvent.createdBy === user?._id &&
+					(user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed))
+				) {
 					setEditEventModalOpen(true);
 				} else {
 					setEventDetailsModalOpen(true);
@@ -145,7 +149,11 @@ const EventCalendar = () => {
 	};
 
 	const handleSelectSlot = ({ start, end }: SlotInfo) => {
-		if (hasAdminAccess || isInstructor || (isLearner && (user?.hasRegisteredCourse || user?.isSubscribed))) {
+		if (
+			hasAdminAccess ||
+			isInstructor ||
+			(isLearner && (user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed)))
+		) {
 			const isMonthView = start.getHours() === 0 && end.getHours() === 0;
 			const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
 			const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;
