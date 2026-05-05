@@ -5,7 +5,7 @@ import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery, useQueryClient } from 'react-query';
 
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
@@ -64,9 +64,10 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const queryClient = useQueryClient();
-	const { userId, userCourseData } = useContext(UserAuthContext);
+	const { userId } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isLearner } = useAuth();
+	const location = useLocation();
 
 	const { courseId } = useParams();
 
@@ -78,7 +79,9 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
+	const [userCoursesData, setUserCoursesData] = useState<UserCoursesIdsWithCourseIds[]>([]);
 	const latestCourseRequestRef = useRef(0);
+	const isLearnerCoursesPage = location.pathname === '/courses';
 
 	const fetchSingleCourseDataUser = useCallback(
 		async (courseId: string | undefined): Promise<void> => {
@@ -103,8 +106,23 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && !!courseId,
 	});
 
-	// Use userCourseData from UserAuthContext (no duplicate API call)
-	const userCoursesData = userCourseData || [];
+	useQuery<UserCoursesIdsWithCourseIds[]>(
+		['userCourseData', userId],
+		async () => {
+			if (!userId) return [];
+			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
+			return response.data.response || [];
+		},
+		{
+			enabled: isEnabled && !!userId && isAuthenticated && isLearner && !isLandingPageRoute && isLearnerCoursesPage,
+			staleTime: 5 * 60 * 1000,
+			cacheTime: 10 * 60 * 1000,
+			refetchOnWindowFocus: false,
+			onSuccess: (data) => {
+				setUserCoursesData(data || []);
+			},
+		}
+	);
 
 	const enableUserCourseLessonDataFetch = () => setIsEnabled(true);
 	const disableUserCourseLessonDataFetch = () => setIsEnabled(false);

@@ -1,4 +1,5 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -60,12 +61,18 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
+	const location = useLocation();
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	// Role-based endpoint detection - separate routes for clarity
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
 	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
+
+	const isLearnerCoursesPage = location.pathname === '/courses';
+	const shouldFetchForRole = isLearner
+		? isLearnerCoursesPage
+		: hasAdminAccess || isInstructor;
 
 	const {
 		data: courses,
@@ -86,7 +93,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}${baseEndpoint}`,
 		entityKey: isInstructor ? 'instructorCourses' : 'allCourses',
-		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && shouldFetchForRole && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		limit: 100,
