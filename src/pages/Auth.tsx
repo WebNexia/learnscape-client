@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, CircularProgress, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
@@ -69,6 +69,7 @@ const Auth = () => {
 	const signupFinallyExecutedRef = useRef(false);
 
 	const [signingUp, setSigningUp] = useState<boolean>(false);
+	const [signingIn, setSigningIn] = useState<boolean>(false);
 	// Removed isSignupInProgress - no longer needed
 
 	const togglePasswordVisibility = () => {
@@ -93,12 +94,15 @@ const Auth = () => {
 
 	const signIn = async (e: FormEvent) => {
 		e.preventDefault();
+		if (signingIn) return;
+		setSigningIn(true);
 		try {
 			const userCredential = await signInWithEmailAndPassword(auth, email, password);
 			const firebaseUser = userCredential.user;
 
 			if (!firebaseUser.emailVerified) {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_VERIFIED);
+				setSigningIn(false);
 				return;
 			}
 
@@ -118,10 +122,7 @@ const Auth = () => {
 			const currentTime = Date.now();
 			localStorage.setItem('sessionTimestamp', currentTime.toString());
 
-			// Clear inputs and handle success state
-			setEmail('');
-			setUsername('');
-			setPassword('');
+			// Keep form values while redirect is in progress; avoid blank state flash.
 			setErrorMsg(undefined);
 		} catch (error) {
 			const firebaseError = error as AuthError;
@@ -132,6 +133,7 @@ const Auth = () => {
 			} else {
 				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
+			setSigningIn(false);
 		}
 	};
 
@@ -513,7 +515,7 @@ const Auth = () => {
 							borderRadius: '1rem 1rem 0 0',
 							overflow: 'hidden',
 						}}>
-						{!isResetPassword && (
+						{!isResetPassword && !signingIn && (
 							<>
 								<Button
 									fullWidth
@@ -619,7 +621,41 @@ const Auth = () => {
 							display: 'flex',
 							justifyContent: 'center',
 						}}>
-						{
+						{signingIn ? (
+							<Box
+								sx={{
+									marginTop: '4rem',
+									width: isVerySmallScreen ? '85%' : '80%',
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									justifyContent: 'center',
+									padding: '2rem 1rem 2.5rem 1rem',
+								}}>
+								<CircularProgress size={isMobileSize ? 34 : 42} sx={{ color: '#0052a3' }} />
+								<Typography
+									variant='h6'
+									sx={{
+										mt: '1rem',
+										fontFamily: 'Varela Round',
+										fontSize: isMobileSize ? '1rem' : '1.15rem',
+										fontWeight: 600,
+										color: theme.textColor?.primary.main,
+									}}>
+									Giriş yapılıyor...
+								</Typography>
+								<Typography
+									sx={{
+										mt: '0.5rem',
+										fontFamily: 'Varela Round',
+										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+										color: theme.textColor?.secondary.main,
+										textAlign: 'center',
+									}}>
+									Hesabınız hazırlanıyor, lütfen bekleyin.
+								</Typography>
+							</Box>
+						) : (
 							{
 								[AuthForms.SIGN_IN]: (
 									<Box sx={{ marginTop: '0.25rem', width: isVerySmallScreen ? '85%' : '80%' }}>
@@ -1268,36 +1304,38 @@ const Auth = () => {
 									</form>
 								),
 							}[activeForm]
-						}
+						)}
 					</Box>
 
 					{/* Home Page Link */}
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							mt: '1.25rem',
-						}}>
-						<Typography
-							variant='body2'
+					{!signingIn && (
+						<Box
 							sx={{
-								'fontFamily': 'Varela Round',
-								'color': theme.textColor?.primary.main,
-								'cursor': 'pointer',
-								'transition': 'all 0.3s ease',
-								'&:hover': {
-									color: 'rgba(91, 33, 182, 0.7)',
-									textDecoration: 'underline',
-								},
-							}}
-							onClick={() => {
-								navigate('/');
-								setIsResetPassword(false);
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								mt: '1.25rem',
 							}}>
-							Ana Sayfa
-						</Typography>
-					</Box>
+							<Typography
+								variant='body2'
+								sx={{
+									'fontFamily': 'Varela Round',
+									'color': theme.textColor?.primary.main,
+									'cursor': 'pointer',
+									'transition': 'all 0.3s ease',
+									'&:hover': {
+										color: 'rgba(91, 33, 182, 0.7)',
+										textDecoration: 'underline',
+									},
+								}}
+								onClick={() => {
+									navigate('/');
+									setIsResetPassword(false);
+								}}>
+								Ana Sayfa
+							</Typography>
+						</Box>
+					)}
 
 					{/* Error Messages */}
 					<Box
