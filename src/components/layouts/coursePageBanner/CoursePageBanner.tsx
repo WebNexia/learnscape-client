@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography, DialogContent } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
-import { Info, KeyboardBackspaceOutlined, Insights } from '@mui/icons-material';
+import { Info, KeyboardBackspaceOutlined, Insights, PlayCircleOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
@@ -20,6 +20,29 @@ import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
 import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
+import { extractVideoId } from '../../../utils/videoUrlUtils';
+
+const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
+
+/** iframe embed URL for common hosts; unsupported URLs should open in a new tab */
+const getIntroVideoEmbedSrc = (raw: string): string | null => {
+	const url = raw.trim();
+	if (!url) return null;
+
+	if (url.includes('youtube.com') || url.includes('youtu.be')) {
+		const id = extractVideoId(url);
+		return id ? `https://www.youtube.com/embed/${id}?rel=0` : null;
+	}
+	if (url.includes('vimeo.com')) {
+		const id = extractVideoId(url);
+		return id ? `https://player.vimeo.com/video/${id}` : null;
+	}
+	if (url.includes('dailymotion.com')) {
+		const id = extractVideoId(url);
+		return id ? `https://www.dailymotion.com/embed/video/${id}` : null;
+	}
+	return null;
+};
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -53,6 +76,7 @@ const CoursePageBanner = ({
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [isGroupInfoDialogOpen, setIsGroupInfoDialogOpen] = useState<boolean>(false);
+	const [isIntroVideoOpen, setIsIntroVideoOpen] = useState<boolean>(false);
 	const [userGroup, setUserGroup] = useState<{ name: string; description: string } | null>(null);
 
 	const { courseId } = useParams();
@@ -86,6 +110,23 @@ const CoursePageBanner = ({
 
 	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
 	const isCapacityFull = Boolean(course?.isCapacityFull);
+
+	const introVideoUrl = course?.introVideoUrl?.trim() ?? '';
+	const introEmbedSrc = introVideoUrl ? getIntroVideoEmbedSrc(introVideoUrl) : null;
+
+	const markIntroVideoSeenThisSession = () => {
+		if (!course?._id) return;
+		try {
+			sessionStorage.setItem(`${LP_INTRO_SESSION_PREFIX}${course._id}`, '1');
+		} catch {
+			/* noop */
+		}
+	};
+
+	const closeIntroVideoModal = () => {
+		markIntroVideoSeenThisSession();
+		setIsIntroVideoOpen(false);
+	};
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -176,14 +217,25 @@ const CoursePageBanner = ({
 		const groupDescription = userCourseData?.groupDescription;
 
 		if (groupName) {
-			setUserGroup({ 
-				name: groupName, 
-				description: groupDescription || '' 
+			setUserGroup({
+				name: groupName,
+				description: groupDescription || ''
 			});
 		} else {
 			setUserGroup(null);
 		}
 	}, [isEnrolledStatus, courseId, course?.groups, userCoursesData]);
+
+	// LP: once per browser tab session, auto-open intro modal when configured (flag set on dismiss)
+	useEffect(() => {
+		if (!fromHomePage || !introVideoUrl || !course?._id) return;
+		try {
+			if (sessionStorage.getItem(`${LP_INTRO_SESSION_PREFIX}${course._id}`)) return;
+		} catch {
+			return;
+		}
+		setIsIntroVideoOpen(true);
+	}, [fromHomePage, introVideoUrl, course?._id]);
 
 	return (
 		<Paper
@@ -294,32 +346,87 @@ const CoursePageBanner = ({
 				</Box>
 
 				{!isEnrolledStatus &&
-				!course.isExpired &&
-				!isManuallyClosed &&
-				!isCapacityFull &&
-				!(fromHomePage && isCourseFree) &&
-				(isCourseFree ? user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) : true) ? (
-					<CustomSubmitButton
-						variant='contained'
-						onClick={handleEnroll}
-						sx={{
-							'width': 'fit-content',
-							'padding': isMobileSize ? '1rem 1.5rem' : '1rem 2rem',
-							'position': 'absolute',
-							'bottom': isRotated ? 60 : '1.5rem',
-							'fontSize': isMobileSize ? '0.75rem' : '1rem',
-							'fontFamily': fromHomePage ? 'Varela Round' : '',
-							'pointerEvents': isProcessing ? 'none' : 'auto',
-							'background': fromHomePage ? '#FF6F4E !important' : '',
-							'borderRadius': fromHomePage ? '0.75rem' : undefined,
-							'color': fromHomePage ? '#fff !important' : '',
-							'&:hover': {
-								color: fromHomePage ? '#fff !important' : undefined,
-								backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
-							},
-						}}>
-						{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
-					</CustomSubmitButton>
+					!course.isExpired &&
+					!isManuallyClosed &&
+					!isCapacityFull &&
+					!(fromHomePage && isCourseFree) &&
+					(isCourseFree ? user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) : true) ? (
+					fromHomePage && introVideoUrl ? (
+						<Box
+							sx={{
+								position: 'absolute',
+								bottom: isRotated ? 60 : '1.5rem',
+								left: '1rem',
+								display: 'flex',
+								flexDirection: 'row',
+								alignItems: 'center',
+								gap: { xs: 1, sm: 1.5 },
+								flexWrap: 'wrap',
+								maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
+							}}>
+							<CustomSubmitButton
+								variant='contained'
+								onClick={handleEnroll}
+								sx={{
+									'width': 'fit-content',
+									padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem',
+									'position': 'relative',
+									'fontSize': isMobileSize ? '0.75rem' : '1rem',
+									'fontFamily': fromHomePage ? 'Varela Round' : '',
+									'pointerEvents': isProcessing ? 'none' : 'auto',
+									'background': '#FF6F4E !important',
+									'borderRadius': '0.75rem',
+									'color': '#fff !important',
+									'&:hover': {
+										color: '#fff !important',
+										backgroundColor: '#FF6F4E !important',
+									},
+								}}>
+								Kayıt Ol
+							</CustomSubmitButton>
+							<CustomSubmitButton
+								variant='outlined'
+								onClick={() => setIsIntroVideoOpen(true)}
+								startIcon={<PlayCircleOutlined />}
+								sx={{
+									fontSize: isMobileSize ? '0.75rem' : '1rem',
+									padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem',
+									textTransform: 'none',
+									fontFamily: 'Varela Round',
+									borderColor: 'rgba(255,255,255,0.85)',
+									color: theme.textColor?.common.main,
+									borderRadius: '0.75rem',
+									'&:hover': {
+										borderColor: '#fff',
+										backgroundColor: 'rgba(255,255,255,0.08)',
+									},
+								}}>
+								Tanıtım İzle
+							</CustomSubmitButton>
+						</Box>
+					) : (
+						<CustomSubmitButton
+							variant='contained'
+							onClick={handleEnroll}
+							sx={{
+								'width': 'fit-content',
+								'padding': isMobileSize ? '1rem 1.5rem' : '1rem 2rem',
+								'position': 'absolute',
+								'bottom': isRotated ? 60 : '1.5rem',
+								'fontSize': isMobileSize ? '0.75rem' : '1rem',
+								'fontFamily': fromHomePage ? 'Varela Round' : '',
+								'pointerEvents': isProcessing ? 'none' : 'auto',
+								'background': fromHomePage ? '#FF6F4E !important' : '',
+								'borderRadius': fromHomePage ? '0.75rem' : undefined,
+								'color': fromHomePage ? '#fff !important' : '',
+								'&:hover': {
+									color: fromHomePage ? '#fff !important' : undefined,
+									backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
+								},
+							}}>
+							{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
+						</CustomSubmitButton>
+					)
 				) : !isEnrolledStatus && !course.isExpired && (isManuallyClosed || isCapacityFull) ? (
 					<Alert
 						severity={isCapacityFull ? 'error' : 'warning'}
@@ -332,7 +439,7 @@ const CoursePageBanner = ({
 							width: 'fit-content',
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{isCapacityFull ? (fromHomePage ? 'Kontenjan doldu' : 'No seats available') : fromHomePage ? 'Kayıtlar kapandı' : 'Registration is closed'}
+						{isCapacityFull ? (fromHomePage ? 'Kontenjan doldu' : 'No seats available') : fromHomePage ? 'Kayıtlar kapalı' : 'Registration is closed'}
 					</Alert>
 				) : !isEnrolledStatus && course.isExpired ? (
 					<Alert
@@ -359,22 +466,22 @@ const CoursePageBanner = ({
 							alignItems: 'center',
 							gap: 1,
 						}}>
-					{course.documentIds.length > 0 && (
-						<Typography
-							onClick={() => {
-								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-							}}
-							sx={{
-								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-								textTransform: 'capitalize',
-								color: theme.textColor?.common.main,
-								cursor: 'pointer',
-								textDecoration: 'underline',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-							}}>
-							{fromHomePage ? 'Kurs Materyalleri' : 'Course Materials'}
-						</Typography>
-					)}
+						{course.documentIds.length > 0 && (
+							<Typography
+								onClick={() => {
+									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+								}}
+								sx={{
+									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+									textTransform: 'capitalize',
+									color: theme.textColor?.common.main,
+									cursor: 'pointer',
+									textDecoration: 'underline',
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								}}>
+								{fromHomePage ? 'Kurs Materyalleri' : 'Course Materials'}
+							</Typography>
+						)}
 
 						{/* Analytics icon - visible for enrolled courses; disabled until course is completed */}
 						{!fromHomePage && userCourseId && !course.courseManagement?.isExternal && (
@@ -488,17 +595,16 @@ const CoursePageBanner = ({
 							content={
 								isEnrolledStatus
 									? `${courseProgress.percentage}%`
-									: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${
-											isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
-										}`
+									: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
+									}`
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
 								isEnrolledStatus
 									? {
-											bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
-											color: fromHomePage ? undefined : theme.textColor?.common.main,
-										}
+										bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
+										color: fromHomePage ? undefined : theme.textColor?.common.main,
+									}
 									: undefined
 							}
 						/>
@@ -516,6 +622,68 @@ const CoursePageBanner = ({
 				/>
 			</Box>
 
+			{/* LP tanıtım videosu */}
+			{fromHomePage && introVideoUrl && (
+				<CustomDialog
+					openModal={isIntroVideoOpen}
+					closeModal={closeIntroVideoModal}
+					title={course.title}
+					maxWidth='md'
+					PaperProps={{
+						sx: {
+							backgroundColor: theme.palette.secondary.main,
+						},
+					}}>
+					<DialogContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 0 }}>
+						{introEmbedSrc ? (
+							<Box
+								sx={{
+									position: 'relative',
+									width: '100%',
+									pt: '56.25%',
+									borderRadius: 1,
+									overflow: 'hidden',
+									bgcolor: '#000',
+								}}>
+								<Box
+									component='iframe'
+									src={isIntroVideoOpen ? introEmbedSrc : undefined}
+									title='Kurs tanıtım videosu'
+									allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+									allowFullScreen
+									sx={{
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										width: '100%',
+										height: '100%',
+										border: 0,
+									}}
+								/>
+							</Box>
+						) : (
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
+								<Typography variant='body2' sx={{ fontFamily: 'Varela Round', color: theme.textColor?.primary?.main }}>
+									Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.
+								</Typography>
+								<Button
+									component='a'
+									href={introVideoUrl}
+									target='_blank'
+									rel='noopener noreferrer'
+									variant='contained'
+									sx={{ fontFamily: 'Varela Round', textTransform: 'none', alignSelf: 'flex-start', borderRadius: '0.75rem' }}>
+									Videoyu aç
+								</Button>
+							</Box>
+						)}
+					</DialogContent>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
+						<CustomCancelButton onClick={closeIntroVideoModal}>Kapat</CustomCancelButton>
+					</Box>
+				</CustomDialog>
+			)}
+
 			{/* Group Info Dialog */}
 			<CustomDialog
 				openModal={isGroupInfoDialogOpen}
@@ -526,7 +694,7 @@ const CoursePageBanner = ({
 					{userGroup && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 							<Box>
-								<Typography variant='body1' sx={{  fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem',color: theme.textColor?.primary.main }}>
+								<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem', color: theme.textColor?.primary.main }}>
 									Group Name:
 								</Typography>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
@@ -535,7 +703,7 @@ const CoursePageBanner = ({
 							</Box>
 							{userGroup.description && (
 								<Box>
-									<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem',color: theme.textColor?.primary.main }}>
+									<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem', color: theme.textColor?.primary.main }}>
 										Description:
 									</Typography>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>

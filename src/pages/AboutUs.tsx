@@ -287,7 +287,7 @@ const AboutUs = () => {
 											border: '1px solid rgba(0, 82, 163, 0.2)',
 											boxShadow: '0 12px 30px rgba(0, 82, 163, 0.15)',
 										}}>
-										<Typography variant='h6' sx={{ color: '#0A1A2F', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
+										<Typography variant='h3' sx={{ color: 'white', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
 											Misyonumuz
 										</Typography>
 										<Typography sx={{ fontFamily: 'Varela Round', color: '#fff', fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>
@@ -306,7 +306,7 @@ const AboutUs = () => {
 											border: '1px solid rgba(78, 205, 196, 0.3)',
 											boxShadow: '0 12px 30px rgba(78, 205, 196, 0.2)',
 										}}>
-										<Typography variant='h6' sx={{ color: '#0A1A2F', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
+										<Typography variant='h3' sx={{ color: 'white', fontWeight: 700, mb: 1, fontFamily: 'Varela Round', textAlign: 'center' }}>
 											Vizyonumuz
 										</Typography>
 										<Typography sx={{ fontFamily: 'Varela Round', color: '#fff', fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>

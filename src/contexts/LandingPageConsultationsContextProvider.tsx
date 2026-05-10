@@ -57,6 +57,7 @@ const LandingPageConsultationsContextProvider = (props: LandingPageConsultations
 	const {
 		data: consultationsData,
 		isLoading,
+		isFetching,
 		isError,
 	} = useQuery(['landingPageConsultations', orgId, currentPage], fetchConsultations, {
 		enabled: !!orgId && isConsultationsPage,
@@ -87,7 +88,7 @@ const LandingPageConsultationsContextProvider = (props: LandingPageConsultations
 	const hasMore = consultationsData ? allConsultations.length < totalItems : false;
 	const total = totalItems;
 	const consultations = allConsultations;
-	const loading = isLoading;
+	const loading = isLoading || isFetching;
 	const error = isError ? 'Danışmanlık listesi yüklenemedi.' : null;
 
 	return (

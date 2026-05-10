@@ -390,7 +390,7 @@ const HeroSection = () => {
 						position: 'relative',
 						zIndex: 2,
 					}}>
-					{/* <Box
+					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
@@ -447,7 +447,7 @@ const HeroSection = () => {
 								},
 							}}
 						/>
-					</Box> */}
+					</Box>
 				</motion.div>
 			</Box>
 

@@ -200,11 +200,11 @@ export default function UpcomingEvents() {
 						transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 						'&:hover': canScrollLeft
 							? {
-									background: 'rgba(255, 255, 255, 0.98)',
-									borderColor: 'rgba(0, 82, 163, 0.35)',
-									boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
-									transform: 'translateY(-50%) scale(1.05)',
-								}
+								background: 'rgba(255, 255, 255, 0.98)',
+								borderColor: 'rgba(0, 82, 163, 0.35)',
+								boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
+								transform: 'translateY(-50%) scale(1.05)',
+							}
 							: {},
 					}}
 					aria-label='Sola kaydır'>
@@ -405,11 +405,11 @@ export default function UpcomingEvents() {
 						transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 						'&:hover': canScrollRight
 							? {
-									background: 'rgba(255, 255, 255, 0.98)',
-									borderColor: 'rgba(0, 82, 163, 0.35)',
-									boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
-									transform: 'translateY(-50%) scale(1.05)',
-								}
+								background: 'rgba(255, 255, 255, 0.98)',
+								borderColor: 'rgba(0, 82, 163, 0.35)',
+								boxShadow: '0 8px 28px rgba(0, 82, 163, 0.18), 0 0 0 1px rgba(255,255,255,0.6) inset',
+								transform: 'translateY(-50%) scale(1.05)',
+							}
 							: {},
 					}}
 					aria-label='Sağa kaydır'>
@@ -613,7 +613,7 @@ export default function UpcomingEvents() {
 			</Typography>
 			{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
 			{upcomingEvents && upcomingEvents.length === 0 && (
-				<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem' }}>
+				<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem', marginBottom: '3rem' }}>
 					Henüz yaklaşan etkinlik bulunmamaktadır.
 				</Typography>
 			)}

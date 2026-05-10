@@ -841,6 +841,21 @@ const AdminCourseEditPage = () => {
 			}
 		}
 
+		if (singleCourseBeforeSave?.introVideoUrl?.trim()) {
+			try {
+				const urlObj = new URL(singleCourseBeforeSave.introVideoUrl.trim());
+				if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+					setUrlErrorMessage('Intro video URL must use http or https.');
+					setIsUrlErrorOpen(true);
+					return;
+				}
+			} catch {
+				setUrlErrorMessage('Invalid intro video URL format');
+				setIsUrlErrorOpen(true);
+				return;
+			}
+		}
+
 		let validUntil: Date | null = null;
 		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
 		const durationWeeks = singleCourseBeforeSave?.durationWeeks || 0;

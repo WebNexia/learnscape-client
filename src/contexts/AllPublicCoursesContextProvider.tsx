@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { SingleCourse } from '../interfaces/course';
@@ -92,6 +92,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 				page: currentPage.toString(),
 				limit: '25',
 				currency: getUserCurrency(),
+				landingCards: 'true',
 			});
 
 			// Add search parameter if provided
@@ -116,6 +117,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const {
 		data: coursesData,
 		isLoading,
+		isFetching,
 		isError,
 	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search], fetchCourses, {
 		enabled: !!orgId && isLandingPageRoute,
@@ -191,11 +193,22 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const hasMore = coursesData ? allCourses && allCourses.length < coursesData.total : false;
 	const total = coursesData?.total || 0;
 
+	/** Sayfa 1: sunucu cevabı gelir gelmez listeyi göster (useEffect bir frame gecikmesini önler) */
+	const courses = useMemo(() => {
+		if (currentPage === 1) {
+			if (coursesData !== undefined) {
+				return coursesData.data || [];
+			}
+			return [];
+		}
+		return allCourses;
+	}, [currentPage, coursesData, allCourses]);
+
 	return (
 		<AllPublicCoursesContext.Provider
 			value={{
-				courses: allCourses,
-				loading: isLoading,
+				courses,
+				loading: isLoading || isFetching,
 				error: isError ? 'Failed to fetch courses' : null,
 				total,
 				hasMore,

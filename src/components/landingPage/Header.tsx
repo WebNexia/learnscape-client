@@ -86,6 +86,7 @@ const Header = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'space-between',
+						alignItems: 'center',
 						width: '100%',
 						height: isMobileLandscape
 							? '10vh'
@@ -141,7 +142,7 @@ const Header = () => {
 										key={index}
 										onClick={item.action}
 										sx={{
-											ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem',
+											ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '0.85rem',
 											position: 'relative',
 											cursor: 'pointer',
 											'&::after': {
@@ -166,11 +167,11 @@ const Header = () => {
 										<Typography
 											sx={{
 												fontFamily: 'Varela Round',
-												color: item.isActive ? '#ff7d55' : '#0A1A2F',
+												color: item.isActive ? '#ff7d55' : '#0066CC',
 												textDecoration: 'none',
 												fontWeight: item.isActive ? 600 : 400,
 												cursor: 'pointer',
-												fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
+												fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.2rem',
 												transition: 'color 0.25s ease',
 											}}
 										>

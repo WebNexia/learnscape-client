@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Document } from '../interfaces/document';
@@ -114,6 +114,7 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const {
 		data: resourcesData,
 		isLoading,
+		isFetching,
 		isError,
 	} = useQuery(['landingPageResources', orgId, currentPage, searchedValue, activeFilter, location.search, geoLocation?.countryCode], fetchResources, {
 		enabled: !!orgId && isResourcesPage,
@@ -188,9 +189,17 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const hasMore = resourcesData ? allResources.length < resourcesData.total : false;
 	const total = resourcesData?.total || 0;
 
-	// Get resources data
-	const resources = allResources;
-	const loading = isLoading;
+	const resources = useMemo(() => {
+		if (currentPage === 1) {
+			if (resourcesData !== undefined) {
+				return resourcesData.data || [];
+			}
+			return [];
+		}
+		return allResources;
+	}, [currentPage, resourcesData, allResources]);
+
+	const loading = isLoading || isFetching;
 	const error = isError ? 'Failed to fetch resources' : null;
 
 	return (

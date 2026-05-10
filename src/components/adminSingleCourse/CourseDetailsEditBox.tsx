@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton,  DialogContent } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, DialogContent } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse, CourseGroup } from '../../interfaces/course';
@@ -175,7 +175,7 @@ const CourseDetailsEditBox = ({
 		if (!singleCourseBeforeSave || !name.trim()) return false;
 		const groups = singleCourseBeforeSave.groups || [];
 		const nameLower = name.trim().toLowerCase();
-		
+
 		return groups.some((group, index) => {
 			if (excludeIndex !== null && index === excludeIndex) return false;
 			return group.name?.toLowerCase() === nameLower;
@@ -185,7 +185,7 @@ const CourseDetailsEditBox = ({
 	const handleSaveGroup = () => {
 		const trimmedName = groupFormData.name.trim();
 		const trimmedDescription = groupFormData.description.trim();
-		
+
 		if (!singleCourseBeforeSave || !trimmedName || trimmedName.length === 0 || !trimmedDescription || trimmedDescription.length === 0) {
 			return;
 		}
@@ -348,6 +348,32 @@ const CourseDetailsEditBox = ({
 					</Box>
 				</Box>
 			</Box>
+
+			<Box sx={{ ...sectionSx, mb: '2rem' }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '0.5rem' }}>
+					Landing page intro video
+				</Typography>
+				<Typography variant='body2' color='text.secondary' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+					Optional. Shown on the public course detail page.
+				</Typography>
+				<CustomTextField
+					fullWidth
+					label='Intro video URL'
+					placeholder='https://www.youtube.com/watch?v=...'
+					value={singleCourseBeforeSave?.introVideoUrl ?? ''}
+					onChange={(e) => {
+						if (singleCourseBeforeSave) {
+							setSingleCourseBeforeSave({
+								...singleCourseBeforeSave,
+								introVideoUrl: e.target.value,
+							});
+							setHasUnsavedChanges(true);
+						}
+					}}
+					InputProps={{ inputProps: { maxLength: 500 } }}
+				/>
+			</Box>
+
 			<Box sx={{ ...sectionSx, mb: '2rem' }}>
 				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
 					Course Details
@@ -360,350 +386,75 @@ const CourseDetailsEditBox = ({
 						mt: 0,
 						width: '100%',
 					}}>
-				<Box sx={{ display: 'flex', width: isMobileSize ? '100%' : '80%' }}>
-					<Box sx={{ flex: 1 }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-							Title*
-						</Typography>
-
-						<CustomTextField
-							sx={{
-								marginTop: '0.5rem',
-								backgroundColor: theme.bgColor?.common,
-							}}
-							multiline
-							value={singleCourseBeforeSave?.title}
-							onChange={(e) => {
-								setSingleCourseBeforeSave((prevData) => {
-									if (prevData) {
-										return { ...prevData, title: e.target.value };
-									}
-									return prevData;
-								});
-								setIsMissingField(false);
-								setHasUnsavedChanges(true);
-							}}
-							InputProps={{ inputProps: { maxLength: 50 } }}
-							error={isMissingField && singleCourseBeforeSave?.title === ''}
-						/>
-						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-							{singleCourseBeforeSave?.title?.length}/50 Characters
-						</Typography>
-
-						{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
-					</Box>
-					<Box sx={{ flex: 1.5, marginLeft: isMobileSize ? '1rem' : '2rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-							Description*
-						</Typography>
-
-						<CustomTextField
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourseBeforeSave?.description}
-							onChange={(e) => {
-								setSingleCourseBeforeSave((prevData) => {
-									if (prevData) {
-										return { ...prevData, description: e.target.value };
-									}
-									return prevData;
-								});
-								setIsMissingField(false);
-								setHasUnsavedChanges(true);
-							}}
-							multiline
-							InputProps={{ inputProps: { maxLength: 500 } }}
-							error={isMissingField && singleCourseBeforeSave?.description === ''}
-						/>
-						<Typography
-							sx={{
-								fontSize: isMobileSize ? '0.65rem' : '0.7rem',
-								margin: '-0.25rem 0 0.5rem 0rem',
-								textAlign: 'right',
-							}}>
-							{singleCourseBeforeSave?.description?.length}/500 Characters
-						</Typography>
-
-						{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
-					</Box>
-				</Box>
-				<Box sx={{ alignItems: 'center', ml: isMobileSize ? '0rem' : '2rem', display: hasAdminAccess ? 'flex' : 'none' }}>
-					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={singleCourseBeforeSave?.courseManagement?.isExternal}
-									onChange={(e) => {
-										setSingleCourseBeforeSave((prevData) => {
-											if (prevData) {
-												return {
-													...prevData,
-													courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
-												};
-											}
-											return prevData;
-										});
-										setHasUnsavedChanges(true);
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '1rem' : '1.25rem',
-										},
-									}}
-								/>
-							}
-							label='External Course'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-								},
-							}}
-						/>
-					</Tooltip>
-				</Box>
-			</Box>
-
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: isMobileSize ? 'column' : 'row',
-					justifyContent: 'space-between',
-					alignItems: 'flex-start',
-					mt: '1.5rem',
-				}}>
-				<Box sx={{ flex: 1, zIndex: 1, display: hasAdminAccess ? undefined : 'none' }}>
-					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-						Prices
-					</Typography>
-					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: 'column',
-								justifyContent: 'flex-start',
-								flex: 1,
-							}}>
-							<CustomTextField
-								label='GBP'
-								sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
-								value={isFree ? '' : GBP}
-								onChange={(e) => {
-									setGBP(e.target.value);
-									updatePriceInSingleCourse('gbp', e.target.value);
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								type='number'
-								disabled={isFree}
-								error={!isFree && GBP === ''}
-							/>
-							<CustomTextField
-								label='USD'
-								sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
-								value={isFree ? '' : USD}
-								onChange={(e) => {
-									setUSD(e.target.value);
-									updatePriceInSingleCourse('usd', e.target.value);
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								type='number'
-								disabled={isFree}
-								error={!isFree && USD === ''}
-							/>
-						</Box>
-						<Box sx={{ flex: 1, ml: '1rem' }}>
-							<CustomTextField
-								label='EUR'
-								sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
-								value={isFree ? '' : EUR}
-								onChange={(e) => {
-									setEUR(e.target.value);
-									updatePriceInSingleCourse('eur', e.target.value);
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								type='number'
-								disabled={isFree}
-								error={!isFree && EUR === ''}
-							/>
-							<CustomTextField
-								label='TRY'
-								sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
-								value={isFree ? '' : TRY}
-								onChange={(e) => {
-									setTRY(e.target.value);
-									updatePriceInSingleCourse('try', e.target.value);
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								type='number'
-								disabled={isFree}
-								error={!isFree && TRY === ''}
-							/>
-						</Box>
-					</Box>
-					<Box sx={{ margin: '0 0 1rem 0rem' }}>
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={isFree}
-									onChange={(e) => {
-										setIsFree(e.target.checked);
-										if (e.target.checked) {
-											// Clear prices for a free course
-											setGBP('');
-											setUSD('');
-											setEUR('');
-											setTRY('');
-											setSingleCourseBeforeSave((prevCourse) =>
-												prevCourse
-													? {
-															...prevCourse,
-															prices: [
-																{ amount: '', currency: 'gbp' },
-																{ amount: '', currency: 'usd' },
-																{ amount: '', currency: 'eur' },
-																{ amount: '', currency: 'try' },
-															],
-														}
-													: prevCourse
-											);
-											setIsMissingField(false);
-											setHasUnsavedChanges(true);
-										}
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '1rem' : '1.25rem',
-										},
-									}}
-								/>
-							}
-							label='Free Course'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-								},
-							}}
-						/>
-					</Box>
-					{isMissingField && singleCourseBeforeSave?.prices?.some((price) => price.amount === '') && (
-						<CustomErrorMessage>Enter price amount</CustomErrorMessage>
-					)}
-				</Box>
-
-				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
-					<Box sx={{ display: 'flex' }}>
-						<Box sx={{ display: 'flex', marginLeft: hasAdminAccess ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
-							<Box sx={{ flex: 2 }}>
-								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-									Weeks
-								</Typography>
-								<CustomTextField
-									required={false}
-									sx={{ marginTop: '0.5rem' }}
-									value={singleCourseBeforeSave?.durationWeeks ?? ''}
-									onChange={(e) => {
-										if (singleCourseBeforeSave) {
-											setSingleCourseBeforeSave({
-												...singleCourseBeforeSave,
-												durationWeeks: +e.target.value,
-											});
-											setHasUnsavedChanges(true);
-										}
-									}}
-									type='number'
-									placeholder='# of weeks'
-								/>
-							</Box>
-							<Box sx={{ ml: '0.5rem', flex: 3 }}>
-								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-									Hours
-								</Typography>
-								<CustomTextField
-									required={false}
-									sx={{ marginTop: '0.5rem' }}
-									value={singleCourseBeforeSave?.durationHours ?? ''}
-									onChange={(e) => {
-										if (singleCourseBeforeSave) {
-											setSingleCourseBeforeSave({
-												...singleCourseBeforeSave,
-												durationHours: +e.target.value,
-											});
-											setHasUnsavedChanges(true);
-										}
-									}}
-									type='number'
-									placeholder='# of hours'
-								/>
-							</Box>
-						</Box>
-						<Box sx={{ marginLeft: '4rem', flex: 1 }}>
+					<Box sx={{ display: 'flex', width: isMobileSize ? '100%' : '80%' }}>
+						<Box sx={{ flex: 1 }}>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-								Starting Date
+								Title*
 							</Typography>
+
 							<CustomTextField
-								required={isCohort}
-								sx={{ marginTop: '0.5rem' }}
-								value={
-									singleCourseBeforeSave && singleCourseBeforeSave.startingDate
-										? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
-										: ''
-								}
+								sx={{
+									marginTop: '0.5rem',
+									backgroundColor: theme.bgColor?.common,
+								}}
+								multiline
+								value={singleCourseBeforeSave?.title}
 								onChange={(e) => {
-									const selectedDate = parseDate(e.target.value);
-									if (singleCourseBeforeSave) {
-										setSingleCourseBeforeSave({
-											...singleCourseBeforeSave,
-											startingDate: selectedDate,
-										});
-										setHasUnsavedChanges(true);
-									}
+									setSingleCourseBeforeSave((prevData) => {
+										if (prevData) {
+											return { ...prevData, title: e.target.value };
+										}
+										return prevData;
+									});
+									setIsMissingField(false);
+									setHasUnsavedChanges(true);
 								}}
-								type='date'
-								InputProps={{
-									inputProps: { min: todayDateString() },
-								}}
+								InputProps={{ inputProps: { maxLength: 50 } }}
+								error={isMissingField && singleCourseBeforeSave?.title === ''}
 							/>
+							<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+								{singleCourseBeforeSave?.title?.length}/50 Characters
+							</Typography>
+
+							{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
 						</Box>
-						<Box sx={{ display: 'flex', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
-							<Tooltip title='Cohort courses stay locked for learners until the start date.' placement='top' arrow>
-								<FormControlLabel
-									labelPlacement='start'
-									control={
-										<Checkbox
-											checked={!!isCohort}
-											onChange={(e) => {
-												setSingleCourseBeforeSave((prevData) => {
-													if (!prevData) return prevData;
-													return {
-														...prevData,
-														courseAccessTiming: e.target.checked ? 'cohort' : 'evergreen',
-													};
-												});
-												setHasUnsavedChanges(true);
-											}}
-											sx={{
-												'& .MuiSvgIcon-root': {
-													fontSize: isMobileSize ? '1rem' : '1.25rem',
-												},
-											}}
-										/>
-									}
-									label='Cohort'
-									sx={{
-										'& .MuiFormControlLabel-label': {
-											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-										},
-									}}
-								/>
-							</Tooltip>
+						<Box sx={{ flex: 1.5, marginLeft: isMobileSize ? '1rem' : '2rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+								Description*
+							</Typography>
+
+							<CustomTextField
+								sx={{ marginTop: '0.5rem' }}
+								value={singleCourseBeforeSave?.description}
+								onChange={(e) => {
+									setSingleCourseBeforeSave((prevData) => {
+										if (prevData) {
+											return { ...prevData, description: e.target.value };
+										}
+										return prevData;
+									});
+									setIsMissingField(false);
+									setHasUnsavedChanges(true);
+								}}
+								multiline
+								InputProps={{ inputProps: { maxLength: 500 } }}
+								error={isMissingField && singleCourseBeforeSave?.description === ''}
+							/>
+							<Typography
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.7rem',
+									margin: '-0.25rem 0 0.5rem 0rem',
+									textAlign: 'right',
+								}}>
+								{singleCourseBeforeSave?.description?.length}/500 Characters
+							</Typography>
+
+							{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 						</Box>
 					</Box>
-					<Box sx={{ display: !hasAdminAccess ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+					<Box sx={{ alignItems: 'center', ml: isMobileSize ? '0rem' : '2rem', display: hasAdminAccess ? 'flex' : 'none' }}>
 						<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 							<FormControlLabel
-								labelPlacement='start'
 								control={
 									<Checkbox
 										checked={singleCourseBeforeSave?.courseManagement?.isExternal}
@@ -736,7 +487,282 @@ const CourseDetailsEditBox = ({
 						</Tooltip>
 					</Box>
 				</Box>
-			</Box>
+
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: isMobileSize ? 'column' : 'row',
+						justifyContent: 'space-between',
+						alignItems: 'flex-start',
+						mt: '1.5rem',
+					}}>
+					<Box sx={{ flex: 1, zIndex: 1, display: hasAdminAccess ? undefined : 'none' }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Prices
+						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									flex: 1,
+								}}>
+								<CustomTextField
+									label='GBP'
+									sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : GBP}
+									onChange={(e) => {
+										setGBP(e.target.value);
+										updatePriceInSingleCourse('gbp', e.target.value);
+										setIsMissingField(false);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+									error={!isFree && GBP === ''}
+								/>
+								<CustomTextField
+									label='USD'
+									sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : USD}
+									onChange={(e) => {
+										setUSD(e.target.value);
+										updatePriceInSingleCourse('usd', e.target.value);
+										setIsMissingField(false);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+									error={!isFree && USD === ''}
+								/>
+							</Box>
+							<Box sx={{ flex: 1, ml: '1rem' }}>
+								<CustomTextField
+									label='EUR'
+									sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : EUR}
+									onChange={(e) => {
+										setEUR(e.target.value);
+										updatePriceInSingleCourse('eur', e.target.value);
+										setIsMissingField(false);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+									error={!isFree && EUR === ''}
+								/>
+								<CustomTextField
+									label='TRY'
+									sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : TRY}
+									onChange={(e) => {
+										setTRY(e.target.value);
+										updatePriceInSingleCourse('try', e.target.value);
+										setIsMissingField(false);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+									error={!isFree && TRY === ''}
+								/>
+							</Box>
+						</Box>
+						<Box sx={{ margin: '0 0 1rem 0rem' }}>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={isFree}
+										onChange={(e) => {
+											setIsFree(e.target.checked);
+											if (e.target.checked) {
+												// Clear prices for a free course
+												setGBP('');
+												setUSD('');
+												setEUR('');
+												setTRY('');
+												setSingleCourseBeforeSave((prevCourse) =>
+													prevCourse
+														? {
+															...prevCourse,
+															prices: [
+																{ amount: '', currency: 'gbp' },
+																{ amount: '', currency: 'usd' },
+																{ amount: '', currency: 'eur' },
+																{ amount: '', currency: 'try' },
+															],
+														}
+														: prevCourse
+												);
+												setIsMissingField(false);
+												setHasUnsavedChanges(true);
+											}
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '1rem' : '1.25rem',
+											},
+										}}
+									/>
+								}
+								label='Free Course'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									},
+								}}
+							/>
+						</Box>
+						{isMissingField && singleCourseBeforeSave?.prices?.some((price) => price.amount === '') && (
+							<CustomErrorMessage>Enter price amount</CustomErrorMessage>
+						)}
+					</Box>
+
+					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
+						<Box sx={{ display: 'flex' }}>
+							<Box sx={{ display: 'flex', marginLeft: hasAdminAccess ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
+								<Box sx={{ flex: 2 }}>
+									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+										Weeks
+									</Typography>
+									<CustomTextField
+										required={false}
+										sx={{ marginTop: '0.5rem' }}
+										value={singleCourseBeforeSave?.durationWeeks ?? ''}
+										onChange={(e) => {
+											if (singleCourseBeforeSave) {
+												setSingleCourseBeforeSave({
+													...singleCourseBeforeSave,
+													durationWeeks: +e.target.value,
+												});
+												setHasUnsavedChanges(true);
+											}
+										}}
+										type='number'
+										placeholder='# of weeks'
+									/>
+								</Box>
+								<Box sx={{ ml: '0.5rem', flex: 3 }}>
+									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+										Hours
+									</Typography>
+									<CustomTextField
+										required={false}
+										sx={{ marginTop: '0.5rem' }}
+										value={singleCourseBeforeSave?.durationHours ?? ''}
+										onChange={(e) => {
+											if (singleCourseBeforeSave) {
+												setSingleCourseBeforeSave({
+													...singleCourseBeforeSave,
+													durationHours: +e.target.value,
+												});
+												setHasUnsavedChanges(true);
+											}
+										}}
+										type='number'
+										placeholder='# of hours'
+									/>
+								</Box>
+							</Box>
+							<Box sx={{ marginLeft: '4rem', flex: 1 }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+									Starting Date
+								</Typography>
+								<CustomTextField
+									required={isCohort}
+									sx={{ marginTop: '0.5rem' }}
+									value={
+										singleCourseBeforeSave && singleCourseBeforeSave.startingDate
+											? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
+											: ''
+									}
+									onChange={(e) => {
+										const selectedDate = parseDate(e.target.value);
+										if (singleCourseBeforeSave) {
+											setSingleCourseBeforeSave({
+												...singleCourseBeforeSave,
+												startingDate: selectedDate,
+											});
+											setHasUnsavedChanges(true);
+										}
+									}}
+									type='date'
+									InputProps={{
+										inputProps: { min: todayDateString() },
+									}}
+								/>
+							</Box>
+							<Box sx={{ display: 'flex', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+								<Tooltip title='Cohort courses stay locked for learners until the start date.' placement='top' arrow>
+									<FormControlLabel
+										labelPlacement='start'
+										control={
+											<Checkbox
+												checked={!!isCohort}
+												onChange={(e) => {
+													setSingleCourseBeforeSave((prevData) => {
+														if (!prevData) return prevData;
+														return {
+															...prevData,
+															courseAccessTiming: e.target.checked ? 'cohort' : 'evergreen',
+														};
+													});
+													setHasUnsavedChanges(true);
+												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
+											/>
+										}
+										label='Cohort'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											},
+										}}
+									/>
+								</Tooltip>
+							</Box>
+						</Box>
+						<Box sx={{ display: !hasAdminAccess ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+							<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
+								<FormControlLabel
+									labelPlacement='start'
+									control={
+										<Checkbox
+											checked={singleCourseBeforeSave?.courseManagement?.isExternal}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prevData) => {
+													if (prevData) {
+														return {
+															...prevData,
+															courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
+														};
+													}
+													return prevData;
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='External Course'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
+						</Box>
+					</Box>
+				</Box>
 			</Box>
 
 			{/* Registration Settings (owner/admin only) */}
@@ -745,7 +771,7 @@ const CourseDetailsEditBox = ({
 					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '1rem' }}>
 						Registration Settings
 					</Typography>
-					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', gap: '1rem', justifyContent: 'space-between', alignItems:isMobileSize ? 'flex-start' : 'center', width: '100%', }}>
+					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', gap: '1rem', justifyContent: 'space-between', alignItems: isMobileSize ? 'flex-start' : 'center', width: '100%', }}>
 						<Box sx={{ flex: 1 }}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
 								Course Capacity
@@ -804,7 +830,7 @@ const CourseDetailsEditBox = ({
 								type='text'
 								fullWidth
 								error={!!courseCapacityError}
-								sx={{ backgroundColor: theme.bgColor?.common, width:isMobileSize ? '100%' : '50%' }}
+								sx={{ backgroundColor: theme.bgColor?.common, width: isMobileSize ? '100%' : '50%' }}
 							/>
 							{courseCapacityError && <CustomErrorMessage>{courseCapacityError}</CustomErrorMessage>}
 							{singleCourseBeforeSave?.isCapacityFull && (
@@ -814,7 +840,7 @@ const CourseDetailsEditBox = ({
 							)}
 						</Box>
 
-						<Box sx={{ flex: 1, display: 'flex',justifyContent: 'flex-end', alignItems: isMobileSize ? 'flex-start' : 'center' }}>
+						<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: isMobileSize ? 'flex-start' : 'center' }}>
 							<FormControlLabel
 								control={
 									<Checkbox
@@ -891,17 +917,17 @@ const CourseDetailsEditBox = ({
 											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem', mb: '0.5rem' }}>
 												{group.description}
 											</Typography>
-											<Typography 
-												variant='body2' 
-												sx={{ 
-													fontSize: isMobileSize ? '0.75rem' : '0.85rem', 
+											<Typography
+												variant='body2'
+												sx={{
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 													mb: '0.25rem',
-													color: group.capacity !== undefined 
+													color: group.capacity !== undefined
 														? (group.isFull ? 'error.main' : group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 'warning.main' : 'text.secondary')
 														: 'text.secondary',
 													fontWeight: group.capacity !== undefined && group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 600 : 400,
 												}}>
-												{group.capacity !== undefined 
+												{group.capacity !== undefined
 													? `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? ` (${group.remainingSeats} remaining)` : ''}`
 													: `Enrolled: ${group.enrolledCount || 0} learners`}
 											</Typography>
@@ -910,7 +936,7 @@ const CourseDetailsEditBox = ({
 											<Tooltip title='Edit Group' placement='top' arrow>
 												<IconButton
 													size='small'
-													onClick={() => {openEditGroupDialog(index); setGroupNameError(''); setCapacityError('');}}
+													onClick={() => { openEditGroupDialog(index); setGroupNameError(''); setCapacityError(''); }}
 													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : undefined } }}>
 													<Edit fontSize='small' />
 												</IconButton>
@@ -993,17 +1019,17 @@ const CourseDetailsEditBox = ({
 									</Typography>
 									<CustomTextField
 										value={groupFormData.capacity}
-											onChange={(e) => {
-												const value = e.target.value;
-												// Allow empty string or positive integers only
-												if (value === '' || /^\d+$/.test(value)) {
-													setGroupFormData({ ...groupFormData, capacity: value });
-													// Clear capacity error if user starts typing valid input
-													if (capacityError) {
-														setCapacityError('');
-													}
+										onChange={(e) => {
+											const value = e.target.value;
+											// Allow empty string or positive integers only
+											if (value === '' || /^\d+$/.test(value)) {
+												setGroupFormData({ ...groupFormData, capacity: value });
+												// Clear capacity error if user starts typing valid input
+												if (capacityError) {
+													setCapacityError('');
 												}
-											}}
+											}
+										}}
 										placeholder='e.g., 20'
 										type='text'
 										fullWidth
@@ -1011,7 +1037,7 @@ const CourseDetailsEditBox = ({
 									/>
 									{capacityError && <CustomErrorMessage>{capacityError}</CustomErrorMessage>}
 								</Box>
-							
+
 							</Box>
 						</DialogContent>
 						<CustomDialogActions

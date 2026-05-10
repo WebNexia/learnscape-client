@@ -10,6 +10,8 @@ export interface BaseCourse {
 	description: string;
 	prices: Price[];
 	imageUrl: string;
+	/** Landing page course detail: optional intro/trailer video (YouTube / Vimeo URL). */
+	introVideoUrl?: string;
 	isActive: boolean;
 	isArchived: boolean;
 	createdAt: string;

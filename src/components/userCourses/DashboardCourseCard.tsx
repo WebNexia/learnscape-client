@@ -35,38 +35,41 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0' ||
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === 'Free' ||
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '';
+
+	const topAccent = '#0052a3';
+	const hoverBorderGradient = `linear-gradient(90deg, ${topAccent} 0%, ${topAccent}80 100%)`;
+
 	return (
-		<Card
+		<Box
 			sx={{
-				'display': !isEnrolled && displayMyCourses ? 'none' : 'block',
-				'height': isMobileSize ? '21rem' : '25rem',
-				'width': isMobileSize ? '15rem' : '19rem',
-				'borderRadius': '0.75rem',
-				'position': 'relative',
-				'overflow': 'hidden',
-				'margin': '0 1rem 2rem 1rem',
-				'backgroundColor': '#FFFFFF',
-				'border': '1px solid rgba(0, 82, 163, 0.15)',
-				'boxShadow': '0 4px 12px rgba(0,0,0,0.06)',
-				'transition': 'transform 0.2s ease-out',
+				display: !isEnrolled && displayMyCourses ? 'none' : 'block',
+				width: isMobileSize ? '15rem' : '19rem',
+				height: isMobileSize ? '21rem' : '25rem',
+				p: '4px',
+				borderRadius: '0.75rem',
+				boxSizing: 'border-box',
+				position: 'relative',
+				margin: '0 1rem 2rem 1rem',
+				backgroundColor: 'transparent',
+				boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+				transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+				cursor: 'pointer',
 				'&::before': {
 					content: '""',
 					position: 'absolute',
-					top: 0,
-					left: 0,
-					right: 0,
-					height: '3px',
-					background: '#0052a3',
-					transform: 'scaleX(0)',
-					transformOrigin: 'left',
-					transition: 'transform 0.2s ease-out',
-					zIndex: 1,
+					inset: 0,
+					borderRadius: '0.75rem',
+					background: hoverBorderGradient,
+					opacity: 0,
+					transition: 'opacity 0.25s ease-out',
+					pointerEvents: 'none',
+					zIndex: 0,
 				},
 				'&:hover': {
 					transform: 'translate3d(0, -4px, 0)',
-					'&::before': { transform: 'scaleX(1)' },
+					boxShadow: `0 8px 24px ${topAccent}28`,
+					'&::before': { opacity: 1 },
 				},
-				'cursor': 'pointer',
 			}}
 			onClick={() => {
 				if (user && !fromHomePage) {
@@ -81,6 +84,19 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>
+			<Card
+				sx={{
+					position: 'relative',
+					zIndex: 1,
+					height: '100%',
+					width: '100%',
+					borderRadius: 'calc(0.75rem - 4px)',
+					overflow: 'hidden',
+					margin: 0,
+					backgroundColor: '#FFFFFF',
+					border: 'none',
+					boxShadow: 'none',
+				}}>
 			{course.isExpired && (
 				<Box
 					sx={{
@@ -134,15 +150,15 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						fontSize: {
 							xs: '0.8rem',
 							sm: '0.8rem',
-							md: course?.title?.length > 35 ? '0.8rem' : '0.9rem',
-							lg: course?.title?.length > 35 ? '0.9rem' : '1rem',
+							md: course?.title?.length > 35 ? '0.95rem' : '1rem',
+							lg: course?.title?.length > 35 ? '1rem' : '1.1rem',
 						},
 						textAlign: 'center',
 						color: fromHomePage ? '#0052a3' : theme.palette.primary.main,
 						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-						fontWeight: fromHomePage ? 600 : 400,
+						fontWeight: fromHomePage ? 900 : 400,
 					}}>
-					{course.title}
+					{course.title.toUpperCase()}
 				</Typography>
 				<Typography
 					variant='body2'
@@ -154,7 +170,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						width: '100%',
 						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					}}>
-					{truncateText(course.description, isEnrolled && isMobileSize ? 125 : isEnrolled ? 150 : 200)}
+					{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled ? 125 : 150)}
 				</Typography>
 			</CardContent>
 
@@ -191,7 +207,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						padding: '1rem 1.25rem',
 						borderTop: '1px solid rgba(0, 82, 163, 0.1)',
 						backgroundColor: 'rgba(0, 82, 163, 0.04)',
-						borderRadius: '0 0 0.75rem 0.75rem',
+						borderRadius: '0 0 calc(0.75rem - 4px) calc(0.75rem - 4px)',
 					}}>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1, minWidth: 0 }}>
 						<Avatar
@@ -273,7 +289,8 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 					)}
 				</Box>
 			</Box>
-		</Card>
+			</Card>
+		</Box>
 	);
 };
 

@@ -4,6 +4,13 @@ import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { responsiveStyles } from '../../styles/responsiveStyles';
 
+const cardOuterRadius = responsiveStyles.components.card.borderRadius;
+
+/** Eski üst kenar şeridi ile aynı renk geçişi — kart bazında (mavi / mint sırayla) */
+const cardHoverBorderGradient = (hex: string) => `linear-gradient(90deg, ${hex} 0%, ${hex}80 100%)`;
+/** Dış padding (çerçeve kalınlığı) ile uyumlu iç köşe */
+const cardInnerRadius = { xs: 'calc(0.5rem - 4px)', sm: 'calc(0.75rem - 4px)', md: 'calc(1rem - 4px)' };
+
 const features = [
 	{
 		icon: <School sx={{ fontSize: '3rem', fontWeight: 600 }} />,
@@ -79,99 +86,109 @@ const FeaturesSection = () => {
 						<Grid item xs={12} sm={6} md={3} key={index} sx={{ mb: { xs: 2 } }}>
 							<Box
 								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-									textAlign: 'center',
-									p: responsiveStyles.components.card.padding,
 									height: '100%',
-									backgroundColor: '#FFFFFF',
-									borderRadius: responsiveStyles.components.card.borderRadius,
-									border: `2px solid ${feature.color}20`,
+									p: '4px',
+									borderRadius: cardOuterRadius,
+									backgroundColor: 'transparent',
 									boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-									transition: 'transform 0.2s ease-out',
 									position: 'relative',
-									overflow: 'hidden',
+									transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
 									'&::before': {
 										content: '""',
 										position: 'absolute',
-										top: 0,
-										left: 0,
-										right: 0,
-										height: '4px',
-										background: `linear-gradient(90deg, ${feature.color} 0%, ${feature.color}80 100%)`,
-										transform: 'scaleX(0)',
-										transformOrigin: 'left',
-										transition: 'transform 0.2s ease-out',
-										zIndex: 1,
+										inset: 0,
+										borderRadius: cardOuterRadius,
+										background: cardHoverBorderGradient(feature.color),
+										opacity: 0,
+										transition: 'opacity 0.25s ease-out',
+										pointerEvents: 'none',
+										zIndex: 0,
 									},
 									'&:hover': {
 										transform: 'translate3d(0, -4px, 0)',
-										'&::before': { transform: 'scaleX(1)' },
+										boxShadow: `0 8px 24px ${feature.color}28`,
+										'&::before': {
+											opacity: 1,
+										},
 									},
 									mb: { xs: 2 },
 								}}>
 								<Box
 									sx={{
-										color: feature.color,
-										mb: 2,
-										p: 3,
-										borderRadius: '50%',
-										background:
-											feature.title === 'Learn Anywhere'
-												? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
-												: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
-										boxShadow: feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
-										transition: 'transform 0.2s ease-out',
+										position: 'relative',
+										zIndex: 1,
 										display: 'flex',
+										flexDirection: 'column',
 										alignItems: 'center',
-										justifyContent: 'center',
-										'& svg': {
-											filter:
+										textAlign: 'center',
+										p: responsiveStyles.components.card.padding,
+										height: '100%',
+										backgroundColor: '#FFFFFF',
+										borderRadius: cardInnerRadius,
+										border: 'none',
+									}}>
+									<Box
+										sx={{
+											color: feature.color,
+											mb: 2,
+											p: 3,
+											borderRadius: '50%',
+											background:
 												feature.title === 'Learn Anywhere'
-													? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
-													: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
-										},
-										'&:hover': {
-											transform: 'scale(1.05)',
-										},
-									}}>
-									{feature.icon}
+													? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
+													: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
+											boxShadow: feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
+											transition: 'transform 0.2s ease-out',
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											'& svg': {
+												filter:
+													feature.title === 'Learn Anywhere'
+														? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
+														: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
+											},
+											'&:hover': {
+												transform: 'scale(1.05)',
+											},
+										}}>
+										{feature.icon}
+									</Box>
+									<Typography
+										variant='h5'
+										sx={{
+											mb: 2,
+											minHeight: !isSmallScreen ? '4rem' : !isVerySmallScreen ? '2.5rem' : undefined,
+											fontWeight: 600,
+											color: '#1e293b',
+											fontSize: isMobileSize ? '1.2rem' : '1.4rem',
+											fontFamily: 'Varela Round',
+										}}>
+										{feature.title === 'Expert Instructors'
+											? 'Uzman Eğitmenler'
+											: feature.title === 'Personalized Learning'
+												? 'Sistemli Öğrenme'
+												: feature.title === 'Learn Anywhere'
+													? 'Canlı Dersler'
+													: 'Etüt Programları'}
+									</Typography>
+									<Typography
+										variant='body1'
+										sx={{
+											color: '#0066CC',
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
+											fontFamily: 'Varela Round',
+											lineHeight: 1.6,
+										}}>
+										{feature.description === 'Learn from certified English teachers with years of experience.'
+											? 'Yılların deneyimine sahip İngilizce öğretmenlerinden öğrenin'
+											: feature.description === 'Customized lessons tailored to your learning style and goals.'
+												? 'Kendi hızınızda interaktif öğrenme deneyimi'
+												: feature.description === 'Access your courses on any device, anytime, anywhere.'
+													? 'İnteraktif derslerle öğrendiklerinizi pekiştirme ve canlı pratik fırsatı'
+													: 'Etüt saatlerinde ders çalışma fırsatı ve ders planlama desteği'}
+									</Typography>
 								</Box>
-								<Typography
-									variant='h5'
-									sx={{
-										mb: 2,
-										minHeight: !isSmallScreen ? '4rem' : !isVerySmallScreen ? '2.5rem' : undefined,
-										fontWeight: 600,
-										color: '#1e293b',
-										fontSize: isMobileSize ? '1.2rem' : '1.4rem',
-										fontFamily: 'Varela Round',
-									}}>
-									{feature.title === 'Expert Instructors'
-										? 'Uzman Eğitmenler'
-										: feature.title === 'Personalized Learning'
-											? 'Sistemli Öğrenme'
-											: feature.title === 'Learn Anywhere'
-												? 'Canlı Dersler'
-												: 'Etüt Programları'}
-								</Typography>
-								<Typography
-									variant='body1'
-									sx={{
-										color: '#334155',
-										fontSize: isMobileSize ? '0.9rem' : '1rem',
-										fontFamily: 'Varela Round',
-										lineHeight: 1.6,
-									}}>
-									{feature.description === 'Learn from certified English teachers with years of experience.'
-										? 'Yılların deneyimine sahip İngilizce öğretmenlerinden öğrenin'
-										: feature.description === 'Customized lessons tailored to your learning style and goals.'
-											? 'Kendi hızınızda interaktif öğrenme deneyimi'
-											: feature.description === 'Access your courses on any device, anytime, anywhere.'
-												? 'İnteraktif derslerle öğrendiklerinizi pekiştirme ve canlı pratik fırsatı'
-												: 'Etüt saatlerinde ders çalışma fırsatı ve ders planlama desteği'}
-								</Typography>
 							</Box>
 						</Grid>
 					))}

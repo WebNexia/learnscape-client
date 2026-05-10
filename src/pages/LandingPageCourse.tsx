@@ -1,15 +1,17 @@
 import { useParams } from 'react-router-dom';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { useContext, useEffect, useState } from 'react';
-import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
+import { useContext } from 'react';
 import { SingleCourse } from '../interfaces/course';
-import { Box, Card, CardContent, Typography, Avatar, Chip, Stack, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Avatar, Chip, Stack, IconButton, CircularProgress } from '@mui/material';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import { SEO, StructuredData } from '../components/seo';
+import axios from 'axios';
+import { useQuery } from 'react-query';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
 	// Ensure URLs have proper protocol
@@ -120,16 +122,29 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 
 const LandingPageCourse = () => {
 	const { courseId } = useParams();
-	const { courses, loading, error } = useContext(AllPublicCoursesContext);
+	const { orgId } = useContext(OrganisationContext);
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const [course, setCourse] = useState<SingleCourse>();
-
-	useEffect(() => {
-		if (courseId && courses) {
-			const selectedCourse = courses?.find((course: SingleCourse) => course._id === courseId);
-			setCourse(selectedCourse);
+	const {
+		data: course,
+		isLoading,
+		isFetching,
+		isError,
+	} = useQuery(
+		['lpPublicCourseDetail', orgId, courseId],
+		async () => {
+			const res = await axios.get(`${base_url}/courses/public/${orgId}/course/${courseId}`);
+			return res?.data?.data as SingleCourse;
+		},
+		{
+			enabled: Boolean(orgId && courseId),
+			staleTime: 60_000,
 		}
-	}, [courseId, courses]);
+	);
+
+	const showLoader = !orgId || !courseId || ((!course) && (isLoading || isFetching));
+	const showError = Boolean(orgId && courseId && isError);
+	const showNotFound = Boolean(orgId && courseId && !isLoading && !isFetching && !isError && !course);
 
 	// Helper function to truncate description to 150 characters
 	const getTruncatedDescription = (description: string): string => {
@@ -176,7 +191,7 @@ const LandingPageCourse = () => {
 
 	return (
 		<>
-			{!loading && !error && course && (
+			{course && (
 				<>
 					<SEO
 						title={`${course.title} | LearnScape`}
@@ -284,7 +299,7 @@ const LandingPageCourse = () => {
 				}}>
 				<Box sx={{ position: 'relative', zIndex: 2 }}>
 					<LandingPageLayout>
-						{!loading && !error && course && (
+						{!showLoader && !showError && course && (
 							<Box
 								sx={{
 									display: 'flex',
@@ -301,7 +316,32 @@ const LandingPageCourse = () => {
 							</Box>
 						)}
 
-						{!loading && !error && !course && (
+						{showLoader && (
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									justifyContent: 'center',
+									gap: 2,
+									minHeight: '40vh',
+									width: '100%',
+									paddingTop: '16vh',
+								}}>
+								<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+								<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+							</Box>
+						)}
+
+						{showError && (
+							<Box sx={{ paddingTop: '25vh', textAlign: 'center', px: 2 }}>
+								<Typography variant='h6' sx={{ fontFamily: 'Varela Round', color: 'error.main' }}>
+									Kurs yüklenirken bir hata oluştu
+								</Typography>
+							</Box>
+						)}
+
+						{showNotFound && (
 							<Box sx={{ paddingTop: '25vh', textAlign: 'center' }}>
 								<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
 									Kurs bulunamadı
