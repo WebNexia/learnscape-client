@@ -28,19 +28,22 @@ function getBrowserFallbackLocation(): GeoLocation | null {
 	}
 }
 
-export function useGeoLocation() {
-	const [location, setLocation] = useState<GeoLocation | null>(null);
+const defaultGeo: GeoLocation = {
+	countryCode: 'US',
+	country: '',
+	city: '',
+	query: '',
+};
 
-	useEffect(() => {
-		let isMounted = true;
-		const browserFallback = getBrowserFallbackLocation();
+/** One shared in-flight / resolved lookup for the whole app (many components use this hook). */
+let geoLocationPromise: Promise<GeoLocation> | null = null;
 
-		// Prefer a local/browser-derived country immediately so forms and pricing
-		// keep working even if third-party IP APIs are blocked by the browser.
-		if (browserFallback) {
-			setLocation(browserFallback);
-		}
+function fetchGeoLocationOnce(): Promise<GeoLocation> {
+	if (geoLocationPromise) {
+		return geoLocationPromise;
+	}
 
+	geoLocationPromise = (async () => {
 		const providers = [
 			async () => {
 				const response = await fetch('https://ipapi.co/json/');
@@ -54,25 +57,26 @@ export function useGeoLocation() {
 				}
 
 				return {
-					countryCode: data.country_code,
+					countryCode: String(data.country_code).toUpperCase(),
 					country: data.country_name || '',
 					city: data.city || '',
 					query: data.ip || '',
 				};
 			},
 			async () => {
-				const response = await fetch('https://ipwho.is/');
+				const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
 				if (!response.ok) {
-					throw new Error(`ipwho.is failed with status ${response.status}`);
+					throw new Error(`geojs failed with status ${response.status}`);
 				}
 
 				const data = await response.json();
-				if (data.success === false || !data.country_code) {
-					throw new Error(data.message || 'ipwho.is returned no country code');
+				const code = data?.country_code;
+				if (!code || typeof code !== 'string') {
+					throw new Error('geojs returned no country code');
 				}
 
 				return {
-					countryCode: data.country_code,
+					countryCode: code.toUpperCase(),
 					country: data.country || '',
 					city: data.city || '',
 					query: data.ip || '',
@@ -80,31 +84,37 @@ export function useGeoLocation() {
 			},
 		];
 
-		const loadLocation = async () => {
-			for (const provider of providers) {
-				try {
-					const result = await provider();
-					if (isMounted) {
-						setLocation(result);
-					}
-					return;
-				} catch {
-					// Try the next provider silently. Public IP services commonly
-					// fail due to rate limits, CORS, or regional blocking.
-				}
+		for (const provider of providers) {
+			try {
+				return await provider();
+			} catch {
+				// Try the next provider silently. Public IP services commonly
+				// fail due to rate limits, CORS, or regional blocking.
 			}
+		}
 
-			if (isMounted && !browserFallback) {
-				setLocation({
-					countryCode: 'US',
-					country: '',
-					city: '',
-					query: '',
-				});
+		return getBrowserFallbackLocation() ?? defaultGeo;
+	})();
+
+	return geoLocationPromise;
+}
+
+export function useGeoLocation() {
+	const [location, setLocation] = useState<GeoLocation | null>(null);
+
+	useEffect(() => {
+		let isMounted = true;
+		const browserFallback = getBrowserFallbackLocation();
+
+		if (browserFallback) {
+			setLocation(browserFallback);
+		}
+
+		fetchGeoLocationOnce().then((result) => {
+			if (isMounted) {
+				setLocation(result);
 			}
-		};
-
-		loadLocation();
+		});
 
 		return () => {
 			isMounted = false;

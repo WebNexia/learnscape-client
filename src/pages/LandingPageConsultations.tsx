@@ -136,6 +136,21 @@ const LandingPageConsultations = () => {
 								<Typography sx={{ textAlign: 'center', fontSize: '1.25rem', color: 'error.main', fontFamily: 'Varela Round', mt: 5 }}>
 									{error}
 								</Typography>
+							) : loading && consultations.length === 0 ? (
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										justifyContent: 'center',
+										gap: 2,
+										minHeight: '40vh',
+										width: '100%',
+										mb: 3,
+									}}>
+									<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+									<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+								</Box>
 							) : consultations && consultations.length > 0 ? (
 								<Box
 									sx={{
@@ -300,7 +315,7 @@ const LandingPageConsultations = () => {
 										);
 									})}
 								</Box>
-							) : !loading ? (
+							) : (
 								<Typography
 									sx={{
 										textAlign: 'center',
@@ -312,10 +327,6 @@ const LandingPageConsultations = () => {
 									}}>
 									Henüz yayınlanmış danışmanlık bulunmamaktadır.
 								</Typography>
-							) : null}
-
-							{loading && (
-								<Typography sx={{ textAlign: 'center', fontFamily: 'Varela Round', py: 3 }}>Yükleniyor...</Typography>
 							)}
 
 							{hasMore && consultations.length > 0 && (
