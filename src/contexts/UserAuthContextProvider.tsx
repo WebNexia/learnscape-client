@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useEffect, useState, useRef } from 'react';
-import { useQueryClient, useQuery } from 'react-query';
+import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -43,7 +43,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
-	const [userCourseData, setUserCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>(undefined);
+	const [userCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>([]);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
 	const isLoginInProgressRef = useRef<boolean>(false);
@@ -133,30 +133,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 		return () => unsubscribe();
 	}, []); // Remove skipFetchDuringSignup from dependencies since we're using ref
-
-	// React Query for userCourseData
-	const { data: userCourseDataFromQuery } = useQuery<UserCoursesIdsWithCourseIds[]>(
-		['userCourseData', userId],
-		async () => {
-			if (!userId) return [];
-			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
-
-			return response.data.response || [];
-		},
-		{
-			enabled: !!userId && user?.role === Roles.USER,
-			staleTime: 5 * 60 * 1000, // 5 minutes
-			cacheTime: 10 * 60 * 1000, // 10 minutes
-			refetchOnWindowFocus: false,
-		}
-	);
-
-	// Update context state when React Query data changes
-	useEffect(() => {
-		if (userCourseDataFromQuery) {
-			setUserCourseData(userCourseDataFromQuery);
-		}
-	}, [userCourseDataFromQuery]);
 
 	const fetchUserData = async (firebaseUserId: string, skipIfSignup?: boolean) => {
 		// Skip fetching if signup is in progress
