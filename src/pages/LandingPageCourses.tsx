@@ -1,4 +1,4 @@
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useContext, useEffect, useState } from 'react';
@@ -221,6 +221,21 @@ const LandingPageCourses = () => {
 										}}>
 										{error}
 									</Typography>
+								) : (loading || isSearching) && courses.length === 0 ? (
+									<Box
+										sx={{
+											display: 'flex',
+											flexDirection: 'column',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: 2,
+											minHeight: '40vh',
+											width: '100%',
+											mb: '3rem',
+										}}>
+										<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+										<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+									</Box>
 								) : courses && courses.length > 0 ? (
 									<Box
 										sx={{

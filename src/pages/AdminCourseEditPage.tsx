@@ -5,7 +5,7 @@ import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { Price, SingleCourse } from '../interfaces/course';
+import { CourseLandingPageSection, Price, SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import AdminCourseEditChapter from '../components/adminSingleCourse/AdminCourseEditChapter';
@@ -333,17 +333,27 @@ const AdminCourseEditPage = () => {
 					const response = await axios.get(`${base_url}/courses/${courseId}`);
 
 					const courseResponse = response?.data?.data;
-					setSingleCourse(courseResponse);
-					setSingleCourseBeforeSave(courseResponse);
-					if (courseResponse?.prices?.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
+					const withSectionKeys: SingleCourse = {
+						...courseResponse,
+						landingPageSections: (courseResponse.landingPageSections || []).map((s: CourseLandingPageSection) => ({
+							title: s.title || '',
+							body: s.body || '',
+							rowKey: generateUniqueId('lpsec_'),
+						})),
+					};
+					setSingleCourse(withSectionKeys);
+					setSingleCourseBeforeSave(withSectionKeys);
+					if (withSectionKeys?.prices?.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);
 					}
 
-					if (courseResponse?.chapters[0]?.title) {
+					const apiChapters = (courseResponse?.chapters ?? []) as unknown as BaseChapter[];
+
+					if (apiChapters[0]?.title) {
 						// Initialize chapter lesson data
-						const initialChapterLessonData: ChapterLessonData[] = courseResponse?.chapters
-							?.filter((chapter: BaseChapter) => chapter !== null)
-							?.map((chapter: BaseChapter) => {
+						const initialChapterLessonData: ChapterLessonData[] = apiChapters
+							.filter((chapter) => chapter !== null)
+							.map((chapter) => {
 								return {
 									chapterId: chapter._id,
 									title: chapter.title,
@@ -357,7 +367,7 @@ const AdminCourseEditPage = () => {
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData = courseResponse?.chapters?.map((chapter: BaseChapter) => ({
+					const chapterUpdateData = apiChapters.map((chapter) => ({
 						chapterId: chapter._id,
 						isUpdated: false,
 					}));
@@ -413,14 +423,31 @@ const AdminCourseEditPage = () => {
 			};
 
 			try {
+				const landingPageSectionsClean = (singleCourseBeforeSave.landingPageSections || []).map(({ title, body }) => ({
+					title: title ?? '',
+					body: body ?? '',
+				}));
+
 				const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
 					...updatedCourse,
+					landingPageSections: landingPageSectionsClean,
 				});
 
 				const responseUpdatedData = response.data.data;
 
+				const landingPageSectionsAfterSave: CourseLandingPageSection[] | undefined = Array.isArray(
+					responseUpdatedData.landingPageSections
+				)
+					? responseUpdatedData.landingPageSections.map((s: { title?: string; body?: string }) => ({
+							title: s.title || '',
+							body: s.body || '',
+							rowKey: generateUniqueId('lpsec_'),
+						}))
+					: updatedCourse.landingPageSections;
+
 				setSingleCourseBeforeSave({
 					...updatedCourse,
+					...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave } : {}),
 					updatedAt: responseUpdatedData.updatedAt,
 					updatedByName: responseUpdatedData.updatedByName,
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -429,6 +456,9 @@ const AdminCourseEditPage = () => {
 
 				setSingleCourse({
 					...updatedCourse,
+					...(landingPageSectionsAfterSave !== undefined
+						? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) }
+						: {}),
 					updatedAt: responseUpdatedData.updatedAt,
 					updatedByName: responseUpdatedData.updatedByName,
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -437,6 +467,9 @@ const AdminCourseEditPage = () => {
 
 				updateCourse({
 					...updatedCourse,
+					...(landingPageSectionsAfterSave !== undefined
+						? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) }
+						: {}),
 					updatedAt: responseUpdatedData.updatedAt,
 					updatedByName: responseUpdatedData.updatedByName,
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -633,6 +666,10 @@ const AdminCourseEditPage = () => {
 					isExpired: validUntil ? validUntil < new Date() : false,
 					groups: singleCourseBeforeSave.groups || [],
 					videoURLs: singleCourseBeforeSave.videoURLs || [],
+					landingPageSections: (singleCourseBeforeSave.landingPageSections || []).map(({ title, body }) => ({
+						title: title ?? '',
+						body: body ?? '',
+					})),
 				};
 
 				try {
@@ -640,8 +677,18 @@ const AdminCourseEditPage = () => {
 
 					const responseUpdatedData = response.data.data;
 
+					const landingPageSectionsAfterSave: CourseLandingPageSection[] | undefined =
+						Array.isArray(responseUpdatedData.landingPageSections)
+							? responseUpdatedData.landingPageSections.map((s: { title?: string; body?: string }) => ({
+									title: s.title || '',
+									body: s.body || '',
+									rowKey: generateUniqueId('lpsec_'),
+								}))
+							: updatedCourse.landingPageSections;
+
 					setSingleCourseBeforeSave({
 						...updatedCourse,
+						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -650,6 +697,7 @@ const AdminCourseEditPage = () => {
 
 					updateCourse({
 						...updatedCourse,
+						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -676,6 +724,7 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourse({
 						...updatedCourse,
+						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -838,6 +887,21 @@ const AdminCourseEditPage = () => {
 						return;
 					}
 				}
+			}
+		}
+
+		if (singleCourseBeforeSave?.introVideoUrl?.trim()) {
+			try {
+				const urlObj = new URL(singleCourseBeforeSave.introVideoUrl.trim());
+				if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+					setUrlErrorMessage('Intro video URL must use http or https.');
+					setIsUrlErrorOpen(true);
+					return;
+				}
+			} catch {
+				setUrlErrorMessage('Invalid intro video URL format');
+				setIsUrlErrorOpen(true);
+				return;
 			}
 		}
 

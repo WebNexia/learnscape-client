@@ -245,6 +245,26 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							</Typography>
 						</Box>
 					</Box>
+					{singleCourse?.introVideoUrl?.trim() ? (
+						<Box sx={{ mt: '1rem', textAlign: 'right', maxWidth: '100%' }}>
+							<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.25rem' }}>
+								Landing intro video
+							</Typography>
+							<Link href={singleCourse.introVideoUrl.trim()} target='_blank' rel='noopener noreferrer' sx={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>
+								{singleCourse.introVideoUrl.trim()}
+							</Link>
+						</Box>
+					) : null}
+					{singleCourse?.landingPageSections && singleCourse.landingPageSections.length > 0 ? (
+						<Box sx={{ mt: '1rem', textAlign: 'right', maxWidth: '100%' }}>
+							<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.25rem' }}>
+								Landing page detail sections
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
+								{singleCourse.landingPageSections.length} section(s)
+							</Typography>
+						</Box>
+					) : null}
 				</Box>
 			</Box>
 

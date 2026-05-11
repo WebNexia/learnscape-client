@@ -34,7 +34,9 @@ const LandingPageUpcomingPublicEventsContextProvider = (props: LandingPageUpcomi
 
 		try {
 			// Fetch upcoming events within next 30 days, limit to 50 for landing page
-			const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=true&page=1&limit=100`);
+			const response = await axios.get(
+				`${base_url}/events/public/${orgId}?upcomingOnly=true&landingCards=true&page=1&limit=100`,
+			);
 			return response.data.data || [];
 		} catch (error: any) {
 			console.error('Error fetching upcoming events:', error);

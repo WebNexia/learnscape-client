@@ -2,30 +2,41 @@ import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import ConditionalStripeProvider from '../components/common/ConditionalStripeProvider';
 import CoursePaymentForm from '../components/layouts/coursePageBanner/CoursePaymentForm';
 import axios from 'axios';
-import { useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import theme from '../themes';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 export default function LandingPageCoursePayment() {
 	const { courseId, title } = useParams();
 	const navigate = useNavigate();
-	const { courses } = useContext(AllPublicCoursesContext);
+	const { orgId } = useContext(OrganisationContext);
 	const queryClient = useQueryClient();
-	const [course, setCourse] = useState<SingleCourse | null>(null);
 	const [success, setSuccess] = useState(false);
 
-	useEffect(() => {
-		if (courseId && courses?.length) {
-			const c = courses.find((x: SingleCourse) => x._id === courseId);
-			setCourse(c ?? null);
+	const detailQueryKey = ['lpPublicCourseDetail', orgId, courseId];
+
+	const {
+		data: course,
+		isLoading,
+		isError,
+	} = useQuery(
+		detailQueryKey,
+		async () => {
+			const res = await axios.get(`${base_url}/courses/public/${orgId}/course/${courseId}`);
+			return (res?.data?.data as SingleCourse) ?? null;
+		},
+		{
+			enabled: Boolean(orgId && courseId),
+			initialData: () => queryClient.getQueryData(detailQueryKey) as SingleCourse | null | undefined,
+			staleTime: 60_000,
 		}
-	}, [courseId, courses]);
+	);
 
 	const firstLessonId =
 		course?.firstLessonId ||
@@ -67,7 +78,7 @@ export default function LandingPageCoursePayment() {
 		? `/landing-page-course/${encodeURIComponent(course.title)}/${course._id}`
 		: '#';
 
-	if (!course && courses?.length) {
+	if (!isLoading && (isError || !course)) {
 		return (
 			<LandingPageLayout>
 				<Box sx={{ py: 8, px: 2, textAlign: 'center' }}>
@@ -80,7 +91,7 @@ export default function LandingPageCoursePayment() {
 		);
 	}
 
-	if (!course) {
+	if (isLoading || !course) {
 		return (
 			<LandingPageLayout>
 				<Box sx={{ py: 8, px: 2, textAlign: 'center' }}>

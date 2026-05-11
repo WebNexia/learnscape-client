@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Button } from '@mui/material';
+import { Box, Typography, Grid, Button, CircularProgress } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useContext, useEffect, useState } from 'react';
 import { LandingPageResourcesContext } from '../contexts/LandingPageResourcesContextProvider';
@@ -15,6 +15,7 @@ const LandingPageResources = () => {
 	const {
 		resources,
 		loading,
+		error,
 		total,
 		hasMore,
 		loadMore,
@@ -220,17 +221,34 @@ const LandingPageResources = () => {
 									width: { xs: '90%', sm: '90%', md: '100%', lg: '85%' },
 								}}>
 								<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ maxWidth: '80rem', margin: '0 auto', width: '100%' }}>
-									{resources?.map((doc) => (
-										<Grid item xs={12} sm={6} md={4} lg={3} display='flex' justifyContent='center' key={doc._id}>
-											<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
-										</Grid>
-									))}
-									{resources && resources.length === 0 && (
-										<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30vh' }}>
-											<Typography variant='h6' align='center' color='#334155'>
-												{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kaynak bulunamadı.' : 'Şu anda kaynak bulunmamaktadır.'}
+									{error ? (
+										<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
+											<Typography sx={{ textAlign: 'center', fontSize: '1.1rem', color: 'error.main', fontFamily: 'Varela Round' }}>
+												{error}
 											</Typography>
 										</Grid>
+									) : (loading || isSearching) && resources.length === 0 ? (
+										<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+											<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+												<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+												<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+											</Box>
+										</Grid>
+									) : (
+										<>
+											{resources?.map((doc) => (
+												<Grid item xs={12} sm={6} md={4} lg={3} display='flex' justifyContent='center' key={doc._id}>
+													<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
+												</Grid>
+											))}
+											{resources.length === 0 && (
+												<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
+													<Typography variant='h6' align='center' color='#334155' sx={{ fontFamily: 'Varela Round' }}>
+														{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kaynak bulunamadı.' : 'Şu anda kaynak bulunmamaktadır.'}
+													</Typography>
+												</Grid>
+											)}
+										</>
 									)}
 								</Grid>
 							</Box>
