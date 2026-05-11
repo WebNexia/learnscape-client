@@ -1,7 +1,7 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, Badge } from '@mui/material';
 import theme from '../../themes';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, Fragment } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { useConsultationCart } from '../../contexts/ConsultationCartContextProvider';
@@ -148,109 +148,180 @@ const Header = () => {
 					{!(isSmallScreen || isRotatedMedium) && (
 						<Box
 							sx={{
+								'@keyframes navSpectrum': {
+									'0%': { backgroundPosition: '0% 50%' },
+									'100%': { backgroundPosition: '200% 50%' },
+								},
+								'@keyframes navDiamondPulse': {
+									'0%, 100%': { opacity: 0.55, transform: 'rotate(45deg) scale(1)' },
+									'50%': { opacity: 1, transform: 'rotate(45deg) scale(1.08)' },
+								},
 								display: 'flex',
 								justifyContent: 'center',
 								alignItems: 'center',
 								flex: '1 1 auto',
 								minWidth: 0,
 								flexWrap: 'nowrap',
-								gap: { md: 1.25, lg: 2.25 },
+								gap: { md: 1, lg: 1.75 },
 								px: { md: 0.5, lg: 1 },
 							}}>
 							{navItems
 								?.filter((item) => item.label !== 'Ana Sayfa')
 								?.map((item, index) => {
 									const NavIcon = 'NavIcon' in item && item.NavIcon ? item.NavIcon : null;
+									const staggerY = index % 2 === 0 ? 0 : 2;
 									return (
-										<Box
-											key={index}
-											onClick={item.action}
-											role='button'
-											tabIndex={0}
-											onKeyDown={(e) => {
-												if (e.key === 'Enter' || e.key === ' ') {
-													e.preventDefault();
-													item.action();
-												}
-											}}
-											sx={{
-												display: 'inline-flex',
-												alignItems: 'center',
-												gap: { md: 0.35, lg: 0.45 },
-												flexShrink: 0,
-												cursor: 'pointer',
-												position: 'relative',
-												py: 0.5,
-												px: { md: 0.2, lg: 0.35 },
-												background: 'transparent',
-												transition: 'transform 0.22s ease',
-												'&::after': {
-													content: '""',
-													position: 'absolute',
-													left: '50%',
-													bottom: 0,
-													height: 2,
-													width: item.isActive ? '100%' : 0,
-													maxWidth: '100%',
-													background: item.isActive
-														? 'linear-gradient(90deg, transparent, #ff7d55, #FF6B3D, #ff7d55, transparent)'
-														: 'linear-gradient(90deg, transparent, #ff7d55 20%, #FF6B3D 50%, #ff7d55 80%, transparent)',
-													borderRadius: 1,
-													transform: 'translateX(-50%)',
-													opacity: item.isActive ? 1 : 0,
-													transition:
-														'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease',
-												},
-												'&:hover': {
-													transform: 'translateY(-1px)',
-												},
-												'&:hover::after': {
-													width: '100%',
-													opacity: 1,
-												},
-												'&:hover .nav-link-icon': {
-													color: '#FF6B3D',
-													transform: 'translateY(-0.5px)',
-												},
-												'&:hover .nav-link-label': {
-													color: '#FF6B3D',
-												},
-												'&:focus-visible': {
-													outline: '2px solid #FF6B3D',
-													outlineOffset: 4,
-													borderRadius: 0.5,
-												},
-												'&:active': {
-													transform: 'translateY(0)',
-												},
-											}}
-										>
-											{NavIcon && (
-												<NavIcon
-													className='nav-link-icon'
+										<Fragment key={item.label}>
+											{index > 0 && (
+												<Box
+													aria-hidden
 													sx={{
-														fontSize: { md: '1rem', lg: '1.08rem' },
-														color: item.isActive ? '#FF6B3D' : '#01435A',
-														opacity: item.isActive ? 1 : 0.88,
-														transition: 'color 0.22s ease, transform 0.22s ease, opacity 0.22s ease',
+														width: 5,
+														height: 5,
+														alignSelf: 'center',
+														flexShrink: 0,
+														transform: 'rotate(45deg)',
+														borderRadius: '1px',
+														background: 'linear-gradient(135deg, rgba(255,107,61,0.85) 0%, rgba(1,67,90,0.75) 100%)',
+														boxShadow: '0 0 14px rgba(255,107,61,0.35)',
+														animation: 'navDiamondPulse 3.2s ease-in-out infinite',
+														animationDelay: `${index * 0.35}s`,
 													}}
 												/>
 											)}
-											<Typography
-												className='nav-link-label'
+											<Box
+												onClick={item.action}
+												role='button'
+												tabIndex={0}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault();
+														item.action();
+													}
+												}}
 												sx={{
-													fontFamily: 'Varela Round',
-													color: item.isActive ? '#FF6B3D' : '#0A1A2F',
-													fontWeight: item.isActive ? 700 : 600,
-													fontSize: { md: '0.82rem', lg: '0.92rem' },
-													lineHeight: 1.2,
-													whiteSpace: 'nowrap',
-													transition: 'color 0.22s ease',
+													display: 'inline-flex',
+													alignItems: 'center',
+													gap: { md: 0.35, lg: 0.45 },
+													flexShrink: 0,
+													cursor: 'pointer',
+													position: 'relative',
+													zIndex: 0,
+													py: 0.5,
+													px: { md: 0.25, lg: 0.4 },
+													transform: `translateY(${staggerY}px)`,
+													transition: 'transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1)',
+													'&::before': {
+														content: '""',
+														position: 'absolute',
+														left: '50%',
+														bottom: -2,
+														width: '140%',
+														height: '160%',
+														transform: 'translateX(-50%)',
+														background:
+															'radial-gradient(ellipse 80% 70% at 50% 85%, rgba(255,107,61,0.2) 0%, rgba(30,194,139,0.06) 45%, transparent 72%)',
+														opacity: 0,
+														transition: 'opacity 0.4s ease',
+														pointerEvents: 'none',
+														zIndex: -1,
+													},
+													'&::after': {
+														content: '""',
+														position: 'absolute',
+														left: '50%',
+														bottom: 0,
+														height: 3,
+														width: item.isActive ? '100%' : 0,
+														maxWidth: '100%',
+														background:
+															'linear-gradient(90deg, #01435A, #1EC28B, #FF6B3D, #ff9a6b, #FF6B3D, #01435A)',
+														backgroundSize: '220% 100%',
+														borderRadius: 2,
+														transform: 'translateX(-50%)',
+														opacity: item.isActive ? 1 : 0,
+														transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+														animation: item.isActive ? 'navSpectrum 4s ease infinite' : 'none',
+													},
+													'&:hover': {
+														transform: `translateY(${staggerY - 3}px)`,
+													},
+													'&:hover::before': {
+														opacity: 1,
+													},
+													'&:hover::after': {
+														width: '100%',
+														opacity: 1,
+														animation: 'navSpectrum 2.4s ease infinite',
+													},
+													'&:hover .nav-link-icon': {
+														color: '#FF6B3D',
+														transform: 'rotate(-6deg) scale(1.07)',
+														filter: 'drop-shadow(0 0 10px rgba(255,107,61,0.45))',
+													},
+													'&:hover .nav-link-label': {
+														backgroundImage:
+															'linear-gradient(95deg, #01435A 0%, #0d7a6a 28%, #1EC28B 42%, #FF6B3D 72%, #ff9a6b 100%)',
+														backgroundClip: 'text',
+														WebkitBackgroundClip: 'text',
+														WebkitTextFillColor: 'transparent',
+														color: 'transparent',
+														letterSpacing: '0.045em',
+													},
+													'&:focus-visible': {
+														outline: '2px solid #FF6B3D',
+														outlineOffset: 4,
+														borderRadius: 0.5,
+													},
+													'&:active': {
+														transform: `translateY(${staggerY}px)`,
+													},
 												}}
 											>
-												{item.label}
-											</Typography>
-										</Box>
+												{NavIcon && (
+													<NavIcon
+														className='nav-link-icon'
+														sx={{
+															fontSize: { md: '1.02rem', lg: '1.12rem' },
+															color: item.isActive ? '#FF6B3D' : '#01435A',
+															opacity: item.isActive ? 1 : 0.9,
+															transition:
+																'color 0.28s ease, transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), filter 0.35s ease, opacity 0.25s ease',
+															...(item.isActive && {
+																filter: 'drop-shadow(0 0 8px rgba(255,107,61,0.35))',
+															}),
+														}}
+													/>
+												)}
+												<Typography
+													className='nav-link-label'
+													sx={{
+														fontFamily: 'Varela Round',
+														fontWeight: item.isActive ? 700 : 600,
+														fontSize: { md: '0.84rem', lg: '0.94rem' },
+														lineHeight: 1.2,
+														whiteSpace: 'nowrap',
+														display: 'inline-block',
+														transition: 'letter-spacing 0.3s ease, color 0.25s ease',
+														...(item.isActive
+															? {
+																	backgroundImage:
+																		'linear-gradient(95deg, #a32a0c 0%, #FF6B3D 38%, #ff9a6b 100%)',
+																	backgroundClip: 'text',
+																	WebkitBackgroundClip: 'text',
+																	WebkitTextFillColor: 'transparent',
+																	color: 'transparent',
+																	letterSpacing: '0.035em',
+																}
+															: {
+																	color: '#0A1A2F',
+																}),
+													}}
+												>
+													{item.label}
+												</Typography>
+											</Box>
+										</Fragment>
 									);
 								})}
 						</Box>
