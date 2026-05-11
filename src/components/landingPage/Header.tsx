@@ -17,6 +17,11 @@ import {
 } from '@mui/icons-material';
 import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
+/** Aden blues — same endpoints as `LandingPageDrawer` ADEN_BLUE_GRADIENT, plus a deeper anchor for hover */
+const ADEN_BLUE_DEEP = '#002952';
+const ADEN_BLUE = '#004c99';
+const ADEN_BLUE_BRIGHT = '#0052a3';
+
 const Header = () => {
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium, isMobileLandscape, isMobilePortrait, isTabletPortrait } =
 		useContext(MediaQueryContext);
@@ -183,29 +188,47 @@ const Header = () => {
 												px: { md: '0.55rem', lg: '0.85rem' },
 												py: { md: '0.35rem', lg: '0.45rem' },
 												border: '1.5px solid',
-												borderColor: item.isActive ? 'rgba(255, 107, 61, 0.65)' : 'rgba(1, 67, 90, 0.14)',
+												borderColor: item.isActive ? 'rgba(255, 107, 61, 0.65)' : 'rgba(1, 67, 90, 0.22)',
 												background: item.isActive
 													? 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(255,200,175,0.55) 45%, rgba(255,240,230,0.75) 100%)'
-													: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(235,245,252,0.88) 100%)',
+													: 'linear-gradient(150deg, rgba(255,255,255,0.94) 0%, rgba(232,242,250,0.92) 40%, rgba(210,230,245,0.88) 72%, rgba(190,218,238,0.82) 100%)',
 												boxShadow: item.isActive
 													? '0 3px 14px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.6) inset'
-													: '0 2px 8px rgba(1, 67, 90, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+													: '0 2px 10px rgba(1, 67, 90, 0.1), 0 4px 20px rgba(1, 67, 90, 0.06), 0 0 0 1px rgba(255,255,255,0.55) inset, 0 1px 0 rgba(180,210,235,0.45) inset',
 												transition: 'transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease',
-												'&:hover': {
-													transform: 'translateY(-3px)',
-													borderColor: '#FF6B3D',
-													background:
-														'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,215,195,0.65) 40%, rgba(255,165,120,0.35) 100%)',
-													boxShadow:
-														'0 8px 22px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.65) inset',
-												},
-												'&:hover .nav-pill-icon': {
-													color: '#FF6B3D',
-													transform: 'scale(1.08)',
-												},
-												'&:hover .nav-pill-label': {
-													color: '#FF6B3D',
-												},
+												...(item.isActive
+													? {
+															'&:hover': {
+																transform: 'translateY(-3px)',
+																borderColor: 'rgba(255, 255, 255, 0.35)',
+																background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
+																boxShadow:
+																	'0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset',
+															},
+															'&:hover .nav-pill-icon': {
+																color: '#FFFFFF',
+																transform: 'scale(1.08)',
+															},
+															'&:hover .nav-pill-label': {
+																color: '#FFFFFF',
+															},
+														}
+													: {
+															'&:hover': {
+																transform: 'translateY(-3px)',
+																borderColor: 'rgba(255, 255, 255, 0.35)',
+																background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
+																boxShadow:
+																	'0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset',
+															},
+															'&:hover .nav-pill-icon': {
+																color: '#FFFFFF',
+																transform: 'scale(1.08)',
+															},
+															'&:hover .nav-pill-label': {
+																color: '#FFFFFF',
+															},
+														}),
 												'&:focus-visible': {
 													outline: '2px solid #FF6B3D',
 													outlineOffset: 2,
@@ -229,7 +252,7 @@ const Header = () => {
 												className='nav-pill-label'
 												sx={{
 													fontFamily: 'Varela Round',
-													color: item.isActive ? '#c43d15' : '#0A1A2F',
+													color: item.isActive ? '#c43d15' : '#01435A',
 													fontWeight: item.isActive ? 700 : 600,
 													fontSize: { md: '0.78rem', lg: '0.88rem' },
 													lineHeight: 1.2,
