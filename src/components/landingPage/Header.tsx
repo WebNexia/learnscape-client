@@ -6,7 +6,15 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { useConsultationCart } from '../../contexts/ConsultationCartContextProvider';
 import logo from '../../assets/logo.png';
-import { Menu, ShoppingCart } from '@mui/icons-material';
+import {
+	Menu,
+	ShoppingCart,
+	SchoolOutlined,
+	MenuBookOutlined,
+	GroupsOutlined,
+	MailOutline,
+	InfoOutlined,
+} from '@mui/icons-material';
 import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
 const Header = () => {
@@ -39,6 +47,7 @@ const Header = () => {
 		},
 		{
 			label: 'Kurslar',
+			NavIcon: SchoolOutlined,
 			action: () => {
 				navigate('/landing-page-courses');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -47,6 +56,7 @@ const Header = () => {
 		},
 		{
 			label: 'Kaynaklar',
+			NavIcon: MenuBookOutlined,
 			action: () => {
 				navigate('/landing-page-resources');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -55,6 +65,7 @@ const Header = () => {
 		},
 		{
 			label: 'Danışmanlık',
+			NavIcon: GroupsOutlined,
 			action: () => {
 				navigate('/landing-page-consultations');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,6 +74,7 @@ const Header = () => {
 		},
 		{
 			label: 'İletişim',
+			NavIcon: MailOutline,
 			action: () => {
 				navigate('/contact-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -71,6 +83,7 @@ const Header = () => {
 		},
 		{
 			label: 'Hakkımızda',
+			NavIcon: InfoOutlined,
 			action: () => {
 				navigate('/about-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -105,7 +118,7 @@ const Header = () => {
 						transition: 'background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
 						zIndex: 1201,
 					}}>
-					<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
 						{(isSmallScreen || isRotatedMedium) && (
 							<IconButton onClick={() => setIsDrawerOpen(true)}>
 								<Menu sx={{ color: theme.textColor?.primary.main, padding: 0 }} fontSize='small' />
@@ -133,54 +146,105 @@ const Header = () => {
 					<LandingPageDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} navItems={navItems} />
 
 					{!(isSmallScreen || isRotatedMedium) && (
-						<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								flex: '1 1 auto',
+								minWidth: 0,
+								flexWrap: 'nowrap',
+								gap: { md: 0.5, lg: 0.75 },
+								px: { md: 0.5, lg: 1 },
+							}}>
 							{navItems
 								?.filter((item) => item.label !== 'Ana Sayfa')
-								?.map((item, index) => (
-									<Box
-										key={index}
-										onClick={item.action}
-										sx={{
-											ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem',
-											position: 'relative',
-											cursor: 'pointer',
-											'&::after': {
-												content: '""',
-												position: 'absolute',
-												left: '50%',
-												bottom: -4,
-												height: 2,
-												width: item.isActive ? '100%' : 0,
-												background: item.isActive
-													? 'linear-gradient(90deg, transparent, #ff7d55, #FF6B3D, #ff7d55, transparent)'
-													: 'linear-gradient(90deg, transparent, #ff7d55 20%, #FF6B3D 50%, #ff7d55 80%, transparent)',
-												borderRadius: 1,
-												transform: 'translateX(-50%)',
-												transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-											},
-											'&:hover::after': {
-												width: '100%',
-											},
-										}}
-									>
-										<Typography
+								?.map((item, index) => {
+									const NavIcon = 'NavIcon' in item && item.NavIcon ? item.NavIcon : null;
+									return (
+										<Box
+											key={index}
+											onClick={item.action}
+											role='button'
+											tabIndex={0}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault();
+													item.action();
+												}
+											}}
 											sx={{
-												fontFamily: 'Varela Round',
-												color: item.isActive ? '#ff7d55' : '#0A1A2F',
-												textDecoration: 'none',
-												fontWeight: item.isActive ? 600 : 400,
+												display: 'inline-flex',
+												alignItems: 'center',
+												gap: { md: 0.35, lg: 0.5 },
+												flexShrink: 0,
 												cursor: 'pointer',
-												fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
-												transition: 'color 0.25s ease',
+												borderRadius: '999px',
+												px: { md: '0.55rem', lg: '0.85rem' },
+												py: { md: '0.35rem', lg: '0.45rem' },
+												border: '1.5px solid',
+												borderColor: item.isActive ? 'rgba(255, 107, 61, 0.65)' : 'rgba(1, 67, 90, 0.14)',
+												background: item.isActive
+													? 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(255,200,175,0.55) 45%, rgba(255,240,230,0.75) 100%)'
+													: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(235,245,252,0.88) 100%)',
+												boxShadow: item.isActive
+													? '0 3px 14px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.6) inset'
+													: '0 2px 8px rgba(1, 67, 90, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+												transition: 'transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease',
+												'&:hover': {
+													transform: 'translateY(-3px)',
+													borderColor: '#FF6B3D',
+													background:
+														'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,215,195,0.65) 40%, rgba(255,165,120,0.35) 100%)',
+													boxShadow:
+														'0 8px 22px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.65) inset',
+												},
+												'&:hover .nav-pill-icon': {
+													color: '#FF6B3D',
+													transform: 'scale(1.08)',
+												},
+												'&:hover .nav-pill-label': {
+													color: '#FF6B3D',
+												},
+												'&:focus-visible': {
+													outline: '2px solid #FF6B3D',
+													outlineOffset: 2,
+												},
+												'&:active': {
+													transform: 'translateY(-1px)',
+												},
 											}}
 										>
-											{item.label}
-										</Typography>
-									</Box>
-								))}
+											{NavIcon && (
+												<NavIcon
+													className='nav-pill-icon'
+													sx={{
+														fontSize: { md: '1rem', lg: '1.1rem' },
+														color: item.isActive ? '#FF6B3D' : '#01435A',
+														transition: 'color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1)',
+													}}
+												/>
+											)}
+											<Typography
+												className='nav-pill-label'
+												sx={{
+													fontFamily: 'Varela Round',
+													color: item.isActive ? '#c43d15' : '#0A1A2F',
+													fontWeight: item.isActive ? 700 : 600,
+													fontSize: { md: '0.78rem', lg: '0.88rem' },
+													lineHeight: 1.2,
+													whiteSpace: 'nowrap',
+													transition: 'color 0.25s ease',
+												}}
+											>
+												{item.label}
+											</Typography>
+										</Box>
+									);
+								})}
 						</Box>
 					)}
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1, alignItems: 'center', gap: 2.5 }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: '0 0 auto', alignItems: 'center', gap: 2.5 }}>
 						<Badge
 							badgeContent={cartCount}
 							color="primary"
