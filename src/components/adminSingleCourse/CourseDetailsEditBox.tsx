@@ -1,17 +1,24 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, DialogContent } from '@mui/material';
+import { Box, Button, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, DialogContent } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { SingleCourse, CourseGroup } from '../../interfaces/course';
+import { CourseLandingPageSection, SingleCourse, CourseGroup } from '../../interfaces/course';
 import theme from '../../themes';
 import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Add, Edit, Delete, PostAdd } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import LandingPageSectionBodyEditor from './LandingPageSectionBodyEditor';
+import {
+	MAX_LANDING_PAGE_SECTIONS,
+	MAX_LANDING_PAGE_SECTION_TITLE_LENGTH,
+	MAX_LANDING_PAGE_SECTION_BODY_LENGTH,
+} from '../../constants/landingPageCourseLimits';
+import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -372,6 +379,109 @@ const CourseDetailsEditBox = ({
 					}}
 					InputProps={{ inputProps: { maxLength: 500 } }}
 				/>
+			</Box>
+
+			<Box sx={{ ...sectionSx, mb: '2rem' }}>
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: '0.75rem' }}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+						Landing page detail sections
+					</Typography>
+					<Button
+						size='small'
+						variant='outlined'
+						startIcon={<PostAdd />}
+						disabled={(singleCourseBeforeSave?.landingPageSections?.length ?? 0) >= MAX_LANDING_PAGE_SECTIONS}
+						onClick={() => {
+							if ((singleCourseBeforeSave?.landingPageSections?.length ?? 0) >= MAX_LANDING_PAGE_SECTIONS) return;
+							setSingleCourseBeforeSave((prev) => {
+								if (!prev) return prev;
+								const next: CourseLandingPageSection[] = [
+									...(prev.landingPageSections || []),
+									{ title: '', body: '', rowKey: generateUniqueId('lpsec_') },
+								];
+								return { ...prev, landingPageSections: next };
+							});
+							setHasUnsavedChanges(true);
+						}}>
+						Add section
+					</Button>
+				</Box>
+				<Typography variant='body2' color='text.secondary' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+					Shown below the banner on the public course page. Up to {MAX_LANDING_PAGE_SECTIONS} sections; title max{' '}
+					{MAX_LANDING_PAGE_SECTION_TITLE_LENGTH} characters; body max {MAX_LANDING_PAGE_SECTION_BODY_LENGTH} (HTML included).
+				</Typography>
+				{(singleCourseBeforeSave?.landingPageSections || []).map((section, index) => (
+					<Box
+						key={section.rowKey ?? `lp-${index}`}
+						sx={{
+							mb: '1.5rem',
+							pb: '1.5rem',
+							borderBottom:
+								index < (singleCourseBeforeSave?.landingPageSections?.length ?? 0) - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+						}}>
+						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '0.75rem' }}>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.875rem' }}>
+								Section {index + 1}
+							</Typography>
+							<Tooltip title='Remove section'>
+								<IconButton
+									size='small'
+									aria-label='Remove landing page section'
+									onClick={() => {
+										setSingleCourseBeforeSave((prev) => {
+											if (!prev?.landingPageSections) return prev;
+											const next = prev.landingPageSections.filter((_, i) => i !== index);
+											return { ...prev, landingPageSections: next };
+										});
+										setHasUnsavedChanges(true);
+									}}>
+									<Delete fontSize='small' />
+								</IconButton>
+							</Tooltip>
+						</Box>
+						<CustomTextField
+							fullWidth
+							label='Section title'
+							value={section.title}
+							onChange={(e) => {
+								const v = e.target.value.slice(0, MAX_LANDING_PAGE_SECTION_TITLE_LENGTH);
+								setSingleCourseBeforeSave((prev) => {
+									if (!prev?.landingPageSections) return prev;
+									const next = [...prev.landingPageSections];
+									next[index] = { ...next[index], title: v };
+									return { ...prev, landingPageSections: next };
+								});
+								setHasUnsavedChanges(true);
+							}}
+							InputProps={{ inputProps: { maxLength: MAX_LANDING_PAGE_SECTION_TITLE_LENGTH } }}
+							sx={{ mb: '0.5rem' }}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0 0 0.5rem 0', textAlign: 'right' }}>
+							{section.title.length}/{MAX_LANDING_PAGE_SECTION_TITLE_LENGTH}
+						</Typography>
+						<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.5rem' }}>
+							Section body (rich text)
+						</Typography>
+						<LandingPageSectionBodyEditor
+							key={section.rowKey ?? `lp-body-${index}`}
+							editorId={`lp-section-editor-${section.rowKey ?? index}`}
+							maxLength={MAX_LANDING_PAGE_SECTION_BODY_LENGTH}
+							seedHtml={section.body ?? ''}
+							onHtmlChange={(trimmed) => {
+								setSingleCourseBeforeSave((prev) => {
+									if (!prev?.landingPageSections) return prev;
+									const next = [...prev.landingPageSections];
+									next[index] = { ...next[index], body: trimmed };
+									return { ...prev, landingPageSections: next };
+								});
+								setHasUnsavedChanges(true);
+							}}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0 0', textAlign: 'right' }}>
+							{(section.body?.length ?? 0)}/{MAX_LANDING_PAGE_SECTION_BODY_LENGTH} (HTML length)
+						</Typography>
+					</Box>
+				))}
 			</Box>
 
 			<Box sx={{ ...sectionSx, mb: '2rem' }}>

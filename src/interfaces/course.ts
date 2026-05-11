@@ -4,6 +4,14 @@ import { Document } from './document';
 /** evergreen: start lessons right after enroll. cohort: lessons stay locked until course startingDate. */
 export type CourseAccessTiming = 'evergreen' | 'cohort';
 
+/** Public LP detail: heading + rich HTML (limits in `landingPageCourseLimits`). */
+export interface CourseLandingPageSection {
+	title: string;
+	body: string;
+	/** Client-only list key; not sent to the API. */
+	rowKey?: string;
+}
+
 export interface BaseCourse {
 	_id: string;
 	title: string;
@@ -12,6 +20,8 @@ export interface BaseCourse {
 	imageUrl: string;
 	/** Landing page course detail: optional intro/trailer video (YouTube / Vimeo URL). */
 	introVideoUrl?: string;
+	/** Optional blocks below banner on public LP course detail (title + HTML body). */
+	landingPageSections?: CourseLandingPageSection[];
 	isActive: boolean;
 	isArchived: boolean;
 	createdAt: string;

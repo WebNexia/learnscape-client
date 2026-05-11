@@ -369,7 +369,7 @@ const CoursePageBanner = ({
 								onClick={handleEnroll}
 								sx={{
 									'width': 'fit-content',
-									padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem',
+									padding: isMobileSize ? '0.5rem 1rem' : '1rem 1.25rem',
 									'position': 'relative',
 									'fontSize': isMobileSize ? '0.75rem' : '1rem',
 									'fontFamily': fromHomePage ? 'Varela Round' : '',
@@ -390,7 +390,7 @@ const CoursePageBanner = ({
 								startIcon={<PlayCircleOutlined />}
 								sx={{
 									fontSize: isMobileSize ? '0.75rem' : '1rem',
-									padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem',
+									padding: isMobileSize ? '0.5rem 1rem' : '1rem 1.25rem',
 									textTransform: 'none',
 									fontFamily: 'Varela Round',
 									borderColor: 'rgba(255,255,255,0.85)',
@@ -401,7 +401,7 @@ const CoursePageBanner = ({
 										backgroundColor: 'rgba(255,255,255,0.08)',
 									},
 								}}>
-								Tanıtım İzle
+								Tanıtımı İzle
 							</CustomSubmitButton>
 						</Box>
 					) : (

@@ -8,6 +8,7 @@ import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
+import LandingPageCourseDetailSections from '../components/landingPage/LandingPageCourseDetailSections';
 import { SEO, StructuredData } from '../components/seo';
 import axios from 'axios';
 import { useQuery } from 'react-query';
@@ -245,7 +246,7 @@ const LandingPageCourse = () => {
 			<Box
 				sx={{
 					'position': 'relative',
-					'overflow': 'hidden',
+					'overflow': 'visible',
 					'minHeight': '100vh',
 					// Aden solid gradient (no image - cleaner UX)
 					'background':
@@ -270,19 +271,6 @@ const LandingPageCourse = () => {
 						fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 						fontWeight: 400,
 					},
-					'& .gradient-text': {
-						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-						'WebkitBackgroundClip': 'text',
-						'WebkitTextFillColor': 'transparent',
-						'backgroundClip': 'text',
-						'backgroundSize': '200% 200%',
-						'animation': 'gradientShift 6s ease infinite',
-						'@keyframes gradientShift': {
-							'0%': { backgroundPosition: '0% 50%' },
-							'50%': { backgroundPosition: '100% 50%' },
-							'100%': { backgroundPosition: '0% 50%' },
-						},
-					},
 					'& .accent-color': {
 						color: '#1e293b',
 					},
@@ -300,20 +288,23 @@ const LandingPageCourse = () => {
 				<Box sx={{ position: 'relative', zIndex: 2 }}>
 					<LandingPageLayout>
 						{!showLoader && !showError && course && (
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: { xs: 'column', sm: 'column', md: 'row' },
-									justifyContent: 'center',
-									alignItems: 'center',
-									width: '100%',
-									paddingTop: '13vh',
-									gap: '2rem',
-									flexWrap: { xs: 'wrap', md: 'nowrap' },
-								}}>
-								<CoursePageBanner course={course} fromHomePage={true} />
-								<InstructorCard instructor={course.instructor} />
-							</Box>
+							<>
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+										justifyContent: 'center',
+										alignItems: 'center',
+										width: '100%',
+										paddingTop: '13vh',
+										gap: '2rem',
+										flexWrap: { xs: 'wrap', md: 'nowrap' },
+									}}>
+									<CoursePageBanner course={course} fromHomePage={true} />
+									<InstructorCard instructor={course.instructor} />
+								</Box>
+								<LandingPageCourseDetailSections sections={(course.landingPageSections || []).map(({ title, body }) => ({ title, body }))} />
+							</>
 						)}
 
 						{showLoader && (

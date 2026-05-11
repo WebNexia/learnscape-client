@@ -232,7 +232,7 @@ const HeroSection = () => {
 								fontWeight: 600,
 								lineHeight: 1.3,
 							}}>
-							Size hayal satmıyoruz. İngilizceyi öğrenirken karşınıza çıkan zorlukları ve problemleri biliyoruz.
+							Size hayal satmıyoruz. İngilizceyi öğrenirken karşınıza çıkan zorlukları ve problemleri biliyoruz
 						</Typography>
 						<Typography
 							variant='h5'
@@ -260,7 +260,7 @@ const HeroSection = () => {
 								fontFamily: 'Varela Round',
 								margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0',
 							}}>
-							Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik.
+							Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik
 						</Typography>
 						<Typography variant='h6' sx={{
 							color: '#1e3a5f',
