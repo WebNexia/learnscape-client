@@ -184,6 +184,8 @@ const Header = () => {
 												gap: { md: 0.35, lg: 0.5 },
 												flexShrink: 0,
 												cursor: 'pointer',
+												transformOrigin: 'center',
+												transform: 'scale(1)',
 												borderRadius: '999px',
 												px: { md: '0.55rem', lg: '0.85rem' },
 												py: { md: '0.35rem', lg: '0.45rem' },
@@ -199,7 +201,7 @@ const Header = () => {
 												...(item.isActive
 													? {
 															'&:hover': {
-																transform: 'translateY(-3px)',
+																transform: 'scale(1.07)',
 																borderColor: 'rgba(255, 255, 255, 0.35)',
 																background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
 																boxShadow:
@@ -207,15 +209,16 @@ const Header = () => {
 															},
 															'&:hover .nav-pill-icon': {
 																color: '#FFFFFF',
-																transform: 'scale(1.08)',
+																fontSize: { md: '1.06rem', lg: '1.16rem' },
 															},
 															'&:hover .nav-pill-label': {
 																color: '#FFFFFF',
+																fontSize: { md: '0.84rem', lg: '0.96rem' },
 															},
 														}
 													: {
 															'&:hover': {
-																transform: 'translateY(-3px)',
+																transform: 'scale(1.07)',
 																borderColor: 'rgba(255, 255, 255, 0.35)',
 																background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
 																boxShadow:
@@ -223,10 +226,11 @@ const Header = () => {
 															},
 															'&:hover .nav-pill-icon': {
 																color: '#FFFFFF',
-																transform: 'scale(1.08)',
+																fontSize: { md: '1.06rem', lg: '1.16rem' },
 															},
 															'&:hover .nav-pill-label': {
 																color: '#FFFFFF',
+																fontSize: { md: '0.84rem', lg: '0.96rem' },
 															},
 														}),
 												'&:focus-visible': {
@@ -234,7 +238,7 @@ const Header = () => {
 													outlineOffset: 2,
 												},
 												'&:active': {
-													transform: 'translateY(-1px)',
+													transform: 'scale(1.03)',
 												},
 											}}
 										>
@@ -244,7 +248,7 @@ const Header = () => {
 													sx={{
 														fontSize: { md: '1rem', lg: '1.1rem' },
 														color: item.isActive ? '#FF6B3D' : '#01435A',
-														transition: 'color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1)',
+														transition: 'color 0.25s ease, font-size 0.25s ease',
 													}}
 												/>
 											)}
@@ -257,7 +261,7 @@ const Header = () => {
 													fontSize: { md: '0.78rem', lg: '0.88rem' },
 													lineHeight: 1.2,
 													whiteSpace: 'nowrap',
-													transition: 'color 0.25s ease',
+													transition: 'color 0.25s ease, font-size 0.25s cubic-bezier(0.34, 1.3, 0.64, 1)',
 												}}
 											>
 												{item.label}
