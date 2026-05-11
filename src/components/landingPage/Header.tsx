@@ -154,7 +154,7 @@ const Header = () => {
 								flex: '1 1 auto',
 								minWidth: 0,
 								flexWrap: 'nowrap',
-								gap: { md: 0.5, lg: 0.75 },
+								gap: { md: 1.25, lg: 2.25 },
 								px: { md: 0.5, lg: 1 },
 							}}>
 							{navItems
@@ -176,65 +176,76 @@ const Header = () => {
 											sx={{
 												display: 'inline-flex',
 												alignItems: 'center',
-												gap: { md: 0.35, lg: 0.5 },
+												gap: { md: 0.35, lg: 0.45 },
 												flexShrink: 0,
 												cursor: 'pointer',
-												borderRadius: '999px',
-												px: { md: '0.55rem', lg: '0.85rem' },
-												py: { md: '0.35rem', lg: '0.45rem' },
-												border: '1.5px solid',
-												borderColor: item.isActive ? 'rgba(255, 107, 61, 0.65)' : 'rgba(1, 67, 90, 0.14)',
-												background: item.isActive
-													? 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(255,200,175,0.55) 45%, rgba(255,240,230,0.75) 100%)'
-													: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(235,245,252,0.88) 100%)',
-												boxShadow: item.isActive
-													? '0 3px 14px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.6) inset'
-													: '0 2px 8px rgba(1, 67, 90, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
-												transition: 'transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease',
+												position: 'relative',
+												py: 0.5,
+												px: { md: 0.2, lg: 0.35 },
+												background: 'transparent',
+												transition: 'transform 0.22s ease',
+												'&::after': {
+													content: '""',
+													position: 'absolute',
+													left: '50%',
+													bottom: 0,
+													height: 2,
+													width: item.isActive ? '100%' : 0,
+													maxWidth: '100%',
+													background: item.isActive
+														? 'linear-gradient(90deg, transparent, #ff7d55, #FF6B3D, #ff7d55, transparent)'
+														: 'linear-gradient(90deg, transparent, #ff7d55 20%, #FF6B3D 50%, #ff7d55 80%, transparent)',
+													borderRadius: 1,
+													transform: 'translateX(-50%)',
+													opacity: item.isActive ? 1 : 0,
+													transition:
+														'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease',
+												},
 												'&:hover': {
-													transform: 'translateY(-3px)',
-													borderColor: '#FF6B3D',
-													background:
-														'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(255,215,195,0.65) 40%, rgba(255,165,120,0.35) 100%)',
-													boxShadow:
-														'0 8px 22px rgba(255, 107, 61, 0.28), 0 0 0 1px rgba(255,255,255,0.65) inset',
+													transform: 'translateY(-1px)',
 												},
-												'&:hover .nav-pill-icon': {
+												'&:hover::after': {
+													width: '100%',
+													opacity: 1,
+												},
+												'&:hover .nav-link-icon': {
 													color: '#FF6B3D',
-													transform: 'scale(1.08)',
+													transform: 'translateY(-0.5px)',
 												},
-												'&:hover .nav-pill-label': {
+												'&:hover .nav-link-label': {
 													color: '#FF6B3D',
 												},
 												'&:focus-visible': {
 													outline: '2px solid #FF6B3D',
-													outlineOffset: 2,
+													outlineOffset: 4,
+													borderRadius: 0.5,
 												},
 												'&:active': {
-													transform: 'translateY(-1px)',
+													transform: 'translateY(0)',
 												},
 											}}
 										>
 											{NavIcon && (
 												<NavIcon
-													className='nav-pill-icon'
+													className='nav-link-icon'
 													sx={{
-														fontSize: { md: '1rem', lg: '1.1rem' },
+														fontSize: { md: '1rem', lg: '1.08rem' },
 														color: item.isActive ? '#FF6B3D' : '#01435A',
-														transition: 'color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1)',
+														opacity: item.isActive ? 1 : 0.88,
+														transition: 'color 0.22s ease, transform 0.22s ease, opacity 0.22s ease',
 													}}
 												/>
 											)}
 											<Typography
-												className='nav-pill-label'
+												className='nav-link-label'
 												sx={{
 													fontFamily: 'Varela Round',
-													color: item.isActive ? '#c43d15' : '#0A1A2F',
+													color: item.isActive ? '#FF6B3D' : '#0A1A2F',
 													fontWeight: item.isActive ? 700 : 600,
-													fontSize: { md: '0.78rem', lg: '0.88rem' },
+													fontSize: { md: '0.82rem', lg: '0.92rem' },
 													lineHeight: 1.2,
 													whiteSpace: 'nowrap',
-													transition: 'color 0.25s ease',
+													transition: 'color 0.22s ease',
 												}}
 											>
 												{item.label}
