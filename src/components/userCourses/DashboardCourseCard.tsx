@@ -43,8 +43,8 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 		<Box
 			sx={{
 				display: !isEnrolled && displayMyCourses ? 'none' : 'block',
-				width: isMobileSize ? '15rem' : '19rem',
-				height: isMobileSize ? '21rem' : '25rem',
+				width: isMobileSize ? '17rem' : '21rem',
+				height: isMobileSize ? '22rem' : '28rem',
 				p: '4px',
 				borderRadius: '0.75rem',
 				boxSizing: 'border-box',
@@ -119,7 +119,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 					</Box>
 				)}
 
-				{course?.courseManagement && (
+				{/* {course?.courseManagement && (
 					<Chip
 						label={course?.courseManagement?.isExternal ? <span>Partner</span> : <span>Platform</span>}
 						color={course?.courseManagement?.isExternal ? 'info' : 'success'}
@@ -135,7 +135,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							px: 1,
 						}}
 					/>
-				)}
+				)} */}
 
 				<CardMedia
 					sx={{ height: isMobileSize ? '7rem' : '10rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'cover' }}
@@ -164,13 +164,13 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						variant='body2'
 						sx={{
 							textAlign: 'justify',
-							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 							lineHeight: isMobileSize ? '1.4' : '1.5',
 							marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 							width: '100%',
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled ? 125 : 150)}
+						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled ? 125 : 175)}
 					</Typography>
 				</CardContent>
 

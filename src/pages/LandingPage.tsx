@@ -112,10 +112,11 @@ const LandingPage = () => {
 				<Box sx={{ position: 'relative', zIndex: 2 }}>
 					<LandingPageLayout coursesRef={coursesRef}>
 						<HeroSection />
+						<LandingPageLatestCourses ref={coursesRef} />
 						<FeaturesSection />
 						{/* <StatisticsSection />
 						<TestimonialsSection /> */}
-						<LandingPageLatestCourses ref={coursesRef} />
+
 						<UpcomingEvents />
 						{/* <LandingPageFAQ /> */}
 						<CTASection coursesRef={coursesRef} />

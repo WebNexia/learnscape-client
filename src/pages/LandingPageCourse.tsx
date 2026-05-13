@@ -28,7 +28,7 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 				width: { xs: '85%', sm: '60%', md: '30vw' },
 				maxWidth: '35rem',
 				minHeight: '15rem',
-				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: '48vh' },
+				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: '54vh' },
 				maxHeight: { md: '480px' },
 				borderRadius: '0.5rem',
 				boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
