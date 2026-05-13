@@ -1,4 +1,21 @@
-import { Box, Button, Card, CardContent, CardMedia, Typography, useTheme, Dialog, DialogContent, IconButton } from '@mui/material';
+import {
+	Box,
+	Button,
+	Card,
+	CardContent,
+	CardMedia,
+	Typography,
+	useTheme,
+	Dialog,
+	DialogContent,
+	DialogActions,
+	IconButton,
+	TextField,
+	FormControlLabel,
+	Checkbox,
+	Alert,
+	CircularProgress,
+} from '@mui/material';
 import { Document } from '../../interfaces/document';
 import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
@@ -6,6 +23,11 @@ import { useState } from 'react';
 import { Download, AddShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
 import { decodeHtmlEntities } from '../../utils/utilText';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
+import { isAxiosError } from 'axios';
+import { requestFreeResourceEmail } from '../../services/freeResourceDownloadService';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 
 interface DocumentCardProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrls' | 'documentUrl' | 'orgId' | 'pageCount'>;
@@ -20,6 +42,12 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 	const isInCart = documentCartItems.some((item) => item.documentId === document._id);
 	const [openSample, setOpenSample] = useState(false);
 	const [sampleIndex, setSampleIndex] = useState(0);
+	const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+	const [downloadEmail, setDownloadEmail] = useState('');
+	const [marketingOptIn, setMarketingOptIn] = useState(false);
+	const [downloadSubmitting, setDownloadSubmitting] = useState(false);
+	const [downloadError, setDownloadError] = useState<string | null>(null);
+	const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
 	const sampleUrls = document.samplePageImageUrls ?? [];
 	const hasSamplePages = sampleUrls.length > 0;
 	const currentSampleUrl = sampleUrls[sampleIndex];
@@ -45,6 +73,51 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 
 	const handleCloseSample = () => {
 		setOpenSample(false);
+	};
+
+	const openFreeDownloadDialog = () => {
+		setDownloadError(null);
+		setDownloadSuccess(null);
+		setDownloadEmail('');
+		setMarketingOptIn(false);
+		setDownloadDialogOpen(true);
+	};
+
+	const closeFreeDownloadDialog = () => {
+		if (downloadSubmitting) return;
+		setDownloadDialogOpen(false);
+	};
+
+	const handleSubmitFreeDownload = async () => {
+		setDownloadError(null);
+		setDownloadSuccess(null);
+		const trimmed = downloadEmail.trim();
+		if (!trimmed) {
+			setDownloadError('Lütfen e-posta adresinizi girin.');
+			return;
+		}
+		if (!document.orgId) {
+			setDownloadError('Kaynak bilgisi eksik.');
+			return;
+		}
+		setDownloadSubmitting(true);
+		try {
+			const { message } = await requestFreeResourceEmail({
+				orgId: String(document.orgId),
+				documentId: String(document._id),
+				email: trimmed,
+				currency: userCurrency,
+				marketingOptIn,
+			});
+			setDownloadSuccess(message);
+		} catch (e: unknown) {
+			const msg = isAxiosError(e) && e.response?.data && typeof (e.response.data as { message?: string }).message === 'string'
+				? (e.response.data as { message: string }).message
+				: 'Gönderim başarısız. Lütfen tekrar deneyin.';
+			setDownloadError(msg);
+		} finally {
+			setDownloadSubmitting(false);
+		}
 	};
 
 	return (
@@ -252,7 +325,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								<Button
 									variant='text'
 									fullWidth
-									onClick={() => window.open(document.documentUrl, '_blank')}
+									onClick={() => (fromHomePage ? openFreeDownloadDialog() : window.open(document.documentUrl, '_blank'))}
 									sx={{
 										'background': 'linear-gradient(135deg, rgba(0, 82, 163, 0.9) 0%, rgba(0, 102, 204, 0.9) 100%)',
 										'color': 'white',
@@ -420,6 +493,75 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 						</Box>
 					)}
 				</DialogContent>
+			</Dialog>
+
+			{/* Ücretsiz kaynak: e-posta ile gönder */}
+			<Dialog open={downloadDialogOpen} onClose={closeFreeDownloadDialog} fullWidth maxWidth='xs'>
+				<DialogContent sx={{ pt: 3, pb: 1 }}>
+					<Typography variant='h6' sx={{ fontFamily: "'Varela Round', sans-serif", fontWeight: 700, mb: 1, color: '#0f172a' }}>
+						Kaynağı e-posta ile al
+					</Typography>
+					<Typography variant='body2' color='text.secondary' sx={{ fontFamily: "'Varela Round', sans-serif", mb: 2 }}>
+						{decodeHtmlEntities(document.name || '')} e-posta adresinize gönderilecektir.
+					</Typography>
+					{downloadError && (
+						<Alert severity='error' sx={{ mb: 2, fontFamily: "'Varela Round', sans-serif" }}>
+							{downloadError}
+						</Alert>
+					)}
+					{downloadSuccess && (
+						<Alert severity='success' sx={{ mb: 2, fontFamily: "'Varela Round', sans-serif" }}>
+							{downloadSuccess}
+						</Alert>
+					)}
+					{!downloadSuccess && (
+						<>
+							<CustomTextField
+								fullWidth
+								type='email'
+								label='E-posta'
+								value={downloadEmail}
+								onChange={(e) => setDownloadEmail(e.target.value)}
+								disabled={downloadSubmitting}
+								sx={{ mb: 2.5, '& .MuiInputBase-input': { fontFamily: "'Varela Round', sans-serif" } }}
+							/>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={marketingOptIn}
+										onChange={(e) => setMarketingOptIn(e.target.checked)}
+										disabled={downloadSubmitting}
+										size='small'
+									/>
+								}
+								label={
+									<Typography variant='body2' sx={{ fontFamily: "'Varela Round', sans-serif", color: 'text.secondary' }}>
+										Kampanya ve yenilikler hakkında e-posta almak istiyorum
+									</Typography>
+								}
+							/>
+						</>
+					)}
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+					<CustomCancelButton onClick={closeFreeDownloadDialog} disabled={downloadSubmitting} sx={{ fontFamily: "'Varela Round', sans-serif", textTransform: 'none' }}>
+						{downloadSuccess ? 'Kapat' : 'İptal'}
+					</CustomCancelButton>
+					{!downloadSuccess && (
+						<CustomSubmitButton
+							variant='contained'
+							onClick={handleSubmitFreeDownload}
+							disabled={downloadSubmitting}
+							sx={{
+								fontFamily: "'Varela Round', sans-serif",
+								textTransform: 'none',
+								background: 'linear-gradient(135deg, #0052a3 0%, #0066cc 100%)',
+							}}
+							startIcon={downloadSubmitting ? <CircularProgress size={18} color='inherit' /> : undefined}>
+							Gönder
+						</CustomSubmitButton>
+					)}
+				</DialogActions>
 			</Dialog>
 		</>
 	);

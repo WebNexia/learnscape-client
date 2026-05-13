@@ -14,9 +14,16 @@ import {
 	Snackbar,
 	Alert,
 } from '@mui/material';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import EventOutlined from '@mui/icons-material/EventOutlined';
+import CalendarMonthOutlined from '@mui/icons-material/CalendarMonthOutlined';
+import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
+import TodayOutlined from '@mui/icons-material/TodayOutlined';
+import EventAvailableOutlined from '@mui/icons-material/EventAvailableOutlined';
+import AccessTimeOutlined from '@mui/icons-material/AccessTimeOutlined';
+import WatchLaterOutlined from '@mui/icons-material/WatchLaterOutlined';
 import SwipeableViews from 'react-swipeable-views';
 import { responsiveStyles } from '../../styles/responsiveStyles';
 import { LandingPageUpcomingPublicEventsContext } from '../../contexts/LandingPageUpcomingPublicEventsContextProvider';
@@ -28,6 +35,23 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import CustomDialogActions from '../../components/layouts/dialog/CustomDialogActions';
 import CustomErrorMessage from '../../components/forms/customFields/CustomErrorMessage';
 import logo from '../../assets/logo.png';
+import { mulberry32, scatterNonOverlapping } from '../../utils/lpDecorScatter';
+
+/** LP etkinlik dekoru — Header ile uyumlu Outlined seti */
+const EVENT_DECOR_ICONS = [
+	EventOutlined,
+	CalendarMonthOutlined,
+	ScheduleOutlined,
+	TodayOutlined,
+	EventAvailableOutlined,
+	AccessTimeOutlined,
+	WatchLaterOutlined,
+] as const;
+
+const UPCOMING_EVENTS_DECOR_COUNT = 15;
+
+const EVENTS_SECTION_BG =
+	'linear-gradient(165deg, #e8f0f8 0%, #f0f4f8 38%, #eef6fc 72%, #e4eef8 100%), radial-gradient(ellipse 85% 55% at 18% 20%, rgba(0, 102, 204, 0.09) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 88% 75%, rgba(0, 76, 153, 0.07) 0%, transparent 50%)';
 
 export default function UpcomingEvents() {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -45,6 +69,22 @@ export default function UpcomingEvents() {
 
 	const recaptchaRef = useRef<any>(null);
 	const isMobile = useMediaQuery('(max-width:600px)');
+
+	const backgroundDecor = useMemo(() => {
+		const positions = scatterNonOverlapping(0x4556454e, UPCOMING_EVENTS_DECOR_COUNT, {
+			topMin: 0.12,
+			minNormDist: 0.13,
+		});
+		const rand = mulberry32(0x4556454e ^ 0xace5);
+		return positions.map((pos, i) => ({
+			Icon: EVENT_DECOR_ICONS[i % EVENT_DECOR_ICONS.length],
+			top: `${pos.y * 100}%`,
+			left: `${pos.x * 100}%`,
+			rotate: (rand() - 0.5) * 55,
+			fontSize: 20 + rand() * 28,
+			opacity: 0.04 + rand() * 0.1,
+		}));
+	}, []);
 
 	const resetRecaptcha = () => {
 		setRecaptchaToken(null);
@@ -584,202 +624,238 @@ export default function UpcomingEvents() {
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
+				position: 'relative',
+				overflow: 'hidden',
+				width: '100%',
+				boxSizing: 'border-box',
 				py: 6,
-				backgroundColor: '#F6F9FC',
+				background: EVENTS_SECTION_BG,
 			}}>
-			<Typography
+			<Box
+				aria-hidden
 				sx={{
-					'fontSize': responsiveStyles.typography.h2,
-					'fontFamily': 'Varela Round',
-					'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-					'WebkitBackgroundClip': 'text',
-					'WebkitTextFillColor': 'transparent',
-					'backgroundClip': 'text',
-					'backgroundSize': '200% 200%',
-					'animation': 'gradientShift 5s ease infinite',
-					'letterSpacing': '-0.02em',
-					'lineHeight': 1.2,
-					'fontWeight': 700,
-					'@keyframes gradientShift': {
-						'0%': { backgroundPosition: '0% 50%' },
-						'50%': { backgroundPosition: '100% 50%' },
-						'100%': { backgroundPosition: '0% 50%' },
-					},
+					position: 'absolute',
+					inset: 0,
+					zIndex: 0,
+					pointerEvents: 'none',
+					overflow: 'hidden',
 				}}>
-				Yaklaşan Etkinlikler
-			</Typography>
-			{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
-			{upcomingEvents && upcomingEvents.length === 0 && (
-				<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem', marginBottom: '3rem' }}>
-					Henüz yaklaşan etkinlik bulunmamaktadır.
-				</Typography>
-			)}
-			<CustomDialog
-				title={'Kayıt Ol'}
-				openModal={isRegisterForEventModalOpen}
-				closeModal={() => {
-					if (!isRegisterForEventSending) {
-						setIsRegisterForEventModalOpen(false);
-						setIsRegisterForEventSuccess(false);
-						setRegisterErrorMsg(null);
-					}
-				}}
-				maxWidth='xs'
-				titleSx={{
-					fontSize: '1.5rem',
-					fontWeight: 600,
-					fontFamily: 'Varela Round',
-					color: '#1e293b',
-					textAlign: 'center',
-				}}
-				PaperProps={{
-					sx: {
-						height: 'auto',
-						maxHeight: '90vh',
-						overflow: 'visible',
-						borderRadius: '0.75rem',
-						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
-						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
-						backdropFilter: 'blur(8px)',
-						border: '1px solid rgba(255, 255, 255, 0.18)',
-					},
+				{backgroundDecor.map(({ Icon, top, left, rotate, fontSize, opacity }, index) => (
+					<Icon
+						key={index}
+						sx={{
+							position: 'absolute',
+							top,
+							left,
+							transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
+							fontSize,
+							opacity,
+							color: '#004c99',
+						}}
+					/>
+				))}
+			</Box>
+			<Box
+				sx={{
+					position: 'relative',
+					zIndex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
 				}}>
-				<DialogContent sx={{ paddingTop: '1rem' }}>
-					<form onSubmit={handleRegisterForEvent}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: '1rem' }}>
-							<CustomTextField
-								label='İsminiz'
-								value={firstName}
-								onChange={(e) => {
-									setFirstName(e.target.value);
-									setRegisterErrorMsg(null);
-								}}
-								fullWidth={false}
-								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
-								InputProps={{
-									inputProps: {
-										maxLength: 50,
-									},
-								}}
-							/>
-							<CustomTextField
-								label='Soy İsminiz'
-								value={lastName}
-								onChange={(e) => {
-									setLastName(e.target.value);
-									setRegisterErrorMsg(null);
-								}}
-								fullWidth={false}
-								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
-								InputProps={{
-									inputProps: {
-										maxLength: 50,
-									},
-								}}
-							/>
-						</Box>
-						<Box>
-							<CustomTextField
-								label='E-posta Adresi'
-								type='email'
-								value={email}
-								onChange={(e) => {
-									setEmail(e.target.value);
-									setRegisterErrorMsg(null);
-								}}
-								sx={{ mb: '1.25rem', fontFamily: 'Varela Round' }}
-								InputProps={{
-									inputProps: {
-										maxLength: 254,
-									},
-								}}
-							/>
-						</Box>
-						<div
-							style={{
-								transform: isMobile ? 'scale(0.9)' : 'scale(1)',
-								transformOrigin: '0 0',
-								width: isMobile ? 304 * 0.9 : 304,
-								maxWidth: '100%',
-								margin: '0 auto',
-								overflow: 'hidden',
-							}}>
-							<ReCAPTCHA
-								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-								onChange={handleRecaptchaChange}
-								onExpired={resetRecaptcha}
-								ref={recaptchaRef}
-								key={isRegisterForEventModalOpen ? 'active' : 'inactive'}
-								style={{ marginBottom: '1rem' }}
-							/>
-						</div>
-						{registerErrorMsg && (
-							<CustomErrorMessage
-								sx={{ m: isMobile ? '0.5rem 0' : '0.85rem 0', fontFamily: 'Varela Round', fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
-								{registerErrorMsg}
-							</CustomErrorMessage>
-						)}
-						<CustomDialogActions
-							onCancel={() => {
-								if (!isRegisterForEventSending) {
-									setIsRegisterForEventModalOpen(false);
-									setIsRegisterForEventSuccess(false);
-									setRegisterErrorMsg(null);
-								}
-							}}
-							cancelBtnText='Kapat'
-							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
-							disableBtn={isRegisterForEventSending}
-							disableCancelBtn={isRegisterForEventSending}
-							submitBtnSx={{
-								'background': '#FF6B3D !important',
-								'backgroundColor': '#FF6B3D !important',
-								'fontFamily': 'Varela Round',
-								'color': 'white !important',
-								'transition': 'background 0.2s ease !important',
-								'&:hover': {
-									background: '#ff7d55 !important',
-									backgroundColor: '#ff7d55 !important',
-								},
-								'&.Mui-disabled': {
-									background: 'rgba(0, 0, 0, 0.12) !important',
-									backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
-									color: 'rgba(0, 0, 0, 0.26) !important',
-								},
-							}}
-							cancelBtnSx={{ fontFamily: 'Varela Round' }}
-							actionSx={{ mr: '-1rem', mb: '-0.5rem' }}
-						/>
-					</form>
-				</DialogContent>
-			</CustomDialog>
-
-			<Snackbar
-				open={isRegisterForEventSuccess}
-				autoHideDuration={3500}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => {
-					setIsRegisterForEventSuccess(false);
-				}}
-				sx={{ mt: '6rem' }}>
-				<Alert
-					severity='success'
-					variant='filled'
+				<Typography
 					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						letterSpacing: 0,
-						color: theme.palette.common.white,
-						backgroundColor: '#059669',
-						'& .MuiAlert-icon': { color: 'inherit' },
+						'fontSize': responsiveStyles.typography.h2,
+						'fontFamily': 'Varela Round',
+						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
+						'WebkitBackgroundClip': 'text',
+						'WebkitTextFillColor': 'transparent',
+						'backgroundClip': 'text',
+						'backgroundSize': '200% 200%',
+						'animation': 'gradientShift 5s ease infinite',
+						'letterSpacing': '-0.02em',
+						'lineHeight': 1.2,
+						'fontWeight': 700,
+						'filter':
+							'drop-shadow(0 0 10px rgba(240, 244, 248, 0.95)) drop-shadow(0 0 22px rgba(232, 240, 248, 0.85)) drop-shadow(0 0 36px rgba(228, 238, 248, 0.55))',
+						'@keyframes gradientShift': {
+							'0%': { backgroundPosition: '0% 50%' },
+							'50%': { backgroundPosition: '100% 50%' },
+							'100%': { backgroundPosition: '0% 50%' },
+						},
 					}}>
-					Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
-				</Alert>
-			</Snackbar>
+					Yaklaşan Etkinlikler
+				</Typography>
+				{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
+				{upcomingEvents && upcomingEvents.length === 0 && (
+					<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem', marginBottom: '3rem' }}>
+						Henüz yaklaşan etkinlik bulunmamaktadır.
+					</Typography>
+				)}
+				<CustomDialog
+					title={'Kayıt Ol'}
+					openModal={isRegisterForEventModalOpen}
+					closeModal={() => {
+						if (!isRegisterForEventSending) {
+							setIsRegisterForEventModalOpen(false);
+							setIsRegisterForEventSuccess(false);
+							setRegisterErrorMsg(null);
+						}
+					}}
+					maxWidth='xs'
+					titleSx={{
+						fontSize: '1.5rem',
+						fontWeight: 600,
+						fontFamily: 'Varela Round',
+						color: '#1e293b',
+						textAlign: 'center',
+					}}
+					PaperProps={{
+						sx: {
+							height: 'auto',
+							maxHeight: '90vh',
+							overflow: 'visible',
+							borderRadius: '0.75rem',
+							background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
+							boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
+							backdropFilter: 'blur(8px)',
+							border: '1px solid rgba(255, 255, 255, 0.18)',
+						},
+					}}>
+					<DialogContent sx={{ paddingTop: '1rem' }}>
+						<form onSubmit={handleRegisterForEvent}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: '1rem' }}>
+								<CustomTextField
+									label='İsminiz'
+									value={firstName}
+									onChange={(e) => {
+										setFirstName(e.target.value);
+										setRegisterErrorMsg(null);
+									}}
+									fullWidth={false}
+									sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
+								/>
+								<CustomTextField
+									label='Soy İsminiz'
+									value={lastName}
+									onChange={(e) => {
+										setLastName(e.target.value);
+										setRegisterErrorMsg(null);
+									}}
+									fullWidth={false}
+									sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
+								/>
+							</Box>
+							<Box>
+								<CustomTextField
+									label='E-posta Adresi'
+									type='email'
+									value={email}
+									onChange={(e) => {
+										setEmail(e.target.value);
+										setRegisterErrorMsg(null);
+									}}
+									sx={{ mb: '1.25rem', fontFamily: 'Varela Round' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 254,
+										},
+									}}
+								/>
+							</Box>
+							<div
+								style={{
+									transform: isMobile ? 'scale(0.9)' : 'scale(1)',
+									transformOrigin: '0 0',
+									width: isMobile ? 304 * 0.9 : 304,
+									maxWidth: '100%',
+									margin: '0 auto',
+									overflow: 'hidden',
+								}}>
+								<ReCAPTCHA
+									sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+									onChange={handleRecaptchaChange}
+									onExpired={resetRecaptcha}
+									ref={recaptchaRef}
+									key={isRegisterForEventModalOpen ? 'active' : 'inactive'}
+									style={{ marginBottom: '1rem' }}
+								/>
+							</div>
+							{registerErrorMsg && (
+								<CustomErrorMessage
+									sx={{ m: isMobile ? '0.5rem 0' : '0.85rem 0', fontFamily: 'Varela Round', fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
+									{registerErrorMsg}
+								</CustomErrorMessage>
+							)}
+							<CustomDialogActions
+								onCancel={() => {
+									if (!isRegisterForEventSending) {
+										setIsRegisterForEventModalOpen(false);
+										setIsRegisterForEventSuccess(false);
+										setRegisterErrorMsg(null);
+									}
+								}}
+								cancelBtnText='Kapat'
+								submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
+								disableBtn={isRegisterForEventSending}
+								disableCancelBtn={isRegisterForEventSending}
+								submitBtnSx={{
+									'background': '#FF6B3D !important',
+									'backgroundColor': '#FF6B3D !important',
+									'fontFamily': 'Varela Round',
+									'color': 'white !important',
+									'transition': 'background 0.2s ease !important',
+									'&:hover': {
+										background: '#ff7d55 !important',
+										backgroundColor: '#ff7d55 !important',
+									},
+									'&.Mui-disabled': {
+										background: 'rgba(0, 0, 0, 0.12) !important',
+										backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+										color: 'rgba(0, 0, 0, 0.26) !important',
+									},
+								}}
+								cancelBtnSx={{ fontFamily: 'Varela Round' }}
+								actionSx={{ mr: '-1rem', mb: '-0.5rem' }}
+							/>
+						</form>
+					</DialogContent>
+				</CustomDialog>
+
+				<Snackbar
+					open={isRegisterForEventSuccess}
+					autoHideDuration={3500}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					onClose={() => {
+						setIsRegisterForEventSuccess(false);
+					}}
+					sx={{ mt: '6rem' }}>
+					<Alert
+						severity='success'
+						variant='filled'
+						sx={{
+							width: '100%',
+							fontFamily: 'Varela Round',
+							fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+							letterSpacing: 0,
+							color: theme.palette.common.white,
+							backgroundColor: '#059669',
+							'& .MuiAlert-icon': { color: 'inherit' },
+						}}>
+						Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
+					</Alert>
+				</Snackbar>
+			</Box>
 		</Box>
 	);
 }

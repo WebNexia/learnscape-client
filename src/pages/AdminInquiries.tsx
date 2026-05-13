@@ -25,29 +25,31 @@ import { truncateText } from '@utils/utilText';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import EmailSender from '../components/EmailSender';
 import EmailIcon from '@mui/icons-material/Email';
+import ArticleIcon from '@mui/icons-material/Article';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../themes';
+import ResourceDownloadLeadsDialog from '../components/admin/ResourceDownloadLeadsDialog';
 
 // Responsive column configuration
 const getColumns = (isVerySmallScreen: boolean) => {
 	return isVerySmallScreen
 		? [
-				{ key: 'firstName', label: 'Name' },
-				{ key: 'email', label: 'Email' },
-				{ key: 'createdAt', label: 'Date' },
-				{ key: 'actions', label: 'Actions' },
-			]
+			{ key: 'firstName', label: 'Name' },
+			{ key: 'email', label: 'Email' },
+			{ key: 'createdAt', label: 'Date' },
+			{ key: 'actions', label: 'Actions' },
+		]
 		: [
-				{ key: 'firstName', label: 'Name' },
-				{ key: 'email', label: 'Email' },
-				{ key: 'phone', label: 'Phone' },
-				{ key: 'countryCode', label: 'Country' },
-				{ key: 'message', label: 'Message' },
-				{ key: 'createdAt', label: 'Date' },
-				{ key: 'actions', label: 'Actions' },
-			];
+			{ key: 'firstName', label: 'Name' },
+			{ key: 'email', label: 'Email' },
+			{ key: 'phone', label: 'Phone' },
+			{ key: 'countryCode', label: 'Country' },
+			{ key: 'message', label: 'Message' },
+			{ key: 'createdAt', label: 'Date' },
+			{ key: 'actions', label: 'Actions' },
+		];
 };
 
 const AdminInquiries = () => {
@@ -117,6 +119,7 @@ const AdminInquiries = () => {
 	const [deleteModalOpen, setDeleteModalOpen] = useState<{ [key: number]: boolean }>({});
 	const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+	const [resourceDownloadLeadsOpen, setResourceDownloadLeadsOpen] = useState(false);
 
 	useEffect(() => {
 		setInquiriesPageNumber(1);
@@ -251,15 +254,20 @@ const AdminInquiries = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isMobileSize ? 'Download' : `Download ${isSearchActive ? 'Filtered' : 'All'} Inquiries`,
+								label: isMobileSize ? 'Inquiries' : `Inquiries ${isSearchActive ? 'Filtered' : ''}`,
 								onClick: handleDownload,
 								startIcon: !isMobileSize ? <DownloadIcon /> : undefined,
 								disabled: displayInquiries && displayInquiries.length === 0,
 							},
 							{
-								label: isMobileSize ? 'Email' : 'Send Bulk Email',
+								label: isMobileSize ? 'Email' : 'Bulk Email',
 								onClick: () => setEmailDialogOpen(true),
 								startIcon: !isMobileSize ? <EmailIcon /> : undefined,
+							},
+							{
+								label: isMobileSize ? 'LP leads' : 'Resource download leads',
+								onClick: () => setResourceDownloadLeadsOpen(true),
+								startIcon: !isMobileSize ? <ArticleIcon /> : undefined,
 							},
 						]}
 						isSticky={true}
@@ -427,6 +435,17 @@ const AdminInquiries = () => {
 					<DialogContent>
 						<EmailSender setEmailDialogOpen={setEmailDialogOpen} />
 					</DialogContent>
+				</CustomDialog>
+				<CustomDialog
+					openModal={resourceDownloadLeadsOpen}
+					closeModal={() => setResourceDownloadLeadsOpen(false)}
+					maxWidth='md'
+					title='Resource download leads'>
+					<ResourceDownloadLeadsDialog
+						open={resourceDownloadLeadsOpen}
+						onClose={() => setResourceDownloadLeadsOpen(false)}
+						orgId={orgId ?? null}
+					/>
 				</CustomDialog>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
