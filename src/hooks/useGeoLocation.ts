@@ -38,15 +38,33 @@ const defaultGeo: GeoLocation = {
 /** One shared in-flight / resolved lookup for the whole app (many components use this hook). */
 let geoLocationPromise: Promise<GeoLocation> | null = null;
 
+async function fetchWithTimeout(url: string, timeoutMs = 1500): Promise<Response> {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		return await fetch(url, { signal: controller.signal });
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
 function fetchGeoLocationOnce(): Promise<GeoLocation> {
 	if (geoLocationPromise) {
 		return geoLocationPromise;
 	}
 
 	geoLocationPromise = (async () => {
+		const isLocalhost =
+			typeof window !== 'undefined' &&
+			(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+		if (isLocalhost) {
+			return getBrowserFallbackLocation() ?? defaultGeo;
+		}
+
 		const providers = [
 			async () => {
-				const response = await fetch('https://ipapi.co/json/');
+				const response = await fetchWithTimeout('https://ipapi.co/json/');
 				if (!response.ok) {
 					throw new Error(`ipapi failed with status ${response.status}`);
 				}
@@ -64,22 +82,25 @@ function fetchGeoLocationOnce(): Promise<GeoLocation> {
 				};
 			},
 			async () => {
-				const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
+				const response = await fetchWithTimeout('https://ipwho.is/');
 				if (!response.ok) {
-					throw new Error(`geojs failed with status ${response.status}`);
+					throw new Error(`ipwho failed with status ${response.status}`);
 				}
 
 				const data = await response.json();
+				if (data?.success === false) {
+					throw new Error('ipwho returned success: false');
+				}
 				const code = data?.country_code;
 				if (!code || typeof code !== 'string') {
-					throw new Error('geojs returned no country code');
+					throw new Error('ipwho returned no country code');
 				}
 
 				return {
 					countryCode: code.toUpperCase(),
 					country: data.country || '',
 					city: data.city || '',
-					query: data.ip || '',
+					query: typeof data.ip === 'string' ? data.ip : '',
 				};
 			},
 		];
