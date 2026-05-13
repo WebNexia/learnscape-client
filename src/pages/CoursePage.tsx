@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Skeleton, Typography } from '@mui/material';
 import { OpenInNew, PlayCircleOutline } from '@mui/icons-material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
@@ -10,8 +10,56 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { getVideoThumbnailUrl } from '../utils/videoUrlUtils';
 
+const CoursePageLoadingState = ({ isMobileSize }: { isMobileSize: boolean }) => (
+	<Box sx={{ width: isMobileSize ? '90%' : '85%', mt: '1.75rem', mb: '2rem' }}>
+		<Typography
+			variant='h6'
+			sx={{
+				mb: '1rem',
+				color: 'text.primary',
+				fontSize: isMobileSize ? '1rem' : '1.2rem',
+				fontWeight: 600,
+			}}>
+			Preparing your course content...
+		</Typography>
+
+		<Box
+			sx={{
+				borderRadius: '1rem',
+				overflow: 'hidden',
+				border: '1px solid',
+				borderColor: 'divider',
+				backgroundColor: 'background.paper',
+				p: isMobileSize ? '1rem' : '1.5rem',
+				mb: '1.25rem',
+			}}>
+			<Skeleton variant='text' width={isMobileSize ? '80%' : '45%'} height={isMobileSize ? 34 : 44} />
+			<Skeleton variant='text' width='95%' />
+			<Skeleton variant='text' width='88%' />
+			<Skeleton variant='rounded' height={isMobileSize ? 44 : 52} width={isMobileSize ? 130 : 180} sx={{ mt: '1rem' }} />
+		</Box>
+
+		<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+			{Array.from({ length: 3 }).map((_, idx) => (
+				<Box
+					key={idx}
+					sx={{
+						borderRadius: '0.75rem',
+						border: '1px solid',
+						borderColor: 'divider',
+						backgroundColor: 'background.paper',
+						p: isMobileSize ? '0.65rem' : '0.85rem',
+					}}>
+					<Skeleton variant='text' width={isMobileSize ? '70%' : '35%'} height={30} />
+					<Skeleton variant='rounded' height={isMobileSize ? 48 : 58} sx={{ mt: '0.35rem' }} />
+				</Box>
+			))}
+		</Box>
+	</Box>
+);
+
 const CoursePage = () => {
-	const { singleCourseUser, fetchSingleCourseDataUser, userCoursesData } = useContext(UserCourseLessonDataContext);
+	const { singleCourseUser, setSingleCourseUser, fetchSingleCourseDataUser, userCoursesData } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -24,23 +72,49 @@ const CoursePage = () => {
 	const currentUserCourseId = currentUserCourse?.userCourseId;
 
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
+	const [isCourseLoading, setIsCourseLoading] = useState<boolean>(true);
 	const [videoThumbnailLoadErrors, setVideoThumbnailLoadErrors] = useState<Record<string, boolean>>({});
 	const documentsRef = useRef<HTMLDivElement>(null);
+	const activeCourse = singleCourseUser && singleCourseUser._id === courseId ? singleCourseUser : null;
+	const shouldShowLoadingState = isCourseLoading && !activeCourse;
 
 	useEffect(() => {
 		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
+	}, [courseId, userCourseData]);
 
-		if (courseId) {
-			fetchSingleCourseDataUser(courseId);
-		}
-	}, [userCourseId, courseId, userCourseData]);
+	useEffect(() => {
+		let cancelled = false;
+
+		const loadCourse = async () => {
+			if (!courseId) {
+				setIsCourseLoading(false);
+				return;
+			}
+
+			setIsCourseLoading(true);
+			setSingleCourseUser(null);
+			try {
+				await fetchSingleCourseDataUser(courseId);
+			} finally {
+				if (!cancelled) {
+					setIsCourseLoading(false);
+				}
+			}
+		};
+
+		void loadCourse();
+		return () => {
+			cancelled = true;
+		};
+	}, [courseId, userCourseId, fetchSingleCourseDataUser, setSingleCourseUser]);
 
 	return (
 		<DashboardPagesLayout pageName='Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			{singleCourseUser && (
+			{shouldShowLoadingState && <CoursePageLoadingState isMobileSize={isMobileSize} />}
+			{activeCourse && (
 				<>
 					<CoursePageBanner
-						course={singleCourseUser}
+						course={activeCourse}
 						isEnrolledStatus={isEnrolledStatus}
 						setIsEnrolledStatus={setIsEnrolledStatus}
 						documentsRef={documentsRef}
@@ -48,15 +122,15 @@ const CoursePage = () => {
 						userCourseId={currentUserCourseId}
 						isCourseCompleted={isCourseCompleted}
 					/>
-					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
+					<Chapters course={activeCourse} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}
-			{isEnrolledStatus && singleCourseUser?.documents && (
+			{isEnrolledStatus && activeCourse?.documents && (
 				<Box
 					ref={documentsRef}
 					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0 0 0', width: isMobileSize ? '90%' : '85%' }}>
 					<DocumentViewer
-						documents={singleCourseUser?.documents || []}
+						documents={activeCourse?.documents || []}
 						title='Course Materials'
 						layout={isMobileSize ? 'list' : 'grid'}
 						showTitle={true}
@@ -64,7 +138,7 @@ const CoursePage = () => {
 					/>
 				</Box>
 			)}
-			{isEnrolledStatus && singleCourseUser?.videoURLs && singleCourseUser.videoURLs.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '').length > 0 && (
+			{isEnrolledStatus && activeCourse?.videoURLs && activeCourse.videoURLs.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '').length > 0 && (
 				<Box
 					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0 4rem 0', width: isMobileSize ? '90%' : '85%' }}>
 					<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined, mb: '1rem' }}>
@@ -78,7 +152,7 @@ const CoursePage = () => {
 							width: '100%',
 							justifyContent: 'center',
 						}}>
-						{singleCourseUser.videoURLs
+						{activeCourse.videoURLs
 							.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
 							.map((videoURL, index) => {
 								const thumbnailUrl = getVideoThumbnailUrl(videoURL.url);
