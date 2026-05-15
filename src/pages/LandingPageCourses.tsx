@@ -177,7 +177,7 @@ const LandingPageCourses = () => {
 									width: '100%',
 								}}>
 								{/* Search and Filter Component */}
-								<Box sx={{ width: '85%', mt: '0rem' }}>
+								{/* <Box sx={{ width: '85%', mt: '0rem' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}
@@ -196,7 +196,7 @@ const LandingPageCourses = () => {
 										hasActiveSearchOrFilter={!!(searchedValue || activeFilter)}
 										isScrolled={isScrolled}
 									/>
-								</Box>
+								</Box> */}
 							</Box>
 						</Box>
 

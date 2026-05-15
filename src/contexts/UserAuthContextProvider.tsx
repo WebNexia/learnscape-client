@@ -5,8 +5,9 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
+import { shouldFetchLearnerEnrollmentList } from '../utils/learnerEnrollmentDataRoutes';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -39,6 +40,7 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
@@ -134,7 +136,10 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		return () => unsubscribe();
 	}, []); // Remove skipFetchDuringSignup from dependencies since we're using ref
 
-	// React Query for userCourseData
+	const learnerNeedsEnrollmentList =
+		user?.role === Roles.USER && shouldFetchLearnerEnrollmentList(pathname);
+
+	// React Query for userCourseData (learners: defer until routes that need enrollments — lighter sign-in)
 	const { data: userCourseDataFromQuery } = useQuery<UserCoursesIdsWithCourseIds[]>(
 		['userCourseData', userId],
 		async () => {
@@ -144,19 +149,21 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			return response.data.response || [];
 		},
 		{
-			enabled: !!userId && user?.role === Roles.USER,
+			enabled: !!userId && learnerNeedsEnrollmentList,
 			staleTime: 5 * 60 * 1000, // 5 minutes
 			cacheTime: 10 * 60 * 1000, // 10 minutes
 			refetchOnWindowFocus: false,
 		}
 	);
 
-	// Update context state when React Query data changes
+	// Sync React Query enrollment list into context; clear when logged out or data cleared
 	useEffect(() => {
-		if (userCourseDataFromQuery) {
+		if (userCourseDataFromQuery !== undefined) {
 			setUserCourseData(userCourseDataFromQuery);
+		} else if (!userId) {
+			setUserCourseData(undefined);
 		}
-	}, [userCourseDataFromQuery]);
+	}, [userCourseDataFromQuery, userId]);
 
 	const fetchUserData = async (firebaseUserId: string, skipIfSignup?: boolean) => {
 		// Skip fetching if signup is in progress
@@ -208,6 +215,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		setUser(undefined);
 		setUserId('');
 		setFirebaseUserId('');
+		setUserCourseData(undefined);
 		queryClient.clear();
 	};
 

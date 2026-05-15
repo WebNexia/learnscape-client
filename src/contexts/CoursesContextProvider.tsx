@@ -1,4 +1,5 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -57,6 +58,7 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 
 const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { pathname } = useLocation();
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
@@ -65,6 +67,20 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 
 	// Role-based endpoint detection - separate routes for clarity
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
+
+	// Learners: only load the org catalogue on the browse page (not on dashboard login, calendar, etc.).
+	// Exclude utility routes under /courses/ (e.g. /courses/certificates/verify/:id) from triggering the catalogue fetch.
+	const isLearnerCatalogRoute =
+		isLearner &&
+		(pathname === '/courses' || pathname.startsWith('/courses/')) &&
+		!pathname.startsWith('/courses/certificates');
+
+	const fetchEnabled =
+		isEnabled &&
+		!!orgId &&
+		isAuthenticated &&
+		!isLandingPageRoute &&
+		(hasAdminAccess || isInstructor || (isLearner && isLearnerCatalogRoute));
 	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
 
 	const {
@@ -86,7 +102,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}${baseEndpoint}`,
 		entityKey: isInstructor ? 'instructorCourses' : 'allCourses',
-		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
+		enabled: fetchEnabled,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		limit: 100,
@@ -114,7 +130,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		<CoursesContext.Provider
 			value={{
 				courses,
-				loading: isLoading || (isEnabled && !courses),
+				loading: isLoading || (fetchEnabled && isEnabled && !courses),
 				error: isError ? 'Failed to fetch courses' : null,
 				fetchCourses,
 				fetchMoreCourses,
