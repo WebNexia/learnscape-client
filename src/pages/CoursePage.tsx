@@ -9,6 +9,7 @@ import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../con
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { getVideoThumbnailUrl } from '../utils/videoUrlUtils';
+import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
 
 const CoursePageLoadingState = ({ isMobileSize }: { isMobileSize: boolean }) => (
 	<Box sx={{ width: isMobileSize ? '90%' : '85%', mt: '1.75rem', mb: '2rem' }}>
@@ -59,8 +60,11 @@ const CoursePageLoadingState = ({ isMobileSize }: { isMobileSize: boolean }) => 
 );
 
 const CoursePage = () => {
-	const { singleCourseUser, setSingleCourseUser, fetchSingleCourseDataUser, userCoursesData } = useContext(UserCourseLessonDataContext);
-	const { courseId, userCourseId } = useParams();
+	const { userCoursesData, singleCourseUser, isCourseShellLoading } = useContext(UserCourseLessonDataContext);
+	const { courseId } = useParams();
+
+	// Parallel userLessons prefetch (course shell cached via useLearnerCourseShell in context).
+	useUserLessonsForCourse(courseId || '');
 
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
@@ -72,41 +76,14 @@ const CoursePage = () => {
 	const currentUserCourseId = currentUserCourse?.userCourseId;
 
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
-	const [isCourseLoading, setIsCourseLoading] = useState<boolean>(true);
 	const [videoThumbnailLoadErrors, setVideoThumbnailLoadErrors] = useState<Record<string, boolean>>({});
 	const documentsRef = useRef<HTMLDivElement>(null);
 	const activeCourse = singleCourseUser && singleCourseUser._id === courseId ? singleCourseUser : null;
-	const shouldShowLoadingState = isCourseLoading && !activeCourse;
+	const shouldShowLoadingState = isCourseShellLoading && !activeCourse;
 
 	useEffect(() => {
 		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
 	}, [courseId, userCourseData]);
-
-	useEffect(() => {
-		let cancelled = false;
-
-		const loadCourse = async () => {
-			if (!courseId) {
-				setIsCourseLoading(false);
-				return;
-			}
-
-			setIsCourseLoading(true);
-			setSingleCourseUser(null);
-			try {
-				await fetchSingleCourseDataUser(courseId);
-			} finally {
-				if (!cancelled) {
-					setIsCourseLoading(false);
-				}
-			}
-		};
-
-		void loadCourse();
-		return () => {
-			cancelled = true;
-		};
-	}, [courseId, userCourseId, fetchSingleCourseDataUser, setSingleCourseUser]);
 
 	return (
 		<DashboardPagesLayout pageName='Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

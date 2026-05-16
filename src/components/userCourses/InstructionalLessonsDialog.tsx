@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, DialogActions, DialogContent, Typography } from '@mui/material';
 import { useContext, useMemo } from 'react';
 import { decode } from 'html-entities';
 import CustomDialog from '../layouts/dialog/CustomDialog';
@@ -18,6 +18,8 @@ interface InstructionalLessonsDialogProps {
 	selectedLessonId: string;
 	onSelectLesson: (lessonId: string) => void;
 	enableWordAssist?: boolean;
+	/** When true, full lesson body is still loading (e.g. course shell omits text/video). */
+	isSelectedLessonBodyLoading?: boolean;
 }
 
 const InstructionalLessonsDialog = ({
@@ -27,6 +29,7 @@ const InstructionalLessonsDialog = ({
 	selectedLessonId,
 	onSelectLesson,
 	enableWordAssist = true,
+	isSelectedLessonBodyLoading = false,
 }: InstructionalLessonsDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -112,7 +115,20 @@ const InstructionalLessonsDialog = ({
 										overflowY: 'auto',
 										pr: isMobileSize ? 0 : '0.25rem',
 									}}>
-									{selectedLesson.videoUrl && (
+									{isSelectedLessonBodyLoading ? (
+										<Box
+											sx={{
+												display: 'flex',
+												justifyContent: 'center',
+												alignItems: 'center',
+												minHeight: isMobileSize ? '12rem' : '16rem',
+												width: '100%',
+											}}>
+											<CircularProgress size={isMobileSize ? 28 : 36} />
+										</Box>
+									) : (
+										<>
+											{selectedLesson.videoUrl && (
 										<Box sx={{ width: '100%', height: isMobileSize ? '14rem' : '20rem', mb: '1rem', mt: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
 											<UniversalVideoPlayer
 												url={selectedLesson.videoUrl}
@@ -178,6 +194,8 @@ const InstructionalLessonsDialog = ({
 										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 											No video or text content available for this lesson yet.
 										</Typography>
+									)}
+										</>
 									)}
 								</Box>
 							</>

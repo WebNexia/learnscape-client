@@ -19,6 +19,7 @@ import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
 import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse';
+import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { extractVideoId } from '../../../utils/videoUrlUtils';
 
@@ -162,7 +163,7 @@ const CoursePageBanner = ({
 			await queryClient.invalidateQueries(['userCourseData']);
 			// Invalidate single course data to refresh capacity status
 			if (courseId) {
-				await queryClient.invalidateQueries(['singleCourseDataUser', courseId]);
+				await queryClient.invalidateQueries(learnerCourseShellQueryKey(courseId));
 			}
 
 			return userCourseId;

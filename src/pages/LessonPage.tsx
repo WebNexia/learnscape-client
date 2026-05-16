@@ -1,4 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
@@ -241,6 +242,53 @@ const LessonPage = () => {
 		}
 		setSelectedInstructionalLessonId('');
 	}, [instructionalLessonsInChapter]);
+
+	/** Course shell (activelessons) omits instructional bodies; load full lesson when the chapter lectures dialog is open. */
+	const instructionalDialogSelectionValid =
+		isInstructionalLessonsDialogOpen &&
+		Boolean(selectedInstructionalLessonId) &&
+		Boolean(courseId) &&
+		instructionalLessonsInChapter.some((l) => l._id === selectedInstructionalLessonId);
+
+	const { data: instructionalDialogLessonPayload, isFetching: isInstructionalDialogLessonFetching } = useQuery(
+		['instructionalDialogLesson', selectedInstructionalLessonId, courseId],
+		async () => {
+			const res = await axios.get(`${base_url}/lessons/${selectedInstructionalLessonId}`, {
+				params: courseId ? { courseId } : undefined,
+			});
+			return res.data as Lesson;
+		},
+		{
+			enabled: instructionalDialogSelectionValid,
+			staleTime: 5 * 60 * 1000,
+			retry: 2,
+		},
+	);
+
+	const instructionalLessonsForDialog = useMemo(() => {
+		if (!instructionalLessonsInChapter.length) return [];
+		if (
+			!instructionalDialogLessonPayload ||
+			String(instructionalDialogLessonPayload._id) !== String(selectedInstructionalLessonId)
+		) {
+			return instructionalLessonsInChapter;
+		}
+		return instructionalLessonsInChapter.map((l) =>
+			String(l._id) === String(selectedInstructionalLessonId)
+				? {
+					...l,
+					text: instructionalDialogLessonPayload.text ?? '',
+					videoUrl: instructionalDialogLessonPayload.videoUrl ?? '',
+				}
+				: l,
+		);
+	}, [instructionalLessonsInChapter, selectedInstructionalLessonId, instructionalDialogLessonPayload]);
+
+	const isInstructionalDialogBodyLoading =
+		instructionalDialogSelectionValid &&
+		(isInstructionalDialogLessonFetching ||
+			!instructionalDialogLessonPayload ||
+			String(instructionalDialogLessonPayload._id) !== String(selectedInstructionalLessonId));
 
 	useEffect(() => {
 		localStorage.setItem('word-assist-enabled', String(isWordAssistEnabled));
@@ -1382,10 +1430,11 @@ const LessonPage = () => {
 			<InstructionalLessonsDialog
 				open={isInstructionalLessonsDialogOpen}
 				onClose={() => setIsInstructionalLessonsDialogOpen(false)}
-				lessons={instructionalLessonsInChapter}
+				lessons={instructionalLessonsForDialog}
 				selectedLessonId={selectedInstructionalLessonId}
 				onSelectLesson={setSelectedInstructionalLessonId}
 				enableWordAssist={isWordAssistEnabled}
+				isSelectedLessonBodyLoading={isInstructionalDialogBodyLoading}
 			/>
 			<WordAssistPopper
 				open={Boolean(anchorEl) && isWordAssistEnabled}
