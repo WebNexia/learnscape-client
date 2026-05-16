@@ -1,20 +1,24 @@
-import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { ReactNode, createContext, useContext, useState, useCallback } from 'react';
 import { SingleCourse } from '../interfaces/course';
 import { UserAuthContext } from './UserAuthContextProvider';
-import { OrganisationContext } from './OrganisationContextProvider';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import {
+	fetchLearnerCourseShell,
+	learnerCourseShellQueryKey,
+	LEARNER_COURSE_SHELL_STALE_MS,
+	useLearnerCourseShell,
+} from '../hooks/useLearnerCourseShell';
 
 interface UserCourseLessonDataContextTypes {
-	fetchSingleCourseDataUser: (courseId: string) => void;
+	fetchSingleCourseDataUser: (courseId: string) => Promise<void>;
 	singleCourse: SingleCourse | null;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 	singleCourseUser: SingleCourse | null;
-	setSingleCourseUser: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
+	isCourseShellLoading: boolean;
 	enableUserCourseLessonDataFetch: () => void;
 	disableUserCourseLessonDataFetch: () => void;
 	userCoursesData: UserCoursesIdsWithCourseIds[];
@@ -54,66 +58,57 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 	singleCourse: null,
 	setSingleCourse: () => { },
 	singleCourseUser: null,
-	setSingleCourseUser: () => { },
-	fetchSingleCourseDataUser: () => { },
+	isCourseShellLoading: false,
+	fetchSingleCourseDataUser: async () => { },
 	enableUserCourseLessonDataFetch: () => { },
 	disableUserCourseLessonDataFetch: () => { },
 	userCoursesData: [],
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const queryClient = useQueryClient();
 	const { userId, userCourseData } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isLearner } = useAuth();
 
-	const { courseId } = useParams();
+	const { courseId: routeCourseId } = useParams();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
 
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
-	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
-	const latestCourseRequestRef = useRef(0);
+	const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const shellQueryEnabled =
+		isEnabled && !!routeCourseId && !!userId && isAuthenticated && isLearner && !isLandingPageRoute;
+
+	const { data: singleCourseUser = null, isLoading: isCourseShellLoading } = useLearnerCourseShell(routeCourseId || '', {
+		enabled: shellQueryEnabled,
+	});
 
 	const fetchSingleCourseDataUser = useCallback(
-		async (courseId: string | undefined): Promise<void> => {
-			if (!courseId) return;
+		async (targetCourseId: string): Promise<void> => {
+			if (!targetCourseId) return;
 
-			const requestId = ++latestCourseRequestRef.current;
-			const res = await axios.get(`${base_url}/courses/activelessons/${courseId}`);
+			await queryClient.fetchQuery(
+				learnerCourseShellQueryKey(targetCourseId),
+				() => fetchLearnerCourseShell(targetCourseId, baseUrl),
+				{ staleTime: LEARNER_COURSE_SHELL_STALE_MS }
+			);
 
-			// Ignore stale responses from older course navigations.
-			if (requestId !== latestCourseRequestRef.current) return;
-
-			setSingleCourseUser(res.data.data || null);
-			// activelessons may lazily create the first UserLesson (cohort after start); refresh lesson locks.
 			if (userId) {
-				void queryClient.invalidateQueries(['userLessonsForCourse', courseId, userId]);
+				void queryClient.invalidateQueries(['userLessonsForCourse', targetCourseId, userId]);
 			}
 		},
-		[base_url, queryClient, userId]
+		[baseUrl, queryClient, userId]
 	);
-
-	useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
-		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && !!courseId,
-	});
 
 	// Use userCourseData from UserAuthContext (no duplicate API call)
 	const userCoursesData = userCourseData || [];
 
 	const enableUserCourseLessonDataFetch = () => setIsEnabled(true);
 	const disableUserCourseLessonDataFetch = () => setIsEnabled(false);
-
-	useEffect(() => {
-		if (userCoursesData) {
-			setIsLoaded(true);
-		}
-	}, [userCoursesData]);
 
 	return (
 		<UserCourseLessonDataContext.Provider
@@ -122,7 +117,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 				singleCourse,
 				setSingleCourse,
 				singleCourseUser,
-				setSingleCourseUser,
+				isCourseShellLoading,
 				enableUserCourseLessonDataFetch,
 				disableUserCourseLessonDataFetch,
 				userCoursesData: userCoursesData || [],

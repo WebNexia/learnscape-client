@@ -7,6 +7,7 @@ import ConditionalStripeProvider from '../components/common/ConditionalStripePro
 import CoursePaymentForm from '../components/layouts/coursePageBanner/CoursePaymentForm';
 import axios from 'axios';
 import { useQuery, useQueryClient } from 'react-query';
+import { learnerCourseShellQueryKey } from '../hooks/useLearnerCourseShell';
 import theme from '../themes';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
@@ -61,7 +62,7 @@ export default function LandingPageCoursePayment() {
 		// The server creates the initial userLesson during enrollment.
 		if (courseId) queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
 		queryClient.invalidateQueries(['userCourseData']);
-		queryClient.invalidateQueries(['singleCourseDataUser', courseId]);
+		queryClient.invalidateQueries(learnerCourseShellQueryKey(courseId));
 		return userCourseId;
 	};
 

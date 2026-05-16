@@ -35,8 +35,9 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
 	// Fetch user lessons for current course using the new hook
-	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const { data: userLessonsData, isLoading: isUserLessonsLoading } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessonData = userLessonsData || [];
+	const isProgressPending = isEnrolledStatus && isUserLessonsLoading;
 
 	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
@@ -166,7 +167,7 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 	}, [user]);
 
 	const isAccessible = useMemo(() => {
-		if (!isEnrolledStatus) return false;
+		if (!isEnrolledStatus || isProgressPending) return false;
 
 		// For free platform courses, check subscription access
 		// hasRegisteredCourse grants access to free platform courses even without subscription
@@ -175,7 +176,15 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 		}
 
 		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
-	}, [isEnrolledStatus, isFreePlatformCourse, hasSubscriptionAccess, isLessonRegisteredInThisCourse, isLessonInProgress, isLessonCompleted]);
+	}, [
+		isEnrolledStatus,
+		isProgressPending,
+		isFreePlatformCourse,
+		hasSubscriptionAccess,
+		isLessonRegisteredInThisCourse,
+		isLessonInProgress,
+		isLessonCompleted,
+	]);
 
 	return (
 		<Box
@@ -232,7 +241,7 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
 						) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
 							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						) : !isAccessible ? (
+						) : isProgressPending ? null : !isAccessible ? (
 							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						) : null}
 					</Box>
