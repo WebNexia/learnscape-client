@@ -6,6 +6,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 import { Lesson } from '../../interfaces/lessons';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
+import { LEARNER_RICH_TEXT_CLASS, LEARNER_TEXT_FONT_FAMILY, prepareLearnerRichTextHtml } from '../../utils/learnerTypography';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
 import { useWordAssist, wrapWordsForHover } from '../../hooks/useWordAssist';
@@ -33,8 +34,8 @@ const InstructionalLessonsDialog = ({
 }: InstructionalLessonsDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const lessonTextColor = theme.textColor?.secondary.main || '#4D7B8B';
-	const lessonTextFontFamily = theme.fontFamily?.main || 'Poppins';
+	const lessonTextColor = theme.palette.primary.main || theme.textColor?.primary.main || '#01435A';
+	const lessonTextFontFamily = LEARNER_TEXT_FONT_FAMILY;
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
 		enabled: enableWordAssist,
 		hoverDelayMs: 1000,
@@ -142,6 +143,7 @@ const InstructionalLessonsDialog = ({
 
 									{selectedLesson.text && (
 										<Box
+											className={LEARNER_RICH_TEXT_CLASS}
 											sx={{
 												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.15)',
 												padding: isMobileSize ? '0.75rem' : '1.25rem',
@@ -155,6 +157,10 @@ const InstructionalLessonsDialog = ({
 													fontFamily: `${lessonTextFontFamily} !important`,
 													color: `${lessonTextColor} !important`,
 													lineHeight: '2.1 !important',
+													textAlign: 'left !important',
+													textAlignLast: 'left !important',
+													wordSpacing: 'normal !important',
+													letterSpacing: 'normal !important',
 												},
 											}}>
 											<Typography
@@ -164,7 +170,11 @@ const InstructionalLessonsDialog = ({
 												onTouchStart={handleWordTouchStart}
 												onTouchEnd={handleWordTouchEnd}
 												onTouchCancel={handleWordTouchEnd}
-												dangerouslySetInnerHTML={{ __html: wrapWordsForHover(sanitizeHtml(decode(selectedLesson.text))) }}
+												dangerouslySetInnerHTML={{
+													__html: wrapWordsForHover(
+														prepareLearnerRichTextHtml(sanitizeHtml(decode(selectedLesson.text)))
+													),
+												}}
 												sx={{
 													'lineHeight': 2.1,
 													'fontSize': isMobileSize ? '0.75rem' : '0.9rem',
@@ -178,7 +188,8 @@ const InstructionalLessonsDialog = ({
 													'& .pronounceable-word': {
 														cursor: enableWordAssist ? 'pointer' : 'default',
 														borderRadius: '0.2rem',
-														padding: '0 0.1rem',
+														padding: 0,
+														margin: 0,
 														transition: 'background-color 0.15s ease',
 													},
 													'& .pronounceable-word:hover': {

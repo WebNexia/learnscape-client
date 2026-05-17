@@ -16,6 +16,9 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import WordAssistPopper from '../../userCourses/WordAssistPopper';
 import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
+import { LEARNER_TEXT_FONT_FAMILY } from '../../../utils/learnerTypography';
+
+const questionTextColor = theme.palette.primary.main;
 
 const Container = styled(Box)`
 	display: flex;
@@ -445,12 +448,17 @@ const FillInTheBlanksTyping = ({
 									dangerouslySetInnerHTML={{ __html: hoverableSegmentHtml }}
 									sx={{
 										fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem',
-										color: '#000000',
-										'&, & *': { color: '#000000 !important' },
+										fontFamily: LEARNER_TEXT_FONT_FAMILY,
+										color: questionTextColor,
+										'&, & *': {
+											color: `${questionTextColor} !important`,
+											fontFamily: `${LEARNER_TEXT_FONT_FAMILY} !important`,
+										},
 										'& .pronounceable-word': {
 											cursor: enableWordAssist ? 'pointer' : 'default',
 											borderRadius: '0.2rem',
-											padding: '0 0.1rem',
+											padding: 0,
+											margin: 0,
 											transition: 'background-color 0.15s ease',
 										},
 										'& .pronounceable-word:hover': {
@@ -505,11 +513,15 @@ const FillInTheBlanksTyping = ({
 												boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
 											}}>
 											{showHiddenBlankValues ? (
-												<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>
+												<Typography
+													variant='body2'
+													sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
 													{hint}
 												</Typography>
 											) : (
-												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>*****</Typography>
+												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
+													*****
+												</Typography>
 											)}
 										</Box>
 									);
