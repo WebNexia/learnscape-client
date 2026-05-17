@@ -6,6 +6,12 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import WordAssistPopper from './WordAssistPopper';
 import { useWordAssist, wrapWordsForHover } from '../../hooks/useWordAssist';
+import theme from '../../themes';
+import {
+	LEARNER_RICH_TEXT_CLASS,
+	LEARNER_TEXT_FONT_FAMILY,
+	prepareLearnerRichTextHtml,
+} from '../../utils/learnerTypography';
 
 interface QuestionTextProps {
 	question: QuestionInterface;
@@ -13,6 +19,8 @@ interface QuestionTextProps {
 	isMatching?: boolean;
 	enableWordAssist?: boolean;
 }
+
+const questionTextColor = theme.palette.primary.main;
 
 const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist = false }: QuestionTextProps) => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
@@ -23,7 +31,10 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 		hoverDelayMs: 1000,
 	});
 
-	const sanitizedQuestionHtml = useMemo(() => sanitizeHtml(decode(question.question)), [question.question]);
+	const sanitizedQuestionHtml = useMemo(
+		() => prepareLearnerRichTextHtml(sanitizeHtml(decode(question.question))),
+		[question.question]
+	);
 	const questionHtmlWithWordSpans = useMemo(() => wrapWordsForHover(sanitizedQuestionHtml), [sanitizedQuestionHtml]);
 
 	return (
@@ -44,7 +55,7 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 				justifyContent: 'center',
 			}}>
 			<Box
-				className='rich-text-content'
+				className={`rich-text-content ${LEARNER_RICH_TEXT_CLASS}`}
 				onMouseOver={handleWordHover}
 				onMouseLeave={handleMouseLeave}
 				onTouchStart={handleWordTouchStart}
@@ -60,21 +71,28 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 							sx={{
 								'margin': '-0.25rem 0.5rem 0 0',
 								'fontSize': isMobileSizeSmall ? '0.75rem' : '0.95rem',
-								'color': '#000000',
+								'fontFamily': LEARNER_TEXT_FONT_FAMILY,
+								'color': questionTextColor,
 								'textAlign': 'left',
 								'& *': {
 									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
-									fontFamily: 'inherit !important',
-									color: '#000000 !important',
+									fontFamily: `${LEARNER_TEXT_FONT_FAMILY} !important`,
+									color: `${questionTextColor} !important`,
 									textAlign: 'left !important',
+									textAlignLast: 'left !important',
+									wordSpacing: 'normal !important',
+									letterSpacing: 'normal !important',
 								},
 								'& p, & div, & span': {
 									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
-									fontFamily: 'inherit !important',
-									color: '#000000 !important',
+									fontFamily: `${LEARNER_TEXT_FONT_FAMILY} !important`,
+									color: `${questionTextColor} !important`,
 									textAlign: 'left !important',
+									textAlignLast: 'left !important',
+									wordSpacing: 'normal !important',
+									letterSpacing: 'normal !important',
 								},
 								'& img': {
 									maxWidth: '100%',
@@ -86,7 +104,8 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 								'& .pronounceable-word': {
 									cursor: enableWordAssist ? 'pointer' : 'default',
 									borderRadius: '0.2rem',
-									padding: '0 0.1rem',
+									padding: 0,
+									margin: 0,
 									transition: 'background-color 0.15s ease',
 								},
 								'& .pronounceable-word:hover': {

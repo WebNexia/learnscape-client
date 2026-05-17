@@ -16,6 +16,9 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import WordAssistPopper from '../../userCourses/WordAssistPopper';
 import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
+import { LEARNER_TEXT_FONT_FAMILY } from '../../../utils/learnerTypography';
+
+const questionTextColor = theme.palette.primary.main;
 
 const Container = styled(Box)`
 	display: flex;
@@ -108,6 +111,7 @@ const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: bo
 	cursor: pointer;
 	text-align: center;
 	font-size: 0.78rem;
+	font-family: 'DM Sans', sans-serif;
 	font-weight: 500;
 	color: #2f4d5c;
 	position: relative;
@@ -489,12 +493,17 @@ const FillInTheBlanksDragDrop = ({
 									sx={{
 										lineHeight: '2rem',
 										fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem',
-										color: '#000000',
-										'&, & *': { color: '#000000 !important' },
+										fontFamily: LEARNER_TEXT_FONT_FAMILY,
+										color: questionTextColor,
+										'&, & *': {
+											color: `${questionTextColor} !important`,
+											fontFamily: `${LEARNER_TEXT_FONT_FAMILY} !important`,
+										},
 										'& .pronounceable-word': {
 											cursor: enableWordAssist ? 'pointer' : 'default',
 											borderRadius: '0.2rem',
-											padding: '0 0.1rem',
+											padding: 0,
+											margin: 0,
 											transition: 'background-color 0.15s ease',
 										},
 										'& .pronounceable-word:hover': {
@@ -551,7 +560,10 @@ const FillInTheBlanksDragDrop = ({
 												index={index}>
 												{(provided) => (
 													<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
-														<Typography variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem' }}>
+														<Typography
+															variant='body2'
+															component='span'
+															sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
 															{response.value}
 														</Typography>
 													</Item>

@@ -182,13 +182,15 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						variant='body2'
 						sx={{
 							textAlign: 'justify',
-							fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 							lineHeight: isMobileSize ? '1.4' : '1.5',
 							marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 							width: '100%',
+							color: topAccent,
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 250)}
+
+						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 215)}
 					</Typography>
 				</CardContent>
 

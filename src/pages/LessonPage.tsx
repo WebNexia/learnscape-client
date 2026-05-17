@@ -26,6 +26,7 @@ import {
 import theme from '../themes';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { LEARNER_TEXT_FONT_FAMILY, LEARNER_RICH_TEXT_CLASS, prepareLearnerRichTextHtml } from '../utils/learnerTypography';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
@@ -238,9 +239,9 @@ const LessonPage = () => {
 
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
-	const lessonTextColor = '#000000';
-	const lessonTextFontFamily = theme.fontFamily?.main || 'Poppins';
 	const lessonPrimary = theme.palette.primary.main;
+	const lessonTextColor = lessonPrimary;
+	const lessonTextFontFamily = LEARNER_TEXT_FONT_FAMILY;
 	const lessonAccent = theme.palette.success?.main || '#1EC28B';
 	const lessonViolet = '#7C3AED';
 	const lessonCoral = '#FF6B4A';
@@ -384,7 +385,7 @@ const LessonPage = () => {
 
 	const processedLessonHtml = useMemo(() => {
 		if (!activeLesson?.text) return '';
-		return wrapWordsForHover(sanitizeHtml(decode(activeLesson.text)));
+		return wrapWordsForHover(prepareLearnerRichTextHtml(sanitizeHtml(decode(activeLesson.text))));
 	}, [activeLesson?.text]);
 
 
@@ -1276,7 +1277,7 @@ const LessonPage = () => {
 								},
 							}}>
 							<Box
-								className='rich-text-content'
+								className={`rich-text-content ${LEARNER_RICH_TEXT_CLASS}`}
 								onMouseOver={handleWordHover}
 								onMouseLeave={handleMouseLeave}
 								onTouchStart={handleWordTouchStart}
@@ -1294,8 +1295,12 @@ const LessonPage = () => {
 										width: '100%',
 										textAlign: 'left',
 										'&, & *': {
+											fontFamily: `${lessonTextFontFamily} !important`,
 											color: `${lessonTextColor} !important`,
 											textAlign: 'left !important',
+											textAlignLast: 'left !important',
+											wordSpacing: 'normal !important',
+											letterSpacing: 'normal !important',
 										},
 										'& p': { margin: '0 0 1em' },
 										'& p:last-child': { marginBottom: 0 },
@@ -1333,13 +1338,14 @@ const LessonPage = () => {
 										},
 										'& .pronounceable-word': {
 											cursor: isWordAssistEnabled ? 'pointer' : 'default',
-											borderRadius: '0.3rem',
-											padding: '0 0.15rem',
+											borderRadius: '0.2rem',
+											padding: 0,
+											margin: 0,
 											transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
 										},
 										'& .pronounceable-word:hover': {
 											backgroundColor: isWordAssistEnabled ? `${lessonViolet}22` : 'transparent',
-											boxShadow: isWordAssistEnabled ? `inset 0 -3px 0 ${lessonCoral}` : 'none',
+											boxShadow: isWordAssistEnabled ? `inset 0 -2px 0 ${lessonCoral}` : 'none',
 										},
 									}}
 								/>

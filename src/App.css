@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 * {
 	margin: 0;
@@ -31,6 +32,12 @@ a {
 .rich-text-content strong,
 .rich-text-content b {
 	font-weight: bold;
+}
+
+/* Force DM Sans on learner lesson/question bodies (beats MUI Poppins + editor inline fonts). */
+.learner-rich-text,
+.learner-rich-text * {
+	font-family: 'DM Sans', sans-serif !important;
 }
 
 .highlighted-message {
