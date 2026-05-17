@@ -8,8 +8,8 @@ import CustomTextField from '../../../forms/customFields/CustomTextField';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import AudioRecorder from '../../../userCourses/AudioRecorder';
 import { CustomAudioPlayer } from '../../../audio';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../../../firebase';
+import { db } from '../../../../firebase';
+import audioUpload from '../../../../utils/audioUpload';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
@@ -34,7 +34,7 @@ interface CreateTopicDialogProps {
 
 const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpen, setTopic }: CreateTopicDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { addNewTopic } = useContext(CommunityContext);
 
@@ -192,9 +192,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
 		try {
-			const audioRef = ref(storage, `community-topic-audio-recordings/${user?.username}-${Date.now()}.webm`);
-			await uploadBytes(audioRef, blob);
-			const downloadURL = await getDownloadURL(audioRef);
+			const orgName = organisation?.orgName || 'defaultOrg';
+			const downloadURL = await audioUpload(blob, 'TopicAudio', orgName);
 
 			setTopic((prevData) => {
 				if (prevData) {

@@ -1,6 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Slide, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Skeleton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import {
@@ -30,7 +29,9 @@ import { sanitizeHtml } from '../utils/sanitizeHtml';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
-import { useFetchUserQuestion, UserQuestionData } from '../hooks/useFetchUserQuestion';
+import { UserQuestionData } from '../hooks/useFetchUserQuestion';
+import { useLearnerLesson } from '../hooks/useLearnerLesson';
+import { useLearnerUserAnswersByLesson } from '../hooks/useLearnerUserAnswersByLesson';
 import { LessonType } from '../interfaces/enums';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -41,7 +42,6 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
-import { QuestionInterface } from '../interfaces/question';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
 import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -60,6 +60,51 @@ import InstructionalLessonsDialog from '../components/userCourses/InstructionalL
 import { useWordAssist, wrapWordsForHover } from '../hooks/useWordAssist';
 import WordAssistPopper from '../components/userCourses/WordAssistPopper';
 import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
+
+const EMPTY_LESSON: Lesson = {
+	_id: '',
+	title: '',
+	type: '',
+	imageUrl: '',
+	videoUrl: '',
+	isActive: true,
+	createdAt: '',
+	updatedAt: '',
+	text: '',
+	orgId: '',
+	questionIds: [],
+	questions: [],
+	documentIds: [],
+	documents: [],
+	clonedFromId: '',
+	clonedFromTitle: '',
+	usedInCourses: [],
+	createdBy: '',
+	updatedBy: '',
+	publishedAt: '',
+	createdByName: '',
+	updatedByName: '',
+	createdByImageUrl: '',
+	updatedByImageUrl: '',
+	createdByRole: '',
+	updatedByRole: '',
+};
+
+const mapUserAnswersToQuizState = (answers: UserQuestionData[]): QuizQuestionAnswer[] =>
+	answers.map((answer) => ({
+		questionId: answer.questionId,
+		userAnswer: answer.userAnswer,
+		audioRecordUrl: answer.audioRecordUrl,
+		videoRecordUrl: answer.videoRecordUrl,
+		teacherFeedback: answer.teacherFeedback,
+		teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
+		userMatchingPairAnswers: answer.userMatchingPairAnswers,
+		userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
+		pointsEarned: answer.pointsEarned,
+		pointsPossible: answer.pointsPossible,
+		isAutoGraded: answer.isAutoGraded,
+		partialScores: answer.partialScores,
+	}));
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -95,7 +140,6 @@ const LessonPage = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const navigate = useNavigate();
-	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
 	const { handleNextLesson, nextLessonId, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
 	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
 
@@ -136,7 +180,6 @@ const LessonPage = () => {
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
 	const [wasLessonCompletedOnMount, setWasLessonCompletedOnMount] = useState<boolean>(isLessonCompleted);
 	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
-	const [lessonType, setLessonType] = useState<string>('');
 	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
@@ -146,11 +189,12 @@ const LessonPage = () => {
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
 	const [isWordAssistEnabled, setIsWordAssistEnabled] = useState<boolean>(() => {
 		const saved = localStorage.getItem('word-assist-enabled');
-		return saved === null ? true : saved === 'true';
+		return saved === 'true';
 	});
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
+	const [questionsSessionKey, setQuestionsSessionKey] = useState(0);
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
 	const [isInstructionalLessonsDialogOpen, setIsInstructionalLessonsDialogOpen] = useState<boolean>(false);
 	const [selectedInstructionalLessonId, setSelectedInstructionalLessonId] = useState<string>('');
@@ -175,34 +219,13 @@ const LessonPage = () => {
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessonData = useMemo(() => userLessonsData ?? [], [userLessonsData]);
 
-	const [lesson, setLesson] = useState<Lesson>({
-		_id: '',
-		title: '',
-		type: '',
-		imageUrl: '',
-		videoUrl: '',
-		isActive: true,
-		createdAt: '',
-		updatedAt: '',
-		text: '',
-		orgId: '',
-		questionIds: [],
-		questions: [],
-		documentIds: [],
-		documents: [],
-		clonedFromId: '',
-		clonedFromTitle: '',
-		usedInCourses: [],
-		createdBy: '',
-		updatedBy: '',
-		publishedAt: '',
-		createdByName: '',
-		updatedByName: '',
-		createdByImageUrl: '',
-		updatedByImageUrl: '',
-		createdByRole: '',
-		updatedByRole: '',
-	});
+	const { data: lessonData, isLoading: isLessonLoading } = useLearnerLesson(lessonId || '', courseId);
+	const activeLesson = lessonData && String(lessonData._id) === String(lessonId) ? lessonData : null;
+	const lesson = activeLesson ?? EMPTY_LESSON;
+	const lessonType = lesson.type || '';
+	const isLessonContentLoading = isLessonLoading && !activeLesson;
+
+	const { data: lessonAnswersData } = useLearnerUserAnswersByLesson(lessonId || '');
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions
 
@@ -215,8 +238,12 @@ const LessonPage = () => {
 
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
-	const lessonTextColor = theme.textColor?.secondary.main || '#4D7B8B';
+	const lessonTextColor = '#000000';
 	const lessonTextFontFamily = theme.fontFamily?.main || 'Poppins';
+	const lessonPrimary = theme.palette.primary.main;
+	const lessonAccent = theme.palette.success?.main || '#1EC28B';
+	const lessonViolet = '#7C3AED';
+	const lessonCoral = '#FF6B4A';
 
 	const currentChapter = useMemo(() => {
 		if (!singleCourseUser?.chapters || !lessonId) return null;
@@ -250,19 +277,11 @@ const LessonPage = () => {
 		Boolean(courseId) &&
 		instructionalLessonsInChapter.some((l) => l._id === selectedInstructionalLessonId);
 
-	const { data: instructionalDialogLessonPayload, isFetching: isInstructionalDialogLessonFetching } = useQuery(
-		['instructionalDialogLesson', selectedInstructionalLessonId, courseId],
-		async () => {
-			const res = await axios.get(`${base_url}/lessons/${selectedInstructionalLessonId}`, {
-				params: courseId ? { courseId } : undefined,
-			});
-			return res.data as Lesson;
-		},
-		{
-			enabled: instructionalDialogSelectionValid,
-			staleTime: 5 * 60 * 1000,
-			retry: 2,
-		},
+	const instructionalDialogLessonId = instructionalDialogSelectionValid ? selectedInstructionalLessonId : '';
+	const { data: instructionalDialogLessonPayload, isFetching: isInstructionalDialogLessonFetching } = useLearnerLesson(
+		instructionalDialogLessonId,
+		courseId,
+		{ enabled: instructionalDialogSelectionValid }
 	);
 
 	const instructionalLessonsForDialog = useMemo(() => {
@@ -335,63 +354,38 @@ const LessonPage = () => {
 	useEffect(() => {
 		setIsQuestionsVisible(false);
 		setPracticeAgainMode(false);
+		setQuestionsSessionKey(0);
 	}, [lessonId]);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			if (lessonId) {
-				try {
-					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`, {
-						params: courseId ? { courseId } : undefined,
-					});
-					const lessonData = lessonResponse.data;
+		if (!activeLesson || !lessonAnswersData) return;
 
-					setLesson({
-						...lessonData,
-						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null) || [],
-					});
-					setLessonType(lessonData.type);
+		if (activeLesson.type === LessonType.QUIZ) {
+			setUserQuizAnswers(mapUserAnswersToQuizState(lessonAnswersData));
+		} else {
+			setUserAnswers(lessonAnswersData);
+		}
+	}, [activeLesson, lessonAnswersData]);
 
-					const answers = await fetchUserAnswersByLesson(lessonId);
-					if (lessonData.type === LessonType.QUIZ) {
-						setUserQuizAnswers(
-							answers?.map((answer) => ({
-								questionId: answer.questionId,
-								userAnswer: answer.userAnswer,
-								audioRecordUrl: answer.audioRecordUrl,
-								videoRecordUrl: answer.videoRecordUrl,
-								teacherFeedback: answer.teacherFeedback,
-								teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
-								userMatchingPairAnswers: answer.userMatchingPairAnswers,
-								userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
-								pointsEarned: answer.pointsEarned,
-								pointsPossible: answer.pointsPossible,
-								isAutoGraded: answer.isAutoGraded,
-								partialScores: answer.partialScores,
-							}))
-						);
-					} else {
-						setUserAnswers(answers);
-					}
-				} catch (error) {
-					console.log('Error fetching user answers:', error);
-				}
-			}
-		};
-		fetchData();
+	useEffect(() => {
+		if (!lessonId || !activeLesson || activeLesson.type !== LessonType.QUIZ || isLessonCompleted) return;
 
-		if (isQuiz && !isLessonCompleted) {
-			const savedQuizAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
-			if (savedQuizAnswers) {
-				setUserQuizAnswers(JSON.parse(savedQuizAnswers));
-				setIsQuizInProgress(true);
-			}
+		const savedQuizAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
+		if (savedQuizAnswers) {
+			setUserQuizAnswers(JSON.parse(savedQuizAnswers));
+			setIsQuizInProgress(true);
+			return;
 		}
 
-		if (isQuiz && !isLessonCompleted && userQuizAnswers && userQuizAnswers.length !== 0) {
+		if (lessonAnswersData && lessonAnswersData.length > 0) {
 			setIsQuizInProgress(true);
 		}
-	}, [lessonId, courseId, isLessonCompleted]);
+	}, [lessonId, activeLesson, isLessonCompleted, lessonAnswersData]);
+
+	const processedLessonHtml = useMemo(() => {
+		if (!activeLesson?.text) return '';
+		return wrapWordsForHover(sanitizeHtml(decode(activeLesson.text)));
+	}, [activeLesson?.text]);
 
 
 	useEffect(() => {
@@ -1063,7 +1057,16 @@ const LessonPage = () => {
 				</Slide>
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0.5rem 0 0 0', width: '100%' }}>
-				{lesson?.videoUrl && !isQuestionsVisible && (
+				{isLessonContentLoading && !isQuestionsVisible && (
+					<Box sx={{ width: isVerySmallScreen ? '80%' : '85%', mt: isMobileSize ? '7rem' : '9rem' }}>
+						<Skeleton variant='text' width='40%' height={36} />
+						<Skeleton variant='rounded' height={isMobileSize ? 180 : 280} sx={{ mt: '1rem' }} />
+						<Skeleton variant='text' sx={{ mt: '1rem' }} />
+						<Skeleton variant='text' width='92%' />
+						<Skeleton variant='text' width='88%' />
+					</Box>
+				)}
+				{activeLesson && lesson?.videoUrl && !isQuestionsVisible && (
 					<Box
 						sx={{
 							display: 'flex',
@@ -1093,7 +1096,7 @@ const LessonPage = () => {
 					</Box>
 				)}
 			</Box>
-			{lesson?.text && !isQuestionsVisible && (
+			{activeLesson && lesson?.text && !isQuestionsVisible && (
 				<Box
 					sx={{
 						display: 'flex',
@@ -1102,42 +1105,174 @@ const LessonPage = () => {
 						alignItems: 'center',
 						width: isVerySmallScreen ? '80%' : '85%',
 						margin: lesson?.videoUrl ? '1rem 0' : isSmallMobilePortrait ? '6rem 0 1rem 0' : '7rem 0 1rem 0',
+						marginTop: lesson?.videoUrl ? '2.5rem' : isSmallMobilePortrait ? '7.5rem' : '8.5rem',
+						position: 'relative',
 					}}>
 					<Box
 						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'flex-start',
-							alignItems: 'center',
 							width: '100%',
+							borderRadius: isMobileSize ? '1.15rem' : '1.5rem',
+							overflow: 'hidden',
+							position: 'relative',
+							boxShadow: `0 20px 50px rgba(1, 67, 90, 0.18), 0 0 0 1px rgba(1, 67, 90, 0.06), 0 0 80px -20px ${lessonAccent}55`,
+							'&::before': {
+								content: '""',
+								position: 'absolute',
+								inset: 0,
+								background: `linear-gradient(135deg, ${lessonPrimary}12 0%, ${lessonAccent}18 50%, ${lessonViolet}14 100%)`,
+								pointerEvents: 'none',
+							},
 						}}>
-						{!isMobileSizeSmall && (
-							<Box sx={{ width: '100%', marginBottom: '1rem', mt: !isInstructionalLesson && !isMobileSize ? '1rem' : '0' }}>
-								<Typography variant='h5' sx={{ fontSize: isRotatedMedium || isSmallScreen ? '0.85rem' : undefined }}>
-									{!isInstructionalLesson ? 'Instructions' : ''}
-								</Typography>
+						<Box
+							sx={{
+								position: 'relative',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								gap: 1,
+								flexWrap: 'wrap',
+								px: isMobileSize ? 1.5 : 2.25,
+								py: isMobileSize ? 1.5 : 2,
+								background: `linear-gradient(115deg, ${lessonPrimary} 0%, #0a6b7a 35%, ${lessonAccent} 70%, #34d399 100%)`,
+								overflow: 'hidden',
+								'&::after': {
+									content: '""',
+									position: 'absolute',
+									width: isMobileSize ? 120 : 180,
+									height: isMobileSize ? 120 : 180,
+									borderRadius: '50%',
+									background: `radial-gradient(circle, ${lessonCoral}55 0%, transparent 70%)`,
+									top: -40,
+									right: -30,
+									pointerEvents: 'none',
+								},
+							}}>
+							<Box
+								sx={{
+									position: 'absolute',
+									width: 90,
+									height: 90,
+									borderRadius: '50%',
+									background: `radial-gradient(circle, ${lessonViolet}44 0%, transparent 70%)`,
+									bottom: -50,
+									left: -20,
+									pointerEvents: 'none',
+								}}
+							/>
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: isMobileSize ? 1 : 1.5, minWidth: 0, flex: 1, position: 'relative', zIndex: 1 }}>
+								<Box
+									sx={{
+										flexShrink: 0,
+										width: isMobileSize ? 40 : 48,
+										height: isMobileSize ? 40 : 48,
+										borderRadius: isMobileSize ? '12px' : '14px',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										background: 'rgba(255, 255, 255, 0.22)',
+										border: '2px solid rgba(255, 255, 255, 0.45)',
+										color: '#fff',
+										backdropFilter: 'blur(6px)',
+									}}>
+									{isInstructionalLesson ? (
+										<MenuBook sx={{ fontSize: isMobileSize ? '1.15rem' : '1.4rem' }} />
+									) : (
+										<Article sx={{ fontSize: isMobileSize ? '1.15rem' : '1.4rem' }} />
+									)}
+								</Box>
+								<Box sx={{ minWidth: 0 }}>
+									<Typography
+										variant='subtitle1'
+										sx={{
+											fontWeight: 800,
+											fontSize: isMobileSize ? '0.9rem' : '1.05rem',
+											color: '#fff',
+											lineHeight: 1.25,
+											textShadow: '0 1px 8px rgba(0,0,0,0.15)',
+										}}>
+										{isInstructionalLesson ? 'Lesson reading' : 'Instructions'}
+									</Typography>
+									{(isInstructionalLesson ? lesson.title : !isMobileSizeSmall) && (
+										<Typography
+											variant='caption'
+											sx={{
+												display: 'block',
+												mt: 0.35,
+												color: 'rgba(255, 255, 255, 0.92)',
+												fontSize: isMobileSize ? '0.68rem' : '0.78rem',
+												overflow: 'hidden',
+												textOverflow: 'ellipsis',
+												whiteSpace: 'nowrap',
+												maxWidth: isMobileSize ? '11rem' : '26rem',
+											}}>
+											{isInstructionalLesson ? lesson.title : 'Read carefully before you start the questions'}
+										</Typography>
+									)}
+								</Box>
 							</Box>
-						)}
-						<Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: '0.35rem' }}>
-							<Tooltip title={isWordAssistEnabled ? 'Disable Pronunciation Assist' : 'Enable Pronunciation Assist'} placement='top' arrow>
-								<IconButton onClick={() => setIsWordAssistEnabled((prev) => !prev)}>
-									{!isWordAssistEnabled ? <RecordVoiceOverOutlined fontSize='small' /> : <RecordVoiceOver fontSize='small' />}
-								</IconButton>
+							<Tooltip
+								title={isWordAssistEnabled ? 'Disable pronunciation assist' : 'Enable pronunciation assist'}
+								placement='top'
+								arrow>
+								<Box
+									component='button'
+									type='button'
+									onClick={() => setIsWordAssistEnabled((prev) => !prev)}
+									sx={{
+										position: 'relative',
+										zIndex: 1,
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: 0.75,
+										flexShrink: 0,
+										px: isMobileSize ? 1.1 : 1.6,
+										py: 0.85,
+										border: '2px solid',
+										borderColor: isWordAssistEnabled ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+										borderRadius: '999px',
+										cursor: 'pointer',
+										fontFamily: lessonTextFontFamily,
+										fontSize: isMobileSize ? '0.68rem' : '0.78rem',
+										fontWeight: 700,
+										color: '#fff',
+										background: isWordAssistEnabled
+											? `linear-gradient(135deg, ${lessonViolet} 0%, ${lessonCoral} 100%)`
+											: 'rgba(255, 255, 255, 0.18)',
+										backdropFilter: 'blur(8px)',
+										boxShadow: isWordAssistEnabled ? '0 4px 16px rgba(124, 58, 237, 0.45)' : 'none',
+										transition: 'all 0.22s ease',
+										'&:hover': {
+											background: isWordAssistEnabled
+												? `linear-gradient(135deg, ${lessonViolet} 0%, ${lessonCoral} 100%)`
+												: 'rgba(255, 255, 255, 0.3)',
+											transform: 'translateY(-2px)',
+										},
+									}}>
+									{isWordAssistEnabled ? (
+										<RecordVoiceOver sx={{ fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
+									) : (
+										<RecordVoiceOverOutlined sx={{ fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
+									)}
+									{!isVerySmallScreen && (
+										<Box component='span'>{isWordAssistEnabled ? 'Pronunciation on' : 'Pronunciation'}</Box>
+									)}
+								</Box>
 							</Tooltip>
 						</Box>
 						<Box
 							sx={{
-								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-								padding: isMobileSize ? '0.75rem' : '2rem',
-								backgroundColor: theme.bgColor?.common,
-								borderRadius: '0.35rem',
-								width: '100%',
-								mt: isMobileSizeSmall ? '0.85rem' : '',
-								ml: isMobileSizeSmall ? '1rem' : '',
-								'&, & *': {
-									fontFamily: `${lessonTextFontFamily} !important`,
-									color: `${lessonTextColor} !important`,
-									lineHeight: '2 !important',
+								position: 'relative',
+								backgroundColor: '#ffffff',
+								px: isMobileSize ? 1.35 : 2.75,
+								py: isMobileSize ? 1.6 : 2.75,
+								'&::before': {
+									content: '""',
+									position: 'absolute',
+									left: 0,
+									top: 0,
+									bottom: 0,
+									width: '5px',
+									background: `linear-gradient(180deg, ${lessonPrimary} 0%, ${lessonAccent} 45%, ${lessonViolet} 75%, ${lessonCoral} 100%)`,
 								},
 							}}>
 							<Box
@@ -1146,30 +1281,65 @@ const LessonPage = () => {
 								onMouseLeave={handleMouseLeave}
 								onTouchStart={handleWordTouchStart}
 								onTouchEnd={handleWordTouchEnd}
-								onTouchCancel={handleWordTouchEnd}>
+								onTouchCancel={handleWordTouchEnd}
+								sx={{ pl: isMobileSize ? 0.75 : 1.25, width: '100%', textAlign: 'left' }}>
 								<Typography
 									component='div'
-									dangerouslySetInnerHTML={{ __html: wrapWordsForHover(sanitizeHtml(decode(lesson.text))) }}
+									dangerouslySetInnerHTML={{ __html: processedLessonHtml }}
 									sx={{
-										'lineHeight': 2,
-										'fontSize': isMobileSize ? '0.75rem' : '0.9rem',
-										'color': lessonTextColor,
-										'fontFamily': lessonTextFontFamily,
+										fontFamily: lessonTextFontFamily,
+										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+										lineHeight: 1.9,
+										color: lessonTextColor,
+										width: '100%',
+										textAlign: 'left',
+										'&, & *': {
+											color: `${lessonTextColor} !important`,
+											textAlign: 'left !important',
+										},
+										'& p': { margin: '0 0 1em' },
+										'& p:last-child': { marginBottom: 0 },
+										'& h1, & h2, & h3, & h4': {
+											color: `${lessonPrimary} !important`,
+											fontWeight: 700,
+											marginTop: '1.25em',
+											marginBottom: '0.5em',
+										},
+										'& strong, & b': { color: `${lessonTextColor} !important`, fontWeight: 700 },
+										'& ul, & ol': { paddingLeft: '1.4em', marginBottom: '1em' },
+										'& li': { marginBottom: '0.4em' },
+										'& li::marker': { color: lessonAccent },
+										'& a': {
+											color: `${lessonViolet} !important`,
+											fontWeight: 600,
+											textDecoration: 'underline',
+											textDecorationColor: `${lessonAccent}88`,
+										},
+										'& blockquote': {
+											margin: '1.1em 0',
+											padding: '0.85em 1.1em',
+											borderRadius: '0.65rem',
+											borderLeft: 'none',
+											background: `linear-gradient(90deg, ${lessonAccent}18 0%, ${lessonViolet}12 100%)`,
+											color: `${lessonTextColor} !important`,
+											boxShadow: `inset 4px 0 0 ${lessonAccent}`,
+										},
 										'& img': {
 											maxWidth: '100%',
 											height: 'auto',
-											borderRadius: '0.35rem',
-											margin: '1rem 0',
-											boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
+											borderRadius: '0.85rem',
+											margin: '1.35rem 0',
+											boxShadow: `0 12px 32px ${lessonPrimary}22, 0 0 0 3px ${lessonAccent}33`,
 										},
 										'& .pronounceable-word': {
 											cursor: isWordAssistEnabled ? 'pointer' : 'default',
-											borderRadius: '0.2rem',
-											padding: '0 0.1rem',
-											transition: 'background-color 0.15s ease',
+											borderRadius: '0.3rem',
+											padding: '0 0.15rem',
+											transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
 										},
 										'& .pronounceable-word:hover': {
-											backgroundColor: isWordAssistEnabled ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
+											backgroundColor: isWordAssistEnabled ? `${lessonViolet}22` : 'transparent',
+											boxShadow: isWordAssistEnabled ? `inset 0 -3px 0 ${lessonCoral}` : 'none',
 										},
 									}}
 								/>
@@ -1216,6 +1386,10 @@ const LessonPage = () => {
 					<CustomSubmitButton
 						onClick={() => {
 							setPracticeAgainMode(false);
+							if (isLessonCompleted) {
+								setCurrentQuestionNumber(1);
+								setQuestionsSessionKey((key) => key + 1);
+							}
 							setIsQuestionsVisible(true);
 							if (isQuiz && !isLessonCompleted) setIsQuizInProgress(true);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1237,6 +1411,8 @@ const LessonPage = () => {
 							<CustomSubmitButton
 								onClick={() => {
 									setPracticeAgainMode(true);
+									setCurrentQuestionNumber(1);
+									setQuestionsSessionKey((key) => key + 1);
 									setIsQuestionsVisible(true);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}
@@ -1333,6 +1509,7 @@ const LessonPage = () => {
 							minHeight: 'calc(90vh)',
 						}}>
 						<Questions
+							key={questionsSessionKey}
 							questions={lesson?.questions}
 							lessonType={lessonType}
 							userAnswers={userAnswers}

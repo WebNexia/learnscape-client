@@ -28,7 +28,7 @@ const InstructionalLessonsDialog = ({
 	lessons,
 	selectedLessonId,
 	onSelectLesson,
-	enableWordAssist = true,
+	enableWordAssist = false,
 	isSelectedLessonBodyLoading = false,
 }: InstructionalLessonsDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

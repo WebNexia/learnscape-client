@@ -98,6 +98,14 @@ const CoursePageBanner = ({
 		return { completed, total, percentage };
 	}, [isEnrolledStatus, course?.chapters, parsedUserLessons]);
 
+	const hasCourseMaterials = useMemo(() => {
+		const docsWithUrl = (course.documents ?? []).filter(
+			(doc) => doc && doc._id && typeof doc.documentUrl === 'string' && doc.documentUrl.trim() !== ''
+		);
+		if (docsWithUrl.length > 0) return true;
+		return (course.documentIds?.length ?? 0) > 0;
+	}, [course.documents, course.documentIds]);
+
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const location = useGeoLocation();
@@ -125,8 +133,23 @@ const CoursePageBanner = ({
 	};
 
 	const closeIntroVideoModal = () => {
-		markIntroVideoSeenThisSession();
+		if (fromHomePage) {
+			markIntroVideoSeenThisSession();
+		}
 		setIsIntroVideoOpen(false);
+	};
+
+	const introVideoButtonSx = {
+		fontSize: isMobileSize ? '0.75rem' : '1rem',
+		padding: isMobileSize ? '0.5rem 1rem' : '1rem 1.25rem',
+		textTransform: 'none' as const,
+		fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+		borderRadius: fromHomePage ? '0.75rem' : undefined,
+		color: theme.textColor?.common.main,
+		'&:hover': {
+			borderColor: '#fff',
+			backgroundColor: 'rgba(255,255,255,0.08)',
+		},
 	};
 
 	const vertical = 'top';
@@ -389,20 +412,41 @@ const CoursePageBanner = ({
 								variant='outlined'
 								onClick={() => setIsIntroVideoOpen(true)}
 								startIcon={<PlayCircleOutlined />}
-								sx={{
-									fontSize: isMobileSize ? '0.75rem' : '1rem',
-									padding: isMobileSize ? '0.5rem 1rem' : '1rem 1.25rem',
-									textTransform: 'none',
-									fontFamily: 'Varela Round',
-									borderColor: 'rgba(255,255,255,0.85)',
-									color: theme.textColor?.common.main,
-									borderRadius: '0.75rem',
-									'&:hover': {
-										borderColor: '#fff',
-										backgroundColor: 'rgba(255,255,255,0.08)',
-									},
-								}}>
+								sx={introVideoButtonSx}>
 								Tanıtımı İzle
+							</CustomSubmitButton>
+						</Box>
+					) : !fromHomePage && introVideoUrl ? (
+						<Box
+							sx={{
+								position: 'absolute',
+								bottom: isRotated ? 60 : '1.5rem',
+								left: '1rem',
+								display: 'flex',
+								flexDirection: 'row',
+								alignItems: 'center',
+								gap: { xs: 1, sm: 1.5 },
+								flexWrap: 'wrap',
+								maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
+							}}>
+							<CustomSubmitButton
+								variant='contained'
+								onClick={handleEnroll}
+								sx={{
+									'width': 'fit-content',
+									padding: isMobileSize ? '0.5rem 1rem' : '1rem 1.25rem',
+									'fontSize': isMobileSize ? '0.75rem' : '1rem',
+									'fontFamily': theme.fontFamily?.main,
+									'pointerEvents': isProcessing ? 'none' : 'auto',
+								}}>
+								{isProcessing ? 'Processing...' : 'Register'}
+							</CustomSubmitButton>
+							<CustomSubmitButton
+								variant='outlined'
+								onClick={() => setIsIntroVideoOpen(true)}
+								startIcon={<PlayCircleOutlined />}
+								sx={introVideoButtonSx}>
+								Watch Intro
 							</CustomSubmitButton>
 						</Box>
 					) : (
@@ -467,7 +511,7 @@ const CoursePageBanner = ({
 							alignItems: 'center',
 							gap: 1,
 						}}>
-						{course.documentIds.length > 0 && (
+						{hasCourseMaterials && (
 							<Typography
 								onClick={() => {
 									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -480,8 +524,22 @@ const CoursePageBanner = ({
 									textDecoration: 'underline',
 									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								}}>
-								{fromHomePage ? 'Kurs Materyalleri' : 'Course Materials'}
+								{fromHomePage ? 'Kurs Materyalleri' : 'Materials'}
 							</Typography>
+						)}
+
+						{introVideoUrl && (
+							<CustomSubmitButton
+								variant='outlined'
+								onClick={() => setIsIntroVideoOpen(true)}
+								startIcon={<PlayCircleOutlined />}
+								sx={{
+									...introVideoButtonSx,
+									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : introVideoButtonSx.fontSize,
+									padding: isVerySmallScreen || isRotated ? '0.35rem 0.75rem' : introVideoButtonSx.padding,
+								}}>
+								{fromHomePage ? 'Tanıtımı İzle' : 'Watch Intro'}
+							</CustomSubmitButton>
 						)}
 
 						{/* Analytics icon - visible for enrolled courses; disabled until course is completed */}
@@ -623,8 +681,7 @@ const CoursePageBanner = ({
 				/>
 			</Box>
 
-			{/* LP tanıtım videosu */}
-			{fromHomePage && introVideoUrl && (
+			{introVideoUrl && (
 				<CustomDialog
 					openModal={isIntroVideoOpen}
 					closeModal={closeIntroVideoModal}
@@ -649,7 +706,7 @@ const CoursePageBanner = ({
 								<Box
 									component='iframe'
 									src={isIntroVideoOpen ? introEmbedSrc : undefined}
-									title='Kurs tanıtım videosu'
+									title={fromHomePage ? 'Kurs tanıtım videosu' : 'Course intro video'}
 									allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 									allowFullScreen
 									sx={{
@@ -664,8 +721,15 @@ const CoursePageBanner = ({
 							</Box>
 						) : (
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
-								<Typography variant='body2' sx={{ fontFamily: 'Varela Round', color: theme.textColor?.primary?.main }}>
-									Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.
+								<Typography
+									variant='body2'
+									sx={{
+										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+										color: theme.textColor?.primary?.main,
+									}}>
+									{fromHomePage
+										? 'Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.'
+										: 'This video cannot be embedded here; you can open it in a new tab.'}
 								</Typography>
 								<Button
 									component='a'
@@ -673,14 +737,19 @@ const CoursePageBanner = ({
 									target='_blank'
 									rel='noopener noreferrer'
 									variant='contained'
-									sx={{ fontFamily: 'Varela Round', textTransform: 'none', alignSelf: 'flex-start', borderRadius: '0.75rem' }}>
-									Videoyu aç
+									sx={{
+										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+										textTransform: 'none',
+										alignSelf: 'flex-start',
+										borderRadius: fromHomePage ? '0.75rem' : undefined,
+									}}>
+									{fromHomePage ? 'Videoyu aç' : 'Open video'}
 								</Button>
 							</Box>
 						)}
 					</DialogContent>
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
-						<CustomCancelButton onClick={closeIntroVideoModal}>Kapat</CustomCancelButton>
+						<CustomCancelButton onClick={closeIntroVideoModal}>{fromHomePage ? 'Kapat' : 'Close'}</CustomCancelButton>
 					</Box>
 				</CustomDialog>
 			)}

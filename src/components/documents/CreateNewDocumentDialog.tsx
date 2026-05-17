@@ -115,6 +115,7 @@ const CreateNewDocumentDialog = ({
 								}}
 								imageUrlValue={singleDocument?.imageUrl || ''}
 								imageFolderName='DocumentImages'
+								scopedEntityId={singleDocument?._id}
 								enterImageUrl={enterDocImageUrl}
 								setEnterImageUrl={setEnterDocImageUrl}
 							/>
@@ -146,8 +147,9 @@ const CreateNewDocumentDialog = ({
 										setSingleDocument({ ...singleDocument, samplePageImageUrls: urls });
 									}
 								}}
-								imageFolderName="DocumentImages"
-								label="Sample Page Images"
+								imageFolderName='DocumentSampleImages'
+								scopedEntityId={singleDocument?._id}
+								label='Sample Page Images'
 								onRemoveUrl={(url) => onDeleteSamplePageImagesFromStorage?.([url])}
 							/>
 						</Box>

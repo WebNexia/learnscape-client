@@ -6,8 +6,7 @@ import CustomDialogActions from '../../dialog/CustomDialogActions';
 import CustomTextField from '../../../forms/customFields/CustomTextField';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import AudioRecorder from '../../../userCourses/AudioRecorder';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../../firebase';
+import audioUpload from '../../../../utils/audioUpload';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
@@ -30,7 +29,7 @@ interface EditTopicDialogProps {
 
 const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, setTopic }: EditTopicDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { updateTopics } = useContext(CommunityContext);
 
@@ -77,9 +76,8 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
 		try {
-			const audioRef = ref(storage, `community-topic-audio-recordings/${user?.username}-${Date.now()}.webm`);
-			const uploadTask = await uploadBytes(audioRef, blob);
-			const downloadURL = await getDownloadURL(uploadTask.ref);
+			const orgName = organisation?.orgName || 'defaultOrg';
+			const downloadURL = await audioUpload(blob, 'TopicAudio', orgName, topic._id);
 			setTopic((prevData) => ({ ...prevData, audioUrl: downloadURL }));
 		} catch (error) {
 			console.log(error);
@@ -326,6 +324,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							onChangeImgUrl={(e) => setTopic((prevData) => ({ ...prevData, imageUrl: e.target.value }))}
 							imageUrlValue={topic?.imageUrl}
 							imageFolderName='TopicImages'
+							scopedEntityId={topic._id}
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
 							isImageUploadLimitReached={getRemainingImageUploads() <= 0}

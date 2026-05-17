@@ -115,7 +115,7 @@ const PracticeQuestion = ({
 	closeAiResponseDrawer,
 	isSoundMuted = false,
 	practiceAgainMode = false,
-	enableWordAssist = true,
+	enableWordAssist = false,
 	lessonText,
 	chapterName,
 }: PracticeQuestionProps) => {
@@ -596,7 +596,7 @@ const PracticeQuestion = ({
 				position: 'relative',
 				minHeight: 'calc(95vh)',
 				height: 'fit-content',
-				paddingBottom: '8rem',
+				paddingBottom: isTranslate ? (isMobileSize ? '4rem' : '6rem') : '8rem',
 			}}>
 			{!isFlipCard && (
 				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
@@ -759,6 +759,7 @@ const PracticeQuestion = ({
 														? '0rem auto 0 auto'
 														: '0rem auto',
 									gap: '1.5rem',
+									pb: isMobileSize ? '4rem' : '5rem',
 								}}>
 								{question.translatePairs?.map((pair, index) => {
 									const pairId = pair.id || index.toString();
@@ -1136,7 +1137,6 @@ const PracticeQuestion = ({
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					position: 'absolute',
-					mt: isMobileSize ? '1.5rem' : '2rem',
 					width: '50%',
 					minWidth: isMobileSize ? '11.5rem' : '14rem',
 					left: '50%',
@@ -1307,10 +1307,10 @@ const PracticeQuestion = ({
 										: isTranslate
 											? checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
 											: (!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-												!isCardFlipped &&
-												!allPairsMatchedFITBDragDrop &&
-												!allPairsMatchedFITBTyping &&
-												!allPairsMatchedMatching
+											!isCardFlipped &&
+											!allPairsMatchedFITBDragDrop &&
+											!allPairsMatchedFITBTyping &&
+											!allPairsMatchedMatching
 						}>
 						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>

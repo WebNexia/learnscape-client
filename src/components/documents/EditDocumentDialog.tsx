@@ -116,6 +116,7 @@ const EditDocumentDialog = ({
 								}}
 								imageUrlValue={document?.imageUrl || ''}
 								imageFolderName='DocumentImages'
+								scopedEntityId={document?._id}
 								enterImageUrl={enterDocImageUrl}
 								setEnterImageUrl={setEnterDocImageUrl}
 							/>
@@ -147,8 +148,9 @@ const EditDocumentDialog = ({
 										setDocument({ ...document, samplePageImageUrls: urls });
 									}
 								}}
-								imageFolderName="DocumentImages"
-								label="Sample Page Images"
+								imageFolderName='DocumentSampleImages'
+								scopedEntityId={document?._id}
+								label='Sample Page Images'
 								onRemoveUrl={(url) => onDeleteSamplePageImagesFromStorage?.([url])}
 							/>
 						</Box>

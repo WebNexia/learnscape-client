@@ -44,7 +44,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 			sx={{
 				display: !isEnrolled && displayMyCourses ? 'none' : 'block',
 				width: isMobileSize ? '17rem' : '21rem',
-				height: isMobileSize ? '22rem' : '28rem',
+				height: isMobileSize ? '23rem' : '29rem',
 				p: '4px',
 				borderRadius: '0.75rem',
 				boxSizing: 'border-box',
@@ -137,21 +137,39 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 					/>
 				)} */}
 
-				<CardMedia
-					sx={{ height: isMobileSize ? '7rem' : '10rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'cover' }}
-					image={
-						course.imageUrl ||
-						'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-					}
-				/>
+				<Box
+					sx={{
+						width: '100%',
+						height: isMobileSize ? '10rem' : '13rem',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						backgroundColor: '#f4f7fa',
+						overflow: 'hidden',
+					}}>
+					<CardMedia
+						component='img'
+						sx={{
+							width: '100%',
+							height: '100%',
+							objectFit: 'cover',
+							objectPosition: 'center',
+						}}
+						image={
+							course.imageUrl ||
+							'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+						}
+						alt={course.title}
+					/>
+				</Box>
 				<CardContent sx={{ padding: '1rem 1.5rem' }}>
-					<Typography
+					{/* <Typography
 						sx={{
 							fontSize: {
 								xs: '0.8rem',
 								sm: '0.8rem',
-								md: course?.title?.length > 35 ? '0.95rem' : '1rem',
-								lg: course?.title?.length > 35 ? '1rem' : '1.1rem',
+								md: course?.title?.length > 35 ? '0.9rem' : '0.95rem',
+								lg: course?.title?.length > 35 ? '0.9rem' : '1rem',
 							},
 							textAlign: 'center',
 							color: fromHomePage ? 'black' : theme.palette.primary.main,
@@ -159,18 +177,18 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							fontWeight: fromHomePage ? 900 : 400,
 						}}>
 						{course.title.toUpperCase()}
-					</Typography>
+					</Typography> */}
 					<Typography
 						variant='body2'
 						sx={{
 							textAlign: 'justify',
-							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 							lineHeight: isMobileSize ? '1.4' : '1.5',
 							marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 							width: '100%',
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled ? 125 : 175)}
+						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 250)}
 					</Typography>
 				</CardContent>
 

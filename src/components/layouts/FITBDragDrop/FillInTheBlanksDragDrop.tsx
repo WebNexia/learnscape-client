@@ -489,6 +489,8 @@ const FillInTheBlanksDragDrop = ({
 									sx={{
 										lineHeight: '2rem',
 										fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem',
+										color: '#000000',
+										'&, & *': { color: '#000000 !important' },
 										'& .pronounceable-word': {
 											cursor: enableWordAssist ? 'pointer' : 'default',
 											borderRadius: '0.2rem',

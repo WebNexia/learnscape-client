@@ -39,6 +39,8 @@ interface ResourcesContextTypes {
 
 	// Access
 	accessInfo: ResourceAccessInfo | null;
+	resourcesAccessLoading: boolean;
+	resourcesAccessDenied: boolean;
 	checkAccess: () => Promise<ResourceAccessInfo>;
 
 	// Admin mutations
@@ -236,13 +238,22 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		}
 	}, [isAuthenticated, base_url]);
 
+	const { data: accessInfo, isLoading: accessInfoLoading } = useQuery(['resourceAccess', orgId], checkAccess, {
+		enabled: !!orgId && isAuthenticated,
+		staleTime: 5 * 60 * 1000,
+		cacheTime: 30 * 60 * 1000,
+	});
+
+	const learnerResourcesAccessDenied = isLearner && accessInfo !== undefined && !accessInfo.canAccess;
+	const canFetchResourcesData = enabled && (!isLearner || accessInfo?.canAccess === true);
+
 	// React Query hooks for folders
 	const {
 		data: folders,
 		isLoading: foldersLoading,
 		isError: foldersError,
 	} = useQuery(['resourceFolders', orgId, foldersPageNumber], () => fetchFolders(foldersPageNumber), {
-		enabled: !!orgId && enabled,
+		enabled: !!orgId && canFetchResourcesData,
 		staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 		cacheTime: 30 * 60 * 1000,
 		refetchOnMount: true,
@@ -258,20 +269,13 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		['resourceItems', orgId, currentFolderId || 'all', itemsPageNumber],
 		() => fetchItems(currentFolderId || undefined, itemsPageNumber),
 		{
-			enabled: !!orgId && enabled,
+			enabled: !!orgId && canFetchResourcesData,
 			staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 			cacheTime: 30 * 60 * 1000,
 			refetchOnMount: true,
 			refetchOnWindowFocus: false, // Consistent with other admin pages
 		}
 	);
-
-	// Access info query
-	const { data: accessInfo } = useQuery(['resourceAccess', orgId], checkAccess, {
-		enabled: !!orgId && isAuthenticated,
-		staleTime: 5 * 60 * 1000,
-		cacheTime: 30 * 60 * 1000,
-	});
 
 	// Admin mutations
 	const createFolderMutation = useMutation(
@@ -399,6 +403,8 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 
 				// Access
 				accessInfo: accessInfo || null,
+				resourcesAccessLoading: isLearner && accessInfoLoading,
+				resourcesAccessDenied: learnerResourcesAccessDenied,
 				checkAccess,
 
 				// Admin mutations

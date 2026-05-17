@@ -304,6 +304,7 @@ const CourseDetailsEditBox = ({
 							}}
 							imageUrlValue={singleCourseBeforeSave?.imageUrl || ''}
 							imageFolderName='CourseImages'
+							scopedEntityId={singleCourseBeforeSave?._id}
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
 						/>

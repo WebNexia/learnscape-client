@@ -16,6 +16,8 @@ interface GroupChatModalProps {
 	groupName: string;
 	groupImageUrl: string;
 	enterGroupImageUrl: boolean;
+	/** Pre-generated chat id for scoped GroupImages/{chatId}/ uploads before Firestore create */
+	scopedChatId?: string;
 	selectedGroupUsers: User[];
 	groupSearchValue: string;
 
@@ -23,7 +25,7 @@ interface GroupChatModalProps {
 	blockedUsers?: string[];
 	onCloseModal: () => void;
 	onGroupNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-	onGroupImageUpload: (url: string) => void;
+	onGroupImageUpload: (url: string) => void | Promise<void>;
 	onGroupImageUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onEnterGroupImageUrlChange: (value: boolean) => void;
 	onGroupUserSelection: (user: User) => void;
@@ -36,6 +38,7 @@ const GroupChatModal = ({
 	createGroupModalOpen,
 	groupName,
 	groupImageUrl,
+	scopedChatId,
 	selectedGroupUsers,
 	groupSearchValue,
 
@@ -105,6 +108,7 @@ const GroupChatModal = ({
 					onChangeImgUrl={onGroupImageUrlChange}
 					imageUrlValue={groupImageUrl}
 					imageFolderName='GroupImages'
+					scopedEntityId={scopedChatId}
 					enterImageUrl={enterImageUrl}
 					setEnterImageUrl={setEnterImageUrl}
 				/>

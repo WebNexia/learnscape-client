@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { doc, collection, writeBatch, arrayUnion, arrayRemove, getDocs, getDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
+import { cleanupGroupChatImages } from '../utils/groupImageStorage';
 import { User } from '../interfaces/user';
 import { Chat, Message } from '../pages/Messages';
 
@@ -30,7 +31,7 @@ interface UseChatActionsProps {
 interface UseChatActionsReturn {
 	// Chat creation
 	createNewChat: (selectedUser: User) => Promise<'success' | 'blocked'>;
-	createGroupChat: (groupName: string, groupImageUrl: string, selectedUsers: User[]) => Promise<void>;
+	createGroupChat: (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[]) => Promise<void>;
 
 	// Chat management
 	handleHideChat: (chatId: string) => Promise<void>;
@@ -181,12 +182,12 @@ export const useChatActions = ({
 
 	// Create group chat
 	const createGroupChat = useCallback(
-		async (groupName: string, groupImageUrl: string, selectedUsers: User[]) => {
-			if (!user?.firebaseUserId) return;
+		async (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[]) => {
+			if (!user?.firebaseUserId || !chatId) return;
 
 			const allParticipants = [user, ...selectedUsers];
 			const participantIds = allParticipants.map((p) => p.firebaseUserId);
-			const chatId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+			const trimmedGroupImageUrl = groupImageUrl.trim() || '';
 			const chatRef = doc(db, 'chats', chatId);
 
 			try {
@@ -197,7 +198,7 @@ export const useChatActions = ({
 					participants: participantIds,
 					chatType: 'group',
 					groupName: groupName.trim(),
-					groupImageUrl: groupImageUrl.trim() || '',
+					groupImageUrl: trimmedGroupImageUrl,
 					createdBy: user.firebaseUserId,
 					lastMessage: {
 						text: 'Group chat created',
@@ -210,6 +211,14 @@ export const useChatActions = ({
 
 				await batch.commit();
 
+				if (trimmedGroupImageUrl) {
+					try {
+						await cleanupGroupChatImages(chatId, trimmedGroupImageUrl, null);
+					} catch (cleanupErr) {
+						console.warn('Group image storage cleanup failed on create:', cleanupErr);
+					}
+				}
+
 				// Set as active chat
 				const newChat: Chat = {
 					chatId,
@@ -220,7 +229,7 @@ export const useChatActions = ({
 						role: p.role,
 					})),
 					groupName: groupName.trim(),
-					groupImageUrl: groupImageUrl.trim() || '',
+					groupImageUrl: trimmedGroupImageUrl,
 					chatType: 'group',
 					createdBy: user.firebaseUserId,
 					lastMessage: {
@@ -258,6 +267,9 @@ export const useChatActions = ({
 				const chatRef = doc(db, 'chats', chatId);
 				const batch = writeBatch(db);
 
+				const previousGroupImageUrl = activeChat.groupImageUrl || '';
+				const newGroupImageUrl = groupImageUrl.trim() || '';
+
 				const currentParticipants = activeChat.participants?.filter((p) => !removedMembers.includes(p.firebaseUserId))?.map((p) => p.firebaseUserId);
 
 				const newParticipants = selectedUsers.map((u) => u.firebaseUserId);
@@ -270,7 +282,7 @@ export const useChatActions = ({
 					participants: allParticipants,
 					removedParticipants: updatedRemovedParticipants,
 					groupName: groupName.trim(),
-					groupImageUrl: groupImageUrl.trim() || '',
+					groupImageUrl: newGroupImageUrl,
 				});
 
 				// ✅ Add system messages for NEW members — but still in the same batch (1 write total!)
@@ -288,6 +300,14 @@ export const useChatActions = ({
 				});
 
 				await batch.commit(); // ✅ ONE WRITE ONLY
+
+				if (newGroupImageUrl !== previousGroupImageUrl) {
+					try {
+						await cleanupGroupChatImages(chatId, newGroupImageUrl || null, previousGroupImageUrl || null);
+					} catch (cleanupErr) {
+						console.warn('Group image storage cleanup failed on update:', cleanupErr);
+					}
+				}
 
 				// ✅ Local UI update — same logic as before
 				const finalParticipants = [
@@ -307,7 +327,7 @@ export const useChatActions = ({
 				const updatedChat: Chat = {
 					...activeChat,
 					groupName: groupName.trim(),
-					groupImageUrl: groupImageUrl.trim() || '',
+					groupImageUrl: newGroupImageUrl,
 					participants: uniqueParticipantObjects,
 					removedParticipants: updatedRemovedParticipants,
 				};
@@ -333,6 +353,10 @@ export const useChatActions = ({
 				const chatRef = doc(db, 'chats', chatId);
 				const messagesRef = collection(db, 'chats', chatId, 'messages');
 
+				const chatSnap = await getDoc(chatRef);
+				const groupImageUrl =
+					chatSnap.exists() && typeof chatSnap.data()?.groupImageUrl === 'string' ? chatSnap.data().groupImageUrl : '';
+
 				const messagesSnapshot = await getDocs(messagesRef);
 				// Collect image/video URLs and delete from Firebase Storage before removing Firestore docs
 				const urls: string[] = [];
@@ -342,6 +366,12 @@ export const useChatActions = ({
 					if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
 				});
 				if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
+
+				try {
+					await cleanupGroupChatImages(chatId, null, groupImageUrl || null);
+				} catch (cleanupErr) {
+					console.warn('Group image storage cleanup failed on delete:', cleanupErr);
+				}
 
 				const batch = writeBatch(db);
 				messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
@@ -433,6 +463,8 @@ export const useChatActions = ({
 
 				// ✅ CASE 1: LAST active user → MUST DELETE ALL MESSAGES FIRST (rule-safe)
 				if (activeAfter.length === 0) {
+					const groupImageUrl = typeof chatData.groupImageUrl === 'string' ? chatData.groupImageUrl : '';
+
 					const messagesSnapshot = await getDocs(messagesRef);
 					// Delete uploaded files from Firebase Storage before removing Firestore docs
 					const urls: string[] = [];
@@ -442,6 +474,12 @@ export const useChatActions = ({
 						if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
 					});
 					if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
+
+					try {
+						await cleanupGroupChatImages(chatId, null, groupImageUrl || null);
+					} catch (cleanupErr) {
+						console.warn('Group image storage cleanup failed on leave (last user):', cleanupErr);
+					}
 
 					const batch = writeBatch(db);
 					messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));

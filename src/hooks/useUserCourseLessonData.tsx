@@ -7,6 +7,8 @@ import { UserCourseLessonDataContext, UserLessonDataStorage } from '../contexts/
 import { useAuth } from './useAuth';
 import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
 import { useUserLessonsForCourse } from './useUserLessonsForCourse';
+import { learnerLessonQueryKey } from './useLearnerLesson';
+import { learnerUserAnswersByLessonQueryKey } from './useLearnerUserAnswersByLesson';
 
 export const useUserCourseLessonData = () => {
 	const { lessonId, courseId, userCourseId } = useParams<{ lessonId: string; courseId: string; userCourseId: string }>();
@@ -58,6 +60,12 @@ export const useUserCourseLessonData = () => {
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
 
+	const invalidateLearnerLessonPageCaches = useCallback(async () => {
+		if (!lessonId) return;
+		await queryClient.invalidateQueries(learnerUserAnswersByLessonQueryKey(lessonId));
+		await queryClient.invalidateQueries(learnerLessonQueryKey(lessonId, courseId));
+	}, [queryClient, lessonId, courseId]);
+
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
 		const isCompleted = searchParams.get('isCompleted');
 		return isCompleted ? JSON.parse(isCompleted) : false;
@@ -100,11 +108,12 @@ export const useUserCourseLessonData = () => {
 
 				// Invalidate cache to refresh data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+				await invalidateLearnerLessonPageCaches();
 			} catch (error) {
 				console.error('Failed to update question index:', error);
 			}
 		},
-		[userLessonId, courseId, user?._id, base_url, queryClient]
+		[userLessonId, courseId, user?._id, base_url, queryClient, invalidateLearnerLessonPageCaches]
 	);
 
 	// Function to get last question index
@@ -128,11 +137,12 @@ export const useUserCourseLessonData = () => {
 			if (existingLessonResponse.data && existingLessonResponse.data.length > 0) {
 				// Invalidate cache to refresh lesson data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user._id]);
+				await invalidateLearnerLessonPageCaches();
 			}
 		} catch (fallbackError) {
 			console.error('Fallback also failed:', fallbackError);
 		}
-	}, [nextLessonId, user?._id, courseId, orgId, base_url, queryClient, parsedUserCourseData]);
+	}, [nextLessonId, user?._id, courseId, orgId, base_url, queryClient, parsedUserCourseData, invalidateLearnerLessonPageCaches]);
 
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
@@ -183,6 +193,7 @@ export const useUserCourseLessonData = () => {
 
 				// Invalidate cache to refresh lesson data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+				await invalidateLearnerLessonPageCaches();
 
 				// Trigger dashboard sync when lesson is completed
 				dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
@@ -270,6 +281,7 @@ export const useUserCourseLessonData = () => {
 						if (responseUserLesson && responseUserLesson.data && responseUserLesson.data._id) {
 							// Invalidate cache to refresh lesson data
 							await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+							await invalidateLearnerLessonPageCaches();
 						} else {
 							console.error('Failed to get userLessonId from the response:', responseUserLesson);
 							// Fallback: try to fetch existing lesson data from server
@@ -357,6 +369,7 @@ export const useUserCourseLessonData = () => {
 		refreshDashboard,
 		singleCourseUser,
 		lessonId,
+		invalidateLearnerLessonPageCaches,
 	]);
 
 	// Function to update in-progress lessons
@@ -371,10 +384,13 @@ export const useUserCourseLessonData = () => {
 			}
 			// Invalidate cache to refresh lesson data
 			await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+			if (lessonId) {
+				await queryClient.invalidateQueries(learnerUserAnswersByLessonQueryKey(lessonId));
+			}
 		} catch (error) {
 			console.error('Failed to update in-progress lessons', error);
 		}
-	}, [base_url, parsedUserLessonData, courseId, user?._id, queryClient]);
+	}, [base_url, parsedUserLessonData, courseId, user?._id, queryClient, lessonId]);
 
 	return {
 		isLessonCompleted,

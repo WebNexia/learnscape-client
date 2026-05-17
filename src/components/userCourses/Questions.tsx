@@ -40,19 +40,31 @@ const Questions: React.FC<QuestionsProps> = ({
 	isSoundMuted = false,
 	onQuestionChange,
 	practiceAgainMode = false,
-	enableWordAssist = true,
+	enableWordAssist = false,
 	lessonText,
 	chapterName,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted, updateLastQuestion } = useUserCourseLessonData();
 	const filteredQuestions = questions?.filter((question) => question !== null && question !== undefined) ?? [];
 	const numberOfQuestions = filteredQuestions.length;
-	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(isLessonCompleted ? 1 : getLastQuestion);
+	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(() => {
+		if (practiceAgainMode || isLessonCompleted) return 1;
+		return getLastQuestion();
+	});
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const { lessonId } = useParams();
 
+	// Practice Again always starts at question 1 (Review uses questionsSessionKey remount in LessonPage)
+	useEffect(() => {
+		if (practiceAgainMode) {
+			setDisplayedQuestionNumber(1);
+			setShowQuestionSelector(false);
+		}
+	}, [practiceAgainMode]);
+
 	// When lesson changes or question list changes, sync displayed index (e.g. after questions were deleted)
 	useEffect(() => {
+		if (practiceAgainMode) return;
 		if (isLessonCompleted) {
 			setDisplayedQuestionNumber(1);
 		} else {

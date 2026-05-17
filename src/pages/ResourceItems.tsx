@@ -12,6 +12,7 @@ import CreateResourceItemDialog from '../components/resources/CreateResourceItem
 import EditResourceItemDialog from '../components/resources/EditResourceItemDialog';
 import ResourceItemCard from '../components/resources/ResourceItemCard';
 import ResourcesSkeleton from '../components/layouts/skeleton/ResourcesSkeleton';
+import ResourcesAccessMessage from '../components/resources/ResourcesAccessMessage';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
@@ -41,6 +42,8 @@ const ResourceItems = () => {
 		createItem,
 		updateItem,
 		deleteItem,
+		resourcesAccessDenied,
+		resourcesAccessLoading,
 	} = useContext(ResourcesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -240,6 +243,14 @@ const ResourceItems = () => {
 		<AdminPageErrorBoundary pageName={currentFolder ? `${currentFolder.name} - Resources` : 'Resource Items'}>
 			<DashboardPagesLayout pageName={currentFolder ? `${currentFolder.name}` : 'Resources'} customSettings={{ justifyContent: 'flex-start' }}>
 				<Box sx={{ width: '100%', height: '100%' }}>
+					{resourcesAccessLoading ? (
+						<Box sx={{ px: 2, pt: 2 }}>
+							<ResourcesSkeleton isItems={true} />
+						</Box>
+					) : resourcesAccessDenied ? (
+						<ResourcesAccessMessage />
+					) : (
+						<>
 					<FilterSearchRow
 						filterValue={filterValue}
 						onFilterChange={handleFilterChange}
@@ -342,9 +353,13 @@ const ResourceItems = () => {
 						<CustomTablePagination count={itemsNumberOfPages} page={itemsCurrentPage} onChange={handlePageChange} />
 						</Box>
 					</Box>
+						</>
+					)}
 				</Box>
 
 				{/* Dialogs */}
+				{!resourcesAccessDenied && (
+				<>
 				<CreateResourceItemDialog
 					isOpen={isCreateItemOpen}
 					onClose={() => {
@@ -398,6 +413,8 @@ const ResourceItems = () => {
 						actionSx={{ mb: '0.5rem' }}
 					/>
 				</CustomDialog>
+				</>
+				)}
 
 				{/* Snackbar */}
 				<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>

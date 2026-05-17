@@ -1,11 +1,11 @@
-import { CloudUpload } from '@mui/icons-material';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { Box, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
+// import { CloudUpload } from '@mui/icons-material';
+// import LoadingButton from '@mui/lab/LoadingButton';
+import { Box, FormControl, /* IconButton, Input, Tooltip, */ Typography } from '@mui/material';
 import React, { ChangeEvent, useContext } from 'react';
-import CustomErrorMessage from '../customFields/CustomErrorMessage';
+// import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
-import useVideoUpload from '../../../hooks/useVideoUpload';
-import theme from '../../../themes';
+// import useVideoUpload from '../../../hooks/useVideoUpload';
+// import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface HandleVideoUploadURLProps {
@@ -19,30 +19,33 @@ interface HandleVideoUploadURLProps {
 }
 
 const HandleVideoUploadURL = ({
-	onVideoUploadLogic,
+	onVideoUploadLogic: _onVideoUploadLogic,
 	onChangeVideoUrl,
-	setEnterVideoUrl,
+	setEnterVideoUrl: _setEnterVideoUrl,
 	videoUrlValue,
-	videoFolderName,
-	enterVideoUrl,
+	videoFolderName: _videoFolderName,
+	enterVideoUrl: _enterVideoUrl,
 	label = 'Video',
 }: HandleVideoUploadURLProps) => {
-	const { videoUpload, isVideoSizeLarge, handleVideoChange, resetVideoUpload, handleVideoUpload, isVideoLoading } = useVideoUpload();
+	// Upload disabled for now — URL entry only (re-enable when Firebase video upload is needed again)
+	// const { videoUpload, isVideoSizeLarge, handleVideoChange, resetVideoUpload, handleVideoUpload, isVideoLoading } = useVideoUpload();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const handleVideoUploadReusable = () => {
-		handleVideoUpload(videoFolderName, (url: string) => {
-			onVideoUploadLogic(url);
-		});
-	};
+	// const handleVideoUploadReusable = () => {
+	// 	handleVideoUpload(videoFolderName, (url: string) => {
+	// 		onVideoUploadLogic(url);
+	// 	});
+	// };
+
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 				<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '1rem' : '0.8rem' }}>
 					{label}
 				</Typography>
+				{/* Choose file upload — disabled for now
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography
@@ -65,8 +68,10 @@ const HandleVideoUploadURL = ({
 						</Typography>
 					</Box>
 				</Box>
+				*/}
 			</Box>
 
+			{/* File upload UI — disabled for now
 			{!enterVideoUrl && (
 				<>
 					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -75,7 +80,7 @@ const HandleVideoUploadURL = ({
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 								handleVideoChange(e);
 							}}
-							inputProps={{ accept: 'video/*' }} // Specify accepted file types
+							inputProps={{ accept: 'video/*' }}
 							sx={{
 								width: '82.5%',
 								backgroundColor: theme.bgColor?.common,
@@ -101,16 +106,15 @@ const HandleVideoUploadURL = ({
 					{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 50MB.</CustomErrorMessage>}
 				</>
 			)}
+			*/}
 
-			{enterVideoUrl && (
-				<CustomTextField
-					placeholder='Video URL'
-					required={false}
-					sx={{ marginTop: '0.5rem' }}
-					value={videoUrlValue ?? ''}
-					onChange={onChangeVideoUrl}
-				/>
-			)}
+			<CustomTextField
+				placeholder='Video URL'
+				required={false}
+				sx={{ marginTop: '0.5rem' }}
+				value={videoUrlValue ?? ''}
+				onChange={onChangeVideoUrl}
+			/>
 		</FormControl>
 	);
 };

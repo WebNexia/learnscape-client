@@ -859,6 +859,7 @@ const EditEventDialog = ({
 									}}
 									imageUrlValue={selectedEvent?.coverImageUrl || ''}
 									imageFolderName='EventImages'
+									scopedEntityId={selectedEvent?._id}
 									enterImageUrl={enterCoverImageUrl}
 									setEnterImageUrl={setEnterCoverImageUrl}
 									disabled={!canManageEvent}

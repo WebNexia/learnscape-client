@@ -4,10 +4,12 @@ import uploadImage from '../utils/imageUpload';
 
 interface UseImageUploadOptions {
 	maxSizeInMB?: number;
+	/** User or course Mongo id — uploads to {folderName}/{scopedEntityId}/ */
+	scopedEntityId?: string;
 }
 
 const useImageUpload = (options: UseImageUploadOptions = {}) => {
-	const { maxSizeInMB = 3 } = options; // Default to 3MB for backward compatibility
+	const { maxSizeInMB = 3, scopedEntityId } = options; // Default to 3MB for backward compatibility
 	const { organisation } = useContext(OrganisationContext); // Assuming you have org context
 	const [imageUpload, setImageUpload] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null); // State for preview URL
@@ -39,7 +41,7 @@ const useImageUpload = (options: UseImageUploadOptions = {}) => {
 
 		try {
 			setIsUploading(true); // Set uploading to true
-			const url = await uploadImage(imageUpload, folderName, organisation?.orgName || 'defaultOrg');
+			const url = await uploadImage(imageUpload, folderName, organisation?.orgName || 'defaultOrg', scopedEntityId);
 			handleUrlCallback(url);
 		} catch (error) {
 			console.error('Error uploading image:', error);

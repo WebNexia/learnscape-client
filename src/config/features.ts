@@ -3,3 +3,12 @@
  * Set `VITE_SUBSCRIPTIONS_ENABLED=false` in `.env` when subscriptions are off.
  */
 export const isSubscriptionsProductEnabled = import.meta.env.VITE_SUBSCRIPTIONS_ENABLED === 'true';
+
+export const RESOURCES_ACCESS_MESSAGE_WITH_SUBSCRIPTION =
+	'Subscription or paid platform course enrollment required to access resources';
+
+export const RESOURCES_ACCESS_MESSAGE_WITHOUT_SUBSCRIPTION =
+	'Paid platform course enrollment required to access resources';
+
+export const getResourcesAccessRequiredMessage = (): string =>
+	isSubscriptionsProductEnabled ? RESOURCES_ACCESS_MESSAGE_WITH_SUBSCRIPTION : RESOURCES_ACCESS_MESSAGE_WITHOUT_SUBSCRIPTION;
