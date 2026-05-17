@@ -74,7 +74,7 @@ const QuizQuestion = ({
 	setIsLessonCompleted,
 	setUserQuizAnswers,
 	setIsQuizInProgress,
-	enableWordAssist = true,
+	enableWordAssist = false,
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();

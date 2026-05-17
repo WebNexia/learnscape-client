@@ -1,1 +1,5 @@
-/* /index.html 200
+# Permanent redirect Netlify subdomain → production domain
+https://learnscape-qa.netlify.app/*  https://adenacademy.co.uk/:splat  301!
+
+# SPA fallback (custom domain + local Netlify dev)
+/*  /index.html  200

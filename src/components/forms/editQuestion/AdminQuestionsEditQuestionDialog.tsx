@@ -442,6 +442,7 @@ const AdminQuestionsEditQuestionDialog = ({
 								}}
 								imageUrlValue={imageUrlAdminQuestions}
 								imageFolderName='QuestionImages'
+								scopedEntityId={question._id}
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
 							/>

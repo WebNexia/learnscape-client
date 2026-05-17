@@ -17,6 +17,7 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import EditResourceFolderDialog from '../components/resources/EditResourceFolderDialog';
 import ResourcesSkeleton from '../components/layouts/skeleton/ResourcesSkeleton';
+import ResourcesAccessMessage from '../components/resources/ResourcesAccessMessage';
 
 const Resources = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -36,6 +37,8 @@ const Resources = () => {
 		createFolder,
 		updateFolder,
 		deleteFolder,
+		resourcesAccessDenied,
+		resourcesAccessLoading,
 	} = useContext(ResourcesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -174,6 +177,14 @@ const Resources = () => {
 		<AdminPageErrorBoundary pageName='Resources'>
 			<DashboardPagesLayout pageName='Resources' customSettings={{ justifyContent: 'flex-start' }}>
 				<Box sx={{ width: '100%', height: '100%' }}>
+					{resourcesAccessLoading ? (
+						<Box sx={{ px: 2, pt: 2 }}>
+							<ResourcesSkeleton isItems={false} />
+						</Box>
+					) : resourcesAccessDenied ? (
+						<ResourcesAccessMessage />
+					) : (
+						<>
 					<FilterSearchRow
 						filterValue={filterValue}
 						onFilterChange={handleFilterChange}
@@ -264,11 +275,14 @@ const Resources = () => {
 						<CustomTablePagination count={foldersNumberOfPages} page={foldersCurrentPage} onChange={handlePageChange} />
 						</Box>
 					</Box>
-					
+						</>
+					)}
 
 				</Box>
 
 				{/* Dialogs */}
+				{!resourcesAccessDenied && (
+				<>
 				<CreateResourceFolderDialog
 					isOpen={isCreateFolderOpen}
 					onClose={() => {
@@ -327,6 +341,8 @@ const Resources = () => {
 						actionSx={{ mb: '0.5rem' }}
 					/>
 				</CustomDialog>
+				</>
+				)}
 
 				{/* Snackbar */}
 				<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>

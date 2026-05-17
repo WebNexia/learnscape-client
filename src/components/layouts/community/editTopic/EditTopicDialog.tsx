@@ -326,6 +326,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							onChangeImgUrl={(e) => setTopic((prevData) => ({ ...prevData, imageUrl: e.target.value }))}
 							imageUrlValue={topic?.imageUrl}
 							imageFolderName='TopicImages'
+							scopedEntityId={topic._id}
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
 							isImageUploadLimitReached={getRemainingImageUploads() <= 0}

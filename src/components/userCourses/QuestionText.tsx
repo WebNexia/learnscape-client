@@ -14,7 +14,7 @@ interface QuestionTextProps {
 	enableWordAssist?: boolean;
 }
 
-const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist = true }: QuestionTextProps) => {
+const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist = false }: QuestionTextProps) => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -60,17 +60,21 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 							sx={{
 								'margin': '-0.25rem 0.5rem 0 0',
 								'fontSize': isMobileSizeSmall ? '0.75rem' : '0.95rem',
+								'color': '#000000',
+								'textAlign': 'left',
 								'& *': {
 									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
 									fontFamily: 'inherit !important',
-									color: 'inherit !important',
+									color: '#000000 !important',
+									textAlign: 'left !important',
 								},
 								'& p, & div, & span': {
 									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
 									fontFamily: 'inherit !important',
-									color: 'inherit !important',
+									color: '#000000 !important',
+									textAlign: 'left !important',
 								},
 								'& img': {
 									maxWidth: '100%',
@@ -89,7 +93,6 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 									backgroundColor: enableWordAssist ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
 								},
 								'lineHeight': 1.9,
-								'color': 'inherit',
 							}}
 						/>
 					</Box>

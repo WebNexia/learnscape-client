@@ -429,6 +429,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								}}
 								imageUrlValue={question.imageUrl}
 								imageFolderName='QuestionImages'
+								scopedEntityId={question._id}
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
 							/>

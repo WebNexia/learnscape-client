@@ -21,10 +21,13 @@ import { useGeoLocation } from '../hooks/useGeoLocation';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import { useAuth } from '../hooks/useAuth';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import uploadImage from '../utils/imageUpload';
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
+	const { organisation } = useContext(OrganisationContext);
 	const { hasAdminAccess, canAccessPayments } = useAuth();
 	const navigate = useNavigate();
 	const auth = getAuth();
@@ -53,7 +56,10 @@ const Settings = () => {
 
 	const [isPasswordUpdatedMsgDisplayed, setIsPasswordUpdatedMsgDisplayed] = useState<boolean>(false);
 	const [isProfileUpdatedMsgDisplayed, setIsProfileUpdatedMsgDisplayed] = useState<boolean>(false);
+	const [isProfilePictureSavedMsgDisplayed, setIsProfilePictureSavedMsgDisplayed] = useState<boolean>(false);
 	const [isEmailUpdatedMsgDisplayed, setIsEmailUpdatedMsgDisplayed] = useState<boolean>(false);
+	const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+	const [isSavingProfilePicture, setIsSavingProfilePicture] = useState<boolean>(false);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -129,6 +135,29 @@ const Settings = () => {
 		// If email is available, open the password dialog
 		setEmailToUpdate(email);
 		setShowPasswordDialog(true);
+	};
+
+	const handleProfilePictureSave = async (file: File) => {
+		if (!user?._id) return;
+
+		setIsSavingProfilePicture(true);
+		setProfileErrorMsg(undefined);
+
+		try {
+			const url = await uploadImage(file, 'ProfileImages', organisation?.orgName || 'defaultOrg', user._id);
+			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: url });
+
+			setUser((prevData) => (prevData ? { ...prevData, imageUrl: url } : prevData));
+			setImageUrl(url);
+			setProfilePicturePreview(null);
+			setIsProfilePictureSavedMsgDisplayed(true);
+		} catch (error: unknown) {
+			console.error('Profile picture save error:', error);
+			const axiosError = error as { response?: { data?: { message?: string } } };
+			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while saving your profile picture.');
+		} finally {
+			setIsSavingProfilePicture(false);
+		}
 	};
 
 	const handleProfileUpdate = async () => {
@@ -382,7 +411,11 @@ const Settings = () => {
 								margin: '1rem 0 0.5rem 0',
 							}}>
 							<img
-								src={imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+								src={
+									profilePicturePreview ||
+									imageUrl ||
+									'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'
+								}
 								alt='profile_img'
 								style={{
 									height: isMobileSize ? '7rem' : '10rem',
@@ -396,6 +429,10 @@ const Settings = () => {
 						<Box sx={{ width: '90%' }}>
 							<HandleImageUploadURL
 								label='Profile Picture'
+								saveButtonMode
+								onSaveImage={handleProfilePictureSave}
+								isSaving={isSavingProfilePicture}
+								onPreviewChange={setProfilePicturePreview}
 								onImageUploadLogic={(url) => {
 									setImageUrl(url);
 									setIsProfileUpdated(true);
@@ -406,6 +443,7 @@ const Settings = () => {
 								}}
 								imageUrlValue={imageUrl}
 								imageFolderName='ProfileImages'
+								scopedEntityId={user?._id}
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
 							/>
@@ -520,7 +558,7 @@ const Settings = () => {
 								/>
 							}
 							label={
-								<Typography component='span' sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
+								<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
 									Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum
 								</Typography>
 							}
@@ -615,6 +653,19 @@ const Settings = () => {
 								variant='filled'
 								sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								{profileUpdateStatus === 'updated' ? 'You have successfully updated your profile!' : 'No changes were made to your profile.'}
+							</Alert>
+						</Snackbar>
+						<Snackbar
+							open={isProfilePictureSavedMsgDisplayed}
+							autoHideDuration={3000}
+							anchorOrigin={{ vertical, horizontal }}
+							sx={{ mt: '1rem' }}
+							onClose={() => setIsProfilePictureSavedMsgDisplayed(false)}>
+							<Alert
+								severity='success'
+								variant='filled'
+								sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+								Your profile picture has been saved.
 							</Alert>
 						</Snackbar>
 						<Snackbar

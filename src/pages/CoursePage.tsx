@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Skeleton, Typography } from '@mui/material';
 import { OpenInNew, PlayCircleOutline } from '@mui/icons-material';
@@ -81,6 +81,15 @@ const CoursePage = () => {
 	const activeCourse = singleCourseUser && singleCourseUser._id === courseId ? singleCourseUser : null;
 	const shouldShowLoadingState = isCourseShellLoading && !activeCourse;
 
+	const courseMaterials = useMemo(
+		() =>
+			(activeCourse?.documents ?? []).filter(
+				(doc) => doc && doc._id && typeof doc.documentUrl === 'string' && doc.documentUrl.trim() !== ''
+			),
+		[activeCourse?.documents]
+	);
+	const hasCourseMaterials = courseMaterials.length > 0 || (activeCourse?.documentIds?.length ?? 0) > 0;
+
 	useEffect(() => {
 		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
 	}, [courseId, userCourseData]);
@@ -102,12 +111,12 @@ const CoursePage = () => {
 					<Chapters course={activeCourse} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}
-			{isEnrolledStatus && activeCourse?.documents && (
+			{isEnrolledStatus && hasCourseMaterials && (
 				<Box
 					ref={documentsRef}
-					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0 0 0', width: isMobileSize ? '90%' : '85%' }}>
+					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '3rem 0 2rem 0', width: isMobileSize ? '90%' : '85%' }}>
 					<DocumentViewer
-						documents={activeCourse?.documents || []}
+						documents={courseMaterials.length > 0 ? courseMaterials : activeCourse?.documents || []}
 						title='Course Materials'
 						layout={isMobileSize ? 'list' : 'grid'}
 						showTitle={true}

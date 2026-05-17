@@ -2,6 +2,7 @@ import { Box, FormControl, IconButton, Input, Tooltip, Typography, Snackbar, Ale
 import React, { ChangeEvent, useContext, useState, useEffect } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
+import CustomSubmitButton from '../customButtons/CustomSubmitButton';
 import { CloudUpload } from '@mui/icons-material';
 import theme from '../../../themes';
 import useImageUpload from '../../../hooks/useImageUpload';
@@ -23,6 +24,13 @@ interface HandleImageUploadURLProps {
 	imageUploadAttempts?: number;
 	maxSessionAttempts?: number;
 	onImageUploadAttempt?: () => void;
+	/** Settings profile picture: Save button runs upload + DB update via parent */
+	saveButtonMode?: boolean;
+	onSaveImage?: (file: File) => Promise<void>;
+	isSaving?: boolean;
+	onPreviewChange?: (previewUrl: string | null) => void;
+	/** Upload to {imageFolderName}/{scopedEntityId}/ when set (course cover, profile picture) */
+	scopedEntityId?: string;
 }
 
 const HandleImageUploadURL = ({
@@ -39,8 +47,15 @@ const HandleImageUploadURL = ({
 	imageUploadAttempts = 0,
 	maxSessionAttempts = 5,
 	onImageUploadAttempt,
+	saveButtonMode = false,
+	onSaveImage,
+	isSaving = false,
+	onPreviewChange,
+	scopedEntityId,
 }: HandleImageUploadURLProps) => {
-	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload, maxSizeInMB } = useImageUpload();
+	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload, maxSizeInMB } = useImageUpload({
+		scopedEntityId,
+	});
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -109,6 +124,23 @@ const HandleImageUploadURL = ({
 		});
 	};
 
+	const handleSaveClick = async () => {
+		if (!imageUpload || isImgSizeLarge || isSaving) return;
+
+		if (saveButtonMode && onSaveImage) {
+			try {
+				await onSaveImage(imageUpload);
+				resetImageUpload();
+				onPreviewChange?.(null);
+			} catch (error) {
+				console.error('Profile picture save failed:', error);
+			}
+			return;
+		}
+
+		handleImageUploadReusable();
+	};
+
 	return (
 		<>
 			<FormControl sx={{ display: 'flex', width: '100%' }}>
@@ -154,8 +186,13 @@ const HandleImageUploadURL = ({
 								type='file'
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 									handleImageChange(e);
+									if (e.target.files?.[0]) {
+										onPreviewChange?.(URL.createObjectURL(e.target.files[0]));
+									} else {
+										onPreviewChange?.(null);
+									}
 								}}
-								disabled={disabled}
+								disabled={disabled || isSaving}
 								inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
 								sx={{
 									width: '82.5%',
@@ -165,14 +202,26 @@ const HandleImageUploadURL = ({
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 								}}
 							/>
-							<Tooltip title='Upload' placement='top' arrow>
-								<IconButton
-									onClick={handleImageUploadReusable}
-									sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
-									disabled={!imageUpload || isImgSizeLarge}>
-									<CloudUpload fontSize='small' />
-								</IconButton>
-							</Tooltip>
+							{saveButtonMode ? (
+								<CustomSubmitButton
+									type='button'
+									variant='contained'
+									size='small'
+									onClick={handleSaveClick}
+									disabled={!imageUpload || isImgSizeLarge || isSaving}
+								>
+									{isSaving ? 'Saving...' : 'Save'}
+								</CustomSubmitButton>
+							) : (
+								<Tooltip title='Upload' placement='top' arrow>
+									<IconButton
+										onClick={handleImageUploadReusable}
+										sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
+										disabled={!imageUpload || isImgSizeLarge || isSaving}>
+										<CloudUpload fontSize='small' />
+									</IconButton>
+								</Tooltip>
+							)}
 						</Box>
 					)}
 
@@ -199,20 +248,18 @@ const HandleImageUploadURL = ({
 							if (onChangeImgUrl) {
 								onChangeImgUrl(e);
 							}
-							// Validate URL on change (debounced)
 							validateImageUrlOnChange(e.target.value);
 						}}
 						InputProps={{
 							sx: {
 								'& input::placeholder': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 								'& input': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' },
-							}, // Adjust this value as needed
+							},
 						}}
 					/>
 				)}
 			</FormControl>
 
-			{/* Image URL validation error SnackBar */}
 			<Snackbar
 				open={isUrlErrorOpen}
 				autoHideDuration={3500}
