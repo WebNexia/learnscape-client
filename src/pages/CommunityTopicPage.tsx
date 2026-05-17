@@ -16,8 +16,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '../firebase';
+import audioUpload from '../utils/audioUpload';
 import { sendCommunityNotifications } from '../utils/communityNotifications';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -48,7 +47,7 @@ const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 
 	const {
 		messages,
@@ -379,10 +378,8 @@ const CommunityTopicPage = () => {
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
 		try {
-			const audioRef = ref(storage, `community-topic-message-audio-recordings/${user?.username}-${Date.now()}.webm`);
-			await uploadBytes(audioRef, blob);
-			const downloadURL = await getDownloadURL(audioRef);
-
+			const orgName = organisation?.orgName || 'defaultOrg';
+			const downloadURL = await audioUpload(blob, 'TopicMessageAudio', orgName);
 			setAudioUrl(downloadURL);
 		} catch (error) {
 			console.error(error);

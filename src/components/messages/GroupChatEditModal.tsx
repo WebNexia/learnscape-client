@@ -28,7 +28,7 @@ interface GroupChatEditModalProps {
 	blockedUsers?: string[];
 	onCloseModal: () => void;
 	onGroupNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-	onGroupImageUpload: (url: string) => void;
+	onGroupImageUpload: (url: string) => void | Promise<void>;
 	onGroupImageUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onGroupUserSelection: (user: User) => void;
 	onRemoveGroupUser: (userId: string) => void;
@@ -122,6 +122,7 @@ const GroupChatEditModal = ({
 					onChangeImgUrl={onGroupImageUrlChange}
 					imageUrlValue={groupImageUrl}
 					imageFolderName='GroupImages'
+					scopedEntityId={activeChat.chatId}
 					enterImageUrl={enterImageUrl}
 					setEnterImageUrl={setEnterImageUrl}
 				/>

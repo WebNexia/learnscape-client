@@ -7,8 +7,7 @@ import CustomTextField from '../../../forms/customFields/CustomTextField';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import AudioRecorder from '../../../userCourses/AudioRecorder';
 import { CustomAudioPlayer } from '../../../audio';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../../firebase';
+import audioUpload from '../../../../utils/audioUpload';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
@@ -20,6 +19,7 @@ import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvide
 import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
 import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
+import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;
@@ -31,6 +31,7 @@ interface EditMessageDialogProps {
 const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, setIsMsgEdited }: EditMessageDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { organisation } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const { updateMessage } = useContext(CommunityMessagesContext);
@@ -69,9 +70,8 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
 		try {
-			const audioRef = ref(storage, `community-topic-message-audio-recordings/${user?.username}-${Date.now()}.webm`);
-			const uploadTask = await uploadBytes(audioRef, blob);
-			const downloadURL = await getDownloadURL(uploadTask.ref);
+			const orgName = organisation?.orgName || 'defaultOrg';
+			const downloadURL = await audioUpload(blob, 'TopicMessageAudio', orgName, editingMessage._id);
 			setEditingMessage((prev) => ({ ...prev, audioUrl: downloadURL }));
 			setIsMsgUpdated(true);
 		} finally {
@@ -322,6 +322,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							}}
 							imageUrlValue={editingMessage?.imageUrl}
 							imageFolderName='TopicMessageImages'
+							scopedEntityId={editingMessage._id}
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
 							isImageUploadLimitReached={getRemainingImageUploads() <= 0}

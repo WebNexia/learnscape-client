@@ -21,6 +21,8 @@ export interface UseGroupChatManagementReturn {
 	setEnterGroupImageUrl: React.Dispatch<React.SetStateAction<boolean>>;
 	removedMembers: string[];
 	setRemovedMembers: React.Dispatch<React.SetStateAction<string[]>>;
+	pendingGroupChatId: string;
+	setPendingGroupChatId: React.Dispatch<React.SetStateAction<string>>;
 
 	// Group chat helper functions
 	handleGroupUserSelection: (selectedUser: User) => void;
@@ -39,6 +41,7 @@ export const useGroupChatManagement = ({ activeChat }: UseGroupChatManagementPro
 	const [groupImageUrl, setGroupImageUrl] = useState<string>('');
 	const [enterGroupImageUrl, setEnterGroupImageUrl] = useState<boolean>(true);
 	const [removedMembers, setRemovedMembers] = useState<string[]>([]);
+	const [pendingGroupChatId, setPendingGroupChatId] = useState<string>('');
 
 	// Group chat helper functions
 	const handleGroupUserSelection = useCallback(
@@ -90,6 +93,7 @@ export const useGroupChatManagement = ({ activeChat }: UseGroupChatManagementPro
 		setGroupSearchValue('');
 		setGroupImageUrl('');
 		setEnterGroupImageUrl(false);
+		setPendingGroupChatId('');
 	}, []);
 
 	const resetGroupChatEditForm = useCallback(() => {
@@ -115,6 +119,8 @@ export const useGroupChatManagement = ({ activeChat }: UseGroupChatManagementPro
 		setEnterGroupImageUrl,
 		removedMembers,
 		setRemovedMembers,
+		pendingGroupChatId,
+		setPendingGroupChatId,
 
 		// Group chat helper functions
 		handleGroupUserSelection,

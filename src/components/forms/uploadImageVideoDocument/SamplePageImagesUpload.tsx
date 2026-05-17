@@ -14,6 +14,8 @@ interface SamplePageImagesUploadProps {
 	urls: string[];
 	onUrlsChange: (urls: string[]) => void;
 	imageFolderName: string;
+	/** Document Mongo id — uploads to {imageFolderName}/{scopedEntityId}/ */
+	scopedEntityId?: string;
 	label?: string;
 	maxCount?: number;
 	maxSizeMB?: number;
@@ -26,6 +28,7 @@ export default function SamplePageImagesUpload({
 	urls = [],
 	onUrlsChange,
 	imageFolderName,
+	scopedEntityId,
 	label = 'Sample Page Images',
 	maxCount = DEFAULT_MAX_COUNT,
 	maxSizeMB = DEFAULT_MAX_SIZE_MB,
@@ -64,7 +67,7 @@ export default function SamplePageImagesUpload({
 		try {
 			const orgName = organisation?.orgName || 'defaultOrg';
 			const newUrls = await Promise.all(
-				validFiles.map((file) => uploadImage(file, imageFolderName, orgName))
+				validFiles.map((file) => uploadImage(file, imageFolderName, orgName, scopedEntityId))
 			);
 			onUrlsChange([...urls, ...newUrls]);
 		} catch (err) {

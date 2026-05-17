@@ -391,6 +391,7 @@ const AdminConsultationEditPage = () => {
 											}}
 											imageUrlValue={singleConsultationBeforeSave?.coverImageUrl || ''}
 											imageFolderName='ConsultationImages'
+											scopedEntityId={consultationId}
 											enterImageUrl={enterImageUrl}
 											setEnterImageUrl={setEnterImageUrl}
 										/>

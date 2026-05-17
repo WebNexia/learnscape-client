@@ -34,6 +34,7 @@ import { useGroupChatManagement } from '../hooks/useGroupChatManagement';
 import { useChatNavigation } from '../hooks/useChatNavigation';
 import { useAuth } from '../hooks/useAuth';
 import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
+import { cleanupGroupChatImages, generateGroupChatId } from '../utils/groupImageStorage';
 
 export interface Message {
 	id: string;
@@ -222,6 +223,8 @@ const Messages = () => {
 		setEnterGroupImageUrl,
 		removedMembers,
 		setRemovedMembers,
+		pendingGroupChatId,
+		setPendingGroupChatId,
 		handleGroupUserSelection,
 		removeGroupUser,
 		removeExistingGroupMember,
@@ -401,6 +404,7 @@ const Messages = () => {
 						// Clear active chat when creating a new group to avoid conflicts
 						setActiveChat(null);
 						setActiveChatId('');
+						setPendingGroupChatId(generateGroupChatId());
 						setCreateGroupModalOpen(true);
 						setGroupName('');
 						setSelectedGroupUsers([]);
@@ -720,25 +724,42 @@ const Messages = () => {
 				groupName={groupName}
 				groupImageUrl={groupImageUrl}
 				enterGroupImageUrl={enterGroupImageUrl}
+				scopedChatId={pendingGroupChatId}
 				selectedGroupUsers={selectedGroupUsers}
 				groupSearchValue={groupSearchValue}
 				user={user}
 				blockedUsers={globalBlockedUsers}
-				onCloseModal={() => {
+				onCloseModal={async () => {
+					if (pendingGroupChatId && groupImageUrl.trim()) {
+						try {
+							await cleanupGroupChatImages(pendingGroupChatId, null, groupImageUrl.trim());
+						} catch (err) {
+							console.warn('Group image orphan cleanup failed on create cancel:', err);
+						}
+					}
 					setCreateGroupModalOpen(false);
 					resetGroupChatForm();
 				}}
 				onGroupNameChange={(e) => setGroupName(e.target.value)}
-				onGroupImageUpload={(url) => setGroupImageUrl(url)}
+				onGroupImageUpload={async (url) => {
+					const previous = groupImageUrl.trim();
+					if (!url.trim() && previous && pendingGroupChatId) {
+						try {
+							await cleanupGroupChatImages(pendingGroupChatId, null, previous);
+						} catch (err) {
+							console.warn('Group image cleanup failed on remove:', err);
+						}
+					}
+					setGroupImageUrl(url);
+				}}
 				onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
 				onEnterGroupImageUrlChange={setEnterGroupImageUrl}
 				onGroupUserSelection={handleGroupUserSelection}
 				onRemoveGroupUser={removeGroupUser}
 				onGroupSearchChange={setGroupSearchValue}
 				onCreateGroupChat={() => {
-					if (!groupName.trim() || selectedGroupUsers.length === 0) return;
-					createGroupChat(groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers);
-					// Reset form fields
+					if (!groupName.trim() || selectedGroupUsers.length === 0 || !pendingGroupChatId) return;
+					createGroupChat(pendingGroupChatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers);
 					resetGroupChatForm();
 					setCreateGroupModalOpen(false);
 				}}
