@@ -1019,6 +1019,7 @@ const LessonPage = () => {
 							<Box sx={{ mt: '0.5rem', flex: 1, minHeight: 0, overflow: 'hidden' }} id='editor-content'>
 								<TinyMceEditor
 									height='300'
+									enableImage={false}
 									handleEditorChange={(content) => {
 										setEditorContent(content);
 										setIsNotesUpdated(true);

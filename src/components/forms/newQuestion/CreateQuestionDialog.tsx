@@ -47,6 +47,7 @@ import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksD
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { generateMongoObjectId, questionEditorScope } from '../../../utils/editorImageScopes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 declare global {
@@ -120,6 +121,7 @@ const CreateQuestionDialog = ({
 
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
+	const pendingQuestionId = useMemo(() => generateMongoObjectId(), []);
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
@@ -248,6 +250,7 @@ const CreateQuestionDialog = ({
 		try {
 			const questionTypeId = questionTypes?.find((type) => type.name === questionType)?._id || '';
 			const response = await axios.post(`${base_url}/questions${isInstructor ? '/instructor' : ''}`, {
+				_id: pendingQuestionId,
 				questionType: questionTypeId,
 				question: isFlipCard ? newQuestion.question.trim() : editorContent.trim(),
 				options,
@@ -690,6 +693,7 @@ const CreateQuestionDialog = ({
 										)}
 									</Box>
 									<TinyMceEditor
+										imageScopedEntityId={questionEditorScope(pendingQuestionId)}
 										handleEditorChange={(content) => {
 											setEditorContent(content);
 											setIsQuestionMissing(false);

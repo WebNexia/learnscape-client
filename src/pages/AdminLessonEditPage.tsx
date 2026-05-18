@@ -70,6 +70,7 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { lessonEditorScope } from '../utils/editorImageScopes';
 
 const colorChange = keyframes`
     0% {
@@ -1474,6 +1475,7 @@ const AdminLessonEditPage = () => {
 								/>
 								<TinyMceEditor
 									height={400}
+									imageScopedEntityId={lessonId ? lessonEditorScope(lessonId) : undefined}
 									handleEditorChange={(content) => {
 										setEditorContent(content);
 										setPrevEditorContent(content);
