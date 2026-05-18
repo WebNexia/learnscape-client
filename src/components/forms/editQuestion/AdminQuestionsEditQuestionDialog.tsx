@@ -32,6 +32,7 @@ import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTypin
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { questionEditorScope } from '../../../utils/editorImageScopes';
 import { decode } from 'html-entities';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
@@ -503,6 +504,7 @@ const AdminQuestionsEditQuestionDialog = ({
 								</span>
 							</Typography>
 							<TinyMceEditor
+								imageScopedEntityId={question._id ? questionEditorScope(question._id) : undefined}
 								handleEditorChange={(content) => {
 									setEditorContent(content);
 									setIsQuestionMissing(false);

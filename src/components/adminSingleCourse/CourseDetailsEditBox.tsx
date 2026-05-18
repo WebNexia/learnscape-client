@@ -19,6 +19,7 @@ import {
 	MAX_LANDING_PAGE_SECTION_BODY_LENGTH,
 } from '../../constants/landingPageCourseLimits';
 import { generateUniqueId } from '../../utils/uniqueIdGenerator';
+import { courseEditorScope } from '../../utils/editorImageScopes';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -467,6 +468,9 @@ const CourseDetailsEditBox = ({
 							key={section.rowKey ?? `lp-body-${index}`}
 							editorId={`lp-section-editor-${section.rowKey ?? index}`}
 							maxLength={MAX_LANDING_PAGE_SECTION_BODY_LENGTH}
+							imageScopedEntityId={
+								singleCourseBeforeSave?._id ? courseEditorScope(singleCourseBeforeSave._id) : undefined
+							}
 							seedHtml={section.body ?? ''}
 							onHtmlChange={(trimmed) => {
 								setSingleCourseBeforeSave((prev) => {

@@ -19,6 +19,9 @@ interface TinyMceEditorProps {
 	editorRef?: React.MutableRefObject<any>;
 	isFITB?: boolean;
 	maxLength?: number;
+	enableImage?: boolean;
+	/** e.g. lessons/{id}, questions/{id}, courses/{id} — required for image upload */
+	imageScopedEntityId?: string;
 }
 
 const TinyMceEditor = ({
@@ -32,7 +35,10 @@ const TinyMceEditor = ({
 	editorRef,
 	isFITB = false,
 	maxLength = 10000,
+	enableImage = true,
+	imageScopedEntityId,
 }: TinyMceEditorProps) => {
+	const allowImages = enableImage && Boolean(imageScopedEntityId?.trim());
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
 	const [internalBlankValuePairs, setInternalBlankValuePairs] = useState<BlankValuePair[]>(blankValuePairs || []);
 	const blankCounterRef = useRef<number>(internalBlankValuePairs.length);
@@ -143,9 +149,9 @@ const TinyMceEditor = ({
 						tools: { title: 'Tools', items: 'wordcount' },
 						table: { title: 'Table', items: 'inserttable | cell row column | advtablesort | tableprops deletetable' },
 					},
-					plugins: 'lists link image media charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount',
+					plugins: `lists link${allowImages ? ' image' : ''} media charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount`,
 					toolbar:
-						'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
+						`undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor${allowImages ? ' | image' : ''} | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code`,
 					font_family_formats: 'System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
 					font_size_formats: '12pt',
 					content_style: `
@@ -154,13 +160,17 @@ const TinyMceEditor = ({
 							font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 						}
 					`,
-					image_title: true,
-					automatic_uploads: false,
-					file_picker_types: 'image',
-					file_picker_callback: function (callback) {
-						imageCallbackRef.current = callback;
-						setShowImageDialog(true);
-					},
+					...(allowImages
+						? {
+								image_title: true,
+								automatic_uploads: false,
+								file_picker_types: 'image',
+								file_picker_callback: function (callback: (url: string) => void) {
+									imageCallbackRef.current = callback;
+									setShowImageDialog(true);
+								},
+							}
+						: {}),
 					branding: false,
 					paste_preprocess: function (_, args) {
 						// Replace &nbsp; with a regular space in the pasted content
@@ -212,7 +222,7 @@ const TinyMceEditor = ({
 					}
 				}}
 			/>
-			{showImageDialog && (
+			{allowImages && showImageDialog && (
 				<CustomDialog openModal={showImageDialog} closeModal={() => setShowImageDialog(false)} maxWidth='xs'>
 					<Box sx={{ padding: '1.5rem 1.5rem 0.5rem 1.5rem', minWidth: 350 }}>
 						<HandleImageUploadURL
@@ -227,6 +237,7 @@ const TinyMceEditor = ({
 							setEnterImageUrl={setEnterImageUrl}
 							imageUrlValue={imageUrlValue}
 							imageFolderName={'editor-images'}
+							scopedEntityId={imageScopedEntityId}
 							enterImageUrl={enterImageUrl}
 							label='Insert Image'
 						/>

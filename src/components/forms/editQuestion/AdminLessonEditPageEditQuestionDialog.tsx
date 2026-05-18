@@ -28,6 +28,7 @@ import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBl
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { questionEditorScope } from '../../../utils/editorImageScopes';
 import { decode } from 'html-entities';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { stripHtml } from '../../../utils/stripHtml';
@@ -487,6 +488,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								</span>
 							</Typography>
 							<TinyMceEditor
+								imageScopedEntityId={question._id ? questionEditorScope(question._id) : undefined}
 								handleEditorChange={(content) => {
 									setEditorContent(content);
 									setIsQuestionMissing(false);

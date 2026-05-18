@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import TinyMceEditor from './richTextEditor/TinyMceEditor';
+import { generateUniqueId } from '../utils/uniqueIdGenerator';
+import { emailEditorScope } from '../utils/editorImageScopes';
+import { deleteAllEditorImagesInScope } from '../utils/editorImageStorage';
 import { Select, MenuItem, Box, Alert, CircularProgress, FormControl, Snackbar, Chip, IconButton, Typography } from '@mui/material';
 import { AttachFile, Close } from '@mui/icons-material';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
@@ -11,6 +14,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 interface EmailSenderProps {
 	setEmailDialogOpen: (open: boolean) => void;
+	dialogOpen: boolean;
 }
 
 const recipientOptions = [
@@ -29,7 +33,7 @@ interface Attachment {
 	size: number;
 }
 
-const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
+const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 	const [category, setCategory] = useState<string>('');
 	const [subject, setSubject] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
@@ -40,8 +44,27 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 
 	const editorRef = useRef<any>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const emailSessionScopeRef = useRef(emailEditorScope(generateUniqueId('email-')));
+	const [emailSessionScope, setEmailSessionScope] = useState(emailSessionScopeRef.current);
 
 	const { orgId } = useContext(OrganisationContext);
+
+	// Open: fresh session + form. Close: one Storage cleanup (no extra work on send).
+	useEffect(() => {
+		if (dialogOpen) {
+			const nextScope = emailEditorScope(generateUniqueId('email-'));
+			emailSessionScopeRef.current = nextScope;
+			setEmailSessionScope(nextScope);
+			setSubject('');
+			setCategory('');
+			setAttachments([]);
+			setError(null);
+			setShowEmailSuccessMsg(false);
+			editorRef.current?.setContent('');
+			return;
+		}
+		void deleteAllEditorImagesInScope(emailSessionScopeRef.current);
+	}, [dialogOpen]);
 
 	useEffect(() => {
 		const link = document.createElement('link');
@@ -153,12 +176,6 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 						: undefined,
 			});
 			setShowEmailSuccessMsg(true);
-			setSubject('');
-			setCategory('');
-			setAttachments([]);
-			if (editorRef.current) {
-				editorRef.current.setContent('');
-			}
 		} catch (err: any) {
 			setError('Error sending email: ' + (err.response?.data?.message || err.message));
 		} finally {
@@ -208,9 +225,11 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 			</Box>
 			<Box sx={{ mb: 3 }}>
 				<TinyMceEditor
+					key={emailSessionScope}
 					initialValue=''
 					height={400}
 					editorRef={editorRef}
+					imageScopedEntityId={emailSessionScope}
 					handleEditorChange={() => {
 						setError(null);
 					}}

@@ -433,7 +433,7 @@ const AdminInquiries = () => {
 				</Box>
 				<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
 					<DialogContent>
-						<EmailSender setEmailDialogOpen={setEmailDialogOpen} />
+						<EmailSender setEmailDialogOpen={setEmailDialogOpen} dialogOpen={emailDialogOpen} />
 					</DialogContent>
 				</CustomDialog>
 				<CustomDialog
