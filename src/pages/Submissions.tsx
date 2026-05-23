@@ -21,7 +21,6 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useNavigate } from 'react-router-dom';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { LessonType } from '../interfaces/enums';
-import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 
 const Submissions = () => {
@@ -276,10 +275,7 @@ const Submissions = () => {
 											const isQuiz = submission.lessonType === LessonType.QUIZ;
 											const isGraded = !!submission.lessonIsGraded && isQuiz;
 
-											const totalPossible =
-												isGraded && submission.lessonQuestionScores
-													? calculateQuizTotalScoreFromScores({ questionScores: submission.lessonQuestionScores })
-													: 0;
+											const totalPossible = isGraded ? submission.totalPossible ?? 0 : 0;
 											const percentage = calculateScorePercentage(totalEarned, totalPossible);
 
 											return (

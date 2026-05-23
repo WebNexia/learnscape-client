@@ -25,7 +25,11 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { Select, MenuItem, FormControl } from '@mui/material';
 import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { formatMessageTime } from '../utils/formatTime';
-import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
+import {
+	COMMUNITY_UI_PAGE_SIZE,
+	CommunityMessagesContext,
+	frontendPageToBackendPage,
+} from '../contexts/CommunityMessagesContextProvider';
 import { CustomAudioPlayer } from '../components/audio';
 
 import { Roles } from '../interfaces/enums';
@@ -61,7 +65,6 @@ const CommunityTopicPage = () => {
 		totalItems,
 		addNewMessage,
 		currentTopicId,
-		enableCommunityMessagesFetch,
 	} = useContext(CommunityMessagesContext);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -143,36 +146,40 @@ const CommunityTopicPage = () => {
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-	// Enable community messages fetching only once when component mounts
-	useEffect(() => {
-		enableCommunityMessagesFetch();
-	}, []); // Empty dependency array - only run once
-
 	useEffect(() => {
 		setPageNumber(initialPageNumber);
 		setHighlightedMessageId(messageIdFromNotification);
-	}, [initialPageNumber, messageIdFromNotification]);
+	}, [initialPageNumber, messageIdFromNotification, setPageNumber]);
 
 	useEffect(() => {
-		if (topicId) {
-			const fetchTopicInfo = async () => {
-				try {
-					// Only fetch topic info, not messages
-					const topicResponse = await axios.get(`${base_url}/communityTopics/${topicId}`);
+		if (!topicId || !orgId) return;
 
-					setTopic(topicResponse.data.data);
-					setIsTopicLocked(!topicResponse.data.data.isActive);
+		let cancelled = false;
 
-					// Initialize messages in context
-					fetchMessages(topicId);
-				} catch (error) {
+		const loadTopicDetail = async () => {
+			try {
+				const [topicResponse] = await Promise.all([
+					axios.get(`${base_url}/communityTopics/${topicId}`),
+					fetchMessages(topicId),
+				]);
+
+				if (cancelled) return;
+
+				setTopic(topicResponse.data.data);
+				setIsTopicLocked(!topicResponse.data.data.isActive);
+			} catch (error) {
+				if (!cancelled) {
 					console.log(error);
 				}
-			};
+			}
+		};
 
-			fetchTopicInfo();
-		}
-	}, [topicId, fetchMessages]);
+		loadTopicDetail();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [topicId, orgId, fetchMessages, base_url]);
 
 	useEffect(() => {
 		if (highlightedMessageId && messages && messages.length > 0) {
@@ -180,8 +187,7 @@ const CommunityTopicPage = () => {
 			const messageIndex = messages.findIndex((msg) => msg._id === highlightedMessageId);
 
 			if (messageIndex !== -1) {
-				// Calculate which frontend page this message is on (20 messages per frontend page)
-				const frontendPage = Math.floor(messageIndex / 20) + 1;
+				const frontendPage = Math.floor(messageIndex / COMMUNITY_UI_PAGE_SIZE) + 1;
 
 				// If the message is not on the current frontend page, navigate to the correct page
 				if (frontendPage !== pageNumber) {
@@ -193,23 +199,25 @@ const CommunityTopicPage = () => {
 				// Message not found in loaded messages - it might be on a further backend page
 				const fetchMessagePage = async () => {
 					try {
-						// Get the message details to find which backend page it's on
-						const response = await axios.get(`${base_url}/communityMessages/message/${highlightedMessageId}?limit=200`);
-						const { page: backendPage } = response.data;
+						const response = await axios.get(
+							`${base_url}/communityMessages/message/${highlightedMessageId}?limit=${COMMUNITY_UI_PAGE_SIZE}`
+						);
+						const frontendPage = response.data.page;
 
-						if (backendPage) {
-							// Find the highest currently loaded backend page
-							const maxLoadedBackendPage = Math.max(...loadedPages, 1);
+						if (!frontendPage) return;
 
-							// If the target backend page is beyond what we've loaded, fetch all backend pages in between
-							if (backendPage > maxLoadedBackendPage) {
-								await fetchMoreMessages(topicId || '', maxLoadedBackendPage + 1, backendPage);
-							}
+						const backendPage = frontendPageToBackendPage(frontendPage);
+						const maxLoadedBackendPage = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 
-							// After loading the backend page, the message should now be in the messages array
-							// The highlighting will happen when the effect runs again with the updated messages
-							return;
+						if (backendPage > maxLoadedBackendPage) {
+							await fetchMoreMessages(topicId || '', maxLoadedBackendPage + 1, backendPage);
 						}
+
+						if (frontendPage !== pageNumber) {
+							setPageNumber(frontendPage);
+						}
+
+						return;
 					} catch (error) {
 						console.error('Error fetching message page:', error);
 						// Clear the highlighted message if we can't find it
@@ -260,7 +268,7 @@ const CommunityTopicPage = () => {
 
 			return () => clearTimeout(timer);
 		}
-	}, [highlightedMessageId, messages, pageNumber, topicId, fetchMoreMessages, loadedPages]);
+	}, [highlightedMessageId, messages, pageNumber, topicId, fetchMoreMessages, loadedPages, setPageNumber, base_url]);
 
 	useEffect(() => {
 		// scrollToBottom();
@@ -506,7 +514,7 @@ const CommunityTopicPage = () => {
 
 	// Smart pagination handler
 	const handlePageChange = async (newPage: number) => {
-		const pageSize = 20; // 20 messages per page
+		const pageSize = COMMUNITY_UI_PAGE_SIZE;
 		const requiredRecords = newPage * pageSize;
 
 		// Smart "Last" button optimization: If jumping to a page far from current data, fetch directly
@@ -758,7 +766,7 @@ const CommunityTopicPage = () => {
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', width: '100%' }}>
 						{(() => {
-							const pageSize = 20;
+							const pageSize = COMMUNITY_UI_PAGE_SIZE;
 							const startIndex = (pageNumber - 1) * pageSize;
 							const endIndex = startIndex + pageSize;
 							const pageMessages = messages?.slice(startIndex, endIndex) || [];

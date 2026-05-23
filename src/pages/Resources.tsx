@@ -1,7 +1,7 @@
 import { Box, Typography, Snackbar, Alert, Grid, DialogContent } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useState, useMemo } from 'react';
+import { useContext, useState, useMemo, useEffect } from 'react';
 import { Add } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -39,7 +39,13 @@ const Resources = () => {
 		deleteFolder,
 		resourcesAccessDenied,
 		resourcesAccessLoading,
+		setCurrentFolderId,
 	} = useContext(ResourcesContext);
+
+	// Folder list only — do not keep a folder selected (avoids fetching items in context)
+	useEffect(() => {
+		setCurrentFolderId(null);
+	}, [setCurrentFolderId]);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;

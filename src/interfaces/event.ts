@@ -1,3 +1,30 @@
+/** Month grid payload from GET ...?view=calendar — detail via GET /events/:id */
+export interface CalendarGridEvent {
+	_id: string;
+	title: string;
+	start: string;
+	end: string;
+	isAllDay: boolean;
+	isPublic: boolean;
+	createdBy: string;
+}
+
+/** API grid row after parsing dates for react-big-calendar */
+export type CalendarDisplayEvent = Omit<CalendarGridEvent, 'start' | 'end'> & {
+	start: Date;
+	end: Date;
+};
+
+/** Grid rows omit description; detail responses (incl. learner lean) include it */
+export function isEventDetailLoaded(event: CalendarGridEvent | CalendarDisplayEvent | Partial<Event> | null): event is Event {
+	return !!event?._id && typeof (event as Event).description === 'string';
+}
+
+/** @deprecated Use isEventDetailLoaded — kept for any external imports */
+export function isFullCalendarEvent(event: CalendarGridEvent | Event): event is Event {
+	return isEventDetailLoaded(event);
+}
+
 export interface Event {
 	_id: string;
 	title: string;

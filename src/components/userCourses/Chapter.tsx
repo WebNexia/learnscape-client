@@ -518,6 +518,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 								nextLessonId={nextLessonId}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
 								lessonOrder={lessonOrder}
+								chapterId={chapterId}
 								isLastLessonOfChapter={isLastLessonOfChapter}
 								currentChapterHasChecklist={hasChecklistItems}
 								currentChapterChecklistCompleted={isChecklistCompleted}

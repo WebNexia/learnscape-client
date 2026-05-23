@@ -59,6 +59,7 @@ interface QuizQuestionProps {
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	setIsQuizInProgress: React.Dispatch<React.SetStateAction<boolean>>;
 	enableWordAssist?: boolean;
+	chapterId?: string;
 }
 
 const QuizQuestion = ({
@@ -75,6 +76,7 @@ const QuizQuestion = ({
 	setUserQuizAnswers,
 	setIsQuizInProgress,
 	enableWordAssist = false,
+	chapterId,
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
@@ -313,6 +315,7 @@ const QuizQuestion = ({
 				courseId,
 				userLessonId,
 				orgId,
+				...(chapterId ? { chapterId } : {}),
 			});
 
 			// Send notification AFTER quiz submission is complete (non-blocking)

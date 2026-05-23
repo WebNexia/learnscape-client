@@ -81,12 +81,12 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 	const [itemsPageNumber, setItemsPageNumber] = useState<number>(1);
 	const [itemsTotalItems, setItemsTotalItems] = useState<number>(0);
 	const [itemsLoadedPages, setItemsLoadedPages] = useState<number[]>([]);
-	const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+	const [currentFolderId, setCurrentFolderIdState] = useState<string | null>(null);
 
-	// Reset items pagination when folderId changes
-	const handleSetCurrentFolderId = useCallback((value: React.SetStateAction<string | null>) => {
+	// Reset items pagination when folder changes
+	const setCurrentFolderId = useCallback((value: React.SetStateAction<string | null>) => {
 		const newFolderId = typeof value === 'function' ? value(currentFolderId) : value;
-		setCurrentFolderId(newFolderId);
+		setCurrentFolderIdState(newFolderId);
 		setItemsPageNumber(1);
 		setItemsLoadedPages([]);
 		setItemsTotalItems(0);
@@ -266,10 +266,10 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		isLoading: itemsLoading,
 		isError: itemsError,
 	} = useQuery(
-		['resourceItems', orgId, currentFolderId || 'all', itemsPageNumber],
-		() => fetchItems(currentFolderId || undefined, itemsPageNumber),
+		['resourceItems', orgId, currentFolderId, itemsPageNumber],
+		() => fetchItems(currentFolderId!, itemsPageNumber),
 		{
-			enabled: !!orgId && canFetchResourcesData,
+			enabled: !!orgId && canFetchResourcesData && !!currentFolderId,
 			staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 			cacheTime: 30 * 60 * 1000,
 			refetchOnMount: true,
@@ -362,7 +362,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		if (!orgId || itemsLoadedPages.length === 0) return items || [];
 		let accumulated: ResourceItem[] = [];
 		for (const page of itemsLoadedPages) {
-			const pageData = queryClient.getQueryData<ResourceItem[]>(['resourceItems', orgId, currentFolderId || 'all', page]) || [];
+			const pageData = queryClient.getQueryData<ResourceItem[]>(['resourceItems', orgId, currentFolderId, page]) || [];
 			accumulated = [...accumulated, ...pageData];
 		}
 		// Remove duplicates by _id
@@ -387,7 +387,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 
 				// Items
 				items: allItems,
-				itemsLoading: itemsLoading || (isEnabled && !items),
+				itemsLoading: !!currentFolderId && (itemsLoading || (canFetchResourcesData && items === undefined)),
 				itemsError: itemsError ? 'Failed to fetch items' : null,
 				fetchItems,
 				fetchMoreItems,
@@ -396,7 +396,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 				itemsTotalItems,
 				itemsLoadedPages,
 				currentFolderId,
-				setCurrentFolderId: handleSetCurrentFolderId as React.Dispatch<React.SetStateAction<string | null>>,
+				setCurrentFolderId,
 
 				// Search
 				searchResources,

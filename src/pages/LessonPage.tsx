@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Skeleton, Slide, Tooltip, Typography } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import {
 	Article,
@@ -122,9 +122,14 @@ export interface QuizQuestionAnswer {
 	partialScores?: { [key: string]: number };
 }
 
+const getChapterIdFromChapter = (chapter: { _id?: string; chapterId?: string } | null | undefined) =>
+	String(chapter?._id ?? chapter?.chapterId ?? '');
+
 const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, courseId, userCourseId } = useParams();
+	const [searchParams] = useSearchParams();
+	const chapterIdFromUrl = searchParams.get('chapterId') || '';
 	const {
 		isSmallScreen,
 		isRotatedMedium,
@@ -248,8 +253,20 @@ const LessonPage = () => {
 
 	const currentChapter = useMemo(() => {
 		if (!singleCourseUser?.chapters || !lessonId) return null;
+
+		if (chapterIdFromUrl) {
+			const chapterFromUrl = singleCourseUser.chapters.find(
+				(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+			);
+			if (chapterFromUrl?.lessons?.some((l) => l?._id === lessonId)) {
+				return chapterFromUrl;
+			}
+		}
+
 		return (singleCourseUser.chapters || []).find((ch) => ch?.lessons?.some((l) => l?._id === lessonId)) ?? null;
-	}, [singleCourseUser?.chapters, lessonId]);
+	}, [singleCourseUser?.chapters, lessonId, chapterIdFromUrl]);
+
+	const activeChapterId = chapterIdFromUrl || getChapterIdFromChapter(currentChapter as { _id?: string; chapterId?: string });
 
 	const instructionalLessonsInChapter = useMemo(() => {
 		if (!currentChapter?.lessons) return [];
@@ -520,10 +537,13 @@ const LessonPage = () => {
 		}
 	};
 
-	const handleDrawerLessonClick = (targetLessonId: string) => {
+	const handleDrawerLessonClick = (targetLessonId: string, targetChapterId?: string) => {
 		if (!courseId || !userCourseId || targetLessonId === lessonId) return;
 		setIsChapterListDrawerOpen(false);
-		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}`);
+		const params = new URLSearchParams();
+		if (targetChapterId) params.set('chapterId', targetChapterId);
+		const query = params.toString();
+		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}${query ? `?${query}` : ''}`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -907,7 +927,7 @@ const LessonPage = () => {
 													return (
 														<Box
 															key={lesson._id}
-															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id)}
+															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id, String(chapterId))}
 															sx={{
 																display: 'flex',
 																alignItems: 'center',
@@ -1531,6 +1551,7 @@ const LessonPage = () => {
 							enableWordAssist={isWordAssistEnabled}
 							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
 							chapterName={currentChapter?.title}
+							chapterId={activeChapterId || undefined}
 						/>
 					</Box>
 				);

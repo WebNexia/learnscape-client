@@ -281,6 +281,7 @@ const ResourceItems = () => {
 								} else if (location.pathname.includes('/resources') && !location.pathname.includes('/admin')) {
 									basePath = '/resources';
 								}
+								setCurrentFolderId(null);
 								navigate(basePath);
 							},
 							startIcon: <ArrowBack />,

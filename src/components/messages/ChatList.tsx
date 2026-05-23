@@ -129,7 +129,7 @@ const ChatList = ({
 					</Box>
 
 					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
-						{isLoadingChatList ? (
+						{isLoadingChatList && filteredChatList.length === 0 ? (
 							<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
 								<Typography variant='body2' sx={{ color: 'text.secondary' }}>
 									Loading chats...

@@ -11,6 +11,7 @@ import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
+import { COMMUNITY_UI_PAGE_SIZE } from '../../../contexts/CommunityMessagesContextProvider';
 
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import EventsContextProvider from '../../../contexts/EventsContextProvider';
@@ -136,7 +137,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				note.type === NotificationType.COMMUNITY_NOTIFICATION
 			) {
 				try {
-					const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=250`);
+					const response = await axios.get(
+						`${base_url}/communityMessages/message/${note.communityMessageId}?limit=${COMMUNITY_UI_PAGE_SIZE}`
+					);
 					const { page } = response.data;
 					const basePath =
 						user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN

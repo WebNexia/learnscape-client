@@ -13,46 +13,84 @@ interface UseChatListReturn {
 	filteredChatList: Chat[];
 	setFilteredChatList: React.Dispatch<React.SetStateAction<Chat[]>>;
 	isLoadingChatList: boolean;
-	fetchChatListFromBackend: () => Promise<void>;
-	refreshChatList: (retries?: number) => Promise<void>;
+	fetchChatListFromBackend: (background?: boolean) => Promise<void>;
+	refreshChatList: (retries?: number, bypassCache?: boolean) => Promise<void>;
 	restoredChat: Chat | null;
 }
 
+// Survives Messages unmount so revisits can show stale data while revalidating.
+let chatListCache: Chat[] | null = null;
+let chatListCacheUserId: string | undefined;
+
+const sortChatList = (chatListData: Chat[]) =>
+	[...chatListData].sort((a, b) => {
+		const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+		const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+		return bTime - aTime;
+	});
+
+const getCachedChatList = (userFirebaseId?: string) => {
+	if (!userFirebaseId || chatListCacheUserId !== userFirebaseId || chatListCache === null) {
+		return null;
+	}
+
+	return chatListCache;
+};
+
+const persistChatListCache = (userFirebaseId: string | undefined, chatList: Chat[]) => {
+	if (!userFirebaseId) return;
+
+	chatListCache = chatList;
+	chatListCacheUserId = userFirebaseId;
+};
+
 export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): UseChatListReturn => {
-	const [chatList, setChatList] = useState<Chat[]>([]);
-	const [filteredChatList, setFilteredChatList] = useState<Chat[]>([]);
-	const [isLoadingChatList, setIsLoadingChatList] = useState(false);
+	const cachedChatList = getCachedChatList(userFirebaseId);
+	const [chatList, setChatListState] = useState<Chat[]>(() => cachedChatList ?? []);
+	const [filteredChatList, setFilteredChatList] = useState<Chat[]>(() => cachedChatList ?? []);
+	const [isLoadingChatList, setIsLoadingChatList] = useState(() => cachedChatList === null);
 	const [restoredChat, setRestoredChat] = useState<Chat | null>(null);
 
-	// Function to fetch chat list from backend with retry mechanism
-	const fetchChatListFromBackend = useCallback(async () => {
-		if (!userFirebaseId) return;
-
-		setIsLoadingChatList(true);
-		try {
-			const response = await axios.get('/chats');
-			const chatListData = response.data;
-
-			// Sort by last message timestamp (most recent first)
-			const sortedChatList = chatListData.sort((a: Chat, b: Chat) => {
-				// All timestamps are now ISO strings from backend
-				const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-				const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-				return bTime - aTime; // Descending order (most recent first)
+	const setChatList = useCallback<React.Dispatch<React.SetStateAction<Chat[]>>>(
+		(updater) => {
+			setChatListState((prev) => {
+				const next = typeof updater === 'function' ? updater(prev) : updater;
+				persistChatListCache(userFirebaseId, next);
+				return next;
 			});
+		},
+		[userFirebaseId]
+	);
 
-			// Update state with sorted backend data
-			setChatList(sortedChatList);
-			setFilteredChatList(sortedChatList);
-		} catch (error) {
-			console.error('❌ Error fetching chat list from backend:', error);
-			// Fallback to empty array
-			setChatList([]);
-			setFilteredChatList([]);
-		} finally {
-			setIsLoadingChatList(false);
-		}
-	}, [userFirebaseId]);
+	// Function to fetch chat list from backend with retry mechanism
+	const fetchChatListFromBackend = useCallback(
+		async (background = false) => {
+			if (!userFirebaseId) return;
+
+			const hasCachedData = getCachedChatList(userFirebaseId) !== null;
+			if (!background && !hasCachedData) {
+				setIsLoadingChatList(true);
+			}
+
+			try {
+				const response = await axios.get('/chats');
+				const sortedChatList = sortChatList(response.data);
+
+				persistChatListCache(userFirebaseId, sortedChatList);
+				setChatListState(sortedChatList);
+				setFilteredChatList(sortedChatList);
+			} catch (error) {
+				console.error('❌ Error fetching chat list from backend:', error);
+				if (!hasCachedData) {
+					setChatListState([]);
+					setFilteredChatList([]);
+				}
+			} finally {
+				setIsLoadingChatList(false);
+			}
+		},
+		[userFirebaseId]
+	);
 
 	// Event-driven refresh function with retry mechanism
 	const refreshChatList = useCallback(
@@ -69,21 +107,15 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 				// Add cache-busting parameter if bypassCache is true
 				const url = bypassCache ? `/chats?t=${Date.now()}` : '/chats';
 				const response = await axios.get(url);
-				const chatListData = response.data;
+				const sortedChatList = sortChatList(response.data);
 
-				// Sort by last message timestamp (most recent first)
-				const sortedChatList = chatListData.sort((a: Chat, b: Chat) => {
-					const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-					const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-					return bTime - aTime; // Descending order (most recent first)
-				});
-
-				setChatList(sortedChatList);
+				persistChatListCache(userFirebaseId, sortedChatList);
+				setChatListState(sortedChatList);
 				setFilteredChatList(sortedChatList);
 			} catch (error) {
 				console.error('❌ Error refreshing chat list:', error);
 				if (retries > 0) {
-					setTimeout(() => refreshChatList(retries - 1), 1000);
+					setTimeout(() => refreshChatList(retries - 1, bypassCache), 1000);
 				} else {
 					console.error('❌ Failed to refresh chat list after 3 attempts');
 				}
@@ -92,10 +124,23 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 		[userFirebaseId, activeChat]
 	);
 
-	// Load chat list on mount
+	// Always revalidate on mount/user change; show cached list while fetching when available.
 	useEffect(() => {
-		fetchChatListFromBackend();
-	}, [fetchChatListFromBackend]);
+		if (!userFirebaseId) return;
+
+		const cachedData = getCachedChatList(userFirebaseId);
+		if (cachedData) {
+			setChatListState(cachedData);
+			setFilteredChatList(cachedData);
+			setIsLoadingChatList(false);
+			fetchChatListFromBackend(true);
+			return;
+		}
+
+		setChatListState([]);
+		setFilteredChatList([]);
+		fetchChatListFromBackend(false);
+	}, [userFirebaseId, fetchChatListFromBackend]);
 
 	// Restore previously active chat from sessionStorage after chatList loads
 	useEffect(() => {

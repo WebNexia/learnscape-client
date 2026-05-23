@@ -7,16 +7,17 @@ export interface QuizSubmission {
 	courseName: string;
 	userName: string;
 	lessonId: string;
-	courseId: string;
+	courseId?: string;
 	userLessonId: string;
-	orgId: string;
-	userId: string;
+	orgId?: string;
+	userId?: string;
 	isChecked: boolean;
-	createdAt: string;
+	createdAt?: string;
 	updatedAt: string;
 
 	// Existing summary / helper fields
 	totalEarned?: number;
+	totalPossible?: number;
 	lessonIsGraded?: boolean;
 	lessonType?: string;
 	lessonQuestionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
