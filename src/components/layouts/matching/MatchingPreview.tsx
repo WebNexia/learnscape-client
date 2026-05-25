@@ -264,7 +264,7 @@ const MatchingPreview = ({
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) return;
 
-		if (isLessonCompleted && fromQuizQuestionUser) return; // Prevent dragging if lesson is completed for quiz
+		if (isLessonCompleted) return;
 
 		setHasInteracted(true);
 
@@ -362,7 +362,11 @@ const MatchingPreview = ({
 											{pair.question}
 										</Typography>
 										{pair.answer ? (
-											<Draggable key={`draggable-prompt-${pair.id}`} draggableId={`draggable-prompt-${pair.id}`} index={index}>
+											<Draggable
+												key={`draggable-prompt-${pair.id}`}
+												draggableId={`draggable-prompt-${pair.id}`}
+												index={index}
+												isDragDisabled={isLessonCompleted}>
 												{(provided) => (
 													<Item
 														ref={provided.innerRef}
@@ -437,7 +441,7 @@ const MatchingPreview = ({
 												key={`draggable-response-${response.id}-${index}`}
 												draggableId={`draggable-response-${response.id}-${index}`}
 												index={index}
-												isDragDisabled={isLessonCompleted && fromQuizQuestionUser}>
+												isDragDisabled={isLessonCompleted}>
 												{(provided) => (
 													<Item
 														ref={provided.innerRef}

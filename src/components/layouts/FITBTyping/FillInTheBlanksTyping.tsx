@@ -10,13 +10,14 @@ import { words } from '../../../interfaces/randomWords';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
-import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import WordAssistPopper from '../../userCourses/WordAssistPopper';
 import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
 import { LEARNER_TEXT_FONT_FAMILY } from '../../../utils/learnerTypography';
+import FitbInteractionModeBadge from '../fitb/FitbInteractionModeBadge';
+import { getWordBankHint } from '../../../utils/fitbWordBankHint';
 
 const questionTextColor = theme.palette.primary.main;
 
@@ -25,7 +26,7 @@ const Container = styled(Box)`
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	margin-top: 1.5rem;
+	margin-top: 0;
 	flex-grow: 1;
 `;
 
@@ -91,6 +92,7 @@ const StyledInput = styled(
 		if (isCorrect !== null) return '#fff';
 		return 'black';
 	}};
+		font-family: ${LEARNER_TEXT_FONT_FAMILY};
 		font-size: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : '0.9rem')};
 		height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : undefined)};
 		width: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '6rem' : '7.5rem')};
@@ -157,6 +159,9 @@ const FillInTheBlanksTyping = ({
 	const hintsInitializedRef = useRef<boolean>(false);
 	const previousQuestionIdRef = useRef<string | undefined>(questionId);
 	const previousIsLessonCompletedRef = useRef<boolean | undefined>(isLessonCompleted);
+	const isReviewMode = Boolean(isLessonCompleted && fromPracticeQuestionUser && lessonType === LessonType.PRACTICE_LESSON);
+	const showWordBank = !isLessonCompleted || isReviewMode;
+	const revealWordBankValues = showHiddenBlankValues || isReviewMode;
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
@@ -356,7 +361,7 @@ const FillInTheBlanksTyping = ({
 	}, [userAnswers, hasInteracted]);
 
 	const handleChange = (id: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON) return;
+		if (isLessonCompleted) return;
 
 		setHasInteracted(true);
 
@@ -407,6 +412,7 @@ const FillInTheBlanksTyping = ({
 	return (
 		<Container>
 			<Column>
+				<FitbInteractionModeBadge mode='typing' compact={isMobileSize} />
 				<TextContainer
 					isMobileSizeSmall={isMobileSizeSmall}
 					onMouseOver={handleWordHover}
@@ -426,6 +432,7 @@ const FillInTheBlanksTyping = ({
 									size='small'
 									value={userAnswers[blankId] || ''}
 									onChange={handleChange(blankId)}
+									disabled={!!isLessonCompleted}
 									isCorrect={inputStatus[blankId]}
 									fromQuizQuestionUser={!!fromQuizQuestionUser}
 									isLessonCompleted={!!isLessonCompleted}
@@ -478,18 +485,16 @@ const FillInTheBlanksTyping = ({
 					isLoadingWordInfo={isLoadingWordInfo}
 				/>
 
-				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
+				{showWordBank && (
 					<Box
 						sx={{
 							mt: '5rem',
 							mb: '2rem',
 						}}>
-						<CustomInfoMessageAlignedLeft message='Type the correct word into each blank to complete the sentence(s)' />
 						<Box
 							sx={{
 								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
+								flexDirection: 'column',
 								minHeight: '3rem',
 								boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
 								borderRadius: '0.85rem',
@@ -499,6 +504,36 @@ const FillInTheBlanksTyping = ({
 								width: '100%',
 								padding: '1.75rem 1rem',
 							}}>
+							<Box sx={{ width: '100%', mb: 1.5 }}>
+								<Typography
+									variant='h6'
+									sx={{
+										fontSize: isMobileSizeSmall ? '0.85rem' : '1rem',
+										fontWeight: 600,
+										color: theme.palette.primary.main,
+										fontFamily: LEARNER_TEXT_FONT_FAMILY,
+									}}>
+									Word bank
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{
+										mt: 0.5,
+										color: 'text.secondary',
+										fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+										fontFamily: LEARNER_TEXT_FONT_FAMILY,
+										lineHeight: 1.5,
+									}}>
+									{getWordBankHint(blankValuePairs?.length ?? 0)}
+								</Typography>
+							</Box>
+							<Box
+								sx={{
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									width: '100%',
+								}}>
 							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
 								{hints?.map((hint, index) => {
 									return (
@@ -512,7 +547,7 @@ const FillInTheBlanksTyping = ({
 												backgroundColor: 'rgba(1, 67, 90, 0.06)',
 												boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
 											}}>
-											{showHiddenBlankValues ? (
+											{revealWordBankValues ? (
 												<Typography
 													variant='body2'
 													sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
@@ -527,16 +562,19 @@ const FillInTheBlanksTyping = ({
 									);
 								})}
 							</Box>
-							<Box>
-								<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top' arrow>
-									<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-										{showHiddenBlankValues ? (
-											<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
-										) : (
-											<Visibility fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
-										)}
-									</IconButton>
-								</Tooltip>
+							{!isReviewMode && (
+								<Box>
+									<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top' arrow>
+										<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
+											{showHiddenBlankValues ? (
+												<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+											) : (
+												<Visibility fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+											)}
+										</IconButton>
+									</Tooltip>
+								</Box>
+							)}
 							</Box>
 						</Box>
 					</Box>

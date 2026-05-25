@@ -2,6 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Paper, Container } from '@mui/material';
 import { Refresh, BugReport, ErrorOutline } from '@mui/icons-material';
 import logo from '../../assets/logo.png';
+import { hardReloadPage, reportApplicationBug } from '../../utils/errorPageActions';
 
 interface Props {
 	children: ReactNode;
@@ -145,7 +146,7 @@ class AdminPageErrorBoundary extends Component<Props, State> {
 								variant='contained'
 								size='large'
 								startIcon={<Refresh />}
-								onClick={this.handleRetry}
+								onClick={hardReloadPage}
 								sx={{
 									minWidth: 140,
 									py: 1.5,
@@ -158,9 +159,7 @@ class AdminPageErrorBoundary extends Component<Props, State> {
 								variant='outlined'
 								size='large'
 								startIcon={<BugReport />}
-								onClick={() => {
-									// TODO: Open support modal or redirect to support
-								}}
+								onClick={() => reportApplicationBug(this.state.error, this.props.pageName)}
 								sx={{
 									minWidth: 140,
 									py: 1.5,

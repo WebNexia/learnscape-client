@@ -60,6 +60,7 @@ import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import InstructionalLessonsDialog from '../components/userCourses/InstructionalLessonsDialog';
 import { useWordAssist, wrapWordsForHover } from '../hooks/useWordAssist';
+import { readWordAssistPreference, WORD_ASSIST_STORAGE_KEY } from '../utils/wordAssistPreference';
 import WordAssistPopper from '../components/userCourses/WordAssistPopper';
 import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
 
@@ -194,10 +195,7 @@ const LessonPage = () => {
 	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
-	const [isWordAssistEnabled, setIsWordAssistEnabled] = useState<boolean>(() => {
-		const saved = localStorage.getItem('word-assist-enabled');
-		return saved === 'true';
-	});
+	const [isWordAssistEnabled, setIsWordAssistEnabled] = useState<boolean>(() => readWordAssistPreference());
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
@@ -330,7 +328,7 @@ const LessonPage = () => {
 			String(instructionalDialogLessonPayload._id) !== String(selectedInstructionalLessonId));
 
 	useEffect(() => {
-		localStorage.setItem('word-assist-enabled', String(isWordAssistEnabled));
+		localStorage.setItem(WORD_ASSIST_STORAGE_KEY, String(isWordAssistEnabled));
 	}, [isWordAssistEnabled]);
 
 	// When chapter list drawer opens, ensure the chapter containing the current lesson is expanded
@@ -1411,7 +1409,7 @@ const LessonPage = () => {
 					)}
 				</Box>
 			)}
-			{!isInstructionalLesson && !isQuestionsVisible && (
+			{!isInstructionalLesson && !isQuestionsVisible && !isLessonContentLoading && (
 				<Box
 					sx={{
 						mt: isMobileSize ? '1rem' : '2rem',
@@ -1558,6 +1556,7 @@ const LessonPage = () => {
 							onQuestionChange={setCurrentQuestionNumber}
 							isSoundMuted={isSoundMuted}
 							practiceAgainMode={practiceAgainMode}
+							questionsSessionKey={questionsSessionKey}
 							enableWordAssist={isWordAssistEnabled}
 							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
 							chapterName={currentChapter?.title}
@@ -1610,6 +1609,7 @@ const LessonPage = () => {
 							setIsLessonCourseCompletedModalOpen(false);
 							setIsNavigatingToNextLesson(false);
 						}}
+						disableDismiss
 						maxWidth='xs'
 						title={`${nextLessonId || hasMoreLessonsInCourse ? 'Lesson Completed' : 'Course Completed'}`}>
 						<DialogContent sx={{ mb: '-0.5rem' }}>
@@ -1618,10 +1618,7 @@ const LessonPage = () => {
 							</Typography>
 						</DialogContent>
 						<CustomDialogActions
-							onCancel={() => {
-								setIsLessonCourseCompletedModalOpen(false);
-								setIsNavigatingToNextLesson(false);
-							}}
+							showCancelBtn={false}
 							onSubmit={async () => {
 								setIsNavigatingToNextLesson(true);
 								try {

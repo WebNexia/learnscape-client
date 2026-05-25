@@ -15,6 +15,8 @@ interface CustomDialogProps {
 	PaperProps?: object;
 	BackdropProps?: object;
 	disableScrollLock?: boolean;
+	/** When true, backdrop click and Escape cannot close the dialog */
+	disableDismiss?: boolean;
 }
 
 const CustomDialog = ({
@@ -29,6 +31,7 @@ const CustomDialog = ({
 	PaperProps,
 	BackdropProps,
 	disableScrollLock = false,
+	disableDismiss = false,
 }: CustomDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -36,7 +39,8 @@ const CustomDialog = ({
 	return (
 		<Dialog
 			open={openModal}
-			onClose={closeModal}
+			onClose={disableDismiss ? undefined : closeModal}
+			disableEscapeKeyDown={disableDismiss}
 			fullWidth
 			maxWidth={maxWidth}
 			disableScrollLock={disableScrollLock}

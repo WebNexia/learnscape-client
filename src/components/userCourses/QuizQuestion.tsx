@@ -623,14 +623,14 @@ const QuizQuestion = ({
 								width: '100%',
 								margin:
 									question.imageUrl || question.videoUrl
-										? '2.5rem auto 0 auto'
+										? '3rem auto 0 auto'
 										: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
-											? '6rem auto 0 auto'
+											? '6.5rem auto 0 auto'
 											: isTabletPortrait || isTabletLandscape
 												? '7rem auto 0 auto'
 												: isDesktopPortrait || isDesktopLandscape
 													? '8rem auto 0 auto'
-													: '6rem auto 0 auto',
+													: '6.5rem auto 0 auto',
 							}}>
 							<FillInTheBlanksDragDrop
 								questionId={question._id}
@@ -661,14 +661,14 @@ const QuizQuestion = ({
 								width: '100%',
 								margin:
 									question.imageUrl || question.videoUrl
-										? '2.5rem auto 0 auto'
+										? '3rem auto 0 auto'
 										: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
-											? '6rem auto 0 auto'
+											? '6.5rem auto 0 auto'
 											: isTabletPortrait || isTabletLandscape
 												? '7rem auto 0 auto'
 												: isDesktopPortrait || isDesktopLandscape
 													? '8rem auto 0 auto'
-													: '6rem auto 0 auto',
+													: '6.5rem auto 0 auto',
 							}}>
 							<FillInTheBlanksTyping
 								questionId={question._id}

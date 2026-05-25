@@ -159,7 +159,10 @@ const PasswordResetPage = () => {
 							placeholder='Yeni şifrenizi girin'
 							type={showNewPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={newPassword}
-							onChange={(e) => setNewPassword(e.target.value.trim())}
+							onChange={(e) => {
+								setNewPassword(e.target.value.trim());
+								setResetErrorMsg(null);
+							}}
 							InputProps={{
 								endAdornment: (
 									<InputAdornment position='end'>
@@ -182,7 +185,10 @@ const PasswordResetPage = () => {
 							placeholder='Yeni şifrenizi tekrar girin'
 							type={showConfirmPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={confirmNewPassword}
-							onChange={(e) => setConfirmNewPassword(e.target.value.trim())}
+							onChange={(e) => {
+								setConfirmNewPassword(e.target.value.trim());
+								setResetErrorMsg(null);
+							}}
 							InputProps={{
 								endAdornment: (
 									<InputAdornment position='end'>

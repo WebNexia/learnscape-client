@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Paper, Container } from '@mui/material';
 import { Refresh, BugReport, Home, ErrorOutline } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { goToHomePage, hardReloadPage, reportApplicationBug } from '../../utils/errorPageActions';
 import logo from '../../assets/logo.png';
 
 interface Props {
@@ -56,14 +56,6 @@ class ErrorBoundary extends Component<Props, State> {
 		// this.logErrorToService(error, errorInfo);
 	}
 
-	handleRetry = () => {
-		this.setState({
-			hasError: false,
-			error: null,
-			errorInfo: null,
-		});
-	};
-
 	render() {
 		if (this.state.hasError) {
 			// Custom fallback UI
@@ -78,7 +70,6 @@ class ErrorBoundary extends Component<Props, State> {
 					errorInfo={this.state.errorInfo}
 					context={this.props.context}
 					showDetails={this.props.showDetails}
-					onRetry={this.handleRetry}
 				/>
 			);
 		}
@@ -93,20 +84,9 @@ interface ErrorFallbackProps {
 	errorInfo: ErrorInfo | null;
 	context?: string;
 	showDetails?: boolean;
-	onRetry: () => void;
 }
 
-const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context, showDetails = false, onRetry }) => {
-	const navigate = useNavigate();
-
-	const handleGoHome = () => {
-		navigate('/');
-	};
-
-	const handleReportBug = () => {
-		// TODO: Open bug report modal or redirect to support
-	};
-
+const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context, showDetails = false }) => {
 	return (
 		<Container maxWidth='md' sx={{ py: 8 }}>
 			<Box
@@ -192,7 +172,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context
 						variant='contained'
 						size='large'
 						startIcon={<Refresh />}
-						onClick={onRetry}
+						onClick={hardReloadPage}
 						sx={{
 							minWidth: 140,
 							py: 1.5,
@@ -205,7 +185,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context
 						variant='outlined'
 						size='large'
 						startIcon={<Home />}
-						onClick={handleGoHome}
+						onClick={goToHomePage}
 						sx={{
 							minWidth: 140,
 							py: 1.5,
@@ -218,7 +198,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context
 						variant='outlined'
 						size='large'
 						startIcon={<BugReport />}
-						onClick={handleReportBug}
+						onClick={() => reportApplicationBug(error, context)}
 						sx={{
 							minWidth: 140,
 							py: 1.5,
