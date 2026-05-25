@@ -22,6 +22,9 @@ export const useDashboardSync = () => {
 		// Invalidate admin/instructor quiz submissions cache
 		queryClient.invalidateQueries(['allAdminQuizSubmissions']);
 
+		// Invalidate submission detail pages (feedback / checked status)
+		queryClient.invalidateQueries(['submissionFeedback']);
+
 		// Also try to refetch immediately
 		queryClient.refetchQueries(['learnerQuizSubmissions']);
 		queryClient.refetchQueries(['allAdminQuizSubmissions']);

@@ -10,6 +10,7 @@ import {
 	ExpandMore,
 	GetApp,
 	HelpOutline,
+	InfoOutlined,
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
@@ -202,6 +203,7 @@ const LessonPage = () => {
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
 	const [questionsSessionKey, setQuestionsSessionKey] = useState(0);
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
+	const [isQuestionToolbarHelpOpen, setIsQuestionToolbarHelpOpen] = useState<boolean>(false);
 	const [isInstructionalLessonsDialogOpen, setIsInstructionalLessonsDialogOpen] = useState<boolean>(false);
 	const [selectedInstructionalLessonId, setSelectedInstructionalLessonId] = useState<string>('');
 	const [isChapterListDrawerOpen, setIsChapterListDrawerOpen] = useState<boolean>(false);
@@ -620,7 +622,7 @@ const LessonPage = () => {
 							alignItems: 'center',
 						}}>
 						{lessonType === LessonType.PRACTICE_LESSON && (
-							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='left' arrow>
+							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='top' arrow>
 								<IconButton onClick={() => setIsSoundMuted(!isSoundMuted)}>
 									{isSoundMuted ? (
 										<VolumeOff fontSize={isMobileSize ? 'small' : 'medium'} />
@@ -649,12 +651,20 @@ const LessonPage = () => {
 							</Tooltip>
 						)}
 						{lessonType === LessonType.PRACTICE_LESSON && instructionalLessonsInChapter.length > 0 && (
-							<Tooltip title='Lectures in this Chapter' placement='right' arrow>
+							<Tooltip title='Lectures in this Chapter' placement='top' arrow>
 								<IconButton onClick={() => setIsInstructionalLessonsDialogOpen(true)}>
 									<MenuBook fontSize={isMobileSize ? 'small' : 'medium'} />
 								</IconButton>
 							</Tooltip>
 						)}
+						<Tooltip title='Toolbar help' placement='top' arrow>
+							<IconButton
+								onClick={() => setIsQuestionToolbarHelpOpen(true)}
+								sx={{ ':hover': { backgroundColor: 'transparent' } }}
+								aria-label='Question toolbar help'>
+								<InfoOutlined fontSize={isMobileSize ? 'small' : 'medium'} />
+							</IconButton>
+						</Tooltip>
 					</Box>
 				)}
 
@@ -1632,6 +1642,73 @@ const LessonPage = () => {
 					</CustomDialog>
 				</Box>
 			)}
+			<CustomDialog
+				openModal={isQuestionToolbarHelpOpen}
+				closeModal={() => setIsQuestionToolbarHelpOpen(false)}
+				maxWidth='sm'
+				title='Question Toolbar'>
+				<DialogContent>
+					{lessonType === LessonType.PRACTICE_LESSON && (
+						<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+							{isSoundMuted ? (
+								<VolumeOff fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							) : (
+								<VolumeUp fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							)}
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Sound effects
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Mute or unmute practice sounds: answer feedback (correct/incorrect) and flip-card flip sounds.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+					<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+						<Article fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+						<Box>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+								Lesson notes
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+								Open the notes panel to write and save personal notes while answering questions. You can download your notes as a PDF.
+							</Typography>
+						</Box>
+					</Box>
+					{lessonType === LessonType.PRACTICE_LESSON && (
+						<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+							<RecordVoiceOver fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Pronunciation assist
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Turn on to hover over words in questions and hear pronunciation with short definitions.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+					{lessonType === LessonType.PRACTICE_LESSON && instructionalLessonsInChapter.length > 0 && (
+						<Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+							<MenuBook fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Lectures in this chapter
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Open lectures from this chapter for quick review while you work on practice questions.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setIsQuestionToolbarHelpOpen(false)} sx={{ margin: '0rem 0.5rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
 			<InstructionalLessonsDialog
 				open={isInstructionalLessonsDialogOpen}
 				onClose={() => setIsInstructionalLessonsDialogOpen(false)}

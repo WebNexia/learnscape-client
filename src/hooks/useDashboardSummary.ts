@@ -3,6 +3,11 @@ import { useContext } from 'react';
 import axios from '@utils/axiosInstance';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { useAuth } from './useAuth';
+
+export const LEARNER_DASHBOARD_STALE_MS = 0;
+export const LEARNER_DASHBOARD_CACHE_MS = 10 * 60 * 1000;
+export const ADMIN_DASHBOARD_STALE_MS = 2 * 60 * 1000;
 
 // Dashboard data interfaces
 export interface UpcomingEvent {
@@ -74,6 +79,7 @@ export interface DashboardSummaryData {
 export const useDashboardSummary = () => {
 	const { userId } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
+	const { isLearner } = useAuth();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -116,9 +122,9 @@ export const useDashboardSummary = () => {
 		},
 		{
 			enabled: !!userId && !!orgId,
-			staleTime: 2 * 60 * 1000, // 2 minutes
-			cacheTime: 10 * 60 * 1000, // 10 minutes
-			refetchOnWindowFocus: true,
+			staleTime: isLearner ? LEARNER_DASHBOARD_STALE_MS : ADMIN_DASHBOARD_STALE_MS,
+			cacheTime: LEARNER_DASHBOARD_CACHE_MS,
+			refetchOnWindowFocus: !isLearner,
 			refetchOnMount: true,
 			onError: (error) => {
 				console.error('❌ Dashboard API Error:', error);

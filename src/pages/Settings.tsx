@@ -57,9 +57,11 @@ const Settings = () => {
 	const [isPasswordUpdatedMsgDisplayed, setIsPasswordUpdatedMsgDisplayed] = useState<boolean>(false);
 	const [isProfileUpdatedMsgDisplayed, setIsProfileUpdatedMsgDisplayed] = useState<boolean>(false);
 	const [isProfilePictureSavedMsgDisplayed, setIsProfilePictureSavedMsgDisplayed] = useState<boolean>(false);
+	const [isProfilePictureRemovedMsgDisplayed, setIsProfilePictureRemovedMsgDisplayed] = useState<boolean>(false);
 	const [isEmailUpdatedMsgDisplayed, setIsEmailUpdatedMsgDisplayed] = useState<boolean>(false);
 	const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
 	const [isSavingProfilePicture, setIsSavingProfilePicture] = useState<boolean>(false);
+	const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState<boolean>(false);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -160,12 +162,65 @@ const Settings = () => {
 		}
 	};
 
+	const hasSavedProfilePicture = Boolean(user?.imageUrl?.trim() || imageUrl?.trim());
+	const hasProfilePicturePreview = Boolean(profilePicturePreview);
+
+	const handleProfilePictureRemove = async () => {
+		if (!user?._id) return;
+
+		setProfileErrorMsg(undefined);
+
+		if (!hasSavedProfilePicture) {
+			setProfilePicturePreview(null);
+			return;
+		}
+
+		setIsRemovingProfilePicture(true);
+
+		try {
+			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: '' });
+
+			setUser((prevData) => (prevData ? { ...prevData, imageUrl: '' } : prevData));
+			setImageUrl('');
+			setProfilePicturePreview(null);
+			setIsProfileUpdated(false);
+			setIsProfilePictureRemovedMsgDisplayed(true);
+		} catch (error: unknown) {
+			console.error('Profile picture remove error:', error);
+			const axiosError = error as { response?: { data?: { message?: string } } };
+			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while removing your profile picture.');
+		} finally {
+			setIsRemovingProfilePicture(false);
+		}
+	};
+
+	const validateUsername = (value: string): string | null => {
+		const trimmed = value.trim();
+		if (trimmed.length < 5) {
+			return 'Username must be at least 5 characters.';
+		}
+		if (trimmed.length > 15) {
+			return 'Username must be at most 15 characters.';
+		}
+		if (!/^(?![._])(?!.*[._]$)[a-zA-Z0-9._]+$/.test(trimmed)) {
+			return 'Username can only include letters, numbers, underscore, and period; it cannot start or end with _ or .';
+		}
+		return null;
+	};
+
 	const handleProfileUpdate = async () => {
 		if (!isProfileUpdated) {
 			setProfileUpdateStatus('nochange');
 			setIsProfileUpdatedMsgDisplayed(true);
 			return;
 		}
+
+		const usernameError = validateUsername(username);
+		if (usernameError) {
+			setProfileErrorMsg(usernameError);
+			return;
+		}
+
 		try {
 			// For other profile updates (not email)
 			if (isProfileUpdated) {
@@ -203,6 +258,8 @@ const Settings = () => {
 					const msg = error?.response?.data?.message;
 					if (msg === 'Username already in use') {
 						setProfileErrorMsg('This username is already in use.');
+					} else if (msg === 'Username must be 5-15 characters.') {
+						setProfileErrorMsg('Username must be at least 5 characters.');
 					} else {
 						setProfileErrorMsg('An error occurred while updating your profile.');
 					}
@@ -385,7 +442,7 @@ const Settings = () => {
 					padding: isVerySmallScreen ? '1rem 1.5rem' : isRotatedMedium ? '1rem' : '3rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', flexDirection: isVerySmallScreen ? 'column' : 'row', mb: isMobileSize ? '1rem' : '0rem' }}>
+				<Box sx={{ display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row', mb: isMobileSize ? '1rem' : '0rem' }}>
 					<form
 						style={{
 							display: 'flex',
@@ -393,8 +450,8 @@ const Settings = () => {
 							alignItems: 'flex-start',
 							justifyContent: 'space-between',
 							flex: isVerySmallScreen ? undefined : 3,
-							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '29rem',
-							marginBottom: isVerySmallScreen ? '3rem' : '',
+							height: isSmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '29rem',
+							marginBottom: isSmallScreen ? '3rem' : '',
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
@@ -405,9 +462,9 @@ const Settings = () => {
 						<Box
 							sx={{
 								display: 'flex',
-								justifyContent: 'center',
+								flexDirection: 'column',
+								alignItems: 'center',
 								width: '90%',
-								height: isMobileSize ? '8rem' : '10rem',
 								margin: '1rem 0 0.5rem 0',
 							}}>
 							<img
@@ -425,13 +482,34 @@ const Settings = () => {
 									border: 'solid lightgray 0.01rem',
 								}}
 							/>
+							{(hasSavedProfilePicture || hasProfilePicturePreview) && (
+								<Box
+									component='button'
+									type='button'
+									onClick={handleProfilePictureRemove}
+									disabled={isRemovingProfilePicture || isSavingProfilePicture}
+									sx={{
+										marginTop: '0.5rem',
+										border: 'none',
+										background: 'transparent',
+										padding: 0,
+										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+										color: theme.palette?.error?.main,
+										cursor: isRemovingProfilePicture || isSavingProfilePicture ? 'not-allowed' : 'pointer',
+										opacity: isRemovingProfilePicture || isSavingProfilePicture ? 0.6 : 1,
+										textDecoration: 'underline',
+										lineHeight: 1.2,
+									}}>
+									{isRemovingProfilePicture ? 'Removing...' : 'Remove'}
+								</Box>
+							)}
 						</Box>
 						<Box sx={{ width: '90%' }}>
 							<HandleImageUploadURL
 								label='Profile Picture'
 								saveButtonMode
 								onSaveImage={handleProfilePictureSave}
-								isSaving={isSavingProfilePicture}
+								isSaving={isSavingProfilePicture || isRemovingProfilePicture}
 								onPreviewChange={setProfilePicturePreview}
 								onImageUploadLogic={(url) => {
 									setImageUrl(url);
@@ -542,28 +620,7 @@ const Settings = () => {
 							</Box>
 						</Box>
 
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={marketingEmailConsent}
-									onChange={(e) => {
-										setMarketingEmailConsent(e.target.checked);
-										setIsProfileUpdated(true);
-									}}
-									size='small'
-									sx={{
-										'color': 'rgba(0, 0, 0, 0.6)',
-										'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
-									}}
-								/>
-							}
-							label={
-								<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
-									Kampanya ve duyurulardan e-posta ile haberdar olmak istiyorum
-								</Typography>
-							}
-							sx={{ width: '90%', mt: '0.5rem', mb: '0.25rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
-						/>
+
 
 						<CustomDialog
 							title='Username Rules'
@@ -608,38 +665,66 @@ const Settings = () => {
 								Update Profile
 							</CustomSubmitButton>
 						</Box>
+
+
 						{user?.role === Roles.USER && (
 							<Box
 								sx={{
 									display: 'flex',
+									flexDirection: 'column',
 									alignItems: 'flex-start',
 									gap: '0.5rem',
-									width: '90%',
-									mt: '3rem',
+									width: '100%',
+									mt: '1.5rem',
 									color: theme.textColor?.secondary.main,
 								}}>
-								<SupportAgent sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', mt: '0.15rem' }} color='error' />
-								<Typography
-									sx={{
-										fontSize: isMobileSize ? '0.7rem' : '0.75rem',
-										lineHeight: 1.7,
-										color: theme.textColor?.secondary.main,
-									}}>
-									To request deletion of your account and learning data, please contact the organisation administrator or use our{' '}
-									<Link
-										component={RouterLink}
-										to='/contact-us'
-										underline='always'
-										rel='noopener noreferrer'
-										target='_blank'
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={marketingEmailConsent}
+											onChange={(e) => {
+												setMarketingEmailConsent(e.target.checked);
+												setIsProfileUpdated(true);
+											}}
+											size='small'
+											sx={{
+												'color': 'rgba(0, 0, 0, 0.6)',
+												'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
+											}}
+										/>
+									}
+									label={
+										<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
+											I want to receive marketing emails.
+										</Typography>
+									}
+									sx={{ width: '90%', mt: '0.5rem', mb: '0.25rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+								/>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+									<SupportAgent sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', mt: '0.15rem' }} color='error' />
+
+									<Typography
 										sx={{
-											fontSize: 'inherit',
-											color: theme.palette.primary.main,
+											fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+											lineHeight: 1.7,
+											color: theme.textColor?.secondary.main,
 										}}>
-										Contact page
-									</Link>
-									.
-								</Typography>
+										To request deletion of your account and learning data, please contact the organisation administrator or use our{' '}
+										<Link
+											component={RouterLink}
+											to='/contact-us'
+											underline='always'
+											rel='noopener noreferrer'
+											target='_blank'
+											sx={{
+												fontSize: 'inherit',
+												color: theme.palette.primary.main,
+											}}>
+											Contact page
+										</Link>
+										.
+									</Typography>
+								</Box>
 							</Box>
 						)}
 						<Snackbar
@@ -669,6 +754,19 @@ const Settings = () => {
 							</Alert>
 						</Snackbar>
 						<Snackbar
+							open={isProfilePictureRemovedMsgDisplayed}
+							autoHideDuration={3000}
+							anchorOrigin={{ vertical, horizontal }}
+							sx={{ mt: '1rem' }}
+							onClose={() => setIsProfilePictureRemovedMsgDisplayed(false)}>
+							<Alert
+								severity='success'
+								variant='filled'
+								sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+								Your profile picture has been removed.
+							</Alert>
+						</Snackbar>
+						<Snackbar
 							open={isEmailUpdatedMsgDisplayed}
 							autoHideDuration={3000}
 							anchorOrigin={{ vertical, horizontal }}
@@ -679,7 +777,7 @@ const Settings = () => {
 							</Alert>
 						</Snackbar>
 					</form>
-					{!isVerySmallScreen && (
+					{!isSmallScreen && (
 						<Box
 							sx={{
 								height: isRotatedMedium ? '23rem' : '29.25rem',
@@ -694,14 +792,14 @@ const Settings = () => {
 							flexDirection: 'column',
 							justifyContent: 'space-between',
 							alignItems: 'center',
-							flex: isVerySmallScreen ? undefined : 3,
-							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '31rem',
+							flex: isSmallScreen ? undefined : 3,
+							height: isSmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '30rem',
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
 							handlePasswordUpdate();
 						}}>
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', }}>
 							<Box sx={{ mb: isMobileSize ? '0.5rem' : '1.5rem' }}>
 								<Typography variant={isMobileSize ? 'h6' : 'h5'}>Update Password</Typography>
 							</Box>
@@ -834,7 +932,7 @@ const Settings = () => {
 								</Box>
 							</Box>
 						</Box>
-						<Box sx={{ display: 'flex', width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', justifyContent: 'flex-end', mt: '0.5rem' }}>
+						<Box sx={{ display: 'flex', width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', justifyContent: 'flex-end', }}>
 							<CustomSubmitButton size='small' sx={{ alignSelf: 'flex-end', fontSize: isMobileSize ? '0.7rem' : undefined }} type='submit'>
 								Update Password
 							</CustomSubmitButton>

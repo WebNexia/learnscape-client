@@ -1,5 +1,5 @@
 import { Box, FormControl, IconButton, Input, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
-import React, { ChangeEvent, useContext, useState, useEffect } from 'react';
+import React, { ChangeEvent, useContext, useState, useEffect, useRef } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import CustomSubmitButton from '../customButtons/CustomSubmitButton';
@@ -64,6 +64,15 @@ const HandleImageUploadURL = ({
 
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const clearFileSelection = () => {
+		resetImageUpload();
+		onPreviewChange?.(null);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = '';
+		}
+	};
 
 	// Debounced URL validation
 	useEffect(() => {
@@ -130,8 +139,7 @@ const HandleImageUploadURL = ({
 		if (saveButtonMode && onSaveImage) {
 			try {
 				await onSaveImage(imageUpload);
-				resetImageUpload();
-				onPreviewChange?.(null);
+				clearFileSelection();
 			} catch (error) {
 				console.error('Profile picture save failed:', error);
 			}
@@ -169,7 +177,7 @@ const HandleImageUploadURL = ({
 										sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 										onClick={() => {
 											setEnterImageUrl(true);
-											resetImageUpload();
+											clearFileSelection();
 										}}>
 										Enter URL
 									</Typography>
@@ -184,6 +192,7 @@ const HandleImageUploadURL = ({
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
 							<Input
 								type='file'
+								inputRef={fileInputRef}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 									handleImageChange(e);
 									if (e.target.files?.[0]) {
