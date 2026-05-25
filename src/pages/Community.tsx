@@ -32,8 +32,7 @@ export interface NewTopic {
 }
 
 const Community = () => {
-	const { sortedTopicsData, setTopicsPageNumber, fetchMoreTopics, totalItems, loadedPages, enableCommunityFetch, refreshCommunityData, isLoading } =
-		useContext(CommunityContext);
+	const { sortedTopicsData, setTopicsPageNumber, fetchMoreTopics, totalItems, loadedPages, isLoading } = useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -108,11 +107,6 @@ const Community = () => {
 
 	// Paginate the data for display
 	const paginatedTopics = sortedTopics;
-	// Enable community fetching and refresh data when component mounts
-	useEffect(() => {
-		enableCommunityFetch();
-		refreshCommunityData();
-	}, []); // Empty dependency array - only run once on mount
 
 	// Force re-sort when topics data changes
 	useEffect(() => {

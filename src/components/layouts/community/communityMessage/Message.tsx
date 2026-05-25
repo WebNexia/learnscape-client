@@ -12,7 +12,7 @@ import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
 import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
-import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
+import { COMMUNITY_UI_PAGE_SIZE, CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
 import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
@@ -141,7 +141,9 @@ const Message = ({
 		} else {
 			// If the message is not found on the current page, navigate to the page where it's located
 			try {
-				const response = await axios.get(`${base_url}/communityMessages/message/${parentMessageId}?limit=30`);
+				const response = await axios.get(
+					`${base_url}/communityMessages/message/${parentMessageId}?limit=${COMMUNITY_UI_PAGE_SIZE}`
+				);
 				const { page } = response.data;
 				setPageNumber(page);
 				setHighlightedMessageId(parentMessageId);

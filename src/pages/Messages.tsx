@@ -55,7 +55,7 @@ export interface ParticipantData {
 	firebaseUserId: string;
 	username: string;
 	imageUrl: string;
-	role: string;
+	role?: string;
 }
 
 export interface Chat {

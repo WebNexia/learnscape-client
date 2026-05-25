@@ -1,6 +1,6 @@
-import { Box, CircularProgress, IconButton, Paper, Popper, Tooltip, styled, Typography } from '@mui/material';
-import { RecordVoiceOverOutlined } from '@mui/icons-material';
-import { useContext, useMemo, useRef, useState } from 'react';
+import { Box, IconButton, Tooltip, styled, Typography } from '@mui/material';
+import { PlayCircleOutline, Sync } from '@mui/icons-material';
+import { useContext, useMemo, useState } from 'react';
 import theme from '../../../themes';
 import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { QuestionInterface } from '../../../interfaces/question';
@@ -110,9 +110,6 @@ const FlipCardPreview = ({
 	isSoundMuted = false,
 }: FlipCardPreviewProps) => {
 	const [isFlipped, setIsFlipped] = useState<boolean>(false);
-	const [phraseAnchorEl, setPhraseAnchorEl] = useState<HTMLElement | null>(null);
-	const [isPhraseLoading, setIsPhraseLoading] = useState<boolean>(false);
-	const phraseHoverTimerRef = useRef<number | null>(null);
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
 	const { isSmallScreen, isRotatedMedium, isMobilePortrait, isMobileLandscape, isTabletPortrait, isDesktopLandscape, isDesktopPortrait } =
@@ -132,13 +129,6 @@ const FlipCardPreview = ({
 		return htmlText.replace(/\s+/g, ' ').trim();
 	}, [frontText, question?.question]);
 
-	const clearPhraseHoverTimer = () => {
-		if (phraseHoverTimerRef.current) {
-			window.clearTimeout(phraseHoverTimerRef.current);
-			phraseHoverTimerRef.current = null;
-		}
-	};
-
 	const speakPhrase = (text: string) => {
 		if (!text || typeof window === 'undefined' || !window.speechSynthesis) return;
 		window.speechSynthesis.cancel();
@@ -148,27 +138,10 @@ const FlipCardPreview = ({
 		window.speechSynthesis.speak(utterance);
 	};
 
-	const handlePhraseAssistStart = (event: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
+	const handlePhraseSpeakClick = (event: React.MouseEvent<HTMLElement>) => {
 		event.stopPropagation();
 		if (!frontExpressionText) return;
-
-		const target = event.currentTarget as HTMLElement;
-		clearPhraseHoverTimer();
-		phraseHoverTimerRef.current = window.setTimeout(() => {
-			setPhraseAnchorEl(target);
-			setIsPhraseLoading(true);
-			speakPhrase(frontExpressionText);
-			window.setTimeout(() => {
-				setIsPhraseLoading(false);
-			}, 200);
-		}, 250);
-	};
-
-	const handlePhraseAssistEnd = (event?: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
-		event?.stopPropagation();
-		clearPhraseHoverTimer();
-		setPhraseAnchorEl(null);
-		setIsPhraseLoading(false);
+		speakPhrase(frontExpressionText);
 	};
 
 	const handleClick = async () => {
@@ -195,34 +168,43 @@ const FlipCardPreview = ({
 	};
 
 	const isImageQuestionPresent = !!(question?.imageUrl || newQuestion?.imageUrl) && !!(question?.question || newQuestion?.question);
+	const showFlipHint = fromPracticeQuestionUser || questionNonEditModal;
+
+	const flipHintSx = {
+		position: 'absolute' as const,
+		bottom: '0.4rem',
+		right: '0.4rem',
+		zIndex: 2,
+		pointerEvents: 'none' as const,
+		color: '#fff',
+		opacity: 0.95,
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+	};
 
 	return (
 		<FlipCardContainer isMobilePortrait={isMobilePortrait} isMobileLandscape={isMobileLandscape} isTabletPortrait={isTabletPortrait}>
 			<FlipCardInner isFlipped={isFlipped} onClick={handleClick}>
 				<FlipCardFront $isImageQuestionPresent={isImageQuestionPresent}>
 					{/* <Label>Front</Label> */}
-					{frontExpressionText && (
+					{frontExpressionText && (fromPracticeQuestionUser || questionNonEditModal) && (
 						<Box sx={{ position: 'absolute', top: '0.35rem', right: '0.35rem', zIndex: 2 }}>
-
-							<IconButton
-								size='small'
-								onClick={(event) => event.stopPropagation()}
-								onMouseEnter={handlePhraseAssistStart}
-								onMouseLeave={handlePhraseAssistEnd}
-								onTouchStart={handlePhraseAssistStart}
-								onTouchEnd={handlePhraseAssistEnd}
-								onTouchCancel={handlePhraseAssistEnd}
-								sx={{
-									backgroundColor: 'rgba(255,255,255,0.22)',
-									color: theme.textColor?.common.main,
-									'&:hover': {
-										backgroundColor: 'rgba(255,255,255,0.34)',
-									},
-								}}>
-								<RecordVoiceOverOutlined fontSize='small' />
-							</IconButton>
-
-
+							<Tooltip title='Listen to phrase' placement='left' arrow>
+								<IconButton
+									size='small'
+									onClick={handlePhraseSpeakClick}
+									aria-label='Listen to phrase'
+									sx={{
+										backgroundColor: 'rgba(255,255,255,0.22)',
+										color: '#fff',
+										'&:hover': {
+											backgroundColor: 'rgba(255,255,255,0.34)',
+										},
+									}}>
+									<PlayCircleOutline fontSize='small' />
+								</IconButton>
+							</Tooltip>
 						</Box>
 					)}
 					{(question?.imageUrl || newQuestion?.imageUrl) && (
@@ -325,6 +307,11 @@ const FlipCardPreview = ({
 							}}
 						/>
 					</Box>
+					{showFlipHint && (
+						<Box sx={flipHintSx} aria-hidden>
+							<Sync sx={{ fontSize: isMobileSize ? 22 : 26 }} />
+						</Box>
+					)}
 				</FlipCardFront>
 
 				<FlipCardBack $isImageQuestionPresent={isImageQuestionPresent}>
@@ -358,6 +345,11 @@ const FlipCardPreview = ({
 							__html: sanitizeHtml((backText || question?.correctAnswer || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>')),
 						}}
 					/>
+					{showFlipHint && (
+						<Box sx={flipHintSx} aria-hidden>
+							<Sync sx={{ fontSize: isMobileSize ? 22 : 26 }} />
+						</Box>
+					)}
 				</FlipCardBack>
 			</FlipCardInner>
 		</FlipCardContainer>

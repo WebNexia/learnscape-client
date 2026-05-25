@@ -21,12 +21,21 @@ interface LessonProps {
 	nextLessonId: string;
 	nextChapterFirstLessonId: string;
 	lessonOrder: number;
+	chapterId?: string;
 	isLastLessonOfChapter?: boolean;
 	currentChapterHasChecklist?: boolean;
 	currentChapterChecklistCompleted?: boolean;
 }
 
-const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
+const Lesson = ({
+	lesson,
+	course,
+	isEnrolledStatus,
+	nextLessonId,
+	nextChapterFirstLessonId,
+	lessonOrder,
+	chapterId,
+}: LessonProps) => {
 	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
@@ -68,15 +77,13 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 			return;
 		}
 
-		const navigateToLesson = (lessonId: string, nextId?: string) => {
-			const url = `/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
-			const queryParams = `?isCompleted=${isLessonCompleted}`;
-			if (nextId) {
-				const nextQuery = `&next=${nextId}`;
-				navigate(`${url}${queryParams}${nextQuery}`);
-			} else {
-				navigate(`${url}${queryParams}`);
-			}
+		const navigateToLesson = (targetLessonId: string, nextId?: string) => {
+			const params = new URLSearchParams();
+			if (chapterId) params.set('chapterId', chapterId);
+			params.set('isCompleted', String(isLessonCompleted));
+			if (nextId) params.set('next', nextId);
+			const query = params.toString();
+			navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}?${query}`);
 
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		};

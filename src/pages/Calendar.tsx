@@ -1,4 +1,5 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useCallback } from 'react';
+import axios from '@utils/axiosInstance';
 import { Calendar, dateFnsLocalizer, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
@@ -8,7 +9,7 @@ import { Box } from '@mui/material';
 import CalendarSkeleton from '../components/layouts/skeleton/CalendarSkeleton';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { EventsContext } from '../contexts/EventsContextProvider';
-import { Event } from '../interfaces/event';
+import { CalendarDisplayEvent, Event, isEventDetailLoaded } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
@@ -36,6 +37,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
@@ -47,9 +49,10 @@ const EventCalendar = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [eventsData, setEventsData] = useState<Event[]>([]);
+	const [eventsData, setEventsData] = useState<CalendarDisplayEvent[]>([]);
 	const [newEventModalOpen, setNewEventModalOpen] = useState<boolean>(false);
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+	const [isLoadingEventDetail, setIsLoadingEventDetail] = useState<boolean>(false);
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
 
 	const [editEventModalOpen, setEditEventModalOpen] = useState<boolean>(false);
@@ -83,9 +86,9 @@ const EventCalendar = () => {
 
 	useEffect(() => {
 		if (sortedEventsData) {
-			const transformedEvents = sortedEventsData?.map((event) => {
-				const startDate = new Date(event.start!);
-				let endDate = new Date(event.end!);
+			const transformedEvents: CalendarDisplayEvent[] = sortedEventsData.map((event) => {
+				const startDate = new Date(event.start);
+				let endDate = new Date(event.end);
 				const isAllDayEvent = event.isAllDay || false;
 
 				if (isAllDayEvent) {
@@ -93,7 +96,10 @@ const EventCalendar = () => {
 				}
 
 				return {
-					...event,
+					_id: event._id,
+					title: event.title,
+					isPublic: event.isPublic,
+					createdBy: event.createdBy,
 					start: startDate,
 					end: endDate,
 					isAllDay: isAllDayEvent,
@@ -105,8 +111,11 @@ const EventCalendar = () => {
 	}, [sortedEventsData, isEventDeleted]);
 
 	useEffect(() => {
-		if (selectedEvent && selectedEvent._id) {
-			if (user?.role === Roles.USER) {
+		if (!isEventDetailLoaded(selectedEvent)) {
+			return;
+		}
+
+		if (user?.role === Roles.USER) {
 				if (
 					selectedEvent.createdBy === user?._id &&
 					(user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed))
@@ -126,15 +135,19 @@ const EventCalendar = () => {
 			} else {
 				setEditEventModalOpen(true);
 			}
-		}
-	}, [selectedEvent, user?.role]);
+	}, [selectedEvent, user?.role, user?._id, user?.hasRegisteredCourse, isInstructor, hasAdminAccess]);
+
+	const closeEventDialogs = useCallback(() => {
+		setEventDetailsModalOpen(false);
+		setEditEventModalOpen(false);
+	}, []);
 
 	// Enable events fetching only once when component mounts
 	useEffect(() => {
 		enableEventsFetch();
 	}, []); // Empty dependency array - only run once
 
-	const eventStyleGetter = (event: Event) => {
+	const eventStyleGetter = (event: CalendarDisplayEvent) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
 		return {
 			style: {
@@ -163,14 +176,24 @@ const EventCalendar = () => {
 		}
 	};
 
-	const handleEventSelect = (event: Event) => {
+	const handleEventSelect = async (gridEvent: CalendarDisplayEvent) => {
 		setIsEventDeleted(false);
-		if (!event._id) {
-			console.error('Event ID is undefined. Event not selected properly.');
-			return; // Exit early if the event has no ID
+		if (!gridEvent._id || isLoadingEventDetail) {
+			return;
 		}
 
-		setSelectedEvent(event);
+		closeEventDialogs();
+		setSelectedEvent(null);
+		setIsLoadingEventDetail(true);
+
+		try {
+			const response = await axios.get(`${base_url}/events/${gridEvent._id}`);
+			setSelectedEvent(response.data.data);
+		} catch (error) {
+			console.error('Failed to load event details', error);
+		} finally {
+			setIsLoadingEventDetail(false);
+		}
 	};
 
 	// Handle calendar navigation to fetch additional months

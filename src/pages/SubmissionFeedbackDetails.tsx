@@ -1,10 +1,10 @@
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, CircularProgress, IconButton, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import useQuestionTypes from '../hooks/useQuestionTypes';
-import axios from '@utils/axiosInstance';
-import { QuestionType, LessonType } from '../interfaces/enums';
+import { useSubmissionFeedback } from '../hooks/useSubmissionFeedback';
+import { QuestionType } from '../interfaces/enums';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -19,74 +19,29 @@ import QuestionMedia from '../components/userCourses/QuestionMedia';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { decode } from 'html-entities';
 import CustomAudioPlayer from '../components/audio/CustomAudioPlayer';
-import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
-import { Lesson } from '../interfaces/lessons';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 
 const SubmissionFeedbackDetails = () => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated, isMobilePortrait } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { userLessonId } = useParams();
+	const { userLessonId, submissionId } = useParams();
 	const { fetchQuestionTypeName } = useQuestionTypes();
+	const { data: feedbackData, isLoading } = useSubmissionFeedback(userLessonId, submissionId);
 
-	const [quizName, setQuizName] = useState<string>('');
-	const [chapterName, setChapterName] = useState<string>('');
-	const [courseName, setCourseName] = useState<string>('');
-	const [quizFeedback, setQuizFeedback] = useState<string>('');
-	const [userResponseData, setUserResponseData] = useState<any>([]);
+	const userResponseData = feedbackData?.response ?? [];
+	const quizName = feedbackData?.lessonName ?? '';
+	const chapterName = feedbackData?.chapterName ?? '';
+	const courseName = feedbackData?.courseName ?? '';
+	const quizFeedback = feedbackData?.teacherFeedback ?? '';
+	const isChecked = feedbackData?.isChecked ?? false;
+	const totalPossible = feedbackData?.totalPossible ?? 0;
+	const showInitialLoading = isLoading && !feedbackData;
+
 	const [userSingleResponseWithFeedback, setUserSingleResponseWithFeedback] = useState<any>(null);
 	const [openQuestionFeedbackModal, setOpenQuestionFeedbackModal] = useState<boolean>(false);
 	const [currentResponseIndex, setCurrentResponseIndex] = useState<number>(0);
-	const [lesson, setLesson] = useState<Lesson | null>(null);
-
-	const [isChecked, setIsChecked] = useState<boolean>(false);
-
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const [quizResponse, lessonResponse] = await Promise.all([
-					axios.get(`${base_url}/userQuestions/userlesson/${userLessonId}`),
-					axios.get(`${base_url}/userlessons/${userLessonId}`),
-				]);
-
-				const lessonData = lessonResponse.data?.data?.[0];
-				if (lessonData) {
-					setIsChecked(Boolean(lessonData.isFeedbackGiven));
-					setQuizFeedback(lessonData.teacherFeedback || '');
-				}
-
-				const userCourseQuizData = quizResponse.data?.response || [];
-				setUserResponseData(userCourseQuizData);
-				setQuizName(quizResponse.data?.lessonName ?? '');
-				setCourseName(quizResponse.data?.courseName ?? '');
-				setChapterName(quizResponse.data?.chapterName ?? '');
-
-				// Fetch lesson data to get isGraded and questionScores for total score calculation
-				let lessonIdToFetch: string | null = null;
-				if (userCourseQuizData?.length > 0) {
-					const first = userCourseQuizData[0];
-					lessonIdToFetch =
-						first.lessonId?._id ?? (typeof first.lessonId === 'string' ? first.lessonId : null);
-				}
-				if (lessonIdToFetch) {
-					try {
-						const lessonDataResponse = await axios.get(`${base_url}/lessons/${lessonIdToFetch}`);
-						setLesson(lessonDataResponse.data);
-					} catch (error) {
-						console.error('Error fetching lesson data:', error);
-					}
-				}
-			} catch (error) {
-				console.error(error);
-			}
-		};
-
-		if (userLessonId) fetchData();
-	}, [base_url, userLessonId]);
 
 	const handleResponseNavigation = (direction: 'next' | 'prev') => {
 		const newIndex = currentResponseIndex + (direction === 'next' ? 1 : -1);
@@ -344,6 +299,12 @@ const SubmissionFeedbackDetails = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Instructor Feedback' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			{showInitialLoading ? (
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '12rem', width: '100%' }}>
+					<CircularProgress />
+				</Box>
+			) : (
+				<>
 			<Box
 				sx={{
 					display: 'flex',
@@ -384,17 +345,14 @@ const SubmissionFeedbackDetails = () => {
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Questions
 						</Typography>
-						{lesson &&
-							lesson.isGraded &&
-							lesson.type === LessonType.QUIZ &&
+						{totalPossible > 0 &&
 							(() => {
-								const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
 								const totalEarned =
 									userResponseData?.reduce((sum: number, response: any) => {
 										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
 									}, 0) || 0;
 								const percentage = calculateScorePercentage(totalEarned, totalPossible);
-								return totalPossible > 0 ? (
+								return (
 									<Box
 										sx={{
 											display: 'inline-flex',
@@ -423,7 +381,7 @@ const SubmissionFeedbackDetails = () => {
 											</Typography>
 										)}
 									</Box>
-								) : null;
+								);
 							})()}
 					</Box>
 					<CustomInfoMessageAlignedRight
@@ -500,6 +458,8 @@ const SubmissionFeedbackDetails = () => {
 						{quizFeedback}
 					</Typography>
 				</Box>
+			)}
+				</>
 			)}
 		</DashboardPagesLayout>
 	);

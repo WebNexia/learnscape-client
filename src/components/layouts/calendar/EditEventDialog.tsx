@@ -93,6 +93,7 @@ const EditEventDialog = ({
 	const { updateEvent, removeEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
 	const canManageEvent = !!selectedEvent && (selectedEvent.createdBy === user?._id || hasAdminAccess);
+	const canDeleteEvent = hasAdminAccess;
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -1734,7 +1735,7 @@ const EditEventDialog = ({
 						<CustomDeleteButton
 							type='button'
 							onClick={() => setDeleteEventModalOpen(true)}
-							disabled={!canManageEvent}
+							disabled={!canDeleteEvent}
 							sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>

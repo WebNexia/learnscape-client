@@ -1,17 +1,17 @@
-import { Alert, Box, IconButton, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, CircularProgress, IconButton, Snackbar, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
+import { submissionFeedbackQueryKey, useSubmissionFeedback } from '../hooks/useSubmissionFeedback';
+import { useQueryClient } from 'react-query';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import { QuestionType, LessonType } from '../interfaces/enums';
+import { QuestionType } from '../interfaces/enums';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import theme from '../themes';
-import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
-import { Lesson } from '../interfaces/lessons';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
@@ -46,6 +46,9 @@ const AdminQuizSubmissionCheck = () => {
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const { data: feedbackData, isLoading } = useSubmissionFeedback(userLessonId, submissionId);
+	const showInitialLoading = isLoading && !feedbackData;
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard, refreshQuizSubmissions } = useDashboardSync();
@@ -75,59 +78,42 @@ const AdminQuizSubmissionCheck = () => {
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 	const [manualScore, setManualScore] = useState<number | undefined>(undefined);
 	const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
-	const [lesson, setLesson] = useState<Lesson | null>(null);
+	const [totalPossible, setTotalPossible] = useState<number>(0);
+	const initializedForRef = useRef<string | null>(null);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const [quizResponse, lessonResponse] = await Promise.all([
-					axios.get(`${base_url}/userQuestions/userlesson/${userLessonId}`),
-					axios.get(`${base_url}/userlessons/${userLessonId}`),
-				]);
+		if (!feedbackData || !userLessonId) return;
 
-				const userCourseQuizData = quizResponse.data?.response || [];
-				setUserResponseData(userCourseQuizData);
-				setQuizName(quizResponse.data?.lessonName ?? '');
-				setCourseName(quizResponse.data?.courseName ?? '');
-				setChapterName(quizResponse.data?.chapterName ?? '');
-				const first = userCourseQuizData[0];
-				if (first) {
-					setUsername(first.userId?.username || '');
-					setStudentFirebaseId(first.userId?.firebaseUserId || '');
-					setUserResponseToFeedback(first);
-					setManualScore(first.pointsEarned);
-				}
-				const lessonData = lessonResponse.data?.data?.[0];
-				if (lessonData) setQuizFeedback(lessonData.teacherFeedback || '');
+		const syncKey = `${userLessonId}:${submissionId ?? ''}`;
+		if (initializedForRef.current === syncKey) return;
+		initializedForRef.current = syncKey;
 
-				setUserQuestionsFeedbacks(
-					() =>
-						userCourseQuizData?.map((data: any) => ({
-							userQuestionId: data._id,
-							feedback: data.teacherFeedback,
-							isUpdated: false,
-							teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
-							isFeedbackGiven: !!data.teacherFeedback,
-						})) || []
-				);
+		const userCourseQuizData = feedbackData.response;
+		setUserResponseData(userCourseQuizData);
+		setQuizName(feedbackData.lessonName);
+		setCourseName(feedbackData.courseName);
+		setChapterName(feedbackData.chapterName);
+		setQuizFeedback(feedbackData.teacherFeedback);
+		setTotalPossible(feedbackData.totalPossible);
 
-				// Fetch lesson data to get isGraded and questionScores for total score calculation
-				if (lessonId) {
-					try {
-						const lessonDataResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
-						const lessonData = lessonDataResponse.data;
-						setLesson(lessonData);
-					} catch (error) {
-						console.error('Error fetching lesson data:', error);
-					}
-				}
-			} catch (error) {
-				console.error(error);
-			}
-		};
+		const first = userCourseQuizData[0];
+		if (first) {
+			setUsername(first.userId?.username || '');
+			setStudentFirebaseId(first.userId?.firebaseUserId || '');
+			setUserResponseToFeedback(first);
+			setManualScore(first.pointsEarned);
+		}
 
-		fetchData();
-	}, [base_url, userLessonId, lessonId]);
+		setUserQuestionsFeedbacks(
+			userCourseQuizData.map((data) => ({
+				userQuestionId: data._id,
+				feedback: data.teacherFeedback || '',
+				isUpdated: false,
+				teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl || '',
+				isFeedbackGiven: !!data.teacherFeedback,
+			}))
+		);
+	}, [feedbackData, userLessonId, submissionId]);
 
 	const handlePreviousResponse = () => {
 		if (currentResponseIndex > 0) {
@@ -264,6 +250,9 @@ const AdminQuizSubmissionCheck = () => {
 				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
 			}
 
+			await queryClient.invalidateQueries(submissionFeedbackQueryKey(userLessonId, submissionId));
+			initializedForRef.current = null;
+
 			// Send notification AFTER submission is fully finalized (non-blocking)
 			const notificationData = {
 				title: 'Quiz Checked',
@@ -305,6 +294,12 @@ const AdminQuizSubmissionCheck = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Check Quiz Submission' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			{showInitialLoading ? (
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '12rem', width: '100%' }}>
+					<CircularProgress />
+				</Box>
+			) : (
+				<>
 			<Box
 				sx={{
 					display: 'flex',
@@ -346,17 +341,14 @@ const AdminQuizSubmissionCheck = () => {
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Questions
 						</Typography>
-						{lesson &&
-							lesson.isGraded &&
-							lesson.type === LessonType.QUIZ &&
+						{totalPossible > 0 &&
 							(() => {
-								const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
 								const totalEarned =
 									userResponseData?.reduce((sum: number, response: any) => {
 										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
 									}, 0) || 0;
 								const percentage = calculateScorePercentage(totalEarned, totalPossible);
-								return totalPossible > 0 ? (
+								return (
 									<Box
 										sx={{
 											display: 'inline-flex',
@@ -384,7 +376,7 @@ const AdminQuizSubmissionCheck = () => {
 											</Typography>
 										)}
 									</Box>
-								) : null;
+								);
 							})()}
 					</Box>
 					<CustomInfoMessageAlignedRight
@@ -828,6 +820,9 @@ const AdminQuizSubmissionCheck = () => {
 					</CustomSubmitButton>
 				)}
 			</Box>
+
+				</>
+			)}
 
 			<Snackbar
 				open={displaySubmissionMsg}

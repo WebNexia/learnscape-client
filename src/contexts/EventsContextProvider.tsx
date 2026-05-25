@@ -5,16 +5,39 @@ import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { useLocation } from 'react-router-dom';
 
 import { OrganisationContext } from './OrganisationContextProvider';
-import { Event } from '../interfaces/event';
+import { CalendarGridEvent, Event } from '../interfaces/event';
+
+export const CALENDAR_EVENTS_LIST_QUERY = 'view=calendar&limit=1000';
+
+const buildCalendarMonthUrl = (baseUrl: string, orgId: string, year: number, month: number) =>
+	`${baseUrl}/events/organisation/${orgId}?year=${year}&month=${month}&${CALENDAR_EVENTS_LIST_QUERY}`;
+
+const toGridEventFields = (source: {
+	_id: string;
+	title: string;
+	start: Date | string | null;
+	end: Date | string | null;
+	isAllDay: boolean;
+	isPublic: boolean;
+	createdBy: string;
+}): CalendarGridEvent => ({
+	_id: source._id,
+	title: source.title,
+	start: source.start == null ? '' : typeof source.start === 'string' ? source.start : source.start.toISOString(),
+	end: source.end == null ? '' : typeof source.end === 'string' ? source.end : source.end.toISOString(),
+	isAllDay: source.isAllDay,
+	isPublic: source.isPublic,
+	createdBy: source.createdBy,
+});
 import { useAuth } from '../hooks/useAuth';
 import { Roles } from '../interfaces/enums';
 import { UserAuthContext } from './UserAuthContextProvider';
 
 interface EventsContextTypes {
-	sortedEventsData: Event[];
+	sortedEventsData: CalendarGridEvent[];
 	isLoading: boolean;
 
-	sortEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
+	sortEventsData: (property: keyof CalendarGridEvent, order: 'asc' | 'desc') => void;
 
 	addNewEvent: (newEvent: any) => void;
 	removeEvent: (id: string) => void;
@@ -61,9 +84,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	// Function to handle sorting
-	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
-		const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
-		const sortedDataCopy = [...(currentData || [])]?.sort((a: Event, b: Event) => {
+	const sortEventsData = (property: keyof CalendarGridEvent, order: 'asc' | 'desc') => {
+		const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as CalendarGridEvent[]) || [];
+		const sortedDataCopy = [...(currentData || [])]?.sort((a: CalendarGridEvent, b: CalendarGridEvent) => {
 			if (order === 'asc') {
 				return a[property]! > b[property]! ? 1 : -1;
 			} else {
@@ -76,8 +99,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	// Function to update events with new event data
 	const addNewEvent = async (newEvent: any) => {
 		// Update calendar events cache
-		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
-			return oldData ? [newEvent, ...oldData] : [newEvent];
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: CalendarGridEvent[] | undefined) => {
+			const gridFields = toGridEventFields(newEvent);
+			return oldData ? [gridFields, ...oldData] : [gridFields];
 		});
 
 		// Also update AdminPublicEvents cache to keep them in sync
@@ -88,11 +112,12 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 	const updateEvent = async (singleEvent: Event) => {
 		// Update calendar events cache
-		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: CalendarGridEvent[] | undefined) => {
+			const gridFields = toGridEventFields(singleEvent);
 			return (
 				oldData?.map((event) => {
 					if (singleEvent._id === event._id) {
-						return singleEvent;
+						return gridFields;
 					}
 					return event;
 				}) || []
@@ -114,7 +139,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 	const removeEvent = async (id: string) => {
 		// Update calendar events cache
-		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: CalendarGridEvent[] | undefined) => {
 			return oldData?.filter((data) => data._id !== id) || [];
 		});
 
@@ -134,12 +159,11 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		if (loadedMonths?.includes(monthKey)) return;
 
 		try {
-			const response = await axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`);
+			const response = await axios.get(buildCalendarMonthUrl(base_url, orgId, year, month));
 
-			const eventsData = response.data.data;
+			const eventsData = response.data.data as CalendarGridEvent[];
 
-			// Add new events to existing calendar events, remove duplicates
-			const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
+			const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as CalendarGridEvent[]) || [];
 			const combined = [...currentData, ...eventsData];
 			const unique = combined?.filter((event, index, self) => index === self?.findIndex?.((e) => e._id === event._id)) || [];
 
@@ -177,9 +201,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 		try {
 			// Fetch all three months in parallel with proper error handling
-			const promises = monthsToFetch?.map(({ year, month }) =>
-				axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`)
-			);
+			const promises = monthsToFetch?.map(({ year, month }) => axios.get(buildCalendarMonthUrl(base_url, orgId, year, month)));
 
 			const responses = await Promise.all(promises);
 
@@ -221,7 +243,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	});
 
 	// Get events data from React Query data
-	const sortedEventsData = eventsData || [];
+	const sortedEventsData: CalendarGridEvent[] = eventsData || [];
 
 	const enableEventsFetch = () => setIsEnabled(true);
 	const disableEventsFetch = () => setIsEnabled(false);

@@ -10,6 +10,9 @@ import { useUserLessonsForCourse } from './useUserLessonsForCourse';
 import { learnerLessonQueryKey } from './useLearnerLesson';
 import { learnerUserAnswersByLessonQueryKey } from './useLearnerUserAnswersByLesson';
 
+const getChapterIdFromChapter = (chapter: { _id?: string; chapterId?: string } | null | undefined) =>
+	String(chapter?._id ?? chapter?.chapterId ?? '');
+
 export const useUserCourseLessonData = () => {
 	const { lessonId, courseId, userCourseId } = useParams<{ lessonId: string; courseId: string; userCourseId: string }>();
 
@@ -18,6 +21,7 @@ export const useUserCourseLessonData = () => {
 	const { user } = useAuth();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonIdFromUrl = searchParams.get('next');
+	const chapterIdFromUrl = searchParams.get('chapterId') || '';
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { userCoursesData, singleCourseUser } = useContext(UserCourseLessonDataContext);
@@ -27,7 +31,13 @@ export const useUserCourseLessonData = () => {
 	const nextLessonId = useMemo(() => {
 		if (nextLessonIdFromUrl) return nextLessonIdFromUrl;
 		if (!singleCourseUser?.chapters?.length || !lessonId) return null;
-		const chapters = singleCourseUser.chapters;
+
+		const chapters = chapterIdFromUrl
+			? singleCourseUser.chapters.filter(
+					(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+				)
+			: singleCourseUser.chapters;
+
 		for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
 			const chapter = chapters[chapterIndex];
 			if (!chapter?.lessons?.length) continue;
@@ -35,14 +45,15 @@ export const useUserCourseLessonData = () => {
 			const currentIndex = validLessons.findIndex((l) => l && l._id === lessonId);
 			if (currentIndex === -1) continue;
 			if (currentIndex < validLessons.length - 1) return validLessons[currentIndex + 1]._id;
-			for (let j = chapterIndex + 1; j < chapters.length; j++) {
-				const first = chapters[j]?.lessons?.find((l) => l && l._id);
+			if (chapterIdFromUrl) return null;
+			for (let j = chapterIndex + 1; j < singleCourseUser.chapters.length; j++) {
+				const first = singleCourseUser.chapters[j]?.lessons?.find((l) => l && l._id);
 				if (first?._id) return first._id;
 			}
 			return null;
 		}
 		return null;
-	}, [nextLessonIdFromUrl, singleCourseUser?.chapters, lessonId]);
+	}, [nextLessonIdFromUrl, chapterIdFromUrl, singleCourseUser?.chapters, lessonId]);
 
 	// Use context data for userCourseData, use hook for userLessonData
 	const parsedUserCourseData = useMemo(() => {
@@ -151,7 +162,12 @@ export const useUserCourseLessonData = () => {
 
 			// Fallback: derive next lesson from course structure when query param is missing
 			if (!resolvedNextLessonId && singleCourseUser && lessonId) {
-				const chapters = singleCourseUser.chapters || [];
+				const chapters = chapterIdFromUrl
+					? singleCourseUser.chapters.filter(
+							(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+						)
+					: singleCourseUser.chapters || [];
+
 				for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
 					const chapter = chapters[chapterIndex];
 					if (!chapter?.lessons?.length) continue;
@@ -167,10 +183,12 @@ export const useUserCourseLessonData = () => {
 						if (nextLessonInChapter?._id) {
 							resolvedNextLessonId = nextLessonInChapter._id;
 						}
-					} else {
+					} else if (!chapterIdFromUrl) {
 						// First lesson of next chapter that has lessons
-						for (let nextChapterIndex = chapterIndex + 1; nextChapterIndex < chapters.length; nextChapterIndex++) {
-							const nextChapter = chapters[nextChapterIndex];
+						const allChapters = singleCourseUser.chapters || [];
+						const currentChapterIndex = allChapters.indexOf(chapter);
+						for (let nextChapterIndex = currentChapterIndex + 1; nextChapterIndex < allChapters.length; nextChapterIndex++) {
+							const nextChapter = allChapters[nextChapterIndex];
 							const firstValidLesson = nextChapter?.lessons?.find((lesson) => lesson && lesson._id);
 							if (firstValidLesson?._id) {
 								resolvedNextLessonId = firstValidLesson._id;
@@ -200,12 +218,17 @@ export const useUserCourseLessonData = () => {
 
 				// Mark lesson completion for checklist auto-open (find which chapter this lesson belongs to)
 				if (singleCourseUser && lessonId) {
-					for (const chapter of singleCourseUser.chapters || []) {
+					const chaptersToSearch = chapterIdFromUrl
+						? singleCourseUser.chapters.filter(
+								(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+							)
+						: singleCourseUser.chapters || [];
+
+					for (const chapter of chaptersToSearch) {
 						if (!chapter || !chapter.lessons) continue;
 						const lessonInChapter = chapter.lessons.find((l) => l && l._id === lessonId);
 						if (lessonInChapter) {
-							// Standardize to use _id (backend format)
-							const chapterId = (chapter as any)._id || (chapter as any).chapterId;
+							const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
 							if (chapterId) {
 								sessionStorage.setItem(`lesson-completed-${chapterId}`, 'true');
 							}
@@ -369,6 +392,7 @@ export const useUserCourseLessonData = () => {
 		refreshDashboard,
 		singleCourseUser,
 		lessonId,
+		chapterIdFromUrl,
 		invalidateLearnerLessonPageCaches,
 	]);
 

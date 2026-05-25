@@ -1,11 +1,12 @@
 export interface CommunityTopic {
 	_id: string;
-	orgId: string;
+	orgId?: string;
 	userId: UserInfo;
 	title: string;
-	text: string;
-	imageUrl: string;
-	audioUrl: string;
+	/** Present on single-topic fetch; omitted from organisation list payload. */
+	text?: string;
+	imageUrl?: string;
+	audioUrl?: string;
 	messageCount?: number;
 	isReported?: boolean;
 	isActive?: boolean;
@@ -23,5 +24,6 @@ interface UserInfo {
 interface LastMessage {
 	createdAt: string;
 	sender: UserInfo;
-	text: string;
+	/** Omitted from organisation list payload. */
+	text?: string;
 }

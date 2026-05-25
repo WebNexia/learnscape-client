@@ -342,20 +342,14 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<ResourcesContextProvider>
-							<Resources />
+							<Outlet />
 						</ResourcesContextProvider>
 					</AdminRouteGuard>
 				),
-			},
-			{
-				path: 'admin/resources/folder/:folderId',
-				element: (
-					<AdminRouteGuard>
-						<ResourcesContextProvider>
-							<ResourceItems />
-						</ResourcesContextProvider>
-					</AdminRouteGuard>
-				),
+				children: [
+					{ index: true, element: <Resources /> },
+					{ path: 'folder/:folderId', element: <ResourceItems /> },
+				],
 			},
 			{
 				path: 'admin/submissions',
@@ -649,20 +643,14 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<ResourcesContextProvider>
-							<Resources />
+							<Outlet />
 						</ResourcesContextProvider>
 					</InstructorRouteGuard>
 				),
-			},
-			{
-				path: 'instructor/resources/folder/:folderId',
-				element: (
-					<InstructorRouteGuard>
-						<ResourcesContextProvider>
-							<ResourceItems />
-						</ResourcesContextProvider>
-					</InstructorRouteGuard>
-				),
+				children: [
+					{ index: true, element: <Resources /> },
+					{ path: 'folder/:folderId', element: <ResourceItems /> },
+				],
 			},
 			{
 				path: 'instructor/submissions',
@@ -824,20 +812,14 @@ export const router = createBrowserRouter([
 				element: (
 					<LearnerRouteGuard>
 						<ResourcesContextProvider>
-							<Resources />
+							<Outlet />
 						</ResourcesContextProvider>
 					</LearnerRouteGuard>
 				),
-			},
-			{
-				path: 'resources/folder/:folderId',
-				element: (
-					<LearnerRouteGuard>
-						<ResourcesContextProvider>
-							<ResourceItems />
-						</ResourcesContextProvider>
-					</LearnerRouteGuard>
-				),
+				children: [
+					{ index: true, element: <Resources /> },
+					{ path: 'folder/:folderId', element: <ResourceItems /> },
+				],
 			},
 			{
 				path: 'submissions',

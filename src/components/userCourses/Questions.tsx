@@ -26,6 +26,8 @@ interface QuestionsProps {
 	lessonText?: string;
 	/** Chapter name for open-ended AI context */
 	chapterName?: string;
+	/** Chapter context for quiz submission when lesson appears in multiple chapters */
+	chapterId?: string;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -43,6 +45,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	enableWordAssist = false,
 	lessonText,
 	chapterName,
+	chapterId,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted, updateLastQuestion } = useUserCourseLessonData();
 	const filteredQuestions = questions?.filter((question) => question !== null && question !== undefined) ?? [];
@@ -188,6 +191,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							setUserQuizAnswers={setUserQuizAnswers}
 							setIsQuizInProgress={setIsQuizInProgress}
 							lessonName={lessonName}
+							chapterId={chapterId}
 							enableWordAssist={enableWordAssist}
 						/>
 					) : null;

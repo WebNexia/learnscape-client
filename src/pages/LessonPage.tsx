@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Skeleton, Slide, Tooltip, Typography } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import {
 	Article,
@@ -10,6 +10,7 @@ import {
 	ExpandMore,
 	GetApp,
 	HelpOutline,
+	InfoOutlined,
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
@@ -122,9 +123,14 @@ export interface QuizQuestionAnswer {
 	partialScores?: { [key: string]: number };
 }
 
+const getChapterIdFromChapter = (chapter: { _id?: string; chapterId?: string } | null | undefined) =>
+	String(chapter?._id ?? chapter?.chapterId ?? '');
+
 const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, courseId, userCourseId } = useParams();
+	const [searchParams] = useSearchParams();
+	const chapterIdFromUrl = searchParams.get('chapterId') || '';
 	const {
 		isSmallScreen,
 		isRotatedMedium,
@@ -197,6 +203,7 @@ const LessonPage = () => {
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
 	const [questionsSessionKey, setQuestionsSessionKey] = useState(0);
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
+	const [isQuestionToolbarHelpOpen, setIsQuestionToolbarHelpOpen] = useState<boolean>(false);
 	const [isInstructionalLessonsDialogOpen, setIsInstructionalLessonsDialogOpen] = useState<boolean>(false);
 	const [selectedInstructionalLessonId, setSelectedInstructionalLessonId] = useState<string>('');
 	const [isChapterListDrawerOpen, setIsChapterListDrawerOpen] = useState<boolean>(false);
@@ -248,8 +255,20 @@ const LessonPage = () => {
 
 	const currentChapter = useMemo(() => {
 		if (!singleCourseUser?.chapters || !lessonId) return null;
+
+		if (chapterIdFromUrl) {
+			const chapterFromUrl = singleCourseUser.chapters.find(
+				(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+			);
+			if (chapterFromUrl?.lessons?.some((l) => l?._id === lessonId)) {
+				return chapterFromUrl;
+			}
+		}
+
 		return (singleCourseUser.chapters || []).find((ch) => ch?.lessons?.some((l) => l?._id === lessonId)) ?? null;
-	}, [singleCourseUser?.chapters, lessonId]);
+	}, [singleCourseUser?.chapters, lessonId, chapterIdFromUrl]);
+
+	const activeChapterId = chapterIdFromUrl || getChapterIdFromChapter(currentChapter as { _id?: string; chapterId?: string });
 
 	const instructionalLessonsInChapter = useMemo(() => {
 		if (!currentChapter?.lessons) return [];
@@ -520,10 +539,13 @@ const LessonPage = () => {
 		}
 	};
 
-	const handleDrawerLessonClick = (targetLessonId: string) => {
+	const handleDrawerLessonClick = (targetLessonId: string, targetChapterId?: string) => {
 		if (!courseId || !userCourseId || targetLessonId === lessonId) return;
 		setIsChapterListDrawerOpen(false);
-		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}`);
+		const params = new URLSearchParams();
+		if (targetChapterId) params.set('chapterId', targetChapterId);
+		const query = params.toString();
+		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}${query ? `?${query}` : ''}`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -600,7 +622,7 @@ const LessonPage = () => {
 							alignItems: 'center',
 						}}>
 						{lessonType === LessonType.PRACTICE_LESSON && (
-							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='left' arrow>
+							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='top' arrow>
 								<IconButton onClick={() => setIsSoundMuted(!isSoundMuted)}>
 									{isSoundMuted ? (
 										<VolumeOff fontSize={isMobileSize ? 'small' : 'medium'} />
@@ -629,12 +651,20 @@ const LessonPage = () => {
 							</Tooltip>
 						)}
 						{lessonType === LessonType.PRACTICE_LESSON && instructionalLessonsInChapter.length > 0 && (
-							<Tooltip title='Lectures in this Chapter' placement='right' arrow>
+							<Tooltip title='Lectures in this Chapter' placement='top' arrow>
 								<IconButton onClick={() => setIsInstructionalLessonsDialogOpen(true)}>
 									<MenuBook fontSize={isMobileSize ? 'small' : 'medium'} />
 								</IconButton>
 							</Tooltip>
 						)}
+						<Tooltip title='Toolbar help' placement='top' arrow>
+							<IconButton
+								onClick={() => setIsQuestionToolbarHelpOpen(true)}
+								sx={{ ':hover': { backgroundColor: 'transparent' } }}
+								aria-label='Question toolbar help'>
+								<InfoOutlined fontSize={isMobileSize ? 'small' : 'medium'} />
+							</IconButton>
+						</Tooltip>
 					</Box>
 				)}
 
@@ -907,7 +937,7 @@ const LessonPage = () => {
 													return (
 														<Box
 															key={lesson._id}
-															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id)}
+															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id, String(chapterId))}
 															sx={{
 																display: 'flex',
 																alignItems: 'center',
@@ -1531,6 +1561,7 @@ const LessonPage = () => {
 							enableWordAssist={isWordAssistEnabled}
 							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
 							chapterName={currentChapter?.title}
+							chapterId={activeChapterId || undefined}
 						/>
 					</Box>
 				);
@@ -1611,6 +1642,73 @@ const LessonPage = () => {
 					</CustomDialog>
 				</Box>
 			)}
+			<CustomDialog
+				openModal={isQuestionToolbarHelpOpen}
+				closeModal={() => setIsQuestionToolbarHelpOpen(false)}
+				maxWidth='sm'
+				title='Question Toolbar'>
+				<DialogContent>
+					{lessonType === LessonType.PRACTICE_LESSON && (
+						<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+							{isSoundMuted ? (
+								<VolumeOff fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							) : (
+								<VolumeUp fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							)}
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Sound effects
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Mute or unmute practice sounds: answer feedback (correct/incorrect) and flip-card flip sounds.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+					<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+						<Article fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+						<Box>
+							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+								Lesson notes
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+								Open the notes panel to write and save personal notes while answering questions. You can download your notes as a PDF.
+							</Typography>
+						</Box>
+					</Box>
+					{lessonType === LessonType.PRACTICE_LESSON && (
+						<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
+							<RecordVoiceOver fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Pronunciation assist
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Turn on to hover over words in questions and hear pronunciation with short definitions.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+					{lessonType === LessonType.PRACTICE_LESSON && instructionalLessonsInChapter.length > 0 && (
+						<Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+							<MenuBook fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
+							<Box>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
+									Lectures in this chapter
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
+									Open lectures from this chapter for quick review while you work on practice questions.
+								</Typography>
+							</Box>
+						</Box>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setIsQuestionToolbarHelpOpen(false)} sx={{ margin: '0rem 0.5rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
 			<InstructionalLessonsDialog
 				open={isInstructionalLessonsDialogOpen}
 				onClose={() => setIsInstructionalLessonsDialogOpen(false)}

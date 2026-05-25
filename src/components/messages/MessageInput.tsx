@@ -136,11 +136,17 @@ const MessageInput = ({
 			// ✅ One atomic batch — no reads needed
 			const batch = writeBatch(db);
 
+			const participantIds = [
+				...new Set(
+					[user?.firebaseUserId, ...(activeChat.participants?.map((p: any) => p.firebaseUserId) || [])].filter(Boolean)
+				),
+			];
+
 			// Always restore visibility (super cheap, always correct)
 			batch.set(
 				chatRef,
 				{
-					participants: activeChat.participants?.map((p: any) => p.firebaseUserId) || [],
+					participants: participantIds,
 					isDeletedBy: [],
 					blockedUsers: {},
 					lastMessage: {

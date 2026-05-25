@@ -6,6 +6,15 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityMessage } from '../interfaces/communityMessage';
 import { CommunityContext } from './CommunityContextProvider';
 
+/** UI pagination on topic detail (messages list). */
+export const COMMUNITY_UI_PAGE_SIZE = 20;
+/** Backend batch size for topic message fetches (must match API limit=200). */
+export const COMMUNITY_BACKEND_BATCH_SIZE = 200;
+
+export function frontendPageToBackendPage(frontendPage: number): number {
+	return Math.ceil((frontendPage * COMMUNITY_UI_PAGE_SIZE) / COMMUNITY_BACKEND_BATCH_SIZE);
+}
+
 interface CommunityMessagesContextTypes {
 	messages: CommunityMessage[];
 	sortMessages: (property: keyof CommunityMessage, order: 'asc' | 'desc') => CommunityMessage[];
@@ -24,8 +33,6 @@ interface CommunityMessagesContextTypes {
 	loading: boolean;
 	error: string | null;
 	refreshData: () => void;
-	enableCommunityMessagesFetch: () => void;
-	disableCommunityMessagesFetch: () => void;
 }
 
 interface CommunityMessagesContextProviderProps {
@@ -50,8 +57,6 @@ export const CommunityMessagesContext = createContext<CommunityMessagesContextTy
 	loading: false,
 	error: null,
 	refreshData: () => {},
-	enableCommunityMessagesFetch: () => {},
-	disableCommunityMessagesFetch: () => {},
 });
 
 const CommunityMessagesContextProvider = (props: CommunityMessagesContextProviderProps) => {
@@ -66,29 +71,25 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [currentTopicId, setCurrentTopicId] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 	const [forceUpdate, setForceUpdate] = useState<number>(0);
 
 	const fetchMessages = useCallback(
 		async (topicId: string) => {
-			if (!isEnabled || !orgId || !topicId) return [];
+			if (!orgId || !topicId) return [];
 
 			setLoading(true);
 			setError(null);
 
 			try {
-				// Fetch first batch of messages with traditional pagination
-				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=200`);
+				const response = await axios.get(
+					`${base_url}/communityMessages/topic/${topicId}?page=1&limit=${COMMUNITY_BACKEND_BATCH_SIZE}`
+				);
 
-				// Update totalItems from server response
-				setTotalItems(response.data.totalMessages || response.data.messages.length);
-
-				// Update loadedPages to track which pages we've fetched
+				setTotalItems(response.data.totalMessages ?? response.data.messages.length);
 				setLoadedPages([1]);
 				setCurrentTopicId(topicId);
-
-				// Store messages in React Query cache for this topic
 				queryClient.setQueryData(['communityMessages', topicId], response.data.messages);
+				setForceUpdate((prev) => prev + 1);
 
 				return response.data.messages;
 			} catch (error: any) {
@@ -99,35 +100,26 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				setLoading(false);
 			}
 		},
-		[isEnabled, orgId, base_url, queryClient] // ✅ dependencies → now stable
+		[orgId, base_url, queryClient]
 	);
 
-	// Helper function to process fetched messages and update cache
-	const processFetchedMessages = async (response: any, topicId: string, backendPage: number) => {
-		// Update totalItems if not already set
-		if (response.data.totalMessages && totalItems === 0) {
+	const processFetchedMessages = (response: { data: { messages: CommunityMessage[]; totalMessages?: number } }, topicId: string, backendPage: number) => {
+		if (response.data.totalMessages != null) {
 			setTotalItems(response.data.totalMessages);
 		}
 
-		// Get current cached data
 		const currentData = (queryClient.getQueryData(['communityMessages', topicId]) as CommunityMessage[]) || [];
-
-		// For smart pagination, we need to maintain chronological order
-		// Merge new messages with existing data and sort by createdAt
 		const existingIds = new Set(currentData.map((msg) => msg._id));
-		const newMessages = response.data.messages.filter((msg: any) => !existingIds.has(msg._id));
+		const newMessages = response.data.messages.filter((msg) => !existingIds.has(msg._id));
 
 		if (newMessages.length > 0) {
 			const mergedData = [...currentData, ...newMessages];
-			// Sort by createdAt to maintain chronological order (oldest first)
 			const sortedData = mergedData.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 			queryClient.setQueryData(['communityMessages', topicId], sortedData);
 		}
 
-		// Update loadedPages to track the corresponding backend page
-		if (!loadedPages?.includes(backendPage)) {
-			setLoadedPages((prev) => [...prev, backendPage]);
-		}
+		setLoadedPages((prev) => (prev.includes(backendPage) ? prev : [...prev, backendPage]));
+		setForceUpdate((prev) => prev + 1);
 	};
 
 	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
@@ -140,7 +132,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
 				if (!loadedPages?.includes(page)) {
-					promises.push(axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=200`));
+					promises.push(
+						axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=${COMMUNITY_BACKEND_BATCH_SIZE}`)
+					);
 				}
 			}
 
@@ -154,7 +148,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			for (let i = 0; i < responses.length; i++) {
 				const response = responses[i];
 				const pageNumber = startPage + i;
-				await processFetchedMessages(response, topicId, pageNumber);
+				processFetchedMessages(response, topicId, pageNumber);
 			}
 		} catch (error: any) {
 			console.error('❌ Error fetching more messages:', error);
@@ -172,7 +166,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			setError(null);
 
 			// Convert frontend page to backend page and fetch directly
-			const backendPage = Math.ceil((pageNumber * 20) / 200); // pageSize=20, limit=200
+			const backendPage = frontendPageToBackendPage(pageNumber);
 
 			// Find the highest loaded backend page
 			const maxLoadedPage = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
@@ -182,8 +176,10 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				await fetchMoreMessages(topicId, maxLoadedPage + 1, backendPage);
 			} else {
 				// If the page is already loaded, just fetch it directly
-				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${backendPage}&limit=200`);
-				await processFetchedMessages(response, topicId, backendPage);
+				const response = await axios.get(
+					`${base_url}/communityMessages/topic/${topicId}?page=${backendPage}&limit=${COMMUNITY_BACKEND_BATCH_SIZE}`
+				);
+				processFetchedMessages(response, topicId, backendPage);
 			}
 
 			return [];
@@ -294,7 +290,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	};
 
 	// Calculate numberOfPages based on totalItems, with minimum of 1 page
-	const numberOfPages = Math.max(1, Math.ceil(totalItems / 20));
+	const numberOfPages = Math.max(1, Math.ceil(totalItems / COMMUNITY_UI_PAGE_SIZE));
 
 	// Get messages data from React Query cache
 	const messages = (queryClient.getQueryData(['communityMessages', currentTopicId]) as CommunityMessage[]) || [];
@@ -302,9 +298,6 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	// Use forceUpdate to ensure re-renders
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const _ = forceUpdate;
-
-	const enableCommunityMessagesFetch = () => setIsEnabled(true);
-	const disableCommunityMessagesFetch = () => setIsEnabled(false);
 
 	return (
 		<CommunityMessagesContext.Provider
@@ -326,8 +319,6 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				loading,
 				error,
 				refreshData,
-				enableCommunityMessagesFetch,
-				disableCommunityMessagesFetch,
 			}}>
 			<DataFetchErrorBoundary context='CommunityMessages'>{props.children}</DataFetchErrorBoundary>
 		</CommunityMessagesContext.Provider>
