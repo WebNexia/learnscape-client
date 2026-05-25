@@ -8,6 +8,7 @@ import { Roles } from '../interfaces/enums';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
 import { shouldFetchLearnerEnrollmentList } from '../utils/learnerEnrollmentDataRoutes';
+import { resetWordAssistPreference } from '../utils/wordAssistPreference';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -97,12 +98,14 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				if (!sessionTimestamp) {
 					localStorage.setItem('sessionTimestamp', currentTime.toString());
 					sessionTimestamp = currentTime.toString();
+					resetWordAssistPreference();
 				}
 
 				// Now check expiry
 				if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
 					await signOut(auth);
 					localStorage.removeItem('sessionTimestamp');
+					resetWordAssistPreference();
 					console.warn('Session expired');
 					window.location.href = '/auth';
 					return;
@@ -211,6 +214,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const signOutUser = async () => {
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
+		resetWordAssistPreference();
 		sessionStorage.removeItem('activeChatId');
 		setUser(undefined);
 		setUserId('');

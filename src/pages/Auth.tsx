@@ -21,6 +21,7 @@ import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
+import { resetWordAssistPreference } from '../utils/wordAssistPreference';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -122,6 +123,7 @@ const Auth = () => {
 			// Set session timestamp explicitly after successful signIn
 			const currentTime = Date.now();
 			localStorage.setItem('sessionTimestamp', currentTime.toString());
+			resetWordAssistPreference();
 
 			// Keep form values while redirect is in progress; avoid blank state flash.
 			setErrorMsg(undefined);

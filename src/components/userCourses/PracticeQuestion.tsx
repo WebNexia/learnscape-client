@@ -203,6 +203,7 @@ const PracticeQuestion = ({
 	const [hasRequestedAiThisRound, setHasRequestedAiThisRound] = useState<boolean>(false);
 	const hasInitializedAiRoundRef = useRef<boolean>(false);
 	const prevUnlockedForNextRoundRef = useRef<boolean>(false);
+	const prevQuestionKeyRef = useRef<string>('');
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null && isLessonCompleted;
@@ -252,6 +253,12 @@ const PracticeQuestion = ({
 		practiceAgainAiRequestEnabled;
 
 	useEffect(() => {
+		const questionKey = `${question._id}-${displayedQuestionNumber}-${practiceAgainMode}`;
+		const isQuestionChange = prevQuestionKeyRef.current !== questionKey;
+		if (isQuestionChange) {
+			prevQuestionKeyRef.current = questionKey;
+		}
+
 		if (isTranslate && isLessonCompleted) {
 			// Translate answers are not saved to database, so always start fresh for practice
 			setTranslateAnswers({});
@@ -272,9 +279,14 @@ const PracticeQuestion = ({
 			}
 		} else if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion && !isTranslate && !practiceAgainMode) {
 			setValue(question.correctAnswer);
-		} else if (isLessonCompleted && practiceAgainMode && !isOpenEndedQuestion && !isTranslate && !isFlipCard) {
-			// Hide answers in practice again mode - reset to empty
+		} else if (isQuestionChange && isLessonCompleted && practiceAgainMode && !isOpenEndedQuestion && !isTranslate && !isFlipCard) {
+			// Hide answers in practice again mode - reset to empty when navigating to a question
 			setValue('');
+			if (isTrueFalseQuestion || isMultipleChoiceQuestion) {
+				setHelperText('Choose wisely');
+				setError(false);
+				setSuccess(false);
+			}
 		} else if (isOpenEndedQuestion) {
 			setValue(() => {
 				const answer = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
@@ -288,7 +300,7 @@ const PracticeQuestion = ({
 
 		setSelectedQuestion(displayedQuestionNumber);
 
-		if (isLessonCompleted) {
+		if (isQuestionChange && isLessonCompleted) {
 			setShowQuestionSelector(true);
 			setQuestionPrompt((prevData) => {
 				const answer: string = userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
@@ -296,28 +308,30 @@ const PracticeQuestion = ({
 			});
 		}
 
-		if (isLessonCompleted || isAnswerCorrect || displayedQuestionNumber < getLastQuestion()) {
-			setHelperText(' ');
+		if (isQuestionChange) {
+			if (!practiceAgainMode && (isLessonCompleted || isAnswerCorrect || displayedQuestionNumber < getLastQuestion())) {
+				setHelperText(' ');
+			}
+
+			setIsOpenEndedAnswerSubmitted(false);
+			setIsAnswerCorrect(false);
+			setIsSubmittingOpenEnded(false);
+			if (!isTranslate) {
+				setCheckedTranslatePairs(new Set());
+				setTranslateAnswers({});
+			}
+
+			// Reset AI feedback state when question changes
+			setHasRequestedAiFeedback(false);
+			setUnlockedForNextRound(false);
+			setHasRequestedAiThisRound(false);
+			hasInitializedAiRoundRef.current = false;
+
+			// Reset sound tracking refs when question changes
+			prevIsAnswerCorrectRef.current = false;
+			prevErrorRef.current = false;
 		}
-
-		setIsOpenEndedAnswerSubmitted(false);
-		setIsAnswerCorrect(false);
-		setIsSubmittingOpenEnded(false);
-		if (!isTranslate) {
-			setCheckedTranslatePairs(new Set());
-			setTranslateAnswers({});
-		}
-
-		// Reset AI feedback state when question changes
-		setHasRequestedAiFeedback(false);
-		setUnlockedForNextRound(false);
-		setHasRequestedAiThisRound(false);
-		hasInitializedAiRoundRef.current = false;
-
-		// Reset sound tracking refs when question changes
-		prevIsAnswerCorrectRef.current = false;
-		prevErrorRef.current = false;
-	}, [displayedQuestionNumber, question._id, userAnswers]);
+	}, [displayedQuestionNumber, question._id, userAnswers, practiceAgainMode]);
 
 	// Keep open-ended answer populated after lesson completion when user answers load asynchronously.
 	useEffect(() => {
@@ -677,14 +691,14 @@ const PracticeQuestion = ({
 									width: '100%',
 									margin:
 										question.imageUrl || question.videoUrl
-											? '2.5rem auto 0 auto'
+											? '3rem auto 0 auto'
 											: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
-												? '6rem auto 0 auto'
+												? '6.5rem auto 0 auto'
 												: isTabletPortrait || isTabletLandscape
 													? '7rem auto 0 auto'
 													: isDesktopPortrait || isDesktopLandscape
 														? '8rem auto 0 auto'
-														: '6rem auto 0 auto',
+														: '6.5rem auto 0 auto',
 								}}>
 								<FillInTheBlanksDragDrop
 									textWithBlanks={question.question}
@@ -714,14 +728,14 @@ const PracticeQuestion = ({
 									width: '100%',
 									margin:
 										question.imageUrl || question.videoUrl
-											? '2.5rem auto 0 auto'
+											? '3rem auto 0 auto'
 											: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
-												? '6rem auto 0 auto'
+												? '6.5rem auto 0 auto'
 												: isTabletPortrait || isTabletLandscape
 													? '7rem auto 0 auto'
 													: isDesktopPortrait || isDesktopLandscape
 														? '8rem auto 0 auto'
-														: '6rem auto 0 auto',
+														: '6.5rem auto 0 auto',
 								}}>
 								<FillInTheBlanksTyping
 									textWithBlanks={question.question}
@@ -954,25 +968,19 @@ const PracticeQuestion = ({
 									question.options &&
 									question.options?.map((option, index) => {
 										const effectiveIsLessonCompleted = isLessonCompleted && !practiceAgainMode;
-										const isSelected =
-											(effectiveIsLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating
-												? question.correctAnswer
-												: value) === option;
+										const isSelected = effectiveIsLessonCompleted
+											? question.correctAnswer === option
+											: value === option;
 										return (
 											<Box
 												key={index}
 												onClick={() => {
-													if (!effectiveIsLessonCompleted || displayedQuestionNumber >= getLastQuestion() || isLessonUpdating) {
-														const syntheticEvent = {
-															target: { value: option },
-														} as React.ChangeEvent<HTMLInputElement>;
-														handleRadioChange(syntheticEvent);
-														// Auto-submit is handled in handleRadioChange for practice questions
-													} else {
-														setShowQuestionSelector(true);
-														setIsLessonUpdating(true);
-														setIsOpenEndedAnswerSubmitted(false);
-													}
+													if (effectiveIsLessonCompleted) return;
+
+													const syntheticEvent = {
+														target: { value: option },
+													} as React.ChangeEvent<HTMLInputElement>;
+													handleRadioChange(syntheticEvent);
 												}}
 												sx={{
 													'position': 'relative',
@@ -988,16 +996,18 @@ const PracticeQuestion = ({
 														: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%)',
 													'boxShadow': isSelected ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.08)',
 													'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-													'cursor': 'pointer',
+													'cursor': effectiveIsLessonCompleted ? 'default' : 'pointer',
 													'backdropFilter': 'blur(10px)',
-													'&:hover': {
+													'&:hover': effectiveIsLessonCompleted
+														? {}
+														: {
 														transform: 'translateY(-2px)',
 														boxShadow: isSelected ? '0 6px 16px rgba(102, 126, 234, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.12)',
 														borderColor: isSelected ? theme.palette.primary.main : 'rgba(102, 126, 234, 0.4)',
 														background: isSelected
 															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
 															: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
-													},
+														},
 													'&::before': {
 														content: '""',
 														position: 'absolute',
@@ -1030,7 +1040,7 @@ const PracticeQuestion = ({
 									})}
 							</Box>
 						)}
-						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating || practiceAgainMode) && helperText !== ' ' && (
 							<FormHelperText
 								sx={{
 									color: success ? 'green' : 'inherit',
@@ -1367,6 +1377,7 @@ const PracticeQuestion = ({
 				<CustomDialog
 					openModal={isLessonCourseCompletedModalOpen}
 					closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
+					disableDismiss
 					maxWidth='xs'
 					title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
 					<DialogContent sx={{ mb: '-0.5rem' }}>
@@ -1375,7 +1386,7 @@ const PracticeQuestion = ({
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
-						onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
+						showCancelBtn={false}
 						onSubmit={async () => {
 							setIsNavigatingFromCompletedDialog(true);
 							try {

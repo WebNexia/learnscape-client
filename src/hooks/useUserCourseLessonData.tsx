@@ -200,14 +200,20 @@ export const useUserCourseLessonData = () => {
 				}
 			}
 
-			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
+			const currentUserLesson = parsedUserLessonData.find((data) => data.userLessonId === userLessonId);
+			// Patch only when still in progress or not completed (skip redundant API calls when already done)
+			const shouldMarkLessonCompleted =
+				Boolean(userLessonId) &&
+				(!currentUserLesson || currentUserLesson.isInProgress || !currentUserLesson.isCompleted);
 
-			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
+			if (shouldMarkLessonCompleted) {
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
 					isCompleted: true,
 					isInProgress: false,
 					currentQuestion: 1,
 				});
+
+				setIsLessonCompleted(true);
 
 				// Invalidate cache to refresh lesson data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
@@ -377,6 +383,7 @@ export const useUserCourseLessonData = () => {
 			}
 		} catch (error) {
 			console.error('Error in handleNextLesson:', error);
+			throw error;
 		}
 	}, [
 		userLessonId,

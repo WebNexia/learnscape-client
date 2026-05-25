@@ -21,6 +21,8 @@ interface QuestionsProps {
 	isSoundMuted?: boolean;
 	onQuestionChange?: (questionNumber: number) => void;
 	practiceAgainMode?: boolean;
+	/** Bumped on each Review Questions / Practice Again entry so the session always starts at Q1 */
+	questionsSessionKey?: number;
 	enableWordAssist?: boolean;
 	/** Lesson content (plain text) for open-ended AI context */
 	lessonText?: string;
@@ -42,6 +44,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	isSoundMuted = false,
 	onQuestionChange,
 	practiceAgainMode = false,
+	questionsSessionKey = 0,
 	enableWordAssist = false,
 	lessonText,
 	chapterName,
@@ -57,7 +60,14 @@ const Questions: React.FC<QuestionsProps> = ({
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const { lessonId } = useParams();
 
-	// Practice Again always starts at question 1 (Review uses questionsSessionKey remount in LessonPage)
+	// Review Questions / Practice Again: always start at question 1 when entering a new session
+	useEffect(() => {
+		if (questionsSessionKey > 0) {
+			setDisplayedQuestionNumber(1);
+			setShowQuestionSelector(false);
+		}
+	}, [questionsSessionKey]);
+
 	useEffect(() => {
 		if (practiceAgainMode) {
 			setDisplayedQuestionNumber(1);
@@ -67,7 +77,7 @@ const Questions: React.FC<QuestionsProps> = ({
 
 	// When lesson changes or question list changes, sync displayed index (e.g. after questions were deleted)
 	useEffect(() => {
-		if (practiceAgainMode) return;
+		if (practiceAgainMode || questionsSessionKey > 0) return;
 		if (isLessonCompleted) {
 			setDisplayedQuestionNumber(1);
 		} else {
@@ -78,7 +88,7 @@ const Questions: React.FC<QuestionsProps> = ({
 				updateLastQuestion(clamped);
 			}
 		}
-	}, [lessonId, numberOfQuestions]);
+	}, [lessonId, numberOfQuestions, practiceAgainMode, questionsSessionKey]);
 
 	// Keep displayed index in bounds when question list shrinks (e.g. admin deleted questions)
 	useEffect(() => {

@@ -55,6 +55,8 @@ const TrueFalseOptions = ({
 	onAutoSubmit,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (fromLearner && isLessonCompleted) return;
+
 		const value = (event.target as HTMLInputElement).value;
 
 		if (setCorrectAnswer) setCorrectAnswer(value);
@@ -111,6 +113,8 @@ const TrueFalseOptions = ({
 	};
 
 	const isQuizResultsView = fromLearner && isLessonCompleted && lessonType === LessonType.QUIZ;
+	const isPracticeReview = fromLearner && isLessonCompleted && lessonType === LessonType.PRACTICE_LESSON;
+	const isReadOnlyReview = isQuizResultsView || isPracticeReview;
 	const isUserAnswer = (optionValue: string) => isQuizResultsView && learnerSetting === optionValue;
 	const isCorrectOption = (optionValue: string) => isQuizResultsView && question?.correctAnswer === optionValue;
 
@@ -120,10 +124,10 @@ const TrueFalseOptions = ({
 				row
 				value={fromLearner ? learnerSetting : adminSetting}
 				onChange={handleChange}
-				{...(isQuizResultsView && { sx: { pointerEvents: 'none', cursor: 'default' } })}
+				{...(isReadOnlyReview && { sx: { pointerEvents: 'none', cursor: 'default' } })}
 			>
 				<Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center', gap: '0.5rem 0' }}>
-					{showCheckmark('True') && lessonType !== LessonType.PRACTICE_LESSON && !isQuizResultsView && (
+					{showCheckmark('True') && !isQuizResultsView && (
 						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginRight: 1 }} />
 					)}
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: isMobileSize ? '5rem' : '6rem' }}>
@@ -140,10 +144,10 @@ const TrueFalseOptions = ({
 								'textAlign': 'center',
 								'borderRadius': '0.75rem',
 								'position': 'relative',
-								':hover': !isQuizResultsView
+								':hover': !isReadOnlyReview
 									? { boxShadow: '0 12px 26px rgba(16, 185, 129, 0.38)', transform: 'translateY(-1px)' }
 									: {},
-								...(isQuizResultsView && { cursor: 'default' }),
+								...(isReadOnlyReview && { cursor: 'default' }),
 							}}>
 							<FormControlLabel
 								value='True'
@@ -166,7 +170,7 @@ const TrueFalseOptions = ({
 								label={
 									<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
 									{/* In quiz results, show checkmark only for correct answer, not for user's selection */}
-									{(fromLearner ? learnerSetting : adminSetting) === 'True' && !isQuizResultsView && (
+									{(fromLearner ? learnerSetting : adminSetting) === 'True' && !isReadOnlyReview && (
 										<CheckRoundedIcon sx={{ color: '#fff', fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
 									)}
 									{isQuizResultsView && isCorrectOption('True') && (
@@ -213,10 +217,10 @@ const TrueFalseOptions = ({
 							'textAlign': 'center',
 							'borderRadius': '0.75rem',
 							'position': 'relative',
-							':hover': !isQuizResultsView
+							':hover': !isReadOnlyReview
 								? { boxShadow: '0 12px 26px rgba(239, 68, 68, 0.38)', transform: 'translateY(-1px)' }
 								: {},
-							...(isQuizResultsView && { cursor: 'default' }),
+							...(isReadOnlyReview && { cursor: 'default' }),
 						}}>
 						<FormControlLabel
 							value='False'
@@ -239,7 +243,7 @@ const TrueFalseOptions = ({
 							label={
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
 									{/* In quiz results, show checkmark only for correct answer */}
-									{(fromLearner ? learnerSetting : adminSetting) === 'False' && !isQuizResultsView && (
+									{(fromLearner ? learnerSetting : adminSetting) === 'False' && !isReadOnlyReview && (
 										<CheckRoundedIcon sx={{ color: '#fff', fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
 									)}
 									{isQuizResultsView && isCorrectOption('False') && (
@@ -271,7 +275,7 @@ const TrueFalseOptions = ({
 							</Box>
 						)}
 					</Box>
-					{showCheckmark('False') && lessonType !== LessonType.PRACTICE_LESSON && !isQuizResultsView && (
+					{showCheckmark('False') && !isQuizResultsView && (
 						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginLeft: 1 }} />
 					)}
 				</Box>
