@@ -38,7 +38,7 @@ const Auth = () => {
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
+	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_IN);
 
 	const [errorMsg, setErrorMsg] = useState<AuthFormErrorMessages>();
 	const [signUpMessage, setSignUpMessage] = useState<boolean>(false);
@@ -70,6 +70,7 @@ const Auth = () => {
 
 	const [signingUp, setSigningUp] = useState<boolean>(false);
 	const [signingIn, setSigningIn] = useState<boolean>(false);
+	const [isSendingResetEmail, setIsSendingResetEmail] = useState<boolean>(false);
 	// Removed isSignupInProgress - no longer needed
 
 	const togglePasswordVisibility = () => {
@@ -142,6 +143,7 @@ const Auth = () => {
 			setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR);
 			return;
 		}
+		setIsSendingResetEmail(true);
 		try {
 			await axiosInstance.post(`${base_url}/users/forgot-password`, {
 				email,
@@ -155,16 +157,15 @@ const Auth = () => {
 			resetResetRecaptcha();
 			setErrorMsg(undefined);
 		} catch (error) {
-			if (error instanceof FirebaseError) {
-				switch (error.code) {
-					case 'auth/network-request-failed':
-						setErrorMsg(AuthFormErrorMessages.NETWORK_ERROR);
-				}
+			if (error instanceof FirebaseError && error.code === 'auth/network-request-failed') {
+				setErrorMsg(AuthFormErrorMessages.NETWORK_ERROR);
+			} else {
+				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
 			console.log(error);
-			setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			resetResetRecaptcha();
-			setErrorMsg(undefined);
+		} finally {
+			setIsSendingResetEmail(false);
 		}
 	};
 
@@ -1281,8 +1282,9 @@ const Auth = () => {
 													background: '#ccc',
 												},
 											}}
-											type='submit'>
-											Şifre Sıfırlama E-postası Gönder
+											type='submit'
+											disabled={isSendingResetEmail}>
+											{isSendingResetEmail ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : 'Şifre Sıfırlama E-postası Gönder'}
 										</Button>
 										<Typography
 											sx={{

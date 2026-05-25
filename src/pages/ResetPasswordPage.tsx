@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuth, confirmPasswordReset, checkActionCode } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { PasswordUpdateErrorMessages, TextFieldTypes } from '../interfaces/enums';
+import { TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { Box, IconButton, InputAdornment, Typography } from '@mui/material';
 import theme from '../themes';
@@ -34,6 +34,10 @@ const PasswordResetPage = () => {
 
 		if (password.length < minLength) {
 			return 'Şifre en az 6 karakter olmalıdır.';
+		}
+
+		if (/\s/.test(password)) {
+			return 'Şifre boşluk içeremez.';
 		}
 
 		if (!hasLetter) {
@@ -155,7 +159,7 @@ const PasswordResetPage = () => {
 							placeholder='Yeni şifrenizi girin'
 							type={showNewPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={newPassword}
-							onChange={(e) => setNewPassword(e.target.value)}
+							onChange={(e) => setNewPassword(e.target.value.trim())}
 							InputProps={{
 								endAdornment: (
 									<InputAdornment position='end'>
@@ -178,7 +182,7 @@ const PasswordResetPage = () => {
 							placeholder='Yeni şifrenizi tekrar girin'
 							type={showConfirmPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={confirmNewPassword}
-							onChange={(e) => setConfirmNewPassword(e.target.value)}
+							onChange={(e) => setConfirmNewPassword(e.target.value.trim())}
 							InputProps={{
 								endAdornment: (
 									<InputAdornment position='end'>
@@ -196,6 +200,23 @@ const PasswordResetPage = () => {
 								),
 							}}
 						/>
+						<Box sx={{ width: '100%', maxWidth: '22rem', mt: '0.5rem', mb: '1rem' }}>
+							<Typography sx={{ fontSize: '0.85rem', mb: '0.5rem', fontFamily: 'Varela Round', color: theme.textColor?.secondary?.main }}>
+								- Şifre boşluk içeremez
+							</Typography>
+							<Typography sx={{ fontSize: '0.85rem', fontFamily: 'Varela Round', color: theme.textColor?.secondary?.main }}>
+								- Şifre en az şunları içermelidir:
+							</Typography>
+							<Box sx={{ margin: '0.75rem 0 0 3rem' }}>
+								{['6 karakter', '1 harf', '1 rakam'].map((rule, index) => (
+									<ul key={index} style={{ margin: 0, paddingLeft: '1rem' }}>
+										<li style={{ color: theme.textColor?.secondary?.main }}>
+											<Typography sx={{ fontSize: '0.75rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>{rule}</Typography>
+										</li>
+									</ul>
+								))}
+							</Box>
+						</Box>
 						<CustomSubmitButton onClick={handlePasswordResetSubmit} sx={{ fontFamily: 'Varela Round' }}>
 							Şifreyi Yenile
 						</CustomSubmitButton>
