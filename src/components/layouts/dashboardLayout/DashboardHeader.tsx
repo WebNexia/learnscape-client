@@ -1,4 +1,4 @@
-import { AppBar, Badge, Box, Button, IconButton, Switch, Toolbar, Tooltip, Typography } from '@mui/material';
+import { AppBar, Badge, Box, Button, DialogContent, IconButton, Switch, Toolbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
@@ -12,6 +12,8 @@ import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomDrawer from './CustomDrawer';
 import ReportBugDialog from '../dashboard/ReportBugDialog';
+import CustomDialog from '../dialog/CustomDialog';
+import CustomDialogActions from '../dialog/CustomDialogActions';
 import SubscriptionDialog from '../../subscription/SubscriptionDialog';
 import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
 import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
@@ -83,6 +85,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const [bugReportDialogOpen, setBugReportDialogOpen] = useState<boolean>(false);
 	const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState<boolean>(false);
 	const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState<boolean>(false);
+	const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState<boolean>(false);
+	const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
 	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
 	const notificationsButtonRef = useRef<HTMLButtonElement>(null); // Create a ref for the notifications button
@@ -111,6 +115,21 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			}
 		});
 	}, []);
+
+	const handleLogout = useCallback(async () => {
+		setIsLoggingOut(true);
+		try {
+			await signOut();
+			await updateInProgressLessons();
+			clearAllQuizData();
+			setIsLogoutDialogOpen(false);
+			navigate('/');
+		} catch (error) {
+			console.error('Error during logout:', error);
+		} finally {
+			setIsLoggingOut(false);
+		}
+	}, [signOut, updateInProgressLessons, clearAllQuizData, navigate]);
 
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
@@ -514,18 +533,37 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							fontFamily: theme.fontFamily?.main,
 							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 						}}
-						onClick={async () => {
-							await signOut();
-							await updateInProgressLessons();
-							clearAllQuizData();
-							navigate('/');
-						}}>
+						onClick={() => setIsLogoutDialogOpen(true)}>
 						Log Out
 					</Button>
 				</Box>
 			</Toolbar>
 
 			<ReportBugDialog open={bugReportDialogOpen} onClose={() => setBugReportDialogOpen(false)} />
+
+			<CustomDialog
+				openModal={isLogoutDialogOpen}
+				closeModal={() => {
+					if (!isLoggingOut) setIsLogoutDialogOpen(false);
+				}}
+				disableDismiss={isLoggingOut}
+				maxWidth='xs'
+				title='Log Out'>
+				<DialogContent sx={{ mb: '-0.5rem' }}>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						Are you sure you want to log out?
+					</Typography>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={() => setIsLogoutDialogOpen(false)}
+					onSubmit={handleLogout}
+					cancelBtnText='Cancel'
+					submitBtnText='Log Out'
+					isSubmitting={isLoggingOut}
+					disableCancelBtn={isLoggingOut}
+					actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+				/>
+			</CustomDialog>
 
 			{/* Subscription Dialog */}
 			{isSubscriptionsProductEnabled && (
