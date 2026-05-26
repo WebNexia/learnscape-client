@@ -1,14 +1,16 @@
-import { Avatar, Box, Card, CardContent, CardMedia, LinearProgress, Typography, Chip } from '@mui/material';
+import { Avatar, Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { setCurrencySymbol } from '@utils/setCurrencySymbol';
+import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
+import { getCourseProgress } from '../../utils/courseProgress';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -37,7 +39,21 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '';
 
 	const topAccent = '#0052a3';
+	const progressGreen = theme.palette.success?.main || '#1EC28B';
 	const hoverBorderGradient = `linear-gradient(90deg, ${topAccent} 0%, ${topAccent}80 100%)`;
+	const isLoggedInDashboard = Boolean(user && !fromHomePage);
+	const shouldFetchProgress = Boolean(isEnrolled && course._id);
+
+	const { data: userLessonsData, isLoading: isProgressLoading } = useUserLessonsForCourse(course._id || '', {
+		enabled: shouldFetchProgress,
+	});
+
+	const courseProgress = useMemo(() => {
+		if (!isEnrolled) return { completed: 0, total: 0, percentage: 0 };
+		return getCourseProgress(course, userLessonsData);
+	}, [isEnrolled, course, userLessonsData]);
+
+	const progressValue = isCourseCompleted ? 100 : courseProgress.percentage;
 
 	return (
 		<Box
@@ -51,7 +67,10 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				position: 'relative',
 				margin: '0 1rem 2rem 1rem',
 				backgroundColor: 'transparent',
-				boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+				border: isLoggedInDashboard ? '1.5px solid rgba(0, 82, 163, 0.24)' : '1.5px solid transparent',
+				boxShadow: isLoggedInDashboard
+					? '0 4px 14px rgba(0, 82, 163, 0.1)'
+					: '0 4px 12px rgba(0,0,0,0.06)',
 				transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
 				cursor: 'pointer',
 				'&::before': {
@@ -182,7 +201,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 						variant='body2'
 						sx={{
 							textAlign: 'justify',
-							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.875rem',
 							lineHeight: isMobileSize ? '1.4' : '1.5',
 							marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 							width: '100%',
@@ -190,7 +209,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
 
-						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 215)}
+						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 200)}
 					</Typography>
 				</CardContent>
 
@@ -207,17 +226,57 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							visibility: isEnrolled ? 'visible' : 'hidden',
 							width: '90%',
 							alignSelf: 'center',
+							mb: 0.75,
+							mt: 0.25,
 						}}>
-						{/* <Typography
+						<Box
 							sx={{
-								fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-								textAlign: 'center',
-								marginBottom: '0.2rem',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								display: 'flex',
+								justifyContent: 'flex-end',
+								mb: 0.5,
 							}}>
-							{isCourseCompleted ? 'Completed' : 'In Progress'}
-						</Typography> */}
-						<LinearProgress variant='determinate' color='success' value={isCourseCompleted ? 100 : 70} />
+							<Typography
+								component='span'
+								sx={{
+									fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+									fontWeight: 700,
+									color: progressValue >= 100 ? progressGreen : topAccent,
+									fontVariantNumeric: 'tabular-nums',
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								}}>
+								{isProgressLoading ? '…' : `${progressValue}%`}
+							</Typography>
+						</Box>
+						<Box
+							sx={{
+								position: 'relative',
+								height: isMobileSize ? '0.4rem' : '0.45rem',
+								borderRadius: '999px',
+								backgroundColor: 'rgba(0, 82, 163, 0.1)',
+								overflow: 'hidden',
+								boxShadow: 'inset 0 1px 2px rgba(0, 82, 163, 0.08)',
+							}}>
+							<Box
+								sx={{
+									height: '100%',
+									width: `${Math.min(100, Math.max(isProgressLoading ? 8 : 0, progressValue))}%`,
+									borderRadius: '999px',
+									background:
+										progressValue >= 100
+											? `linear-gradient(90deg, ${progressGreen} 0%, #34d399 100%)`
+											: `linear-gradient(90deg, ${topAccent} 0%, ${progressGreen} 100%)`,
+									boxShadow: progressValue > 0 ? '0 1px 4px rgba(30, 194, 139, 0.35)' : 'none',
+									transition: 'width 0.45s ease-out',
+									...(isProgressLoading && {
+										animation: 'dashboardProgressPulse 1.2s ease-in-out infinite',
+										'@keyframes dashboardProgressPulse': {
+											'0%, 100%': { opacity: 0.55 },
+											'50%': { opacity: 1 },
+										},
+									}),
+								}}
+							/>
+						</Box>
 					</Box>
 					<Box
 						sx={{

@@ -81,6 +81,8 @@ export interface SingleCourse extends BaseCourse {
 	durationHours: number | null;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
+	/** Total lessons in course outline (learner courses list includes this when chapters are omitted) */
+	lessonCount?: number;
 	orgId: string;
 	documentIds: string[];
 	documents: Document[];

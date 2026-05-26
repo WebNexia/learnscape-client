@@ -200,23 +200,52 @@ export const useUserCourseLessonData = () => {
 				}
 			}
 
-			const currentUserLesson = parsedUserLessonData.find((data) => data.userLessonId === userLessonId);
+			// Always resolve the current lesson by lessonId+courseId (userLessonId state can be stale across navigations)
+			const currentUserLesson = parsedUserLessonData.find(
+				(data) => data.lessonId === lessonId && data.courseId === courseId
+			);
+			let targetUserLessonId = currentUserLesson?.userLessonId ?? userLessonId;
+			let isCompletedFlag = currentUserLesson?.isCompleted;
+			let isInProgressFlag = currentUserLesson?.isInProgress;
+
+			if (!targetUserLessonId && lessonId && courseId && user?._id) {
+				try {
+					const searchResponse = await axios.post(`${base_url}/userlessons/search`, {
+						userId: user._id,
+						lessonId,
+						courseId,
+					});
+					const serverRecord = searchResponse.data?.[0];
+					if (serverRecord?._id) {
+						targetUserLessonId = serverRecord._id;
+						isCompletedFlag = Boolean(serverRecord.isCompleted);
+						isInProgressFlag = Boolean(serverRecord.isInProgress);
+					}
+				} catch (searchError) {
+					console.error('Failed to resolve user lesson for completion:', searchError);
+				}
+			}
+
 			// Patch only when still in progress or not completed (skip redundant API calls when already done)
 			const shouldMarkLessonCompleted =
-				Boolean(userLessonId) &&
-				(!currentUserLesson || currentUserLesson.isInProgress || !currentUserLesson.isCompleted);
+				Boolean(targetUserLessonId) &&
+				(isInProgressFlag === true || isCompletedFlag !== true);
 
-			if (shouldMarkLessonCompleted) {
-				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
+			if (shouldMarkLessonCompleted && targetUserLessonId) {
+				await axios.patch(`${base_url}/userlessons/${targetUserLessonId}`, {
 					isCompleted: true,
 					isInProgress: false,
 					currentQuestion: 1,
 				});
 
 				setIsLessonCompleted(true);
+				if (targetUserLessonId !== userLessonId) {
+					setUserLessonId(targetUserLessonId);
+				}
 
 				// Invalidate cache to refresh lesson data
 				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+				await queryClient.refetchQueries(['userLessonsForCourse', courseId, user?._id]);
 				await invalidateLearnerLessonPageCaches();
 
 				// Trigger dashboard sync when lesson is completed

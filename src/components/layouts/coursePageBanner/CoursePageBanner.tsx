@@ -19,6 +19,7 @@ import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { UserCourseLessonDataContext } from '../../../contexts/UserCourseLessonDataContextProvider';
 import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse';
+import { getCourseProgress } from '../../../utils/courseProgress';
 import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { extractVideoId } from '../../../utils/videoUrlUtils';
@@ -88,15 +89,9 @@ const CoursePageBanner = ({
 	const parsedUserLessons = userLessonsData || [];
 
 	const courseProgress = useMemo(() => {
-		if (!isEnrolledStatus || !course?.chapters) return { completed: 0, total: 0, percentage: 0 };
-		const total = course.chapters.reduce(
-			(sum, ch) => sum + (ch.lessons?.length ?? ch.lessonIds?.length ?? 0),
-			0
-		);
-		const completed = parsedUserLessons.filter((ul) => ul.isCompleted).length;
-		const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-		return { completed, total, percentage };
-	}, [isEnrolledStatus, course?.chapters, parsedUserLessons]);
+		if (!isEnrolledStatus) return { completed: 0, total: 0, percentage: 0 };
+		return getCourseProgress(course, parsedUserLessons);
+	}, [isEnrolledStatus, course, parsedUserLessons]);
 
 	const hasCourseMaterials = useMemo(() => {
 		const docsWithUrl = (course.documents ?? []).filter(
