@@ -173,6 +173,8 @@ const Lesson = ({
 		return false;
 	}, [user]);
 
+	const showInProgressStyle = isLessonInProgress && !isLessonCompleted;
+
 	const isAccessible = useMemo(() => {
 		if (!isEnrolledStatus || isProgressPending) return false;
 
@@ -198,19 +200,19 @@ const Lesson = ({
 			sx={{
 				'display': 'flex',
 				'height':
-					isEnrolledStatus && isLessonInProgress && isMobileSize
+					isEnrolledStatus && showInProgressStyle && isMobileSize
 						? '3.5rem'
-						: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
+						: !(isEnrolledStatus && showInProgressStyle) && isMobileSize
 							? '2.5rem'
-							: isEnrolledStatus && isLessonInProgress
+							: isEnrolledStatus && showInProgressStyle
 								? '4.5rem'
 								: '3rem',
 				'borderBottom': `0.1rem solid ${theme.border.lightMain}`,
-				'backgroundColor': isEnrolledStatus && isLessonInProgress ? '#A8D8A8' : 'white',
+				'backgroundColor': isEnrolledStatus && showInProgressStyle ? '#A8D8A8' : 'white',
 				'cursor': isAccessible ? 'pointer' : '',
 				'borderRadius': lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
 				':hover': {
-					backgroundColor: !isLessonInProgress ? '#F0F2F5' : '',
+					backgroundColor: !showInProgressStyle ? '#F0F2F5' : '',
 					borderColor: theme.border.lightMain,
 				},
 			}}
@@ -244,10 +246,10 @@ const Lesson = ({
 						</Typography>
 					</Box>
 					<Box>
-						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
-							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
-						) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
+						{isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
 							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
+						) : isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
+							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
 						) : isProgressPending ? null : !isAccessible ? (
 							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						) : null}

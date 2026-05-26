@@ -155,6 +155,88 @@ export const useUserCourseLessonData = () => {
 		}
 	}, [nextLessonId, user?._id, courseId, orgId, base_url, queryClient, parsedUserCourseData, invalidateLearnerLessonPageCaches]);
 
+	/** Marks the current lesson completed on the server. Always reads fresh server state (cache can be stale after interrupted OK/spinner). */
+	const markCurrentLessonCompleted = useCallback(async (): Promise<void> => {
+		if (!lessonId || !courseId || !user?._id) return;
+
+		const currentUserLesson = parsedUserLessonData.find(
+			(data) => data.lessonId === lessonId && data.courseId === courseId
+		);
+		let targetUserLessonId = currentUserLesson?.userLessonId ?? userLessonId;
+		let isCompletedFlag = currentUserLesson?.isCompleted;
+		let isInProgressFlag = currentUserLesson?.isInProgress;
+
+		try {
+			const searchResponse = await axios.post(`${base_url}/userlessons/search`, {
+				userId: user._id,
+				lessonId,
+				courseId,
+			});
+			const serverRecord = searchResponse.data?.[0];
+			if (serverRecord?._id) {
+				targetUserLessonId = serverRecord._id;
+				isCompletedFlag = Boolean(serverRecord.isCompleted);
+				isInProgressFlag = Boolean(serverRecord.isInProgress);
+			}
+		} catch (searchError) {
+			console.error('Failed to resolve user lesson for completion:', searchError);
+		}
+
+		const shouldMarkLessonCompleted =
+			Boolean(targetUserLessonId) && (isInProgressFlag === true || isCompletedFlag !== true);
+
+		if (!shouldMarkLessonCompleted || !targetUserLessonId) return;
+
+		await axios.patch(`${base_url}/userlessons/${targetUserLessonId}`, {
+			isCompleted: true,
+			isInProgress: false,
+			currentQuestion: 1,
+		});
+
+		setIsLessonCompleted(true);
+		if (targetUserLessonId !== userLessonId) {
+			setUserLessonId(targetUserLessonId);
+		}
+
+		await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user._id]);
+		await queryClient.refetchQueries(['userLessonsForCourse', courseId, user._id]);
+		await invalidateLearnerLessonPageCaches();
+
+		dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
+
+		if (singleCourseUser && lessonId) {
+			const chaptersToSearch = chapterIdFromUrl
+				? singleCourseUser.chapters.filter(
+						(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
+					)
+				: singleCourseUser.chapters || [];
+
+			for (const chapter of chaptersToSearch) {
+				if (!chapter?.lessons) continue;
+				const lessonInChapter = chapter.lessons.find((l) => l && l._id === lessonId);
+				if (lessonInChapter) {
+					const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
+					if (chapterId) {
+						sessionStorage.setItem(`lesson-completed-${chapterId}`, 'true');
+					}
+					break;
+				}
+			}
+		}
+	}, [
+		lessonId,
+		courseId,
+		user?._id,
+		parsedUserLessonData,
+		userLessonId,
+		base_url,
+		queryClient,
+		invalidateLearnerLessonPageCaches,
+		refreshDashboard,
+		singleCourseUser,
+		chapterIdFromUrl,
+	]);
+
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
 		try {
@@ -200,78 +282,7 @@ export const useUserCourseLessonData = () => {
 				}
 			}
 
-			// Always resolve the current lesson by lessonId+courseId (userLessonId state can be stale across navigations)
-			const currentUserLesson = parsedUserLessonData.find(
-				(data) => data.lessonId === lessonId && data.courseId === courseId
-			);
-			let targetUserLessonId = currentUserLesson?.userLessonId ?? userLessonId;
-			let isCompletedFlag = currentUserLesson?.isCompleted;
-			let isInProgressFlag = currentUserLesson?.isInProgress;
-
-			if (!targetUserLessonId && lessonId && courseId && user?._id) {
-				try {
-					const searchResponse = await axios.post(`${base_url}/userlessons/search`, {
-						userId: user._id,
-						lessonId,
-						courseId,
-					});
-					const serverRecord = searchResponse.data?.[0];
-					if (serverRecord?._id) {
-						targetUserLessonId = serverRecord._id;
-						isCompletedFlag = Boolean(serverRecord.isCompleted);
-						isInProgressFlag = Boolean(serverRecord.isInProgress);
-					}
-				} catch (searchError) {
-					console.error('Failed to resolve user lesson for completion:', searchError);
-				}
-			}
-
-			// Patch only when still in progress or not completed (skip redundant API calls when already done)
-			const shouldMarkLessonCompleted =
-				Boolean(targetUserLessonId) &&
-				(isInProgressFlag === true || isCompletedFlag !== true);
-
-			if (shouldMarkLessonCompleted && targetUserLessonId) {
-				await axios.patch(`${base_url}/userlessons/${targetUserLessonId}`, {
-					isCompleted: true,
-					isInProgress: false,
-					currentQuestion: 1,
-				});
-
-				setIsLessonCompleted(true);
-				if (targetUserLessonId !== userLessonId) {
-					setUserLessonId(targetUserLessonId);
-				}
-
-				// Invalidate cache to refresh lesson data
-				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
-				await queryClient.refetchQueries(['userLessonsForCourse', courseId, user?._id]);
-				await invalidateLearnerLessonPageCaches();
-
-				// Trigger dashboard sync when lesson is completed
-				dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
-
-				// Mark lesson completion for checklist auto-open (find which chapter this lesson belongs to)
-				if (singleCourseUser && lessonId) {
-					const chaptersToSearch = chapterIdFromUrl
-						? singleCourseUser.chapters.filter(
-								(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
-							)
-						: singleCourseUser.chapters || [];
-
-					for (const chapter of chaptersToSearch) {
-						if (!chapter || !chapter.lessons) continue;
-						const lessonInChapter = chapter.lessons.find((l) => l && l._id === lessonId);
-						if (lessonInChapter) {
-							const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
-							if (chapterId) {
-								sessionStorage.setItem(`lesson-completed-${chapterId}`, 'true');
-							}
-							break;
-						}
-					}
-				}
-			}
+			await markCurrentLessonCompleted();
 
 			if (resolvedNextLessonId) {
 				// Keep only one active expansion target to avoid stale key collisions
@@ -425,11 +436,11 @@ export const useUserCourseLessonData = () => {
 		base_url,
 		queryClient,
 		handleNextLessonFallback,
-		refreshDashboard,
 		singleCourseUser,
 		lessonId,
 		chapterIdFromUrl,
 		invalidateLearnerLessonPageCaches,
+		markCurrentLessonCompleted,
 	]);
 
 	// Function to update in-progress lessons
@@ -459,6 +470,7 @@ export const useUserCourseLessonData = () => {
 		setIsCourseCompleted,
 		userLessonId,
 		handleNextLesson,
+		markCurrentLessonCompleted,
 		nextLessonId,
 		updateLastQuestion,
 		getLastQuestion,
