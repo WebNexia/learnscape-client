@@ -18,10 +18,11 @@ interface BackendUserLessonData {
 	createdAt: string;
 }
 
-export const useUserLessonsForCourse = (courseId: string) => {
+export const useUserLessonsForCourse = (courseId: string, options?: { enabled?: boolean }) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useAuth();
 	const userId = user?._id;
+	const queryEnabled = (options?.enabled ?? true) && !!userId && !!courseId && user?.role === Roles.USER;
 
 	return useQuery<UserLessonDataStorage[]>(
 		['userLessonsForCourse', courseId, userId],
@@ -47,7 +48,7 @@ export const useUserLessonsForCourse = (courseId: string) => {
 			return transformedData;
 		},
 		{
-			enabled: !!userId && !!courseId && user?.role === Roles.USER,
+			enabled: queryEnabled,
 			staleTime: 5 * 60 * 1000, // 5 minutes
 			cacheTime: 10 * 60 * 1000, // 10 minutes
 			retry: 2,
