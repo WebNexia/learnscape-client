@@ -14,7 +14,10 @@ export interface WordAssistData {
 interface MeaningCandidate {
 	definition: string;
 	partOfSpeech: string;
+	synonyms: string[];
 }
+
+const ARCHAIC_DEFINITION_MARKERS = /\((archaic|obsolete|dated|rare|historical|uncommon|old)\)/i;
 
 export const wrapWordsForHover = (html: string): string => {
 	if (!html) return '';
@@ -163,15 +166,46 @@ const containsAnyKeyword = (text: string, keywords: string[]): boolean => {
 
 const buildMeaningCandidates = (entries: any[]): MeaningCandidate[] => {
 	return entries.flatMap((entry) =>
-		(entry?.meanings || []).flatMap((meaning: any) =>
-			(meaning?.definitions || [])
-				.map((definitionItem: any) => ({
-					definition: String(definitionItem?.definition || '').trim(),
-					partOfSpeech: String(meaning?.partOfSpeech || '').toLowerCase(),
-				}))
-				.filter((candidate: MeaningCandidate) => candidate.definition.length > 0)
-		)
+		(entry?.meanings || []).flatMap((meaning: any) => {
+			const meaningSynonyms = (meaning?.synonyms || []).map((synonym: unknown) => String(synonym).toLowerCase().trim()).filter(Boolean);
+
+			return (meaning?.definitions || [])
+				.map((definitionItem: any) => {
+					const definitionSynonyms = (definitionItem?.synonyms || [])
+						.map((synonym: unknown) => String(synonym).toLowerCase().trim())
+						.filter(Boolean);
+
+					return {
+						definition: String(definitionItem?.definition || '').trim(),
+						partOfSpeech: String(meaning?.partOfSpeech || '').toLowerCase(),
+						synonyms: [...new Set([...definitionSynonyms, ...meaningSynonyms])],
+					};
+				})
+				.filter((candidate: MeaningCandidate) => candidate.definition.length > 0);
+		})
 	);
+};
+
+const sharesLookupStem = (text: string, lookupWord: string): boolean => {
+	const normalizedText = text.toLowerCase();
+	const normalizedLookup = lookupWord.toLowerCase().trim();
+	if (!normalizedLookup) return false;
+
+	for (let len = Math.min(normalizedLookup.length, 10); len >= 4; len--) {
+		if (normalizedText.includes(normalizedLookup.slice(0, len))) return true;
+	}
+
+	return false;
+};
+
+const isGlossRelatedToLookup = (glossLemma: string, lookupWord: string, candidateSynonyms: string[]): boolean => {
+	const lemma = glossLemma.toLowerCase().trim();
+	const lookup = lookupWord.toLowerCase().trim();
+	if (!lemma || !lookup) return false;
+	if (lemma === lookup) return true;
+	if (sharesLookupStem(lemma, lookup)) return true;
+
+	return candidateSynonyms.some((synonym) => synonym === lemma || sharesLookupStem(synonym, lookup));
 };
 
 const toConciseGloss = (text: string, maxLength = 180): string => {
@@ -181,7 +215,7 @@ const toConciseGloss = (text: string, maxLength = 180): string => {
 	return firstSentence.length <= maxLength ? firstSentence : `${firstSentence.slice(0, maxLength).trimEnd()}...`;
 };
 
-const scoreMeaningCandidate = (candidate: MeaningCandidate): number => {
+const scoreMeaningCandidate = (candidate: MeaningCandidate, lookupWord = ''): number => {
 	const lowerDefinition = candidate.definition.toLowerCase();
 	const wordCount = candidate.definition.split(/\s+/).length;
 
@@ -196,18 +230,37 @@ const scoreMeaningCandidate = (candidate: MeaningCandidate): number => {
 	if (containsAnyKeyword(lowerDefinition, EDUCATIONAL_STYLE_WARNING_KEYWORDS)) score -= 60;
 	if (containsAnyKeyword(lowerDefinition, SENSITIVE_OR_SLANG_KEYWORDS)) score -= 180;
 
+	const normalizedLookup = lookupWord.toLowerCase().trim();
+	if (normalizedLookup) {
+		if (sharesLookupStem(lowerDefinition, normalizedLookup)) {
+			score += 35;
+		}
+
+		if (ARCHAIC_DEFINITION_MARKERS.test(lowerDefinition)) {
+			score -= 55;
+		}
+
+		// Only penalize single-word glosses that are not the lookup word or a listed synonym (e.g. "Pregnant." for "interesting").
+		const glossLemma = lowerDefinition.replace(/[^a-z]/g, '');
+		if (wordCount === 1 && glossLemma.length > 0 && glossLemma.length < 20) {
+			if (!isGlossRelatedToLookup(glossLemma, normalizedLookup, candidate.synonyms)) {
+				score -= 45;
+			}
+		}
+	}
+
 	return score;
 };
 
-const selectBestMeaningCandidate = (candidates: MeaningCandidate[]): MeaningCandidate | null => {
+const selectBestMeaningCandidate = (candidates: MeaningCandidate[], lookupWord = ''): MeaningCandidate | null => {
 	if (!candidates.length) return null;
 
 	return candidates
-		.map((candidate) => ({ candidate, score: scoreMeaningCandidate(candidate) }))
+		.map((candidate) => ({ candidate, score: scoreMeaningCandidate(candidate, lookupWord) }))
 		.sort((left, right) => right.score - left.score)[0].candidate;
 };
 
-const selectTopMeaningCandidates = (candidates: MeaningCandidate[], limit = 3): MeaningCandidate[] => {
+const selectTopMeaningCandidates = (candidates: MeaningCandidate[], lookupWord = '', limit = 3): MeaningCandidate[] => {
 	if (!candidates.length) return [];
 
 	const safeCandidates = candidates.filter(
@@ -218,7 +271,7 @@ const selectTopMeaningCandidates = (candidates: MeaningCandidate[], limit = 3): 
 	const rankingSource = safeCandidates.length > 0 ? safeCandidates : candidates;
 
 	const scoredCandidates = rankingSource
-		.map((candidate) => ({ candidate, score: scoreMeaningCandidate(candidate) }))
+		.map((candidate) => ({ candidate, score: scoreMeaningCandidate(candidate, lookupWord) }))
 		.sort((left, right) => right.score - left.score)
 		.map(({ candidate }) => candidate);
 
@@ -260,6 +313,13 @@ const isFirstWordOfSentence = (target: HTMLElement): boolean => {
 	return wordsInCurrentSentence.length === 0;
 };
 
+const WORD_ASSIST_POPPER_SELECTOR = '[data-word-assist-popper="true"]';
+
+const isInsideWordAssistUi = (node: EventTarget | null): boolean => {
+	if (!(node instanceof Element)) return false;
+	return Boolean(node.closest('.pronounceable-word') || node.closest(WORD_ASSIST_POPPER_SELECTOR));
+};
+
 export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAssistOptions = {}) => {
 	const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 	const [activeWord, setActiveWord] = useState<string>('');
@@ -267,6 +327,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 	const [isLoadingWordInfo, setIsLoadingWordInfo] = useState<boolean>(false);
 	const hoverTimerRef = useRef<number | null>(null);
 	const wordInfoCacheRef = useRef<Record<string, WordAssistData>>({});
+	const fetchRequestIdRef = useRef(0);
 
 	const clearHoverTimer = () => {
 		if (hoverTimerRef.current) {
@@ -275,12 +336,25 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 		}
 	};
 
-	const handleMouseLeave = () => {
+	const dismissWordAssist = () => {
 		clearHoverTimer();
+		fetchRequestIdRef.current += 1;
 		setAnchorEl(null);
 		setActiveWord('');
 		setWordInfo(null);
 		setIsLoadingWordInfo(false);
+	};
+
+	const handleWordAssistMouseOut = (event: React.MouseEvent<HTMLElement>) => {
+		if (!enabled) return;
+		if (isInsideWordAssistUi(event.relatedTarget)) return;
+		dismissWordAssist();
+	};
+
+	const handlePopperMouseOut = (event: React.MouseEvent<HTMLElement>) => {
+		if (!enabled) return;
+		if (isInsideWordAssistUi(event.relatedTarget)) return;
+		dismissWordAssist();
 	};
 
 	const speakWord = (word: string) => {
@@ -293,11 +367,15 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 	};
 
 	const fetchWordInfo = async (word: string, options?: { preferProperNoun?: boolean }) => {
+		const requestId = ++fetchRequestIdRef.current;
+		const isStale = () => requestId !== fetchRequestIdRef.current;
+
 		const normalizedWord = word.toLowerCase();
 		const preferProperNoun = Boolean(options?.preferProperNoun);
-		const cacheKey = `${normalizedWord}|${preferProperNoun ? 'proper' : 'default'}`;
+		const cacheKey = `${normalizedWord}|${preferProperNoun ? 'proper' : 'default'}|v3`;
 
 		if (wordInfoCacheRef.current[cacheKey]) {
+			if (isStale()) return;
 			setWordInfo(wordInfoCacheRef.current[cacheKey]);
 			setIsLoadingWordInfo(false);
 			return;
@@ -306,6 +384,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 		setIsLoadingWordInfo(true);
 		try {
 			const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalizedWord)}`);
+			if (isStale()) return;
 			const data = await response.json();
 			const entries = Array.isArray(data) ? data : [];
 			const firstEntry = entries[0] || null;
@@ -334,10 +413,10 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 				];
 			} else {
 				const candidates = buildMeaningCandidates(entries);
-				const topCandidates = selectTopMeaningCandidates(candidates, 3);
+				const topCandidates = selectTopMeaningCandidates(candidates, normalizedWord, 3);
 
 				resolvedMeanings = await Promise.all(
-					(topCandidates.length ? topCandidates : [{ definition: normalizedWord, partOfSpeech: '' }]).map(async (candidate) => {
+					(topCandidates.length ? topCandidates : [{ definition: normalizedWord, partOfSpeech: '', synonyms: [] }]).map(async (candidate) => {
 						const meaningEnCandidate = toConciseGloss(candidate.definition) || normalizedWord;
 
 						let meaningTrCandidate = 'Anlam bulunamadi.';
@@ -358,6 +437,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 						};
 					})
 				);
+				if (isStale()) return;
 			}
 
 			const primaryMeaning = resolvedMeanings[0] || {
@@ -373,8 +453,10 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 				meanings: resolvedMeanings,
 			};
 			wordInfoCacheRef.current[cacheKey] = parsedInfo;
+			if (isStale()) return;
 			setWordInfo(parsedInfo);
 		} catch (error) {
+			if (isStale()) return;
 			setWordInfo({
 				pronunciation: 'N/A',
 				meaningEn: 'Meaning unavailable.',
@@ -388,7 +470,9 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 				],
 			});
 		} finally {
-			setIsLoadingWordInfo(false);
+			if (!isStale()) {
+				setIsLoadingWordInfo(false);
+			}
 		}
 	};
 
@@ -429,7 +513,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 	};
 
 	const handleWordTouchEnd = () => {
-		clearHoverTimer();
+		dismissWordAssist();
 	};
 
 	return {
@@ -440,6 +524,8 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 		handleWordHover,
 		handleWordTouchStart,
 		handleWordTouchEnd,
-		handleMouseLeave,
+		handleMouseLeave: handleWordAssistMouseOut,
+		handleWordAssistMouseOut,
+		handlePopperMouseOut,
 	};
 };

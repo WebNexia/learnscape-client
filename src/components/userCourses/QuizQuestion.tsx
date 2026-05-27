@@ -1055,7 +1055,14 @@ const QuizQuestion = ({
 						)}
 					</IconButton>
 				</Tooltip>
-				<CustomDialog openModal={isSubmitQuizModalOpen} closeModal={() => setIsSubmitQuizModalOpen(false)} maxWidth='xs' title='Quiz Submission'>
+				<CustomDialog
+					openModal={isSubmitQuizModalOpen}
+					closeModal={() => {
+						if (!userQuizAnswersUploading) setIsSubmitQuizModalOpen(false);
+					}}
+					maxWidth='xs'
+					title='Quiz Submission'
+					disableDismiss={userQuizAnswersUploading}>
 					<DialogContent>
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
 							Are you sure you want to submit the quiz? You will not have another chance.

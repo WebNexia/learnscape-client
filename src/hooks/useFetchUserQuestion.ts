@@ -16,7 +16,7 @@ export interface UserQuestionData {
 	pointsPossible?: number;
 	isAutoGraded?: boolean;
 	partialScores?: { [key: string]: number };
-	/** Open-ended: number of AI feedback requests (max 3) */
+	/** Open-ended: number of AI feedback requests (max 2 first time + 1 practice again) */
 	aiFeedbackRequestCount?: number;
 	/** Open-ended: last AI feedback text */
 	lastAiFeedback?: string;

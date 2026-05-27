@@ -64,7 +64,9 @@ const spin = keyframes`
     }
 `;
 
-const AI_FEEDBACK_LIMIT = 3;
+const AI_FEEDBACK_LIMIT = 2;
+const PRACTICE_AGAIN_AI_LIMIT = 1;
+const AI_FEEDBACK_TOTAL_MAX = AI_FEEDBACK_LIMIT + PRACTICE_AGAIN_AI_LIMIT;
 
 interface PracticeQuestionProps {
 	question: QuestionInterface;
@@ -197,8 +199,9 @@ const PracticeQuestion = ({
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 	const [hasRequestedAiFeedback, setHasRequestedAiFeedback] = useState<boolean>(false);
 	const [isAiFeedbackLoading, setIsAiFeedbackLoading] = useState<boolean>(false);
-	// Open-ended 3-round flow: true after "Refresh" (user can edit/save again), false after Save (feedback phase)
+	// Open-ended flow: true after "Edit Answer" (user can edit/save again), false after Save (feedback phase)
 	const [unlockedForNextRound, setUnlockedForNextRound] = useState<boolean>(false);
+	const [aiFeedbackError, setAiFeedbackError] = useState<string>('');
 	// In each round, AI is requested only once; further clicks just show saved feedback. Reset on Refresh or question change.
 	const [hasRequestedAiThisRound, setHasRequestedAiThisRound] = useState<boolean>(false);
 	const hasInitializedAiRoundRef = useRef<boolean>(false);
@@ -224,32 +227,55 @@ const PracticeQuestion = ({
 	);
 	const aiFeedbackCount = existingUserAnswerForAi?.aiFeedbackRequestCount ?? 0;
 	const hasReachedAiLimit = aiFeedbackCount >= AI_FEEDBACK_LIMIT;
+	const hasReachedTotalAiLimit = aiFeedbackCount >= AI_FEEDBACK_TOTAL_MAX;
 	const savedLastAiFeedback = existingUserAnswerForAi?.lastAiFeedback ?? '';
 	const hasOpenEndedUserQuestionId = Boolean(existingUserAnswerForAi?.userQuestionId);
-	// First-time solving: input enabled when no save yet, or after "Refresh" (unlocked for next round)
+	// First-time solving: input enabled when no save yet, or after "Edit Answer" (unlimited edits after AI limit)
 	const isOpenEndedFirstTime = isOpenEndedQuestion && !isLessonCompleted;
+	const isOpenEndedPracticeAgain = isOpenEndedQuestion && practiceAgainMode && isLessonCompleted;
 	const openEndedInputEnabled =
-		isOpenEndedFirstTime &&
-		((aiFeedbackCount === 0 && !hasOpenEndedUserQuestionId) || (unlockedForNextRound && aiFeedbackCount < AI_FEEDBACK_LIMIT));
+		(isOpenEndedFirstTime &&
+			((aiFeedbackCount === 0 && !hasOpenEndedUserQuestionId) || unlockedForNextRound)) ||
+		(isOpenEndedPracticeAgain && unlockedForNextRound);
 	const openEndedSaveEnabled =
-		isOpenEndedFirstTime && openEndedInputEnabled && value.trim() !== '' && !isSubmittingOpenEnded;
-	// After 3rd save (count still 2), hide Refresh until user clicks AI feedback; then count becomes 3 and Refresh stays hidden.
-	const openEndedShowRefresh =
+		(isOpenEndedFirstTime || isOpenEndedPracticeAgain) &&
+		openEndedInputEnabled &&
+		value.trim() !== '' &&
+		!isSubmittingOpenEnded;
+	// Hide Edit until AI is requested for the current round (except after first-time AI limit is exhausted)
+	const openEndedAwaitingAiThisRound =
 		isOpenEndedFirstTime &&
+		!hasReachedAiLimit &&
 		aiFeedbackCount >= 1 &&
-		aiFeedbackCount < AI_FEEDBACK_LIMIT &&
-		!openEndedInputEnabled &&
-		!(aiFeedbackCount === 2 && !hasRequestedAiThisRound);
-	// Practice again: allow up to 3 AI requests per question in this round (local count)
+		!hasRequestedAiThisRound &&
+		!openEndedInputEnabled;
+	const openEndedShowRefresh =
+		(isOpenEndedPracticeAgain &&
+			hasOpenEndedUserQuestionId &&
+			!openEndedInputEnabled) ||
+		(isOpenEndedFirstTime &&
+			hasOpenEndedUserQuestionId &&
+			!openEndedInputEnabled &&
+			!openEndedAwaitingAiThisRound &&
+			(hasReachedAiLimit || aiFeedbackCount >= 1));
+	// Practice again: 1 AI request per session, based on last saved answer
 	const [practiceAgainAiCount, setPracticeAgainAiCount] = useState(0);
 	useEffect(() => {
 		if (practiceAgainMode) setPracticeAgainAiCount(0);
 	}, [practiceAgainMode]);
-	const practiceAgainAiLimitReached = practiceAgainMode && isOpenEndedQuestion && practiceAgainAiCount >= AI_FEEDBACK_LIMIT;
+	const practiceAgainAiLimitReached =
+		practiceAgainMode &&
+		isOpenEndedQuestion &&
+		(practiceAgainAiCount >= PRACTICE_AGAIN_AI_LIMIT || hasReachedTotalAiLimit);
 	const practiceAgainAiRequestEnabled =
-		practiceAgainMode && isOpenEndedQuestion && hasOpenEndedUserQuestionId && practiceAgainAiCount < AI_FEEDBACK_LIMIT;
+		practiceAgainMode &&
+		isOpenEndedQuestion &&
+		hasOpenEndedUserQuestionId &&
+		!openEndedInputEnabled &&
+		practiceAgainAiCount < PRACTICE_AGAIN_AI_LIMIT &&
+		!hasReachedTotalAiLimit;
 	const openEndedAiRequestEnabled =
-		(isOpenEndedFirstTime && !openEndedInputEnabled && hasOpenEndedUserQuestionId && aiFeedbackCount < AI_FEEDBACK_LIMIT) ||
+		(isOpenEndedFirstTime && !openEndedInputEnabled && hasOpenEndedUserQuestionId && !hasReachedAiLimit) ||
 		practiceAgainAiRequestEnabled;
 
 	useEffect(() => {
@@ -325,6 +351,7 @@ const PracticeQuestion = ({
 			setHasRequestedAiFeedback(false);
 			setUnlockedForNextRound(false);
 			setHasRequestedAiThisRound(false);
+			setAiFeedbackError('');
 			hasInitializedAiRoundRef.current = false;
 
 			// Reset sound tracking refs when question changes
@@ -342,7 +369,7 @@ const PracticeQuestion = ({
 		setValue(savedOpenEndedAnswer);
 	}, [isOpenEndedQuestion, isLessonCompleted, practiceAgainMode, userAnswers, question._id]);
 
-	// First-time open-ended: when all 3 rounds used, show last saved answer in the disabled field.
+	// First-time open-ended: when AI limit is reached, show last saved answer in the disabled field.
 	useEffect(() => {
 		if (!isOpenEndedQuestion || isLessonCompleted) return;
 		if (aiFeedbackCount < AI_FEEDBACK_LIMIT) return;
@@ -495,20 +522,25 @@ const PracticeQuestion = ({
 					}
 				}
 
-				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
-					updateLastQuestion(displayedQuestionNumber + 1);
-				}
+				if (!practiceAgainMode) {
+					if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+						updateLastQuestion(displayedQuestionNumber + 1);
+					}
 
-				if (displayedQuestionNumber === numberOfQuestions) {
-					await handleNextLesson();
-					setIsLessonCompleted(true);
-					setShowQuestionSelector(true);
+					if (displayedQuestionNumber === numberOfQuestions) {
+						await handleNextLesson();
+						setIsLessonCompleted(true);
+						setShowQuestionSelector(true);
+					}
 				}
 			} catch (error) {
 				console.log(error);
 			}
 		} else {
 			setIsOpenEndedAnswerSubmitted(true);
+			if (isOpenEndedQuestion) {
+				setUnlockedForNextRound(false);
+			}
 		}
 	};
 
@@ -628,7 +660,11 @@ const PracticeQuestion = ({
 									rows={4}
 									resizable
 									value={value}
-									disabled={isLessonCompleted || (isOpenEndedFirstTime && !openEndedInputEnabled)}
+									disabled={
+										isOpenEndedFirstTime || isOpenEndedPracticeAgain
+											? !openEndedInputEnabled
+											: isLessonCompleted
+									}
 									onChange={(e) => {
 										setValue(e.target.value);
 										setUserAnswer(e.target.value);
@@ -1069,9 +1105,9 @@ const PracticeQuestion = ({
 									variant='contained'
 									size='small'
 									disabled={
-										isLessonCompleted ||
-										(isOpenEndedFirstTime && !openEndedSaveEnabled) ||
-										isSubmittingOpenEnded
+										isOpenEndedFirstTime || isOpenEndedPracticeAgain
+											? !openEndedSaveEnabled || isSubmittingOpenEnded
+											: isLessonCompleted || isSubmittingOpenEnded
 									}
 									sx={{
 										minWidth: isMobileSize ? 120 : 140,
@@ -1430,12 +1466,12 @@ const PracticeQuestion = ({
 							</IconButton>
 						</Tooltip>
 					) : practiceAgainAiLimitReached ? (
-						<Tooltip title={`View last AI feedback (${AI_FEEDBACK_LIMIT}/${AI_FEEDBACK_LIMIT})`} placement='left' arrow>
+						<Tooltip title={`View last AI feedback (${PRACTICE_AGAIN_AI_LIMIT}/${PRACTICE_AGAIN_AI_LIMIT})`} placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
 							</IconButton>
 						</Tooltip>
-					) : hasReachedAiLimit ? (
+					) : hasReachedAiLimit && !practiceAgainMode ? (
 						<Tooltip title={`View last AI feedback (${AI_FEEDBACK_LIMIT}/${AI_FEEDBACK_LIMIT})`} placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
@@ -1449,7 +1485,7 @@ const PracticeQuestion = ({
 						</Tooltip>
 					) : openEndedAiRequestEnabled ? (
 						<Tooltip
-							title={`Receive feedback from AI (${practiceAgainMode ? practiceAgainAiCount + 1 : aiFeedbackCount + 1}/${AI_FEEDBACK_LIMIT})`}
+							title={`Receive feedback from AI (${practiceAgainMode ? practiceAgainAiCount + 1 : aiFeedbackCount + 1}/${practiceAgainMode ? PRACTICE_AGAIN_AI_LIMIT : AI_FEEDBACK_LIMIT})`}
 							placement='left'
 							arrow>
 							<IconButton
@@ -1459,11 +1495,12 @@ const PracticeQuestion = ({
 
 									setIsAiFeedbackLoading(true);
 									setHasRequestedAiFeedback(true);
+									setAiFeedbackError('');
 									openAiResponseDrawer(index);
 
-									// Use current input value so edited answer gets new AI feedback, not the old saved one
-									const currentAnswer =
-										typeof value === 'string' && value.trim()
+									const currentAnswer = practiceAgainMode
+										? existingUserAnswerForAi?.userAnswer ?? ''
+										: typeof value === 'string' && value.trim()
 											? value
 											: existingUserAnswerForAi?.userAnswer ?? questionPrompt.userInput ?? '';
 									const promptWithSavedAnswer: QuestionPrompt = {
@@ -1495,9 +1532,13 @@ const PracticeQuestion = ({
 													)
 												);
 											}
+										} else {
+											setAiFeedbackError('AI geri bildirimi alınamadı. Cevabınız kaydedildi; daha sonra tekrar deneyebilirsiniz.');
+											setHasRequestedAiFeedback(false);
 										}
 									} catch (err) {
 										console.error('AI feedback error:', err);
+										setAiFeedbackError('AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.');
 										setHasRequestedAiFeedback(false);
 									} finally {
 										setIsAiFeedbackLoading(false);
@@ -1559,11 +1600,23 @@ const PracticeQuestion = ({
 									<Box sx={{ display: 'flex', height: '25vh', justifyContent: 'center', alignItems: 'center' }}>
 										<TypingAnimation />
 									</Box>
+								) : savedLastAiFeedback || aiResponse ? (
+									<Typography
+										variant='body2'
+										sx={{
+											mt: '0.5rem',
+											lineHeight: 1.9,
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											fontFamily: 'Poppins, sans-serif',
+											whiteSpace: 'pre-wrap',
+										}}>
+										{savedLastAiFeedback || aiResponse}
+									</Typography>
 								) : (
 									<Typography
 										variant='body2'
 										sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
-										{savedLastAiFeedback || aiResponse}
+										{aiFeedbackError || 'Henüz AI geri bildirimi yok.'}
 									</Typography>
 								)}
 							</Box>
