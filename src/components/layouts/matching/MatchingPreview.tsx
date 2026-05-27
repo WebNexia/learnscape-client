@@ -1,5 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { MatchingPair, QuizMatchingOption } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
@@ -8,8 +7,8 @@ import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData'
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserMatchingPairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
-import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import FitbInteractionModeBadge from '../fitb/FitbInteractionModeBadge';
 
 const Container = styled(Box)`
 	display: flex;
@@ -34,48 +33,56 @@ const Item = styled.div<{
 	$lessonType?: string;
 	$isMobileSize?: boolean;
 	$isResponseItem?: boolean;
+	$isSelected?: boolean;
+	$isInteractive?: boolean;
 }>`
 	padding: ${({ $isMobileSize }) => ($isMobileSize ? '0.5rem' : '0.75rem')};
 	margin: ${({ $isMobileSize, $isResponseItem }) =>
 		$isResponseItem ? ($isMobileSize ? '1rem 0.6rem' : '1.1rem 0.75rem') : $isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem'};
-	background: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
-		$isLessonCompleted
-			? $isCorrect
-				? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
-				: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-				? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
-				: $isCorrect === null
+	background: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType, $isSelected }) =>
+		$isSelected
+			? 'linear-gradient(135deg, #e8f4f8 0%, #d4ebf2 100%)'
+			: $isLessonCompleted
+				? $isCorrect
+					? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+					: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+				: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
 					? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
-					: $isCorrect
-						? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
-						: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
-	border: 1px solid
-		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
-		$isLessonCompleted
-			? $isCorrect
-				? '#b7e4c7'
-				: '#f1b8bd'
-			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-				? 'rgba(1, 67, 90, 0.16)'
-				: $isCorrect === null
-					? 'rgba(1, 67, 90, 0.16)'
-					: $isCorrect
-						? '#b7e4c7'
-						: '#f1b8bd'};
+					: $isCorrect === null
+						? 'linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%)'
+						: $isCorrect
+							? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+							: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
+	border: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType, $isSelected }) =>
+		$isSelected
+			? `2px solid ${theme.palette.primary.main}`
+			: `1px solid ${
+					$isLessonCompleted
+						? $isCorrect
+							? '#b7e4c7'
+							: '#f1b8bd'
+						: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+							? 'rgba(1, 67, 90, 0.16)'
+							: $isCorrect === null
+								? 'rgba(1, 67, 90, 0.16)'
+								: $isCorrect
+									? '#b7e4c7'
+									: '#f1b8bd'
+				}`};
 	border-radius: 0.62rem;
-	cursor: ${({ $isLessonCompleted }) => ($isLessonCompleted ? 'default' : 'pointer')};
+	cursor: ${({ $isLessonCompleted, $isInteractive }) =>
+		$isLessonCompleted ? 'default' : $isInteractive === false ? 'default' : 'pointer'};
 	text-align: center;
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-	transition: transform 0.16s ease, border-color 0.16s ease;
+	box-shadow: ${({ $isSelected }) => ($isSelected ? '0 0 0 2px rgba(1, 67, 90, 0.2)' : '0 1px 4px rgba(0, 0, 0, 0.06)')};
+	transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 
 	&:hover {
-		transform: translateY(-1px);
-		border: 1.25px solid
+		transform: ${({ $isLessonCompleted, $isInteractive }) =>
+			$isLessonCompleted || $isInteractive === false ? 'none' : 'translateY(-1px)'};
 	}
 `;
 
-const DropArea = styled(Box) <{ isMobileSize: boolean }>`
+const PromptDropArea = styled(Box)<{ isMobileSize: boolean }>`
 	padding: ${({ isMobileSize }) => (isMobileSize ? '0.65rem' : '0.75rem')};
 	margin: 0.5rem 0;
 	background: rgba(255, 255, 255, 0.78);
@@ -84,6 +91,18 @@ const DropArea = styled(Box) <{ isMobileSize: boolean }>`
 	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 	border: 2px solid rgba(1, 67, 90, 0.1);
 	flex-grow: 1;
+`;
+
+const DashedSlot = styled(Box)<{ $isDropTarget?: boolean; $isInteractive?: boolean; $isMobileSize?: boolean }>`
+	min-height: ${({ $isMobileSize }) => ($isMobileSize ? '2rem' : '2.5rem')};
+	border: ${({ $isDropTarget }) =>
+		$isDropTarget ? `dashed 0.12rem ${theme.palette.primary.main}` : `dashed 0.1rem ${theme.bgColor?.lessonInProgress}`};
+	background: ${({ $isDropTarget }) => ($isDropTarget ? 'rgba(1, 67, 90, 0.08)' : 'rgba(1, 67, 90, 0.04)')};
+	border-radius: 0.55rem;
+	margin-top: 0.5rem;
+	cursor: ${({ $isInteractive }) => ($isInteractive ? 'pointer' : 'default')};
+	box-shadow: ${({ $isDropTarget }) => ($isDropTarget ? '0 0 0 2px rgba(1, 67, 90, 0.2)' : 'none')};
+	transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 `;
 
 interface MatchingPreviewProps {
@@ -127,13 +146,22 @@ const MatchingPreview = ({
 }: MatchingPreviewProps) => {
 	const [pairs, setPairs] = useState<MatchingPair[]>([]);
 	const [responses, setResponses] = useState<MatchingPair[]>([]);
-
 	const [hasInteracted, setHasInteracted] = useState(false);
+	const [selectedResponseIndex, setSelectedResponseIndex] = useState<number | null>(null);
+	const previousQuestionIdRef = useRef<string | undefined>(questionId);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isInteractionLocked = Boolean(isLessonCompleted);
+
+	useEffect(() => {
+		if (previousQuestionIdRef.current !== questionId) {
+			previousQuestionIdRef.current = questionId;
+			setSelectedResponseIndex(null);
+		}
+	}, [questionId]);
 
 	useEffect(() => {
 		// For admin preview mode, always initialize with initialPairs
@@ -213,6 +241,7 @@ const MatchingPreview = ({
 		quizMatchingOptions,
 		isLessonCompleted,
 		fromQuizQuestionUser,
+		fromPracticeQuestionUser,
 		userMatchingPairsAfterSubmission,
 		questionId,
 		displayedQuestionNumber,
@@ -220,7 +249,6 @@ const MatchingPreview = ({
 		getLastQuestion(),
 	]);
 
-	// Add a useEffect to reset `allCorrect` state when question changes
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
 			const allCorrect = pairs?.every((pair) => pair.answer === initialPairs?.find((p) => p.id === pair.id)?.answer) || false;
@@ -261,273 +289,289 @@ const MatchingPreview = ({
 		});
 	}, [initialPairs, questionId]);
 
-	const handleDragEnd = (result: DropResult) => {
-		if (!result.destination) return;
+	const persistQuizAnswers = useCallback(
+		(newPairs: MatchingPair[]) => {
+			if (fromQuizQuestionUser && !isLessonCompleted) {
+				setUserQuizAnswers?.((prevData) => {
+					const updatedAnswers = newPairs?.map((pair) => ({
+						id: pair.id,
+						answer: pair.answer,
+					}));
 
-		if (isLessonCompleted) return;
-
-		setHasInteracted(true);
-
-		const { source, destination } = result;
-
-		const newPairs = pairs?.map((pair) => ({ ...pair })) || [];
-		const newResponses = responses?.map((response) => ({ ...response })) || [];
-
-		if (source.droppableId === 'responses' && destination.droppableId.startsWith('prompt-')) {
-			const pairIndex = parseInt(destination.droppableId.split('-')[1], 10);
-			if (!newPairs[pairIndex].answer) {
-				const matchedAnswer = newResponses[source.index].answer;
-				newPairs[pairIndex].answer = matchedAnswer;
-				newResponses.splice(source.index, 1);
-
-				// Check if match is correct and play sound
-				const originalPair = initialPairs?.find((pair) => pair.id === newPairs[pairIndex].id);
-				if (originalPair) {
-					if (originalPair.answer === matchedAnswer) {
-						onCorrectMatch?.();
-					} else {
-						onWrongMatch?.();
+					if (prevData) {
+						return prevData?.map((data) => {
+							if (data.questionId === questionId) {
+								return { ...data, userMatchingPairAnswers: updatedAnswers };
+							}
+							return data;
+						});
 					}
+
+					return prevData;
+				});
+			}
+		},
+		[fromQuizQuestionUser, isLessonCompleted, questionId, setUserQuizAnswers]
+	);
+
+	const commitBoardUpdate = useCallback(
+		(newPairs: MatchingPair[], newResponses: MatchingPair[]) => {
+			setPairs(newPairs);
+			setResponses(newResponses);
+			persistQuizAnswers(newPairs);
+		},
+		[persistQuizAnswers]
+	);
+
+	const playMatchFeedback = useCallback(
+		(pairId: string, matchedAnswer: string) => {
+			const originalPair = initialPairs?.find((pair) => pair.id === pairId);
+			if (originalPair) {
+				if (originalPair.answer === matchedAnswer) {
+					onCorrectMatch?.();
+				} else {
+					onWrongMatch?.();
 				}
 			}
-		} else if (source.droppableId.startsWith('prompt-') && destination.droppableId === 'responses') {
-			const pairIndex = parseInt(source.droppableId.split('-')[1], 10);
+		},
+		[initialPairs, onCorrectMatch, onWrongMatch]
+	);
+
+	const handleResponseClick = (index: number) => {
+		if (isInteractionLocked) return;
+		setSelectedResponseIndex((prev) => (prev === index ? null : index));
+	};
+
+	const handlePromptClick = (pairIndex: number) => {
+		if (isInteractionLocked) return;
+
+		const pair = pairs[pairIndex];
+		if (!pair) return;
+
+		if (pair.answer) {
+			setHasInteracted(true);
+			setSelectedResponseIndex(null);
+
+			const newPairs = pairs?.map((p) => ({ ...p })) || [];
+			const newResponses = responses?.map((response) => ({ ...response })) || [];
 			const movedResponse = newPairs[pairIndex].answer;
 			newPairs[pairIndex].answer = '';
 
 			if (!newResponses?.some((response) => response.answer === movedResponse)) {
-				const originalPair = initialPairs?.find((pair) => pair.id === newPairs[pairIndex].id);
+				const originalPair = initialPairs?.find((p) => p.id === newPairs[pairIndex].id);
 				if (originalPair) {
-					newResponses.splice(destination.index, 0, {
+					newResponses.push({
 						id: originalPair.id,
 						question: originalPair.question,
 						answer: movedResponse,
 					});
 				}
 			}
-		} else if (source.droppableId === 'responses' && destination.droppableId === 'responses') {
-			const [movedResponse] = newResponses.splice(source.index, 1);
-			newResponses.splice(destination.index, 0, movedResponse);
-		} else if (source.droppableId.startsWith('prompt-') && destination.droppableId.startsWith('prompt-')) {
-			const pairIndexSource = parseInt(source.droppableId.split('-')[1], 10);
-			const pairIndexDestination = parseInt(destination.droppableId.split('-')[1], 10);
 
-			if (!newPairs[pairIndexDestination].answer || isLessonCompleted) {
-				const movedResponse = newPairs[pairIndexSource].answer;
-				newPairs[pairIndexSource].answer = '';
-				newPairs[pairIndexDestination].answer = movedResponse;
-			}
+			commitBoardUpdate(newPairs, newResponses);
+			return;
 		}
 
-		setPairs(newPairs);
-		setResponses(newResponses);
+		if (selectedResponseIndex === null || selectedResponseIndex >= responses.length) return;
 
-		if (fromQuizQuestionUser && !isLessonCompleted) {
-			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = newPairs?.map((pair) => ({
-					id: pair.id,
-					answer: pair.answer,
-				}));
+		setHasInteracted(true);
 
-				if (prevData) {
-					return prevData?.map((data) => {
-						if (data.questionId === questionId) {
-							return { ...data, userMatchingPairAnswers: updatedAnswers };
-						}
-						return data;
-					});
-				}
+		const newPairs = pairs?.map((p) => ({ ...p })) || [];
+		const newResponses = responses?.map((response) => ({ ...response })) || [];
+		const matchedAnswer = newResponses[selectedResponseIndex].answer;
+		newPairs[pairIndex].answer = matchedAnswer;
+		newResponses.splice(selectedResponseIndex, 1);
 
-				return prevData;
-			});
-		}
+		playMatchFeedback(newPairs[pairIndex].id, matchedAnswer);
+		setSelectedResponseIndex(null);
+		commitBoardUpdate(newPairs, newResponses);
 	};
 
+	const hasSelectedResponse = selectedResponseIndex !== null && !isInteractionLocked;
+
 	return (
-		<DragDropContext onDragEnd={handleDragEnd}>
-			<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-				{!isLessonCompleted && (
-					<CustomInfoMessageAlignedLeft
-						message='Drag the correct cards from the right into the dashed areas to match the pairs'
-						sx={{ margin: isMobileSize ? '1rem 0 0 0' : '1.5rem 0 0 0', width: isMobileSize ? '100%' : '90%' }}
-					/>
-				)}
-				<Container>
-					<Column sx={{ marginRight: isMobileSize ? '1rem' : '2rem' }}>
-						{pairs?.map((pair, index) => (
-							<Droppable key={`prompt-${index}`} droppableId={`prompt-${index}`}>
-								{(provided) => (
-									<DropArea ref={provided.innerRef} {...provided.droppableProps} isMobileSize={isMobileSize}>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600, color: theme.textColor?.secondary.main }}>
-											{pair.question}
+		<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+			{!isLessonCompleted && <FitbInteractionModeBadge mode='tap' compact={isMobileSize} />}
+			<Container>
+				<Column sx={{ marginRight: isMobileSize ? '1rem' : '2rem' }}>
+					{pairs?.map((pair, index) => {
+						const isCorrect = pair.answer ? pair.answer === initialPairs?.find((p) => p.id === pair.id)?.answer : null;
+						const isEmptyDropTarget = hasSelectedResponse && !pair.answer;
+						const canInteractWithPrompt = !isInteractionLocked && (Boolean(pair.answer) || isEmptyDropTarget);
+
+						return (
+							<PromptDropArea key={`prompt-${pair.id}-${index}`} isMobileSize={isMobileSize}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600, color: theme.textColor?.secondary.main }}>
+									{pair.question}
+								</Typography>
+								{pair.answer ? (
+									<Item
+										$isCorrect={isCorrect}
+										$fromQuizQuestionUser={fromQuizQuestionUser}
+										$lessonType={lessonType}
+										$isLessonCompleted={isLessonCompleted}
+										$isInteractive={canInteractWithPrompt}
+										onClick={() => handlePromptClick(index)}
+										role={canInteractWithPrompt ? 'button' : undefined}
+										tabIndex={canInteractWithPrompt ? 0 : undefined}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter' || event.key === ' ') {
+												event.preventDefault();
+												handlePromptClick(index);
+											}
+										}}>
+										<Typography
+											variant='body2'
+											sx={{
+												color:
+													(!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ
+														? theme.textColor?.secondary.main
+														: '#fff',
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												margin: isMobileSize ? '-0.35rem 0rem' : '0rem',
+												fontWeight: 600,
+											}}>
+											{pair.answer}
 										</Typography>
-										{pair.answer ? (
-											<Draggable
-												key={`draggable-prompt-${pair.id}`}
-												draggableId={`draggable-prompt-${pair.id}`}
-												index={index}
-												isDragDisabled={isLessonCompleted}>
-												{(provided) => (
-													<Item
-														ref={provided.innerRef}
-														{...provided.draggableProps}
-														{...provided.dragHandleProps}
-														$isCorrect={pair.answer === initialPairs?.find((p) => p.id === pair.id)?.answer}
-														$fromQuizQuestionUser={fromQuizQuestionUser}
-														$lessonType={lessonType}
-														$isLessonCompleted={isLessonCompleted}>
-														<Typography
-															variant='body2'
-															sx={{
-																color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? theme.textColor?.secondary.main : '#fff',
-																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-																margin: isMobileSize ? '-0.35rem 0rem' : '0rem',
-																fontWeight: 600,
-															}}>
-															{pair.answer}
-														</Typography>
-													</Item>
-												)}
-											</Draggable>
-										) : (
-											<Box
-												style={{
-													minHeight: isMobileSize ? '2rem' : '2.5rem',
-													border: `dashed 0.1rem ${theme.bgColor?.lessonInProgress}`,
-													background: 'rgba(1, 67, 90, 0.04)',
-													borderRadius: '0.55rem',
-													marginTop: '0.5rem',
-												}}></Box>
-										)}
-										{provided.placeholder}
-									</DropArea>
+									</Item>
+								) : (
+									<DashedSlot
+										$isDropTarget={isEmptyDropTarget}
+										$isInteractive={canInteractWithPrompt}
+										$isMobileSize={isMobileSize}
+										onClick={() => handlePromptClick(index)}
+										role={canInteractWithPrompt ? 'button' : undefined}
+										tabIndex={canInteractWithPrompt ? 0 : undefined}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter' || event.key === ' ') {
+												event.preventDefault();
+												handlePromptClick(index);
+											}
+										}}
+									/>
 								)}
-							</Droppable>
-						))}
-					</Column>
-					<Column>
+							</PromptDropArea>
+						);
+					})}
+				</Column>
+				<Column>
+					<Box
+						sx={{
+							width: '100%',
+							display: 'flex',
+							flexDirection: 'column',
+							height: '100%',
+							alignItems: 'center',
+							justifyContent: 'center',
+						}}>
 						<Box
 							sx={{
-								width: '100%',
+								borderRadius: '0.8rem',
 								display: 'flex',
 								flexDirection: 'column',
+								width: '100%',
 								height: '100%',
-								alignItems: 'center',
+								minHeight: '100%',
 								justifyContent: 'center',
+								overflowY: 'auto',
+								scrollbarGutter: 'stable',
+								margin: '0.5rem 0',
+								padding: '0.5rem 0',
+								background: 'rgba(255, 255, 255, 0.78)',
 							}}>
-							<Droppable droppableId='responses'>
-								{(provided) => (
-									<Box
-										ref={provided.innerRef}
-										{...provided.droppableProps}
+							{responses?.map((response, index) => (
+								<Item
+									key={`response-${response.id}-${index}`}
+									$isCorrect={null}
+									$fromQuizQuestionUser={fromQuizQuestionUser}
+									$lessonType={lessonType}
+									$isLessonCompleted={isLessonCompleted}
+									$isMobileSize={isMobileSize}
+									$isResponseItem={true}
+									$isSelected={!isInteractionLocked && selectedResponseIndex === index}
+									$isInteractive={!isInteractionLocked}
+									onClick={!isInteractionLocked ? () => handleResponseClick(index) : undefined}
+									role={!isInteractionLocked ? 'button' : undefined}
+									tabIndex={!isInteractionLocked ? 0 : undefined}
+									onKeyDown={(event) => {
+										if (!isInteractionLocked && (event.key === 'Enter' || event.key === ' ')) {
+											event.preventDefault();
+											handleResponseClick(index);
+										}
+									}}>
+									<Typography
+										variant='body2'
 										sx={{
-											// boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
-											borderRadius: '0.8rem',
-											display: 'flex',
-											flexDirection: 'column',
-											width: '100%',
-											height: '100%',
-											minHeight: '100%',
-											justifyContent: 'center',
-											overflowY: 'auto',
-											scrollbarGutter: 'stable',
-											margin: '0.5rem 0',
-											padding: '0.5rem 0',
-											background: 'rgba(255, 255, 255, 0.78)',
-											// border: '0.75px solid rgba(1, 67, 90, 0.1)',
+											color: isLessonCompleted ? '#fff' : theme.textColor?.secondary.main,
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											fontWeight: 600,
 										}}>
-										{responses?.map((response, index) => (
-											<Draggable
-												key={`draggable-response-${response.id}-${index}`}
-												draggableId={`draggable-response-${response.id}-${index}`}
-												index={index}
-												isDragDisabled={isLessonCompleted}>
-												{(provided) => (
-													<Item
-														ref={provided.innerRef}
-														{...provided.draggableProps}
-														{...provided.dragHandleProps}
-														$isCorrect={null}
-														$fromQuizQuestionUser={fromQuizQuestionUser}
-														$lessonType={lessonType}
-														$isLessonCompleted={isLessonCompleted}
-														$isMobileSize={isMobileSize}
-														$isResponseItem={true}>
-														<Typography
-															variant='body2'
-															sx={{ color: isLessonCompleted ? '#fff' : theme.textColor?.secondary.main, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 600 }}>
-															{response.answer}
-														</Typography>
-													</Item>
-												)}
-											</Draggable>
-										))}
-										{provided.placeholder}
-									</Box>
-								)}
-							</Droppable>
-						</Box>
-					</Column>
-				</Container>
-				{isLessonCompleted && fromQuizQuestionUser && (
-					<Box sx={{ margin: isMobileSize ? '2rem 0 1.5rem 0' : '3rem 0 1.5rem 0' }}>
-						<Box sx={{ margin: '1rem 0 1rem 0' }}>
-							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
-								Correct Matching
-							</Typography>
-						</Box>
-						<Box
-							sx={{
-								borderRadius: '0.5rem',
-								overflow: 'hidden',
-								boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-								border: '1px solid rgba(0,0,0,0.1)',
-							}}>
-							{initialPairs?.map((pair, index) => {
-								return (
-									<Box
-										sx={{
-											'display': 'flex',
-											'backgroundColor': index % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-											'transition': 'background-color 0.2s ease',
-											'&:hover': {
-												backgroundColor: 'rgba(0,0,0,0.04)',
-											},
-										}}
-										key={pair.id}>
-										<Box
-											sx={{
-												display: 'flex',
-												justifyContent: 'center',
-												alignItems: 'center',
-												flex: 1,
-												borderRight: '1px solid rgba(0,0,0,0.1)',
-												borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
-												backgroundColor: 'rgba(255,255,255,0.5)',
-											}}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.question}</Typography>
-										</Box>
-										<Box
-											sx={{
-												display: 'flex',
-												justifyContent: 'center',
-												alignItems: 'center',
-												flex: 1,
-												borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
-												backgroundColor: 'rgba(255,255,255,0.5)',
-											}}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.answer}</Typography>
-										</Box>
-									</Box>
-								);
-							})}
+										{response.answer}
+									</Typography>
+								</Item>
+							))}
 						</Box>
 					</Box>
-				)}
-			</Box>
-		</DragDropContext>
+				</Column>
+			</Container>
+			{isLessonCompleted && fromQuizQuestionUser && (
+				<Box sx={{ margin: isMobileSize ? '2rem 0 1.5rem 0' : '3rem 0 1.5rem 0' }}>
+					<Box sx={{ margin: '1rem 0 1rem 0' }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+							Correct Matching
+						</Typography>
+					</Box>
+					<Box
+						sx={{
+							borderRadius: '0.5rem',
+							overflow: 'hidden',
+							boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+							border: '1px solid rgba(0,0,0,0.1)',
+						}}>
+						{initialPairs?.map((pair, index) => {
+							return (
+								<Box
+									sx={{
+										'display': 'flex',
+										'backgroundColor': index % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+										'transition': 'background-color 0.2s ease',
+										'&:hover': {
+											backgroundColor: 'rgba(0,0,0,0.04)',
+										},
+									}}
+									key={pair.id}>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'center',
+											alignItems: 'center',
+											flex: 1,
+											borderRight: '1px solid rgba(0,0,0,0.1)',
+											borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+											padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
+											backgroundColor: 'rgba(255,255,255,0.5)',
+										}}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.question}</Typography>
+									</Box>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'center',
+											alignItems: 'center',
+											flex: 1,
+											borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+											padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
+											backgroundColor: 'rgba(255,255,255,0.5)',
+										}}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.answer}</Typography>
+									</Box>
+								</Box>
+							);
+						})}
+					</Box>
+				</Box>
+			)}
+		</Box>
 	);
 };
 
