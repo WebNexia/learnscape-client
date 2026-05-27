@@ -1,5 +1,5 @@
 import { Box, FormControl, IconButton, Input, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
-import React, { ChangeEvent, useContext, useState, useEffect, useRef } from 'react';
+import React, { ChangeEvent, forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import CustomSubmitButton from '../customButtons/CustomSubmitButton';
@@ -33,7 +33,11 @@ interface HandleImageUploadURLProps {
 	scopedEntityId?: string;
 }
 
-const HandleImageUploadURL = ({
+export type HandleImageUploadURLHandle = {
+	clearFileSelection: () => void;
+};
+
+const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageUploadURLProps>(({
 	onImageUploadLogic,
 	onChangeImgUrl,
 	setEnterImageUrl,
@@ -52,7 +56,7 @@ const HandleImageUploadURL = ({
 	isSaving = false,
 	onPreviewChange,
 	scopedEntityId,
-}: HandleImageUploadURLProps) => {
+}, ref) => {
 	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload, maxSizeInMB } = useImageUpload({
 		scopedEntityId,
 	});
@@ -66,13 +70,17 @@ const HandleImageUploadURL = ({
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const clearFileSelection = () => {
+	const clearFileSelection = useCallback(() => {
 		resetImageUpload();
 		onPreviewChange?.(null);
+		setIsUrlErrorOpen(false);
+		setUrlErrorMessage('');
 		if (fileInputRef.current) {
 			fileInputRef.current.value = '';
 		}
-	};
+	}, [resetImageUpload, onPreviewChange]);
+
+	useImperativeHandle(ref, () => ({ clearFileSelection }), [clearFileSelection]);
 
 	// Debounced URL validation
 	useEffect(() => {
@@ -194,9 +202,10 @@ const HandleImageUploadURL = ({
 								type='file'
 								inputRef={fileInputRef}
 								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+									const file = e.target.files?.[0];
 									handleImageChange(e);
-									if (e.target.files?.[0]) {
-										onPreviewChange?.(URL.createObjectURL(e.target.files[0]));
+									if (file && file.size <= maxSizeInMB * 1024 * 1024) {
+										onPreviewChange?.(URL.createObjectURL(file));
 									} else {
 										onPreviewChange?.(null);
 									}
@@ -280,6 +289,8 @@ const HandleImageUploadURL = ({
 			</Snackbar>
 		</>
 	);
-};
+});
+
+HandleImageUploadURL.displayName = 'HandleImageUploadURL';
 
 export default HandleImageUploadURL;

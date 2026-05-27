@@ -1,8 +1,10 @@
 import { Alert, Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Link, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useRef, useState, useEffect } from 'react';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
+import HandleImageUploadURL, {
+	type HandleImageUploadURLHandle,
+} from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged, verifyBeforeUpdateEmail } from 'firebase/auth';
@@ -62,6 +64,7 @@ const Settings = () => {
 	const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
 	const [isSavingProfilePicture, setIsSavingProfilePicture] = useState<boolean>(false);
 	const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState<boolean>(false);
+	const profilePictureUploadRef = useRef<HandleImageUploadURLHandle>(null);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -169,9 +172,10 @@ const Settings = () => {
 		if (!user?._id) return;
 
 		setProfileErrorMsg(undefined);
+		profilePictureUploadRef.current?.clearFileSelection();
+		setProfilePicturePreview(null);
 
 		if (!hasSavedProfilePicture) {
-			setProfilePicturePreview(null);
 			return;
 		}
 
@@ -182,7 +186,6 @@ const Settings = () => {
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: '' } : prevData));
 			setImageUrl('');
-			setProfilePicturePreview(null);
 			setIsProfileUpdated(false);
 			setIsProfilePictureRemovedMsgDisplayed(true);
 		} catch (error: unknown) {
@@ -506,6 +509,7 @@ const Settings = () => {
 						</Box>
 						<Box sx={{ width: '90%' }}>
 							<HandleImageUploadURL
+								ref={profilePictureUploadRef}
 								label='Profile Picture'
 								saveButtonMode
 								onSaveImage={handleProfilePictureSave}

@@ -20,7 +20,8 @@ const useImageUpload = (options: UseImageUploadOptions = {}) => {
 		if (e.target.files && e.target.files.length > 0) {
 			const file = e.target.files[0];
 			if (file.size > maxSizeInMB * 1024 * 1024) {
-				// Image size validation (configurable limit)
+				setImageUpload(null);
+				setImagePreview(null);
 				setIsImageSizeLarge(true);
 			} else {
 				setImageUpload(file);
