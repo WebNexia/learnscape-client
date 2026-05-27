@@ -36,7 +36,7 @@ const InstructionalLessonsDialog = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const lessonTextColor = theme.palette.primary.main || theme.textColor?.primary.main || '#01435A';
 	const lessonTextFontFamily = LEARNER_TEXT_FONT_FAMILY;
-	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
 		hoverDelayMs: 1000,
 	});
@@ -166,7 +166,7 @@ const InstructionalLessonsDialog = ({
 											<Typography
 												component='div'
 												onMouseOver={handleWordHover}
-												onMouseLeave={handleMouseLeave}
+												onMouseOut={handleMouseLeave}
 												onTouchStart={handleWordTouchStart}
 												onTouchEnd={handleWordTouchEnd}
 												onTouchCancel={handleWordTouchEnd}
@@ -223,6 +223,7 @@ const InstructionalLessonsDialog = ({
 					activeWord={activeWord}
 					wordInfo={wordInfo}
 					isLoadingWordInfo={isLoadingWordInfo}
+					onPopperMouseOut={handlePopperMouseOut}
 				/>
 			</DialogContent>
 			<DialogActions sx={{ px: '1.5rem', pb: '1rem' }}>

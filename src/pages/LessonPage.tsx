@@ -216,7 +216,7 @@ const LessonPage = () => {
 		if (chapterId) initial.add(String(chapterId));
 		return initial;
 	});
-	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: isWordAssistEnabled,
 		hoverDelayMs: 1000,
 	});
@@ -1308,7 +1308,7 @@ const LessonPage = () => {
 							<Box
 								className={`rich-text-content ${LEARNER_RICH_TEXT_CLASS}`}
 								onMouseOver={handleWordHover}
-								onMouseLeave={handleMouseLeave}
+								onMouseOut={handleMouseLeave}
 								onTouchStart={handleWordTouchStart}
 								onTouchEnd={handleWordTouchEnd}
 								onTouchCancel={handleWordTouchEnd}
@@ -1462,7 +1462,7 @@ const LessonPage = () => {
 						<CustomDialog openModal={isHelpDialogOpen} closeModal={() => setIsHelpDialogOpen(false)} maxWidth='xs'>
 							<DialogContent>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
-									You can solve the multiple choice, true/false, fill in the blank, matching pairs, and translate questions again.
+									You can solve the multiple choice, true/false, fill in the blank, matching pairs, translate, and open-ended questions again.
 								</Typography>
 							</DialogContent>
 							<DialogActions>
@@ -1721,6 +1721,7 @@ const LessonPage = () => {
 				activeWord={activeWord}
 				wordInfo={wordInfo}
 				isLoadingWordInfo={isLoadingWordInfo}
+				onPopperMouseOut={handlePopperMouseOut}
 			/>
 		</Box>
 	);

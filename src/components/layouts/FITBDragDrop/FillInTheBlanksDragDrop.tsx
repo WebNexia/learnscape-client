@@ -253,7 +253,7 @@ const FillInTheBlanksDragDrop = ({
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
 		hoverDelayMs: 1000,
 	});
@@ -457,7 +457,7 @@ const FillInTheBlanksDragDrop = ({
 				<FitbInteractionModeBadge mode='tap' compact={isMobileSize} />
 				<TextContainer
 					onMouseOver={handleWordHover}
-					onMouseLeave={handleMouseLeave}
+					onMouseOut={handleMouseLeave}
 					onTouchStart={handleWordTouchStart}
 					onTouchEnd={handleWordTouchEnd}
 					onTouchCancel={handleWordTouchEnd}>
@@ -553,6 +553,7 @@ const FillInTheBlanksDragDrop = ({
 					activeWord={activeWord}
 					wordInfo={wordInfo}
 					isLoadingWordInfo={isLoadingWordInfo}
+					onPopperMouseOut={handlePopperMouseOut}
 				/>
 			</Column>
 

@@ -207,7 +207,7 @@ const FillInTheBlanksTyping = ({
 	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
 		hoverDelayMs: 1000,
 	});
@@ -416,7 +416,7 @@ const FillInTheBlanksTyping = ({
 				<TextContainer
 					isMobileSizeSmall={isMobileSizeSmall}
 					onMouseOver={handleWordHover}
-					onMouseLeave={handleMouseLeave}
+					onMouseOut={handleMouseLeave}
 					onTouchStart={handleWordTouchStart}
 					onTouchEnd={handleWordTouchEnd}
 					onTouchCancel={handleWordTouchEnd}>
@@ -483,6 +483,7 @@ const FillInTheBlanksTyping = ({
 					activeWord={activeWord}
 					wordInfo={wordInfo}
 					isLoadingWordInfo={isLoadingWordInfo}
+					onPopperMouseOut={handlePopperMouseOut}
 				/>
 
 				{showWordBank && (

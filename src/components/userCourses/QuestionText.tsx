@@ -26,7 +26,7 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave } = useWordAssist({
+	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
 		hoverDelayMs: 1000,
 	});
@@ -57,7 +57,7 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 			<Box
 				className={`rich-text-content ${LEARNER_RICH_TEXT_CLASS}`}
 				onMouseOver={handleWordHover}
-				onMouseLeave={handleMouseLeave}
+				onMouseOut={handleMouseLeave}
 				onTouchStart={handleWordTouchStart}
 				onTouchEnd={handleWordTouchEnd}
 				onTouchCancel={handleWordTouchEnd}
@@ -123,6 +123,7 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 				activeWord={activeWord}
 				wordInfo={wordInfo}
 				isLoadingWordInfo={isLoadingWordInfo}
+				onPopperMouseOut={handlePopperMouseOut}
 			/>
 		</FormLabel>
 	);

@@ -9,9 +9,17 @@ interface WordAssistPopperProps {
 	activeWord: string;
 	wordInfo: WordAssistData | null;
 	isLoadingWordInfo: boolean;
+	onPopperMouseOut?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-const WordAssistPopper: React.FC<WordAssistPopperProps> = ({ open, anchorEl, activeWord, wordInfo, isLoadingWordInfo }) => {
+const WordAssistPopper: React.FC<WordAssistPopperProps> = ({
+	open,
+	anchorEl,
+	activeWord,
+	wordInfo,
+	isLoadingWordInfo,
+	onPopperMouseOut,
+}) => {
 	const meaningsToRender =
 		wordInfo?.meanings && wordInfo.meanings.length > 0
 			? wordInfo.meanings
@@ -26,6 +34,8 @@ const WordAssistPopper: React.FC<WordAssistPopperProps> = ({ open, anchorEl, act
 	return (
 		<Popper open={open} anchorEl={anchorEl} placement='top-start' sx={{ zIndex: 1700 }}>
 			<Paper
+				data-word-assist-popper='true'
+				onMouseOut={onPopperMouseOut}
 				elevation={5}
 				sx={{
 					p: 2,
