@@ -17,7 +17,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { FirebaseError } from 'firebase/app';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { PhoneInput } from 'react-international-phone';
@@ -32,6 +32,7 @@ const Settings = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const { hasAdminAccess, canAccessPayments } = useAuth();
 	const navigate = useNavigate();
+	const routerLocation = useLocation();
 	const auth = getAuth();
 
 	const location = useGeoLocation();
@@ -65,6 +66,8 @@ const Settings = () => {
 	const [isSavingProfilePicture, setIsSavingProfilePicture] = useState<boolean>(false);
 	const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState<boolean>(false);
 	const profilePictureUploadRef = useRef<HandleImageUploadURLHandle>(null);
+	const isMountedRef = useRef(true);
+	const profilePictureOpGenerationRef = useRef(0);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -86,6 +89,45 @@ const Settings = () => {
 	useEffect(() => {
 		setMarketingEmailConsent(user?.marketingEmailConsent ?? false);
 	}, [user?.marketingEmailConsent]);
+
+	// Sync profile image from user context when not mid-upload
+	useEffect(() => {
+		if (!profilePicturePreview && !isSavingProfilePicture && !isRemovingProfilePicture) {
+			setImageUrl(user?.imageUrl || '');
+		}
+	}, [user?.imageUrl, profilePicturePreview, isSavingProfilePicture, isRemovingProfilePicture]);
+
+	// Reset stuck Saving state on unmount (e.g. navigate away mid-save on mobile)
+	useEffect(() => {
+		isMountedRef.current = true;
+		return () => {
+			isMountedRef.current = false;
+			profilePictureOpGenerationRef.current += 1;
+			setIsSavingProfilePicture(false);
+			setIsRemovingProfilePicture(false);
+		};
+	}, []);
+
+	// Re-entering Settings via SPA navigation — clear stale saving UI
+	useEffect(() => {
+		if (!routerLocation.pathname.includes('settings')) return;
+		setIsSavingProfilePicture(false);
+		setIsRemovingProfilePicture(false);
+	}, [routerLocation.pathname]);
+
+	// Mobile/tablet bfcache can restore the page with isSaving still true
+	useEffect(() => {
+		const handlePageShow = (event: PageTransitionEvent) => {
+			if (!event.persisted) return;
+			setIsSavingProfilePicture(false);
+			setIsRemovingProfilePicture(false);
+			setImageUrl(user?.imageUrl || '');
+			setProfilePicturePreview(null);
+			profilePictureUploadRef.current?.clearFileSelection();
+		};
+		window.addEventListener('pageshow', handlePageShow);
+		return () => window.removeEventListener('pageshow', handlePageShow);
+	}, [user?.imageUrl]);
 
 	// Add auth state listener
 	useEffect(() => {
@@ -145,23 +187,30 @@ const Settings = () => {
 	const handleProfilePictureSave = async (file: File) => {
 		if (!user?._id) return;
 
+		const opGeneration = ++profilePictureOpGenerationRef.current;
 		setIsSavingProfilePicture(true);
 		setProfileErrorMsg(undefined);
 
 		try {
 			const url = await uploadImage(file, 'ProfileImages', organisation?.orgName || 'defaultOrg', user._id);
+			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+
 			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: url });
+			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: url } : prevData));
 			setImageUrl(url);
 			setProfilePicturePreview(null);
 			setIsProfilePictureSavedMsgDisplayed(true);
 		} catch (error: unknown) {
+			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
 			console.error('Profile picture save error:', error);
 			const axiosError = error as { response?: { data?: { message?: string } } };
 			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while saving your profile picture.');
 		} finally {
-			setIsSavingProfilePicture(false);
+			if (isMountedRef.current && opGeneration === profilePictureOpGenerationRef.current) {
+				setIsSavingProfilePicture(false);
+			}
 		}
 	};
 
@@ -179,21 +228,26 @@ const Settings = () => {
 			return;
 		}
 
+		const opGeneration = ++profilePictureOpGenerationRef.current;
 		setIsRemovingProfilePicture(true);
 
 		try {
 			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: '' });
+			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: '' } : prevData));
 			setImageUrl('');
 			setIsProfileUpdated(false);
 			setIsProfilePictureRemovedMsgDisplayed(true);
 		} catch (error: unknown) {
+			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
 			console.error('Profile picture remove error:', error);
 			const axiosError = error as { response?: { data?: { message?: string } } };
 			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while removing your profile picture.');
 		} finally {
-			setIsRemovingProfilePicture(false);
+			if (isMountedRef.current && opGeneration === profilePictureOpGenerationRef.current) {
+				setIsRemovingProfilePicture(false);
+			}
 		}
 	};
 

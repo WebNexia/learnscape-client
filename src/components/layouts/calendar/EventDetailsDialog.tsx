@@ -13,6 +13,7 @@ import axiosOriginal from 'axios';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
+import { eventDateTimeFormatter } from '../../../utils/dateFormatter';
 
 interface EventDetailsDialogProps {
 	eventDetailsModalOpen: boolean;
@@ -200,15 +201,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 								Starts:
 							</Typography>
 							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{selectedEvent.start.toLocaleString(undefined, {
-									weekday: 'long',
-									year: 'numeric',
-									month: 'long',
-									day: 'numeric',
-									hour: '2-digit',
-									minute: '2-digit',
-									timeZoneName: 'short',
-								})}
+								{eventDateTimeFormatter(selectedEvent.start)}
 							</Typography>
 						</Box>
 					)}
@@ -218,15 +211,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 								Ends:
 							</Typography>
 							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{selectedEvent.end.toLocaleString(undefined, {
-									weekday: 'long',
-									year: 'numeric',
-									month: 'long',
-									day: 'numeric',
-									hour: '2-digit',
-									minute: '2-digit',
-									timeZoneName: 'short',
-								})}
+								{eventDateTimeFormatter(selectedEvent.end)}
 							</Typography>
 						</Box>
 					)}
@@ -299,7 +284,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							else if (hasZoomRecordings) {
 								recordingsToShow.push({
 									type: 'zoom',
-									label: `Watch Recording (Zoom - ${new Date(recordings[0].recordingStart).toLocaleString()})`,
+									label: `Watch Recording (Zoom - ${eventDateTimeFormatter(recordings[0].recordingStart)})`,
 									onClick: () => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`),
 								});
 							}
