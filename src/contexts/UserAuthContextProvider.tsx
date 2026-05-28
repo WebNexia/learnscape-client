@@ -9,6 +9,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
 import { shouldFetchLearnerEnrollmentList } from '../utils/learnerEnrollmentDataRoutes';
 import { resetWordAssistPreference } from '../utils/wordAssistPreference';
+import {
+	clearLearnerSessionId,
+	shouldForceNewLearnerSession,
+	getLearnerSessionId,
+} from '../utils/learnerSession';
+import { registerLearnerSessionOnServer } from '../utils/registerLearnerSession';
+import LearnerSessionSupersededDialog from '../components/auth/LearnerSessionSupersededDialog';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -105,6 +112,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
 					await signOut(auth);
 					localStorage.removeItem('sessionTimestamp');
+					clearLearnerSessionId();
 					resetWordAssistPreference();
 					console.warn('Session expired');
 					window.location.href = '/auth';
@@ -192,6 +200,10 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			const userData = responseUserData.data.data[0];
 
 			if (userData && userData._id) {
+				if (userData.role === Roles.USER && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
+					await registerLearnerSessionOnServer();
+				}
+
 				setUser(userData);
 				setUserId(userData._id);
 				queryClient.setQueryData('userData', userData);
@@ -214,6 +226,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const signOutUser = async () => {
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
+		clearLearnerSessionId();
 		resetWordAssistPreference();
 		sessionStorage.removeItem('activeChatId');
 		setUser(undefined);
@@ -236,6 +249,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				setSkipFetchDuringSignup: setSkipFetchDuringSignupWithRef,
 				userCourseData,
 			}}>
+			<LearnerSessionSupersededDialog />
 			{props.children}
 		</UserAuthContext.Provider>
 	);

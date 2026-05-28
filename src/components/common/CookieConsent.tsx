@@ -69,6 +69,7 @@ const CookieConsent = ({ forceOpen, onClose }: CookieConsentProps = { forceOpen:
 			const essentialKeys = [
 				'cookieConsent', // User's cookie preference
 				'sessionTimestamp', // Firebase Auth session
+				'learnerSessionId', // Learner single-device session
 				'rateLimitInfo', // Rate limiting (security)
 			];
 

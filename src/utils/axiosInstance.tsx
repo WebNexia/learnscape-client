@@ -7,6 +7,7 @@ declare global {
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { InternalAxiosRequestConfig } from 'axios';
+import { emitLearnerSessionSuperseded, getLearnerSessionId } from './learnerSession';
 
 // Extend the InternalAxiosRequestConfig type to include retryCount
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -28,6 +29,11 @@ axiosInstance.interceptors.request.use(async (config) => {
 	if (user) {
 		const token = await user.getIdToken();
 		config.headers.Authorization = `Bearer ${token}`;
+	}
+
+	const learnerSessionId = getLearnerSessionId();
+	if (learnerSessionId) {
+		config.headers['X-Learner-Session-Id'] = learnerSessionId;
 	}
 
 	return config;
@@ -69,6 +75,11 @@ axiosInstance.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		const config = error.config as CustomAxiosRequestConfig;
+
+		if (error.response?.data?.code === 'SESSION_SUPERSEDED') {
+			emitLearnerSessionSuperseded();
+			return Promise.reject(error);
+		}
 
 		// Handle rate limit errors (429) and IP blocking (403)
 		if (error.response?.status === 429 || (error.response?.status === 403 && error.response?.data?.type === 'ip_blocked')) {
