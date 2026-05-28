@@ -36,10 +36,16 @@ const CustomDialog = ({
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+	const handleClose = disableDismiss
+		? () => {
+				/* blocked: backdrop / escape must not dismiss */
+			}
+		: closeModal;
+
 	return (
 		<Dialog
 			open={openModal}
-			onClose={disableDismiss ? undefined : closeModal}
+			onClose={handleClose}
 			disableEscapeKeyDown={disableDismiss}
 			fullWidth
 			maxWidth={maxWidth}

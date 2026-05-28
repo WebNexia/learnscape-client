@@ -22,6 +22,7 @@ import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
 import { resetWordAssistPreference } from '../utils/wordAssistPreference';
+import { markNewLearnerLogin } from '../utils/learnerSession';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -119,6 +120,8 @@ const Auth = () => {
 					activeChatId: '', // Initialize activeChatId
 				});
 			}
+
+			markNewLearnerLogin();
 
 			// Set session timestamp explicitly after successful signIn
 			const currentTime = Date.now();
