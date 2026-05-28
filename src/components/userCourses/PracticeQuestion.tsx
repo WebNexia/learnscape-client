@@ -258,10 +258,14 @@ const PracticeQuestion = ({
 			!openEndedInputEnabled &&
 			!openEndedAwaitingAiThisRound &&
 			(hasReachedAiLimit || aiFeedbackCount >= 1));
-	// Practice again: 1 AI request per session, based on last saved answer
+	// Practice again: 1 AI request per session, after Edit Answer + Save (not on entry)
 	const [practiceAgainAiCount, setPracticeAgainAiCount] = useState(0);
+	const [practiceAgainSavedForAi, setPracticeAgainSavedForAi] = useState(false);
 	useEffect(() => {
-		if (practiceAgainMode) setPracticeAgainAiCount(0);
+		if (practiceAgainMode) {
+			setPracticeAgainAiCount(0);
+			setPracticeAgainSavedForAi(false);
+		}
 	}, [practiceAgainMode]);
 	const practiceAgainAiLimitReached =
 		practiceAgainMode &&
@@ -271,6 +275,7 @@ const PracticeQuestion = ({
 		practiceAgainMode &&
 		isOpenEndedQuestion &&
 		hasOpenEndedUserQuestionId &&
+		practiceAgainSavedForAi &&
 		!openEndedInputEnabled &&
 		practiceAgainAiCount < PRACTICE_AGAIN_AI_LIMIT &&
 		!hasReachedTotalAiLimit;
@@ -352,6 +357,7 @@ const PracticeQuestion = ({
 			setUnlockedForNextRound(false);
 			setHasRequestedAiThisRound(false);
 			setAiFeedbackError('');
+			setPracticeAgainSavedForAi(false);
 			hasInitializedAiRoundRef.current = false;
 
 			// Reset sound tracking refs when question changes
@@ -456,6 +462,7 @@ const PracticeQuestion = ({
 						setValue(answerToPersist);
 						playSubmitSound();
 						setUnlockedForNextRound(false);
+						if (practiceAgainMode) setPracticeAgainSavedForAi(true);
 					} else {
 						// First save: create new
 						const res = await axios.post(`${base_url}/userQuestions`, {
@@ -519,6 +526,7 @@ const PracticeQuestion = ({
 						setValue(answerToPersist);
 						playSubmitSound();
 						setUnlockedForNextRound(false);
+						if (practiceAgainMode) setPracticeAgainSavedForAi(true);
 					}
 				}
 
@@ -540,6 +548,7 @@ const PracticeQuestion = ({
 			setIsOpenEndedAnswerSubmitted(true);
 			if (isOpenEndedQuestion) {
 				setUnlockedForNextRound(false);
+				if (practiceAgainMode) setPracticeAgainSavedForAi(true);
 			}
 		}
 	};
@@ -1135,6 +1144,7 @@ const PracticeQuestion = ({
 										onClick={() => {
 											setUnlockedForNextRound(true);
 											setHasRequestedAiThisRound(false);
+											if (practiceAgainMode) setPracticeAgainSavedForAi(false);
 										}}
 										sx={{
 											minWidth: isMobileSize ? 120 : 140,
@@ -1465,6 +1475,20 @@ const PracticeQuestion = ({
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
 							</IconButton>
 						</Tooltip>
+					) : isOpenEndedPracticeAgain && !practiceAgainSavedForAi ? (
+						savedLastAiFeedback ? (
+							<Tooltip title='View last AI feedback' placement='left' arrow>
+								<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
+									<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
+								</IconButton>
+							</Tooltip>
+						) : (
+							<Tooltip title='Edit your answer and save first to receive AI feedback' placement='left' arrow>
+								<IconButton sx={{ ':hover': { backgroundColor: 'transparent' }, color: 'gray' }} disabled>
+									<AutoAwesome fontSize={isMobileSize ? 'small' : 'medium'} />
+								</IconButton>
+							</Tooltip>
+						)
 					) : practiceAgainAiLimitReached ? (
 						<Tooltip title={`View last AI feedback (${PRACTICE_AGAIN_AI_LIMIT}/${PRACTICE_AGAIN_AI_LIMIT})`} placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
