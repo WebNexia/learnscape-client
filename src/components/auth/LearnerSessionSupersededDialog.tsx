@@ -45,10 +45,10 @@ const LearnerSessionSupersededDialog = () => {
 		<CustomDialog
 			openModal={open}
 			title='Oturum sonlandırıldı'
-			maxWidth='sm'
+			maxWidth='xs'
 			disableDismiss>
 			<DialogContent>
-				<Typography variant='body1'>
+				<Typography variant='body2'>
 					Hesabınız başka bir cihazda açıldı. Bu cihazda devam edemezsiniz.
 				</Typography>
 			</DialogContent>
@@ -59,6 +59,7 @@ const LearnerSessionSupersededDialog = () => {
 				onSubmit={handleOk}
 				isSubmitting={isSigningOut}
 				disableBtn={isSigningOut}
+				actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 			/>
 		</CustomDialog>
 	);
