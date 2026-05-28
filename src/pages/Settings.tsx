@@ -67,7 +67,8 @@ const Settings = () => {
 	const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState<boolean>(false);
 	const profilePictureUploadRef = useRef<HandleImageUploadURLHandle>(null);
 	const isMountedRef = useRef(true);
-	const profilePictureOpGenerationRef = useRef(0);
+	const profilePictureSaveGenRef = useRef(0);
+	const profilePictureRemoveGenRef = useRef(0);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -102,7 +103,8 @@ const Settings = () => {
 		isMountedRef.current = true;
 		return () => {
 			isMountedRef.current = false;
-			profilePictureOpGenerationRef.current += 1;
+			profilePictureSaveGenRef.current += 1;
+			profilePictureRemoveGenRef.current += 1;
 			setIsSavingProfilePicture(false);
 			setIsRemovingProfilePicture(false);
 		};
@@ -187,28 +189,29 @@ const Settings = () => {
 	const handleProfilePictureSave = async (file: File) => {
 		if (!user?._id) return;
 
-		const opGeneration = ++profilePictureOpGenerationRef.current;
+		const saveGen = ++profilePictureSaveGenRef.current;
 		setIsSavingProfilePicture(true);
 		setProfileErrorMsg(undefined);
 
 		try {
 			const url = await uploadImage(file, 'ProfileImages', organisation?.orgName || 'defaultOrg', user._id);
-			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
 
 			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: url });
-			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: url } : prevData));
 			setImageUrl(url);
 			setProfilePicturePreview(null);
+			profilePictureUploadRef.current?.clearFileSelection();
 			setIsProfilePictureSavedMsgDisplayed(true);
 		} catch (error: unknown) {
-			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
 			console.error('Profile picture save error:', error);
 			const axiosError = error as { response?: { data?: { message?: string } } };
 			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while saving your profile picture.');
 		} finally {
-			if (isMountedRef.current && opGeneration === profilePictureOpGenerationRef.current) {
+			if (isMountedRef.current && saveGen === profilePictureSaveGenRef.current) {
 				setIsSavingProfilePicture(false);
 			}
 		}
@@ -228,24 +231,24 @@ const Settings = () => {
 			return;
 		}
 
-		const opGeneration = ++profilePictureOpGenerationRef.current;
+		const removeGen = ++profilePictureRemoveGenRef.current;
 		setIsRemovingProfilePicture(true);
 
 		try {
 			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: '' });
-			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+			if (!isMountedRef.current || removeGen !== profilePictureRemoveGenRef.current) return;
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: '' } : prevData));
 			setImageUrl('');
 			setIsProfileUpdated(false);
 			setIsProfilePictureRemovedMsgDisplayed(true);
 		} catch (error: unknown) {
-			if (!isMountedRef.current || opGeneration !== profilePictureOpGenerationRef.current) return;
+			if (!isMountedRef.current || removeGen !== profilePictureRemoveGenRef.current) return;
 			console.error('Profile picture remove error:', error);
 			const axiosError = error as { response?: { data?: { message?: string } } };
 			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while removing your profile picture.');
 		} finally {
-			if (isMountedRef.current && opGeneration === profilePictureOpGenerationRef.current) {
+			if (isMountedRef.current && removeGen === profilePictureRemoveGenRef.current) {
 				setIsRemovingProfilePicture(false);
 			}
 		}
@@ -567,7 +570,8 @@ const Settings = () => {
 								label='Profile Picture'
 								saveButtonMode
 								onSaveImage={handleProfilePictureSave}
-								isSaving={isSavingProfilePicture || isRemovingProfilePicture}
+								isSaving={isSavingProfilePicture}
+								disabled={isRemovingProfilePicture}
 								onPreviewChange={setProfilePicturePreview}
 								onImageUploadLogic={(url) => {
 									setImageUrl(url);
