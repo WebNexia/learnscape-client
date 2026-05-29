@@ -7,7 +7,7 @@ import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthError, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { FirebaseError } from 'firebase/app';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
@@ -260,10 +260,7 @@ const Auth = () => {
 			const user = userCredential.user;
 			userCreated = true;
 
-			// Step 2: Send email verification
-			await sendEmailVerification(user);
-
-			// Step 3: Create a Firestore document for the user
+			// Step 2: Create a Firestore document for the user
 			const userRef = doc(db, 'users', user.uid);
 			await setDoc(userRef, {
 				firebaseUserId: user.uid,
@@ -289,6 +286,10 @@ const Auth = () => {
 			};
 
 			await axiosInstance.post(`${base_url}/users/signup`, signupData);
+
+			await axiosInstance.post(`${base_url}/users/resend-verification`, {
+				email: signupData.email,
+			});
 
 			// Handle UI updates after successful sign-up
 			setActiveForm(AuthForms.SIGN_IN);
@@ -379,8 +380,7 @@ const Auth = () => {
 		if (!email) return;
 		setIsResendingVerification(true);
 		try {
-			const userCredential = await signInWithEmailAndPassword(auth, email, password);
-			await sendEmailVerification(userCredential.user);
+			await axiosInstance.post(`${base_url}/users/resend-verification`, { email: email.trim().toLowerCase() });
 			setErrorMsg(AuthFormErrorMessages.VERIFICATION_EMAIL_SENT);
 		} catch (error) {
 			console.error('Error resending verification email:', error);
