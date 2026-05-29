@@ -66,9 +66,18 @@ const Settings = () => {
 	const [isSavingProfilePicture, setIsSavingProfilePicture] = useState<boolean>(false);
 	const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState<boolean>(false);
 	const profilePictureUploadRef = useRef<HandleImageUploadURLHandle>(null);
+	const profilePicturePreviewRef = useRef<string | null>(null);
 	const isMountedRef = useRef(true);
 	const profilePictureSaveGenRef = useRef(0);
 	const profilePictureRemoveGenRef = useRef(0);
+
+	const updateProfilePicturePreview = (previewUrl: string | null) => {
+		if (profilePicturePreviewRef.current?.startsWith('blob:')) {
+			URL.revokeObjectURL(profilePicturePreviewRef.current);
+		}
+		profilePicturePreviewRef.current = previewUrl;
+		setProfilePicturePreview(previewUrl);
+	};
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -124,7 +133,7 @@ const Settings = () => {
 			setIsSavingProfilePicture(false);
 			setIsRemovingProfilePicture(false);
 			setImageUrl(user?.imageUrl || '');
-			setProfilePicturePreview(null);
+			updateProfilePicturePreview(null);
 			profilePictureUploadRef.current?.clearFileSelection();
 		};
 		window.addEventListener('pageshow', handlePageShow);
@@ -202,7 +211,7 @@ const Settings = () => {
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: url } : prevData));
 			setImageUrl(url);
-			setProfilePicturePreview(null);
+			updateProfilePicturePreview(null);
 			profilePictureUploadRef.current?.clearFileSelection();
 			setIsProfilePictureSavedMsgDisplayed(true);
 		} catch (error: unknown) {
@@ -211,7 +220,7 @@ const Settings = () => {
 			const axiosError = error as { response?: { data?: { message?: string } } };
 			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while saving your profile picture.');
 		} finally {
-			if (isMountedRef.current && saveGen === profilePictureSaveGenRef.current) {
+			if (isMountedRef.current) {
 				setIsSavingProfilePicture(false);
 			}
 		}
@@ -225,7 +234,7 @@ const Settings = () => {
 
 		setProfileErrorMsg(undefined);
 		profilePictureUploadRef.current?.clearFileSelection();
-		setProfilePicturePreview(null);
+		updateProfilePicturePreview(null);
 
 		if (!hasSavedProfilePicture) {
 			return;
@@ -572,7 +581,7 @@ const Settings = () => {
 								onSaveImage={handleProfilePictureSave}
 								isSaving={isSavingProfilePicture}
 								disabled={isRemovingProfilePicture}
-								onPreviewChange={setProfilePicturePreview}
+								onPreviewChange={updateProfilePicturePreview}
 								onImageUploadLogic={(url) => {
 									setImageUrl(url);
 									setIsProfileUpdated(true);

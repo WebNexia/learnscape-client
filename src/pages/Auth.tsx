@@ -109,6 +109,8 @@ const Auth = () => {
 				return;
 			}
 
+			markNewLearnerLogin();
+
 			// Ensure user document exists in Firestore
 			const userRef = doc(db, 'users', firebaseUser.uid);
 			const userDoc = await getDoc(userRef);
@@ -120,8 +122,6 @@ const Auth = () => {
 					activeChatId: '', // Initialize activeChatId
 				});
 			}
-
-			markNewLearnerLogin();
 
 			// Set session timestamp explicitly after successful signIn
 			const currentTime = Date.now();
