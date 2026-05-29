@@ -169,10 +169,10 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 				attachments:
 					attachments.length > 0
 						? attachments.map((att) => ({
-								filename: att.filename,
-								content: att.content,
-								contentType: att.contentType,
-							}))
+							filename: att.filename,
+							content: att.content,
+							contentType: att.contentType,
+						}))
 						: undefined,
 			});
 			setShowEmailSuccessMsg(true);

@@ -57,7 +57,15 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 	onPreviewChange,
 	scopedEntityId,
 }, ref) => {
-	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload, maxSizeInMB } = useImageUpload({
+	const {
+		imageUpload,
+		isImgSizeLarge,
+		isProcessingImage,
+		resetImageUpload,
+		handleImageUpload,
+		processSelectedFile,
+		maxSizeInMB,
+	} = useImageUpload({
 		scopedEntityId,
 	});
 
@@ -142,7 +150,7 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 	};
 
 	const handleSaveClick = async () => {
-		if (!imageUpload || isImgSizeLarge || isSaving) return;
+		if (!imageUpload || isImgSizeLarge || isProcessingImage || isSaving) return;
 
 		if (saveButtonMode && onSaveImage) {
 			try {
@@ -201,17 +209,18 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 							<Input
 								type='file'
 								inputRef={fileInputRef}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+								onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
 									const file = e.target.files?.[0];
-									handleImageChange(e);
-									if (file && file.size <= maxSizeInMB * 1024 * 1024) {
-										onPreviewChange?.(URL.createObjectURL(file));
-									} else {
-										onPreviewChange?.(null);
+									if (!file) {
+										clearFileSelection();
+										return;
 									}
+
+									const previewUrl = await processSelectedFile(file);
+									onPreviewChange?.(previewUrl);
 								}}
-								disabled={disabled || isSaving}
-								inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
+								disabled={disabled || isSaving || isProcessingImage}
+								inputProps={{ accept: 'image/jpeg,image/png,image/webp,image/*' }}
 								sx={{
 									width: '82.5%',
 									backgroundColor: theme.bgColor?.common,
@@ -226,16 +235,16 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 									variant='contained'
 									size='small'
 									onClick={handleSaveClick}
-									disabled={!imageUpload || isImgSizeLarge || isSaving}
+									disabled={!imageUpload || isImgSizeLarge || isProcessingImage || isSaving}
 								>
-									{isSaving ? 'Saving...' : 'Save'}
+									{isProcessingImage ? 'Preparing...' : isSaving ? 'Saving...' : 'Save'}
 								</CustomSubmitButton>
 							) : (
 								<Tooltip title='Upload' placement='top' arrow>
 									<IconButton
 										onClick={handleImageUploadReusable}
 										sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
-										disabled={!imageUpload || isImgSizeLarge || isSaving}>
+										disabled={!imageUpload || isImgSizeLarge || isProcessingImage || isSaving}>
 										<CloudUpload fontSize='small' />
 									</IconButton>
 								</Tooltip>
@@ -251,7 +260,7 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 				)}
 				{isImgSizeLarge && (
 					<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>
-						File size exceeds the limit of {maxSizeInMB} MB{' '}
+						Could not use this image. Choose a photo under {maxSizeInMB} MB (JPEG, PNG, or WebP).
 					</CustomErrorMessage>
 				)}
 
