@@ -28,7 +28,7 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
-		hoverDelayMs: 1000,
+		hoverDelayMs: 500,
 	});
 
 	const sanitizedQuestionHtml = useMemo(

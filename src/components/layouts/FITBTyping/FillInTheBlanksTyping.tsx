@@ -209,7 +209,7 @@ const FillInTheBlanksTyping = ({
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
-		hoverDelayMs: 1000,
+		hoverDelayMs: 500,
 	});
 
 	useEffect(() => {
@@ -535,47 +535,47 @@ const FillInTheBlanksTyping = ({
 									alignItems: 'center',
 									width: '100%',
 								}}>
-							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-								{hints?.map((hint, index) => {
-									return (
-										<Box
-											key={index}
-											sx={{
-												border: '1px solid rgba(1, 67, 90, 0.18)',
-												padding: '0.25rem 0.5rem',
-												margin: '0.25rem 0.35rem 0.5rem 0.35rem',
-												borderRadius: '0.5rem',
-												backgroundColor: 'rgba(1, 67, 90, 0.06)',
-												boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-											}}>
-											{revealWordBankValues ? (
-												<Typography
-													variant='body2'
-													sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
-													{hint}
-												</Typography>
-											) : (
-												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
-													*****
-												</Typography>
-											)}
-										</Box>
-									);
-								})}
-							</Box>
-							{!isReviewMode && (
-								<Box>
-									<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top' arrow>
-										<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-											{showHiddenBlankValues ? (
-												<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
-											) : (
-												<Visibility fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
-											)}
-										</IconButton>
-									</Tooltip>
+								<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+									{hints?.map((hint, index) => {
+										return (
+											<Box
+												key={index}
+												sx={{
+													border: '1px solid rgba(1, 67, 90, 0.18)',
+													padding: '0.25rem 0.5rem',
+													margin: '0.25rem 0.35rem 0.5rem 0.35rem',
+													borderRadius: '0.5rem',
+													backgroundColor: 'rgba(1, 67, 90, 0.06)',
+													boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+												}}>
+												{revealWordBankValues ? (
+													<Typography
+														variant='body2'
+														sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
+														{hint}
+													</Typography>
+												) : (
+													<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
+														*****
+													</Typography>
+												)}
+											</Box>
+										);
+									})}
 								</Box>
-							)}
+								{!isReviewMode && (
+									<Box>
+										<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top' arrow>
+											<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
+												{showHiddenBlankValues ? (
+													<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+												) : (
+													<Visibility fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+												)}
+											</IconButton>
+										</Tooltip>
+									</Box>
+								)}
 							</Box>
 						</Box>
 					</Box>

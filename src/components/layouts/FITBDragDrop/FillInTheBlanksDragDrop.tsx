@@ -47,7 +47,7 @@ const TextContainer = styled(Box)`
 	padding: 0;
 `;
 
-const DropArea = styled(Box)<{
+const DropArea = styled(Box) <{
 	$isCorrect: boolean | null;
 	$fromQuizQuestionUser?: boolean;
 	$isLessonCompleted?: boolean;
@@ -129,15 +129,14 @@ const Item = styled.div<{
 	border: ${({ $isCorrect, $fromQuizQuestionUser, $lessonType, $isSelected }) =>
 		$isSelected
 			? `2px solid ${theme.palette.primary.main}`
-			: `1px solid ${
-					$fromQuizQuestionUser || $lessonType === LessonType.QUIZ
-						? 'rgba(1, 67, 90, 0.16)'
-						: $isCorrect === null
-							? 'rgba(1, 67, 90, 0.16)'
-							: $isCorrect
-								? '#b9e3c7'
-								: '#f0bcbc'
-				}`};
+			: `1px solid ${$fromQuizQuestionUser || $lessonType === LessonType.QUIZ
+				? 'rgba(1, 67, 90, 0.16)'
+				: $isCorrect === null
+					? 'rgba(1, 67, 90, 0.16)'
+					: $isCorrect
+						? '#b9e3c7'
+						: '#f0bcbc'
+			}`};
 	border-radius: 0.62rem;
 	cursor: ${({ $isInteractive }) => ($isInteractive === false ? 'default' : 'pointer')};
 	text-align: center;
@@ -255,7 +254,7 @@ const FillInTheBlanksDragDrop = ({
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
-		hoverDelayMs: 1000,
+		hoverDelayMs: 500,
 	});
 
 	useEffect(() => {
@@ -558,81 +557,81 @@ const FillInTheBlanksDragDrop = ({
 			</Column>
 
 			{showWordBank && (
-					<Column
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'flex-start',
-							boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
-							borderRadius: '0.85rem',
-							background: 'rgba(255,255,255,0.78)',
-							border: '1px solid rgba(1, 67, 90, 0.12)',
-							padding: '1.75rem 1rem',
-							marginTop: '5rem',
-							marginBottom: '2rem',
-						}}>
-						<Box sx={{ width: '100%', mb: 1.5 }}>
-							<Typography
-								variant='h6'
-								sx={{
-									fontSize: isMobileSizeSmall ? '0.85rem' : '1rem',
-									fontWeight: 600,
-									color: theme.palette.primary.main,
-									fontFamily: LEARNER_TEXT_FONT_FAMILY,
-								}}>
-								Word bank
-							</Typography>
-							<Typography
-								variant='body2'
-								sx={{
-									mt: 0.5,
-									color: 'text.secondary',
-									fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
-									fontFamily: LEARNER_TEXT_FONT_FAMILY,
-									lineHeight: 1.5,
-								}}>
-								{getWordBankHint(blankValuePairs?.length ?? 0)}
-							</Typography>
-						</Box>
-						<Box
+				<Column
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-start',
+						boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+						borderRadius: '0.85rem',
+						background: 'rgba(255,255,255,0.78)',
+						border: '1px solid rgba(1, 67, 90, 0.12)',
+						padding: '1.75rem 1rem',
+						marginTop: '5rem',
+						marginBottom: '2rem',
+					}}>
+					<Box sx={{ width: '100%', mb: 1.5 }}>
+						<Typography
+							variant='h6'
 							sx={{
-								borderRadius: '0.35rem',
-								display: 'flex',
-								justifyContent: 'center',
-								flexWrap: 'wrap',
-								height: '100%',
-								width: '100%',
-								minHeight: '4rem',
+								fontSize: isMobileSizeSmall ? '0.85rem' : '1rem',
+								fontWeight: 600,
+								color: theme.palette.primary.main,
+								fontFamily: LEARNER_TEXT_FONT_FAMILY,
 							}}>
-							{responses?.map((response, index) => (
-								<Item
-									key={`response-${response.id}-${index}`}
-									$isCorrect={null}
-									$isSelected={!isInteractionLocked && selectedPoolIndex === index}
-									$isInteractive={!isInteractionLocked}
-									onClick={!isInteractionLocked ? () => handlePoolWordClick(index) : undefined}
-									role={!isInteractionLocked ? 'button' : undefined}
-									tabIndex={isInteractionLocked ? -1 : 0}
-									onKeyDown={
-										!isInteractionLocked
-											? (event) => {
-													if (event.key === 'Enter' || event.key === ' ') {
-														event.preventDefault();
-														handlePoolWordClick(index);
-													}
-												}
-											: undefined
-									}>
-									<Typography
-										variant='body2'
-										component='span'
-										sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
-										{response.value}
-									</Typography>
-								</Item>
-							))}
-						</Box>
-					</Column>
+							Word bank
+						</Typography>
+						<Typography
+							variant='body2'
+							sx={{
+								mt: 0.5,
+								color: 'text.secondary',
+								fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+								fontFamily: LEARNER_TEXT_FONT_FAMILY,
+								lineHeight: 1.5,
+							}}>
+							{getWordBankHint(blankValuePairs?.length ?? 0)}
+						</Typography>
+					</Box>
+					<Box
+						sx={{
+							borderRadius: '0.35rem',
+							display: 'flex',
+							justifyContent: 'center',
+							flexWrap: 'wrap',
+							height: '100%',
+							width: '100%',
+							minHeight: '4rem',
+						}}>
+						{responses?.map((response, index) => (
+							<Item
+								key={`response-${response.id}-${index}`}
+								$isCorrect={null}
+								$isSelected={!isInteractionLocked && selectedPoolIndex === index}
+								$isInteractive={!isInteractionLocked}
+								onClick={!isInteractionLocked ? () => handlePoolWordClick(index) : undefined}
+								role={!isInteractionLocked ? 'button' : undefined}
+								tabIndex={isInteractionLocked ? -1 : 0}
+								onKeyDown={
+									!isInteractionLocked
+										? (event) => {
+											if (event.key === 'Enter' || event.key === ' ') {
+												event.preventDefault();
+												handlePoolWordClick(index);
+											}
+										}
+										: undefined
+								}>
+								<Typography
+									variant='body2'
+									component='span'
+									sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.9rem', fontFamily: LEARNER_TEXT_FONT_FAMILY }}>
+									{response.value}
+								</Typography>
+							</Item>
+						))}
+					</Box>
+				</Column>
 			)}
 
 			{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (

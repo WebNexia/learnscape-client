@@ -38,7 +38,7 @@ const InstructionalLessonsDialog = ({
 	const lessonTextFontFamily = LEARNER_TEXT_FONT_FAMILY;
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: enableWordAssist,
-		hoverDelayMs: 1000,
+		hoverDelayMs: 500,
 	});
 
 	const selectedLesson = useMemo(
@@ -130,82 +130,82 @@ const InstructionalLessonsDialog = ({
 									) : (
 										<>
 											{selectedLesson.videoUrl && (
-										<Box sx={{ width: '100%', height: isMobileSize ? '14rem' : '20rem', mb: '1rem', mt: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
-											<UniversalVideoPlayer
-												url={selectedLesson.videoUrl}
-												width='90%'
-												height='100%'
-												style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.2)' }}
-												controls
-											/>
-										</Box>
-									)}
+												<Box sx={{ width: '100%', height: isMobileSize ? '14rem' : '20rem', mb: '1rem', mt: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+													<UniversalVideoPlayer
+														url={selectedLesson.videoUrl}
+														width='90%'
+														height='100%'
+														style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.2)' }}
+														controls
+													/>
+												</Box>
+											)}
 
-									{selectedLesson.text && (
-										<Box
-											className={LEARNER_RICH_TEXT_CLASS}
-											sx={{
-												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.15)',
-												padding: isMobileSize ? '0.75rem' : '1.25rem',
-												backgroundColor: theme.bgColor?.common,
-												borderRadius: '0.35rem',
-												width: '90%',
-												display: 'flex',
-												alignItems: 'center',
-												margin: '1rem auto',
-												'&, & *': {
-													fontFamily: `${lessonTextFontFamily} !important`,
-													color: `${lessonTextColor} !important`,
-													lineHeight: '2.1 !important',
-													textAlign: 'left !important',
-													textAlignLast: 'left !important',
-													wordSpacing: 'normal !important',
-													letterSpacing: 'normal !important',
-												},
-											}}>
-											<Typography
-												component='div'
-												onMouseOver={handleWordHover}
-												onMouseOut={handleMouseLeave}
-												onTouchStart={handleWordTouchStart}
-												onTouchEnd={handleWordTouchEnd}
-												onTouchCancel={handleWordTouchEnd}
-												dangerouslySetInnerHTML={{
-													__html: wrapWordsForHover(
-														prepareLearnerRichTextHtml(sanitizeHtml(decode(selectedLesson.text)))
-													),
-												}}
-												sx={{
-													'lineHeight': 2.1,
-													'fontSize': isMobileSize ? '0.75rem' : '0.9rem',
-													'color': lessonTextColor,
-													'& img': {
-														maxWidth: '100%',
-														height: 'auto',
+											{selectedLesson.text && (
+												<Box
+													className={LEARNER_RICH_TEXT_CLASS}
+													sx={{
+														boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.15)',
+														padding: isMobileSize ? '0.75rem' : '1.25rem',
+														backgroundColor: theme.bgColor?.common,
 														borderRadius: '0.35rem',
-														margin: '0.75rem 0',
-													},
-													'& .pronounceable-word': {
-														cursor: enableWordAssist ? 'pointer' : 'default',
-														borderRadius: '0.2rem',
-														padding: 0,
-														margin: 0,
-														transition: 'background-color 0.15s ease',
-													},
-													'& .pronounceable-word:hover': {
-														backgroundColor: enableWordAssist ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
-													},
-													fontFamily: lessonTextFontFamily,
-												}}
-											/>
-										</Box>
-									)}
+														width: '90%',
+														display: 'flex',
+														alignItems: 'center',
+														margin: '1rem auto',
+														'&, & *': {
+															fontFamily: `${lessonTextFontFamily} !important`,
+															color: `${lessonTextColor} !important`,
+															lineHeight: '2.1 !important',
+															textAlign: 'left !important',
+															textAlignLast: 'left !important',
+															wordSpacing: 'normal !important',
+															letterSpacing: 'normal !important',
+														},
+													}}>
+													<Typography
+														component='div'
+														onMouseOver={handleWordHover}
+														onMouseOut={handleMouseLeave}
+														onTouchStart={handleWordTouchStart}
+														onTouchEnd={handleWordTouchEnd}
+														onTouchCancel={handleWordTouchEnd}
+														dangerouslySetInnerHTML={{
+															__html: wrapWordsForHover(
+																prepareLearnerRichTextHtml(sanitizeHtml(decode(selectedLesson.text)))
+															),
+														}}
+														sx={{
+															'lineHeight': 2.1,
+															'fontSize': isMobileSize ? '0.75rem' : '0.9rem',
+															'color': lessonTextColor,
+															'& img': {
+																maxWidth: '100%',
+																height: 'auto',
+																borderRadius: '0.35rem',
+																margin: '0.75rem 0',
+															},
+															'& .pronounceable-word': {
+																cursor: enableWordAssist ? 'pointer' : 'default',
+																borderRadius: '0.2rem',
+																padding: 0,
+																margin: 0,
+																transition: 'background-color 0.15s ease',
+															},
+															'& .pronounceable-word:hover': {
+																backgroundColor: enableWordAssist ? 'rgba(1, 67, 90, 0.14)' : 'transparent',
+															},
+															fontFamily: lessonTextFontFamily,
+														}}
+													/>
+												</Box>
+											)}
 
-									{!selectedLesson.videoUrl && !selectedLesson.text && (
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											No video or text content available for this lesson yet.
-										</Typography>
-									)}
+											{!selectedLesson.videoUrl && !selectedLesson.text && (
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													No video or text content available for this lesson yet.
+												</Typography>
+											)}
 										</>
 									)}
 								</Box>
