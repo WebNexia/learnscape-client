@@ -77,10 +77,14 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const fileSelectionGenRef = useRef(0);
 
 	const clearFileSelection = useCallback(() => {
+		fileSelectionGenRef.current += 1;
+		if (onPreviewChange) {
+			onPreviewChange(null);
+		}
 		resetImageUpload();
-		onPreviewChange?.(null);
 		setIsUrlErrorOpen(false);
 		setUrlErrorMessage('');
 		if (fileInputRef.current) {
@@ -216,7 +220,17 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 										return;
 									}
 
-									const previewUrl = await processSelectedFile(file);
+									const selectionGen = ++fileSelectionGenRef.current;
+									const previewUrl = await processSelectedFile(file, {
+										externalPreview: Boolean(onPreviewChange),
+									});
+									if (selectionGen !== fileSelectionGenRef.current) {
+										if (previewUrl?.startsWith('blob:')) {
+											URL.revokeObjectURL(previewUrl);
+										}
+										return;
+									}
+
 									onPreviewChange?.(previewUrl);
 								}}
 								disabled={disabled || isSaving || isProcessingImage}

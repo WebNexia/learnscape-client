@@ -1,5 +1,4 @@
 const MAX_DIMENSION = 2048;
-const DISPLAYABLE_TYPES = /^image\/(jpeg|jpg|png|webp)$/i;
 
 function loadViaImageElement(file: File): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
@@ -20,10 +19,15 @@ function loadViaImageElement(file: File): Promise<HTMLImageElement> {
 async function loadImageSource(file: File): Promise<{ source: CanvasImageSource; cleanup?: () => void }> {
 	if (typeof createImageBitmap === 'function') {
 		try {
-			const bitmap = await createImageBitmap(file);
+			const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
 			return { source: bitmap, cleanup: () => bitmap.close() };
 		} catch {
-			// Fall back to Image element (some mobile browsers handle HEIC here)
+			try {
+				const bitmap = await createImageBitmap(file);
+				return { source: bitmap, cleanup: () => bitmap.close() };
+			} catch {
+				// Fall back to Image element
+			}
 		}
 	}
 
@@ -32,15 +36,10 @@ async function loadImageSource(file: File): Promise<{ source: CanvasImageSource;
 }
 
 /**
- * Converts HEIC/large mobile photos to a JPEG under the size limit so preview + upload work reliably.
+ * Decode + re-encode as JPEG under the size limit so preview and upload work on mobile (HEIC, large photos).
  */
 export async function normalizeImageForUpload(file: File, maxSizeInMB: number): Promise<File> {
 	const maxBytes = maxSizeInMB * 1024 * 1024;
-
-	if (DISPLAYABLE_TYPES.test(file.type) && file.size <= maxBytes) {
-		return file;
-	}
-
 	const { source, cleanup } = await loadImageSource(file);
 
 	try {
@@ -54,6 +53,10 @@ export async function normalizeImageForUpload(file: File, maxSizeInMB: number): 
 			const img = source as HTMLImageElement;
 			width = img.naturalWidth;
 			height = img.naturalHeight;
+		}
+
+		if (!width || !height) {
+			throw new Error('Could not read image dimensions');
 		}
 
 		const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
