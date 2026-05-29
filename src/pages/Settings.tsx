@@ -25,6 +25,13 @@ import 'react-international-phone/style.css';
 import { useAuth } from '../hooks/useAuth';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import uploadImage from '../utils/imageUpload';
+import { withTimeout } from '../utils/withTimeout';
+
+const DEFAULT_PROFILE_AVATAR =
+	'data:image/svg+xml,' +
+	encodeURIComponent(
+		'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#e8eef4"/><circle cx="60" cy="46" r="22" fill="#b0bec9"/><ellipse cx="60" cy="102" rx="34" ry="28" fill="#b0bec9"/></svg>'
+	);
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -196,17 +203,27 @@ const Settings = () => {
 	};
 
 	const handleProfilePictureSave = async (file: File) => {
-		if (!user?._id) return;
+		if (!user?._id) {
+			throw new Error('User not loaded');
+		}
 
 		const saveGen = ++profilePictureSaveGenRef.current;
 		setIsSavingProfilePicture(true);
 		setProfileErrorMsg(undefined);
 
 		try {
-			const url = await uploadImage(file, 'ProfileImages', organisation?.orgName || 'defaultOrg', user._id);
+			const url = await withTimeout(
+				uploadImage(file, 'ProfileImages', organisation?.orgName || 'defaultOrg', user._id),
+				60000,
+				'Upload timed out. Check your connection and try again.'
+			);
 			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
 
-			await axios.patch(`${base_url}/users/${user._id}`, { imageUrl: url });
+			await withTimeout(
+				axios.patch(`${base_url}/users/${user._id}`, { imageUrl: url }),
+				30000,
+				'Save timed out. Please try again.'
+			);
 			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
 
 			setUser((prevData) => (prevData ? { ...prevData, imageUrl: url } : prevData));
@@ -215,14 +232,19 @@ const Settings = () => {
 			profilePictureUploadRef.current?.clearFileSelection();
 			setIsProfilePictureSavedMsgDisplayed(true);
 		} catch (error: unknown) {
-			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) return;
-			console.error('Profile picture save error:', error);
-			const axiosError = error as { response?: { data?: { message?: string } } };
-			setProfileErrorMsg(axiosError?.response?.data?.message || 'An error occurred while saving your profile picture.');
-		} finally {
-			if (isMountedRef.current) {
-				setIsSavingProfilePicture(false);
+			if (!isMountedRef.current || saveGen !== profilePictureSaveGenRef.current) {
+				throw error;
 			}
+			console.error('Profile picture save error:', error);
+			const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+			setProfileErrorMsg(
+				axiosError?.response?.data?.message ||
+					axiosError?.message ||
+					'An error occurred while saving your profile picture.'
+			);
+			throw error;
+		} finally {
+			setIsSavingProfilePicture(false);
 		}
 	};
 
@@ -537,12 +559,15 @@ const Settings = () => {
 								margin: '1rem 0 0.5rem 0',
 							}}>
 							<img
-								src={
-									profilePicturePreview ||
-									imageUrl ||
-									'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'
-								}
-								alt='profile_img'
+								src={profilePicturePreview || imageUrl || DEFAULT_PROFILE_AVATAR}
+								alt=''
+								onError={(e) => {
+									const img = e.currentTarget;
+									if (img.src !== DEFAULT_PROFILE_AVATAR) {
+										img.onerror = null;
+										img.src = DEFAULT_PROFILE_AVATAR;
+									}
+								}}
 								style={{
 									height: isMobileSize ? '7rem' : '10rem',
 									width: isMobileSize ? '7rem' : '10rem',

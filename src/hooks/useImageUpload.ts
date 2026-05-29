@@ -9,6 +9,11 @@ interface UseImageUploadOptions {
 	scopedEntityId?: string;
 }
 
+interface ProcessSelectedFileOptions {
+	/** Parent owns preview blob URL (e.g. Settings profile picture). */
+	externalPreview?: boolean;
+}
+
 const useImageUpload = (options: UseImageUploadOptions = {}) => {
 	const { maxSizeInMB = 3, scopedEntityId } = options;
 	const { organisation } = useContext(OrganisationContext);
@@ -18,6 +23,7 @@ const useImageUpload = (options: UseImageUploadOptions = {}) => {
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
 	const previewUrlRef = useRef<string | null>(null);
+	const processGenRef = useRef(0);
 
 	const clearPreviewUrl = useCallback(() => {
 		if (previewUrlRef.current) {
@@ -54,26 +60,42 @@ const useImageUpload = (options: UseImageUploadOptions = {}) => {
 	};
 
 	const processSelectedFile = useCallback(
-		async (file: File): Promise<string | null> => {
+		async (file: File, options: ProcessSelectedFileOptions = {}): Promise<string | null> => {
+			const gen = ++processGenRef.current;
 			setIsProcessingImage(true);
 			setIsImageSizeLarge(false);
 
 			try {
 				const normalized = await normalizeImageForUpload(file, maxSizeInMB);
+				if (gen !== processGenRef.current) {
+					return null;
+				}
+
 				setImageUpload(normalized);
+
+				if (options.externalPreview) {
+					setImagePreview(null);
+					clearPreviewUrl();
+					return URL.createObjectURL(normalized);
+				}
+
 				const previewUrl = URL.createObjectURL(normalized);
 				setPreviewUrl(previewUrl);
 				return previewUrl;
 			} catch {
-				setImageUpload(null);
-				setPreviewUrl(null);
-				setIsImageSizeLarge(true);
+				if (gen === processGenRef.current) {
+					setImageUpload(null);
+					setPreviewUrl(null);
+					setIsImageSizeLarge(true);
+				}
 				return null;
 			} finally {
-				setIsProcessingImage(false);
+				if (gen === processGenRef.current) {
+					setIsProcessingImage(false);
+				}
 			}
 		},
-		[maxSizeInMB, setPreviewUrl]
+		[maxSizeInMB, setPreviewUrl, clearPreviewUrl]
 	);
 
 	const handleImageUpload = async (folderName: string, handleUrlCallback: (url: string) => void) => {
@@ -94,6 +116,7 @@ const useImageUpload = (options: UseImageUploadOptions = {}) => {
 	};
 
 	const resetImageUpload = useCallback(() => {
+		processGenRef.current += 1;
 		setImageUpload(null);
 		setPreviewUrl(null);
 		setIsImageSizeLarge(false);
