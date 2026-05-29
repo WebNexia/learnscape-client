@@ -218,7 +218,7 @@ const LessonPage = () => {
 	});
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
 		enabled: isWordAssistEnabled,
-		hoverDelayMs: 1000,
+		hoverDelayMs: 500,
 	});
 
 	const { fetchQuestionTypeName } = useQuestionTypes();

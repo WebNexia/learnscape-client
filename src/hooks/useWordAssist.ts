@@ -81,6 +81,23 @@ const SENSITIVE_OR_SLANG_KEYWORDS = [
 	'sexual',
 	'sexually',
 	'homosexual',
+	'homosexuality',
+	'homosexuals',
+	'lesbian',
+	'lesbians',
+	'bisexual',
+	'bisexuals',
+	'a gay man',
+	'a gay woman',
+	'a gay person',
+	'gay man',
+	'gay woman',
+	'gay person',
+	'dyke',
+	'faggot',
+	'fagot',
+	'sodomite',
+	'pansy',
 	'erotic',
 	'porn',
 	'pornographic',
@@ -171,9 +188,7 @@ const buildMeaningCandidates = (entries: any[]): MeaningCandidate[] => {
 
 			return (meaning?.definitions || [])
 				.map((definitionItem: any) => {
-					const definitionSynonyms = (definitionItem?.synonyms || [])
-						.map((synonym: unknown) => String(synonym).toLowerCase().trim())
-						.filter(Boolean);
+					const definitionSynonyms = (definitionItem?.synonyms || []).map((synonym: unknown) => String(synonym).toLowerCase().trim()).filter(Boolean);
 
 					return {
 						definition: String(definitionItem?.definition || '').trim(),
@@ -182,7 +197,7 @@ const buildMeaningCandidates = (entries: any[]): MeaningCandidate[] => {
 					};
 				})
 				.filter((candidate: MeaningCandidate) => candidate.definition.length > 0);
-		})
+		}),
 	);
 };
 
@@ -266,9 +281,9 @@ const selectTopMeaningCandidates = (candidates: MeaningCandidate[], lookupWord =
 	const safeCandidates = candidates.filter(
 		(candidate) =>
 			!containsAnyKeyword(candidate.definition.toLowerCase(), SENSITIVE_OR_SLANG_KEYWORDS) &&
-			!containsAnyKeyword(candidate.definition.toLowerCase(), EDUCATIONAL_STYLE_WARNING_KEYWORDS)
+			!containsAnyKeyword(candidate.definition.toLowerCase(), EDUCATIONAL_STYLE_WARNING_KEYWORDS),
 	);
-	const rankingSource = safeCandidates.length > 0 ? safeCandidates : candidates;
+	const rankingSource = safeCandidates;
 
 	const scoredCandidates = rankingSource
 		.map((candidate) => ({ candidate, score: scoreMeaningCandidate(candidate, lookupWord) }))
@@ -298,9 +313,29 @@ const startsWithUppercaseLetter = (word: string): boolean => {
 	return /^\p{Lu}/u.test(word);
 };
 
+const isLikelyDialogueSpeaker = (target: HTMLElement): boolean => {
+	let sibling: ChildNode | null = target.nextSibling;
+	while (sibling) {
+		if (sibling.nodeType === Node.TEXT_NODE) {
+			const text = sibling.textContent || '';
+			const trimmed = text.trimStart();
+			if (!trimmed) {
+				sibling = sibling.nextSibling;
+				continue;
+			}
+			return trimmed.startsWith(':');
+		}
+		if (sibling.nodeType === Node.ELEMENT_NODE) {
+			const elementText = (sibling as HTMLElement).textContent?.trimStart() || '';
+			return elementText.startsWith(':');
+		}
+		break;
+	}
+	return false;
+};
+
 const isFirstWordOfSentence = (target: HTMLElement): boolean => {
-	const rootContainer =
-		target.closest('.rich-text-content') || target.closest('[class*="MuiTypography-root"]') || target.parentElement;
+	const rootContainer = target.closest('.rich-text-content') || target.closest('[class*="MuiTypography-root"]') || target.parentElement;
 	if (!rootContainer) return false;
 
 	const range = document.createRange();
@@ -320,7 +355,7 @@ const isInsideWordAssistUi = (node: EventTarget | null): boolean => {
 	return Boolean(node.closest('.pronounceable-word') || node.closest(WORD_ASSIST_POPPER_SELECTOR));
 };
 
-export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAssistOptions = {}) => {
+export const useWordAssist = ({ enabled = true, hoverDelayMs = 750 }: UseWordAssistOptions = {}) => {
 	const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 	const [activeWord, setActiveWord] = useState<string>('');
 	const [wordInfo, setWordInfo] = useState<WordAssistData | null>(null);
@@ -372,7 +407,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 
 		const normalizedWord = word.toLowerCase();
 		const preferProperNoun = Boolean(options?.preferProperNoun);
-		const cacheKey = `${normalizedWord}|${preferProperNoun ? 'proper' : 'default'}|v3`;
+		const cacheKey = `${normalizedWord}|${preferProperNoun ? 'proper' : 'default'}|v4`;
 
 		if (wordInfoCacheRef.current[cacheKey]) {
 			if (isStale()) return;
@@ -395,9 +430,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 			if (preferProperNoun) {
 				let properMeaningTr = 'Anlam bulunamadi.';
 				try {
-					const trResponse = await fetch(
-						`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|tr`
-					);
+					const trResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|tr`);
 					const trData = await trResponse.json();
 					properMeaningTr = trData?.responseData?.translatedText || properMeaningTr;
 				} catch (error) {
@@ -421,9 +454,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 
 						let meaningTrCandidate = 'Anlam bulunamadi.';
 						try {
-							const trResponse = await fetch(
-								`https://api.mymemory.translated.net/get?q=${encodeURIComponent(meaningEnCandidate)}&langpair=en|tr`
-							);
+							const trResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(meaningEnCandidate)}&langpair=en|tr`);
 							const trData = await trResponse.json();
 							meaningTrCandidate = trData?.responseData?.translatedText || meaningTrCandidate;
 						} catch (error) {
@@ -435,7 +466,7 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 							meaningEn: meaningEnCandidate,
 							meaningTr: meaningTrCandidate,
 						};
-					})
+					}),
 				);
 				if (isStale()) return;
 			}
@@ -482,7 +513,8 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 		if (!target) return;
 		const rawWord = target.dataset.word?.trim();
 		if (!rawWord) return;
-		const preferProperNoun = startsWithUppercaseLetter(rawWord) && !isFirstWordOfSentence(target);
+		const preferProperNoun =
+			startsWithUppercaseLetter(rawWord) && (!isFirstWordOfSentence(target) || isLikelyDialogueSpeaker(target));
 
 		clearHoverTimer();
 		hoverTimerRef.current = window.setTimeout(() => {
@@ -500,7 +532,8 @@ export const useWordAssist = ({ enabled = true, hoverDelayMs = 1000 }: UseWordAs
 		if (!target) return;
 		const rawWord = target.dataset.word?.trim();
 		if (!rawWord) return;
-		const preferProperNoun = startsWithUppercaseLetter(rawWord) && !isFirstWordOfSentence(target);
+		const preferProperNoun =
+			startsWithUppercaseLetter(rawWord) && (!isFirstWordOfSentence(target) || isLikelyDialogueSpeaker(target));
 
 		clearHoverTimer();
 		hoverTimerRef.current = window.setTimeout(() => {
