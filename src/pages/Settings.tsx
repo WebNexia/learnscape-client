@@ -7,7 +7,7 @@ import HandleImageUploadURL, {
 } from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged, verifyBeforeUpdateEmail } from 'firebase/auth';
+import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged } from 'firebase/auth';
 import theme from '../themes';
 import { Info, SupportAgent, Visibility, VisibilityOff } from '@mui/icons-material';
 import { PasswordUpdateErrorMessages, Roles, TextFieldTypes } from '../interfaces/enums';
@@ -486,14 +486,19 @@ const Settings = () => {
 		try {
 			await reauthenticateWithCredential(firebaseUser, credential);
 
-			await verifyBeforeUpdateEmail(firebaseUser, emailToUpdate);
+			await axios.post(`${base_url}/users/send-email-change-verification`, {
+				newEmail: emailToUpdate.trim().toLowerCase(),
+			});
 			setShowVerifyEmailMsg(true);
 			setShowPasswordDialog(false);
 			setDialogPassword('');
 			setEmailToUpdate(null);
 		} catch (reauthError: any) {
-			console.error('verifyBeforeUpdateEmail error:', reauthError);
-			if (reauthError.code === 'auth/email-already-in-use' || reauthError.message === 'EMAIL_EXISTS') {
+			console.error('send-email-change-verification error:', reauthError);
+			const serverMessage = reauthError?.response?.data?.message;
+			if (serverMessage) {
+				setDialogError(serverMessage);
+			} else if (reauthError.code === 'auth/email-already-in-use' || reauthError.message === 'EMAIL_EXISTS') {
 				setDialogError('This email address is already in use.');
 			} else if (reauthError.code === 'auth/wrong-password') {
 				setDialogError('Incorrect password. Please try again.');
@@ -1066,7 +1071,7 @@ const Settings = () => {
 							lineHeight: 1.5,
 						},
 					}}>
-					A verification email has been sent to your new address. Please check your inbox and verify your email.
+					Yeni e-posta adresinize doğrulama bağlantısı gönderildi. Lütfen gelen kutunuzu kontrol edin.
 				</Alert>
 			</Snackbar>
 

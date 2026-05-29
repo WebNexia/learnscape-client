@@ -34,7 +34,7 @@ export async function sendCommunityNotifications({
 				title: 'Community Message Replied',
 				message: `${user?.username} replied to your message "${truncateText(replyToMessage.text, 30)}" in the topic ${truncateText(
 					topic.title,
-					25
+					25,
 				)} under community topics`,
 				isRead: false,
 				timestamp: serverTimestamp(),
@@ -59,7 +59,7 @@ export async function sendCommunityNotifications({
 				title: 'Community Topic Replied',
 				message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
 					currentMessage,
-					30
+					30,
 				)}"`,
 				isRead: false,
 				timestamp: serverTimestamp(),
@@ -120,7 +120,7 @@ export async function sendCommunityNotifications({
 				if (regularMentions.length > 0) {
 					// Get user data for mentioned usernames
 					const mentionedUsersResponse = await axios.get(
-						`${baseUrl}/users/search-by-usernames?usernames=${regularMentions.join(',')}&orgId=${orgId}`
+						`${baseUrl}/users/search-by-usernames?usernames=${regularMentions.join(',')}&orgId=${orgId}`,
 					);
 					const mentionedUsers = mentionedUsersResponse.data.data || [];
 
