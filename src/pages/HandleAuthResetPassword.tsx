@@ -16,7 +16,11 @@ const HandleActionPage = () => {
 		}
 
 		// Redirect based on the mode parameter
-		if (mode === 'verifyEmail' || mode === 'verifyAndChangeEmail') {
+		if (mode === 'verifyEmail') {
+			navigate(`/verify-email?oobCode=${oobCode}`);
+		} else if (mode === 'recoverEmail') {
+			navigate(`/recover-email?oobCode=${oobCode}`);
+		} else if (mode === 'verifyAndChangeEmail') {
 			navigate(`/verify-email?oobCode=${oobCode}`);
 		} else if (mode === 'resetPassword') {
 			navigate(`/reset-password?mode=resetPassword&oobCode=${oobCode}`);

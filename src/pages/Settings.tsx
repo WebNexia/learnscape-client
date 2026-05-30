@@ -239,8 +239,8 @@ const Settings = () => {
 			const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
 			setProfileErrorMsg(
 				axiosError?.response?.data?.message ||
-					axiosError?.message ||
-					'An error occurred while saving your profile picture.'
+				axiosError?.message ||
+				'An error occurred while saving your profile picture.'
 			);
 			throw error;
 		} finally {
@@ -757,6 +757,29 @@ const Settings = () => {
 							</DialogContent>
 						</CustomDialog>
 
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={marketingEmailConsent}
+									onChange={(e) => {
+										setMarketingEmailConsent(e.target.checked);
+										setIsProfileUpdated(true);
+									}}
+									size='small'
+									sx={{
+										'color': 'rgba(0, 0, 0, 0.6)',
+										'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
+									}}
+								/>
+							}
+							label={
+								<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: theme.textColor?.secondary?.main }}>
+									I want to receive marketing emails.
+								</Typography>
+							}
+							sx={{ width: '90%', mt: '0.5rem', mb: '0.25rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+						/>
+
 						{profileErrorMsg && <CustomErrorMessage sx={{ width: '100%', fontSize: '0.75rem', mb: 1 }}>{profileErrorMsg}</CustomErrorMessage>}
 						<Box sx={{ display: 'flex', width: '90%', justifyContent: 'space-between' }}>
 							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleEmailUpdate}>
@@ -779,28 +802,7 @@ const Settings = () => {
 									mt: '1.5rem',
 									color: theme.textColor?.secondary.main,
 								}}>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={marketingEmailConsent}
-											onChange={(e) => {
-												setMarketingEmailConsent(e.target.checked);
-												setIsProfileUpdated(true);
-											}}
-											size='small'
-											sx={{
-												'color': 'rgba(0, 0, 0, 0.6)',
-												'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#1EC28B' },
-											}}
-										/>
-									}
-									label={
-										<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.textColor?.secondary?.main }}>
-											I want to receive marketing emails.
-										</Typography>
-									}
-									sx={{ width: '90%', mt: '0.5rem', mb: '0.25rem', '& .MuiFormControlLabel-label': { mt: '2px' } }}
-								/>
+
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 									<SupportAgent sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', mt: '0.15rem' }} color='error' />
 
@@ -894,7 +896,7 @@ const Settings = () => {
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							flex: isSmallScreen ? undefined : 3,
-							height: isSmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '30rem',
+							height: isSmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '31.5rem',
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
@@ -1075,7 +1077,7 @@ const Settings = () => {
 				</Alert>
 			</Snackbar>
 
-			<CustomDialog openModal={showPasswordDialog} closeModal={handleDialogClose} title='Enter Current Password' maxWidth='sm'>
+			<CustomDialog openModal={showPasswordDialog} closeModal={handleDialogClose} title='Enter Current Password' maxWidth='xs'>
 				<DialogContent>
 					<CustomTextField
 						type='password'

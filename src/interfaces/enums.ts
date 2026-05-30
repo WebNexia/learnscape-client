@@ -24,6 +24,7 @@ export const enum AuthFormErrorMessages {
 	PASSWORD_NO_NUMBER = 'Şifre en az bir rakam içermelidir',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Şifre en az bir özel karakter içermelidir.',
 	NETWORK_ERROR = 'Ağ hatası oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
+	ACCOUNT_LOAD_FAILED = 'Hesap bilgileri yüklenemedi. Lütfen tekrar giriş yapın veya sayfayı yenileyin.',
 	INVALID_PHONE_NUMBER = 'Lütfen geçerli bir telefon numarası girin.',
 	USERNAME_TOO_SHORT = 'Kullanıcı adı en az 5 karakter olmalıdır',
 	USERNAME_TOO_LONG = 'Kullanıcı adı en fazla 15 karakter olmalıdır',
