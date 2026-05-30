@@ -1088,7 +1088,7 @@ const Settings = () => {
 					/>
 					{dialogError && <CustomErrorMessage sx={{ mt: 1 }}>{dialogError}</CustomErrorMessage>}
 				</DialogContent>
-				<CustomDialogActions onCancel={handleDialogClose} onSubmit={handleDialogSubmit} submitBtnText='Submit' />
+				<CustomDialogActions onCancel={handleDialogClose} onSubmit={handleDialogSubmit} submitBtnText='Submit' actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }} />
 			</CustomDialog>
 		</DashboardPagesLayout>
 	);

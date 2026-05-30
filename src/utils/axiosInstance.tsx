@@ -7,7 +7,11 @@ declare global {
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { InternalAxiosRequestConfig } from 'axios';
-import { emitLearnerSessionSuperseded, getLearnerSessionId } from './learnerSession';
+import {
+	emitLearnerSessionSuperseded,
+	getLearnerSessionId,
+	shouldSuppressLearnerSessionSuperseded,
+} from './learnerSession';
 
 // Extend the InternalAxiosRequestConfig type to include retryCount
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -74,10 +78,16 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
 	(response) => response,
 	async (error) => {
-		const config = error.config as CustomAxiosRequestConfig;
+		const config = error.config as CustomAxiosRequestConfig | undefined;
+
+		if (!config) {
+			return Promise.reject(error);
+		}
 
 		if (error.response?.data?.code === 'SESSION_SUPERSEDED') {
-			emitLearnerSessionSuperseded();
+			if (!shouldSuppressLearnerSessionSuperseded()) {
+				emitLearnerSessionSuperseded();
+			}
 			return Promise.reject(error);
 		}
 
@@ -143,7 +153,6 @@ axiosInstance.interceptors.response.use(
 
 		// Retry mechanism for network errors or 5xx server errors only
 		if (
-			config &&
 			typeof config.retryCount === 'number' &&
 			config.retryCount < 3 &&
 			(!error.response || (error.response.status >= 500 && error.response.status < 600))

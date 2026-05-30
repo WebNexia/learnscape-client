@@ -22,7 +22,7 @@ import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
 import { resetWordAssistPreference } from '../utils/wordAssistPreference';
-import { markNewLearnerLogin } from '../utils/learnerSession';
+import { getLearnerSessionId, markNewLearnerLogin } from '../utils/learnerSession';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -75,9 +75,10 @@ const Auth = () => {
 	const [isSendingResetEmail, setIsSendingResetEmail] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (signingIn && user) {
-			setSigningIn(false);
-		}
+		if (!signingIn || !user) return;
+		// Keep spinner until learner device session is registered (avoids false "signed in elsewhere").
+		if (user.role === 'learner' && !getLearnerSessionId()) return;
+		setSigningIn(false);
 	}, [signingIn, user]);
 	// Removed isSignupInProgress - no longer needed
 
@@ -105,6 +106,7 @@ const Auth = () => {
 		e.preventDefault();
 		if (signingIn) return;
 		setSigningIn(true);
+		markNewLearnerLogin();
 		try {
 			const userCredential = await signInWithEmailAndPassword(auth, email, password);
 			const firebaseUser = userCredential.user;
@@ -114,8 +116,6 @@ const Auth = () => {
 				setSigningIn(false);
 				return;
 			}
-
-			markNewLearnerLogin();
 
 			await firebaseUser.getIdToken();
 

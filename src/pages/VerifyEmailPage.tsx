@@ -1,12 +1,10 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, applyActionCode, checkActionCode, signOut } from 'firebase/auth';
-import { Alert, Box, Typography, Button } from '@mui/material';
+import { getAuth, applyActionCode, checkActionCode } from 'firebase/auth';
+import { Alert, Box, Typography, Button, CircularProgress } from '@mui/material';
 import theme from '../themes';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import axios from '@utils/axiosInstance';
-
 import logo from '../assets/logo.png';
 
 const VerifyEmailPage = () => {
@@ -17,13 +15,11 @@ const VerifyEmailPage = () => {
 	const navigate = useNavigate();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { organisation } = useContext(OrganisationContext);
 	const { user, setUser } = useContext(UserAuthContext);
 	const verificationSuccessRef = useRef(false);
 	const hasRunRef = useRef(false);
 
-	// Retry function for verification status check
-	const checkVerificationWithRetry = async (auth: any, maxRetries = 3): Promise<boolean> => {
+	const checkVerificationWithRetry = async (auth: ReturnType<typeof getAuth>, maxRetries = 3): Promise<boolean> => {
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
 				await auth.currentUser?.reload();
@@ -31,7 +27,6 @@ const VerifyEmailPage = () => {
 					return true;
 				}
 
-				// Wait before next attempt (exponential backoff)
 				if (attempt < maxRetries) {
 					await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
 				}
@@ -51,11 +46,11 @@ const VerifyEmailPage = () => {
 		const auth = getAuth();
 
 		if (!code) {
-			setVerificationMessage('Invalid or missing verification code.');
+			setVerificationMessage('Geçersiz veya eksik doğrulama kodu.');
+			setIsVerified(false);
 			return;
 		}
 
-		// Prevent multiple executions
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
@@ -64,23 +59,17 @@ const VerifyEmailPage = () => {
 			setErrorType(null);
 
 			try {
-				// Step 1: Verify the action code
 				await checkActionCode(auth, code);
-
-				// Step 2: Apply the action code
 				await applyActionCode(auth, code);
 
-				// Step 3: Set success state immediately
 				setIsVerified(true);
-				setVerificationMessage('Your email has been successfully verified.');
+				setVerificationMessage('E-postanız başarıyla doğrulandı.');
 				verificationSuccessRef.current = true;
 
-				// Step 4: Wait and retry verification status check
 				try {
-					const isVerified = await checkVerificationWithRetry(auth, 3);
+					const emailVerified = await checkVerificationWithRetry(auth, 3);
 
-					if (isVerified && auth.currentUser && user?._id) {
-						// Update backend with new email if needed
+					if (emailVerified && auth.currentUser && user?._id) {
 						const newEmail = auth.currentUser.email;
 						if (newEmail && user.email !== newEmail) {
 							try {
@@ -88,34 +77,30 @@ const VerifyEmailPage = () => {
 								setUser((prev) => (prev ? { ...prev, email: newEmail } : prev));
 							} catch (backendError) {
 								console.warn('Failed to sync email with backend:', backendError);
-								// Don't overwrite success message for backend sync failure
 							}
 						}
 					}
 				} catch (retryError) {
 					console.warn('Verification status check failed after retries:', retryError);
-					// Keep success message even if status check fails
 				}
 
-				// Step 5: Redirect after successful verification
-				setTimeout(() => navigate('/auth'), 11000);
-			} catch (error: any) {
-				// Only handle errors if we haven't already succeeded
+				setTimeout(() => navigate('/auth'), 8000);
+			} catch (error: unknown) {
 				if (verificationSuccessRef.current) {
 					return;
 				}
 
 				console.error('Verification error:', error);
 
-				// Check if user is already verified despite the error
+				const firebaseError = error as { code?: string };
+
 				try {
 					await auth.currentUser?.reload();
 					if (auth.currentUser?.emailVerified) {
 						setIsVerified(true);
-						setVerificationMessage('Your email was already verified. Syncing your profile...');
+						setVerificationMessage('E-postanız zaten doğrulanmış. Profiliniz senkronize ediliyor...');
 						verificationSuccessRef.current = true;
 
-						// Update backend if needed
 						if (auth.currentUser && user?._id) {
 							const newEmail = auth.currentUser.email;
 							if (newEmail && user.email !== newEmail) {
@@ -128,30 +113,29 @@ const VerifyEmailPage = () => {
 							}
 						}
 
-						setTimeout(() => navigate('/auth'), 11000);
+						setTimeout(() => navigate('/auth'), 8000);
 						return;
 					}
 				} catch (reloadError) {
 					console.warn('Failed to reload user:', reloadError);
 				}
 
-				// Handle different error scenarios
-				if (error.code === 'auth/invalid-action-code') {
+				if (firebaseError.code === 'auth/invalid-action-code') {
 					setIsVerified(false);
-					setVerificationMessage('The verification link is invalid or has expired.');
-				} else if (error.code === 'auth/expired-action-code') {
+					setVerificationMessage('Doğrulama bağlantısı geçersiz veya süresi dolmuş.');
+				} else if (firebaseError.code === 'auth/expired-action-code') {
 					setIsVerified(false);
-					setVerificationMessage('The verification link has expired. Please request a new one.');
+					setVerificationMessage('Doğrulama bağlantısının süresi dolmuş. Lütfen yeni bir bağlantı isteyin.');
 				} else {
 					setIsVerified(false);
-					setVerificationMessage('An error occurred during verification. Please try again.');
+					setVerificationMessage('Doğrulama sırasında bir hata oluştu. Lütfen tekrar deneyin.');
 				}
 			} finally {
 				setIsUpdating(false);
 			}
 		};
 
-		runVerification();
+		void runVerification();
 	}, [navigate, user, setUser, base_url]);
 
 	return (
@@ -167,16 +151,16 @@ const VerifyEmailPage = () => {
 			<Box sx={{ textAlign: 'center', maxWidth: '600px', width: '100%' }}>
 				<img src={logo} alt='logo' style={{ height: '6rem', marginBottom: '2rem' }} />
 				<Typography variant='h4' sx={{ mb: '2rem' }}>
-					Verify Your Email
+					E-postanızı Doğrulayın
 				</Typography>
 
 				{verificationMessage && (
 					<Alert
 						severity={isVerified && !errorType ? 'success' : 'error'}
 						sx={{
-							'width': '70%',
-							'margin': '3rem auto',
-							'textAlign': 'center',
+							width: '85%',
+							margin: '2rem auto',
+							textAlign: 'center',
 							'& .MuiAlert-message': {
 								fontSize: '1rem',
 								lineHeight: 1.5,
@@ -187,28 +171,29 @@ const VerifyEmailPage = () => {
 				)}
 
 				{isVerified && !isUpdating && !errorType && (
-					<Typography
-						variant='body2'
-						sx={{
-							mt: '1rem',
-							color: 'text.secondary',
-							fontSize: '0.9rem',
-						}}>
-						You will be redirected to the login page in a few seconds...
+					<Typography variant='body2' sx={{ mt: '1rem', color: 'text.secondary', fontSize: '0.9rem' }}>
+						Birkaç saniye içinde giriş sayfasına yönlendirileceksiniz...
 					</Typography>
 				)}
 
-				<Button
-					variant='contained'
+				<Box
 					sx={{
 						mt: '2rem',
-						textTransform: 'capitalize',
-						minWidth: '200px',
-					}}
-					onClick={() => navigate('/auth', { replace: true })}
-					disabled={isUpdating}>
-					{isUpdating ? 'Updating...' : 'Go to Login Page'}
-				</Button>
+						display: 'flex',
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 2,
+					}}>
+					{isUpdating && <CircularProgress size={28} />}
+					<Button
+						variant='contained'
+						sx={{ textTransform: 'capitalize', minWidth: '200px' }}
+						onClick={() => navigate('/auth', { replace: true })}
+						disabled={isUpdating}>
+						Giriş Sayfasına Git
+					</Button>
+				</Box>
 			</Box>
 		</Box>
 	);

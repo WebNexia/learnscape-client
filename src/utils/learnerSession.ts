@@ -1,6 +1,7 @@
 const LEARNER_SESSION_STORAGE_KEY = 'learnerSessionId';
 
 let forceNewLearnerSessionOnNextRegister = false;
+let suppressSessionSupersededUntil = 0;
 
 export function getLearnerSessionId(): string | null {
 	return localStorage.getItem(LEARNER_SESSION_STORAGE_KEY);
@@ -14,10 +15,16 @@ export function clearLearnerSessionId(): void {
 	localStorage.removeItem(LEARNER_SESSION_STORAGE_KEY);
 }
 
-/** Call on explicit sign-in so the next register creates a new server session. */
+/** Call before sign-in so auth listeners use a fresh session (not stale localStorage). */
 export function markNewLearnerLogin(): void {
 	forceNewLearnerSessionOnNextRegister = true;
 	clearLearnerSessionId();
+	// Avoid "signed in elsewhere" dialog while login + session registration finish.
+	suppressSessionSupersededUntil = Date.now() + 12_000;
+}
+
+export function shouldSuppressLearnerSessionSuperseded(): boolean {
+	return Date.now() < suppressSessionSupersededUntil || forceNewLearnerSessionOnNextRegister;
 }
 
 export function shouldForceNewLearnerSession(): boolean {
