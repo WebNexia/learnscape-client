@@ -60,8 +60,6 @@ const ConfirmEmailChangePage = () => {
 					E-posta Değişikliğini Onayla
 				</Typography>
 
-				{isLoading && <CircularProgress sx={{ mt: '2rem' }} />}
-
 				{!isLoading && message && (
 					<Alert
 						severity={isSuccess ? 'success' : 'error'}
@@ -81,13 +79,24 @@ const ConfirmEmailChangePage = () => {
 					</Typography>
 				)}
 
-				<Button
-					variant='contained'
-					sx={{ mt: '2rem', textTransform: 'capitalize', minWidth: '200px' }}
-					onClick={() => navigate('/auth', { replace: true })}
-					disabled={isLoading}>
-					Giriş Sayfasına Git
-				</Button>
+				<Box
+					sx={{
+						mt: '2rem',
+						display: 'flex',
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 2,
+					}}>
+					{isLoading && <CircularProgress size={28} />}
+					<Button
+						variant='contained'
+						sx={{ textTransform: 'capitalize', minWidth: '200px' }}
+						onClick={() => navigate('/auth', { replace: true })}
+						disabled={isLoading}>
+						Giriş Sayfasına Git
+					</Button>
+				</Box>
 			</Box>
 		</Box>
 	);

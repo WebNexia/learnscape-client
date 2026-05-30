@@ -186,7 +186,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		}
 
 		// Skip fetching if we already have the user data for this Firebase ID AND userId is set
-		if (user && user.firebaseUserId === firebaseUserId && userId) {
+		if (user && user.firebaseUserId === firebaseUserId && userId && !shouldForceNewLearnerSession()) {
 			return;
 		}
 
