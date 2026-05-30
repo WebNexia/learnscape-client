@@ -92,6 +92,8 @@ const PublicFeedbackFormPage = React.lazy(() => import('./pages/PublicFeedbackFo
 const CourseAnalytics = React.lazy(() => import('./pages/CourseAnalytics'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
+const ConfirmEmailChangePage = React.lazy(() => import('./pages/ConfirmEmailChangePage'));
+const RecoverEmailPage = React.lazy(() => import('./pages/RecoverEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
 const CertificateVerificationPage = React.lazy(() => import('./pages/CertificateVerificationPage'));
 const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
@@ -172,6 +174,8 @@ export const router = createBrowserRouter([
 			{ path: 'auth', element: <AuthWrapper /> },
 			{ path: 'reset-password', element: <PasswordResetPage /> },
 			{ path: 'verify-email', element: <VerifyEmailPage /> },
+			{ path: 'confirm-email-change', element: <ConfirmEmailChangePage /> },
+			{ path: 'recover-email', element: <RecoverEmailPage /> },
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
 			{ path: 'courses/certificates/verify/:certificateId', element: <CertificateVerificationPage /> },
 			{ path: 'zoom-meeting/:eventId', element: <ZoomMeetingPage /> },

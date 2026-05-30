@@ -1,13 +1,13 @@
 import { Alert, Box, Button, Checkbox, CircularProgress, DialogContent, FormControlLabel, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
-import { FormEvent, useContext, useState, useRef } from 'react';
+import { FormEvent, useContext, useEffect, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { AuthError, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthError, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { FirebaseError } from 'firebase/app';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
@@ -35,7 +35,7 @@ const Auth = () => {
 
 	const navigate = useNavigate();
 
-	const { setSkipFetchDuringSignup } = useContext(UserAuthContext);
+	const { user, fetchUserData, setSkipFetchDuringSignup } = useContext(UserAuthContext);
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -73,6 +73,12 @@ const Auth = () => {
 	const [signingUp, setSigningUp] = useState<boolean>(false);
 	const [signingIn, setSigningIn] = useState<boolean>(false);
 	const [isSendingResetEmail, setIsSendingResetEmail] = useState<boolean>(false);
+
+	useEffect(() => {
+		if (signingIn && user) {
+			setSigningIn(false);
+		}
+	}, [signingIn, user]);
 	// Removed isSignupInProgress - no longer needed
 
 	const togglePasswordVisibility = () => {
@@ -111,31 +117,47 @@ const Auth = () => {
 
 			markNewLearnerLogin();
 
+			await firebaseUser.getIdToken();
+
 			// Ensure user document exists in Firestore
 			const userRef = doc(db, 'users', firebaseUser.uid);
 			const userDoc = await getDoc(userRef);
 			if (!userDoc.exists()) {
-				// Create the document if it doesn't exist
 				await setDoc(userRef, {
 					firebaseUserId: firebaseUser.uid,
 					email: firebaseUser.email,
-					activeChatId: '', // Initialize activeChatId
+					activeChatId: '',
 				});
 			}
 
-			// Set session timestamp explicitly after successful signIn
 			const currentTime = Date.now();
 			localStorage.setItem('sessionTimestamp', currentTime.toString());
 			resetWordAssistPreference();
 
-			// Keep form values while redirect is in progress; avoid blank state flash.
+			try {
+				await fetchUserData(firebaseUser.uid);
+			} catch (loadError) {
+				console.error('Failed to load user profile after sign-in:', loadError);
+				const axiosCode = (loadError as { code?: string })?.code;
+				if (axiosCode === 'ERR_NETWORK') {
+					setErrorMsg(AuthFormErrorMessages.NETWORK_ERROR);
+				} else {
+					setErrorMsg(AuthFormErrorMessages.ACCOUNT_LOAD_FAILED);
+				}
+				setSigningIn(false);
+				return;
+			}
+
 			setErrorMsg(undefined);
+			setSigningIn(false);
 		} catch (error) {
 			const firebaseError = error as AuthError;
 			if (firebaseError.code === 'auth/invalid-credential') {
 				setErrorMsg(AuthFormErrorMessages.INVALID_CREDENTIALS);
 			} else if (firebaseError.code === 'auth/visibility-check-was-unavailable') {
 				setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
+			} else if (firebaseError.code === 'auth/network-request-failed') {
+				setErrorMsg(AuthFormErrorMessages.NETWORK_ERROR);
 			} else {
 				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
@@ -290,6 +312,8 @@ const Auth = () => {
 			await axiosInstance.post(`${base_url}/users/resend-verification`, {
 				email: signupData.email,
 			});
+
+			await signOut(auth);
 
 			// Handle UI updates after successful sign-up
 			setActiveForm(AuthForms.SIGN_IN);
@@ -1383,6 +1407,7 @@ const Auth = () => {
 								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
 								[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
+								[AuthFormErrorMessages.ACCOUNT_LOAD_FAILED]: errorMessageTypography,
 								[AuthFormErrorMessages.INVALID_PHONE_NUMBER]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_TOO_SHORT]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_TOO_LONG]: errorMessageTypography,

@@ -56,8 +56,10 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [userCourseData, setUserCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>(undefined);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
+	const fetchUserDataInFlightRef = useRef<Promise<void> | null>(null);
 	const isLoginInProgressRef = useRef<boolean>(false);
-	const lastAuthStateChangeRef = useRef<number>(0);
+	const lastAuthHandlerUidRef = useRef<string | null>(null);
+	const lastAuthHandlerAtRef = useRef<number>(0);
 	const queryClient = useQueryClient();
 
 	// Custom function to update ref
@@ -86,17 +88,16 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-			const now = Date.now();
-			const timeSinceLastChange = now - lastAuthStateChangeRef.current;
-
-			// Debounce rapid-fire auth state changes (less than 200ms apart)
-			if (timeSinceLastChange < 200) {
-				return;
-			}
-
-			lastAuthStateChangeRef.current = now;
-
 			if (currentUser) {
+				const now = Date.now();
+				if (
+					lastAuthHandlerUidRef.current === currentUser.uid &&
+					now - lastAuthHandlerAtRef.current < 500
+				) {
+					return;
+				}
+				lastAuthHandlerUidRef.current = currentUser.uid;
+				lastAuthHandlerAtRef.current = now;
 				let sessionTimestamp = localStorage.getItem('sessionTimestamp');
 				const currentTime = Date.now();
 				const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
@@ -135,6 +136,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					}, 500);
 				}
 			} else {
+				lastAuthHandlerUidRef.current = null;
+				lastAuthHandlerAtRef.current = 0;
 				// Only clear user state if we're not in the middle of a login process
 				if (!isLoginInProgressRef.current && !isFetchingUserDataRef.current) {
 					setUser(undefined);
@@ -182,44 +185,75 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			return;
 		}
 
-		// Skip fetching if we're already fetching user data
-		if (isFetchingUserDataRef.current) {
-			return;
-		}
-
 		// Skip fetching if we already have the user data for this Firebase ID AND userId is set
 		if (user && user.firebaseUserId === firebaseUserId && userId) {
 			return;
 		}
 
-		// Set fetching flag to prevent duplicate calls
+		if (fetchUserDataInFlightRef.current) {
+			return fetchUserDataInFlightRef.current;
+		}
+
+		const fetchPromise = (async () => {
 		isFetchingUserDataRef.current = true;
 
 		try {
-			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
-			const userData = responseUserData.data.data[0];
+			const maxAttempts = 3;
+			let lastError: unknown;
 
-			if (userData && userData._id) {
-				if (userData.role === Roles.USER && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
-					await registerLearnerSessionOnServer();
+			for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+				try {
+					const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
+					const userData = responseUserData.data.data[0];
+
+					if (userData && userData._id) {
+						if (userData.role === Roles.USER && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
+							await registerLearnerSessionOnServer();
+						}
+
+						setUser(userData);
+						setUserId(userData._id);
+						queryClient.setQueryData('userData', userData);
+						return;
+					}
+
+					throw new Error('Invalid user data received');
+				} catch (error: unknown) {
+					lastError = error;
+					const axiosError = error as { code?: string; response?: { status?: number; data?: unknown } };
+					const isRetryable =
+						!axiosError.response ||
+						axiosError.code === 'ERR_NETWORK' ||
+						axiosError.code === 'ECONNABORTED' ||
+						axiosError.response?.status === 401 ||
+						axiosError.response?.status === 503;
+
+					console.error(`❌ Failed to fetch user data (attempt ${attempt}/${maxAttempts}):`, error);
+					console.error('❌ Error response:', axiosError.response?.data);
+					console.error('❌ Error status:', axiosError.response?.status);
+
+					if (!isRetryable || attempt === maxAttempts) {
+						break;
+					}
+
+					await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
 				}
-
-				setUser(userData);
-				setUserId(userData._id);
-				queryClient.setQueryData('userData', userData);
-
-				// User lesson data now fetched per course using useUserLessonsForCourse hook
-			} else {
-				throw new Error('Invalid user data received');
 			}
-		} catch (error: any) {
-			console.error('❌ Failed to fetch user data:', error);
-			console.error('❌ Error response:', error.response?.data);
-			console.error('❌ Error status:', error.response?.status);
-			throw new Error('Failed to fetch user data');
+
+			throw lastError instanceof Error ? lastError : new Error('Failed to fetch user data');
 		} finally {
-			// Reset fetching flag
 			isFetchingUserDataRef.current = false;
+		}
+		})();
+
+		fetchUserDataInFlightRef.current = fetchPromise;
+
+		try {
+			await fetchPromise;
+		} finally {
+			if (fetchUserDataInFlightRef.current === fetchPromise) {
+				fetchUserDataInFlightRef.current = null;
+			}
 		}
 	};
 
