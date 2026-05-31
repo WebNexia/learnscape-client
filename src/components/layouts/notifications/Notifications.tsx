@@ -115,9 +115,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			if (note.type === NotificationType.QUIZ_SUBMISSION) {
 				const path =
 					user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN
-						? `/admin/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
+						? `/admin/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}?isChecked=false`
 						: user?.role === Roles.INSTRUCTOR
-							? `/instructor/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
+							? `/instructor/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}?isChecked=false`
 							: `/submission-feedback/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
 				navigate(path);
 			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {

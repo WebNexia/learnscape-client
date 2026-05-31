@@ -54,7 +54,7 @@ export async function fetchSubmissionFeedback(
 		chapterName: data?.chapterName ?? '',
 		teacherFeedback: data?.teacherFeedback ?? '',
 		isFeedbackGiven: Boolean(data?.isFeedbackGiven),
-		isChecked: Boolean(data?.isChecked ?? data?.isFeedbackGiven),
+		isChecked: Boolean(data?.isChecked),
 		totalPossible: data?.totalPossible ?? 0,
 	};
 }
