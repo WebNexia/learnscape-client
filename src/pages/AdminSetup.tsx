@@ -650,6 +650,7 @@ const AdminSetup = () => {
 										label='Default From Email/Name'
 										value={settings.smtp.from}
 										onChange={(e) => handleInputChange('smtp', 'from', e.target.value)}
+										disableSanitization
 										fullWidth
 									/>
 									<Tooltip
