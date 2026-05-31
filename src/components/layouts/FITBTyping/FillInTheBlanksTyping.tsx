@@ -162,6 +162,7 @@ const FillInTheBlanksTyping = ({
 	const isReviewMode = Boolean(isLessonCompleted && fromPracticeQuestionUser && lessonType === LessonType.PRACTICE_LESSON);
 	const showWordBank = !isLessonCompleted || isReviewMode;
 	const revealWordBankValues = showHiddenBlankValues || isReviewMode;
+	const showInteractionBadge = !isLessonCompleted;
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
@@ -412,7 +413,7 @@ const FillInTheBlanksTyping = ({
 	return (
 		<Container>
 			<Column>
-				<FitbInteractionModeBadge mode='typing' compact={isMobileSize} />
+				{showInteractionBadge && <FitbInteractionModeBadge mode='typing' compact={isMobileSize} />}
 				<TextContainer
 					isMobileSizeSmall={isMobileSizeSmall}
 					onMouseOver={handleWordHover}

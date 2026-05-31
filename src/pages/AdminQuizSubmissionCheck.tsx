@@ -3,7 +3,11 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { submissionFeedbackQueryKey, useSubmissionFeedback } from '../hooks/useSubmissionFeedback';
+import {
+	submissionFeedbackQueryKey,
+	useSubmissionFeedback,
+	type SubmissionFeedbackData,
+} from '../hooks/useSubmissionFeedback';
 import { useQueryClient } from 'react-query';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -12,6 +16,7 @@ import { QuestionType } from '../interfaces/enums';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import theme from '../themes';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
+import { getFeedbackModalQuestionTitle } from '../utils/quizSubmissionDisplay';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
@@ -55,7 +60,8 @@ const AdminQuizSubmissionCheck = () => {
 
 	const { search } = useLocation();
 	const searchParams = new URLSearchParams(search);
-	const isChecked = searchParams.get('isChecked');
+	const isCheckedFromUrl = searchParams.get('isChecked') === 'true';
+	const isCheckedStatus = feedbackData?.isChecked ?? isCheckedFromUrl;
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -237,8 +243,7 @@ const AdminQuizSubmissionCheck = () => {
 				}) || []
 			);
 
-			if (isChecked === 'false') {
-				// Use instructor endpoint if user is instructor
+			if (!feedbackData?.isChecked) {
 				const updateEndpoint =
 					user?.role === 'instructor' ? `${base_url}/quizsubmissions/instructor/${submissionId}` : `${base_url}/quizsubmissions/${submissionId}`;
 
@@ -246,11 +251,15 @@ const AdminQuizSubmissionCheck = () => {
 					isChecked: true,
 				});
 
-				// Trigger dashboard sync when quiz is checked
 				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
 			}
 
-			await queryClient.invalidateQueries(submissionFeedbackQueryKey(userLessonId, submissionId));
+			const feedbackKey = submissionFeedbackQueryKey(userLessonId, submissionId);
+			const previousFeedback = queryClient.getQueryData<SubmissionFeedbackData>(feedbackKey);
+			if (previousFeedback) {
+				queryClient.setQueryData(feedbackKey, { ...previousFeedback, isChecked: true });
+			}
+			await queryClient.refetchQueries(feedbackKey);
 			initializedForRef.current = null;
 
 			// Send notification AFTER submission is fully finalized (non-blocking)
@@ -283,7 +292,10 @@ const AdminQuizSubmissionCheck = () => {
 
 			// Navigate to the correct route based on user role
 			const basePath = user?.role === 'instructor' ? '/instructor' : '/admin';
-			navigate(`${basePath}/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
+			navigate(
+				`${basePath}/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`,
+				{ replace: true }
+			);
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -315,7 +327,7 @@ const AdminQuizSubmissionCheck = () => {
 					{ label: isMobileSize ? 'Quiz' : 'Quiz Name', value: quizName },
 					{ label: isMobileSize ? 'Chapter' : 'Chapter Name', value: chapterName || '—' },
 					{ label: isMobileSize ? 'Course' : 'Course Name', value: courseName },
-					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
+					{ label: 'Status', value: isCheckedStatus ? 'Checked' : 'Unchecked' },
 				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.8rem' : undefined }}>
@@ -447,7 +459,7 @@ const AdminQuizSubmissionCheck = () => {
 			<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-						Question ({fetchQuestionTypeName?.(userResponseToFeedback?.questionId) || ''})
+						{getFeedbackModalQuestionTitle(fetchQuestionTypeName?.(userResponseToFeedback?.questionId) || '')}
 					</Typography>
 
 					<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />

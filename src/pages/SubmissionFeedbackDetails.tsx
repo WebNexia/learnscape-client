@@ -22,6 +22,7 @@ import CustomAudioPlayer from '../components/audio/CustomAudioPlayer';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 import InstructorFeedbackPanel from '../components/layouts/quizSubmissions/InstructorFeedbackPanel';
 import QuizSubmissionSummaryBar from '../components/layouts/quizSubmissions/QuizSubmissionSummaryBar';
+import { getFeedbackModalQuestionTitle } from '../utils/quizSubmissionDisplay';
 
 const SubmissionFeedbackDetails = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated, isMobilePortrait } = useContext(MediaQueryContext);
@@ -60,7 +61,7 @@ const SubmissionFeedbackDetails = () => {
 			disableScrollLock>
 			<Box sx={{ width: '90%', margin: '1rem auto' }}>
 				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-					Question ({fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId)})
+					{getFeedbackModalQuestionTitle(fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId))}
 				</Typography>
 
 				<QuestionMedia question={userSingleResponseWithFeedback?.questionId} isStudentFeedbackPage={true} />

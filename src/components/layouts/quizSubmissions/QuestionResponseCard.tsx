@@ -59,14 +59,16 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 				</Box>
 
 				<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-					<Typography
-						variant='body2'
-						sx={{
-							textAlign: 'right',
-							fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-						}}>
-						{fetchQuestionTypeName(response.questionId)}
-					</Typography>
+					{fromAdminSubmissions && (
+						<Typography
+							variant='body2'
+							sx={{
+								textAlign: 'right',
+								fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+							}}>
+							{fetchQuestionTypeName(response.questionId)}
+						</Typography>
+					)}
 					{response.pointsEarned !== undefined &&
 						response.pointsEarned !== null &&
 						response.pointsPossible !== undefined &&

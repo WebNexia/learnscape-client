@@ -226,6 +226,7 @@ const FillInTheBlanksDragDrop = ({
 	const isInteractionLocked = Boolean(isLessonCompleted);
 	const isReviewMode = Boolean(isLessonCompleted && fromPracticeQuestionUser && lessonType === LessonType.PRACTICE_LESSON);
 	const showWordBank = !isLessonCompleted || isReviewMode;
+	const showInteractionBadge = !isLessonCompleted;
 
 	useEffect(() => {
 		if (previousQuestionIdRef.current !== questionId) {
@@ -453,7 +454,7 @@ const FillInTheBlanksDragDrop = ({
 	return (
 		<Container>
 			<Column>
-				<FitbInteractionModeBadge mode='tap' compact={isMobileSize} />
+				{showInteractionBadge && <FitbInteractionModeBadge mode='tap' compact={isMobileSize} />}
 				<TextContainer
 					onMouseOver={handleWordHover}
 					onMouseOut={handleMouseLeave}
