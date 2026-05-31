@@ -20,6 +20,8 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { decode } from 'html-entities';
 import CustomAudioPlayer from '../components/audio/CustomAudioPlayer';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
+import InstructorFeedbackPanel from '../components/layouts/quizSubmissions/InstructorFeedbackPanel';
+import QuizSubmissionSummaryBar from '../components/layouts/quizSubmissions/QuizSubmissionSummaryBar';
 
 const SubmissionFeedbackDetails = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated, isMobilePortrait } = useContext(MediaQueryContext);
@@ -262,33 +264,40 @@ const SubmissionFeedbackDetails = () => {
 							</Box>
 						</Box>
 					)}
-					{userSingleResponseWithFeedback?.teacherAudioFeedbackUrl && (
-						<Box sx={{ mt: '3rem' }}>
-							<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-								Instructor's Audio Feedback for Question
-							</Typography>
-							<CustomAudioPlayer
-								audioUrl={userSingleResponseWithFeedback?.teacherAudioFeedbackUrl}
-								sx={{
-									marginTop: '1.5rem',
-									width: '100%',
-								}}
-							/>
-						</Box>
-					)}
 				</Box>
 			)}
 
-			{userSingleResponseWithFeedback?.teacherFeedback && (
-				<Box sx={{ width: '90%', margin: '1.5rem auto 2rem auto' }}>
-					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-						Instructor's Feedback for Question
-					</Typography>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
-						{userSingleResponseWithFeedback?.teacherFeedback}
-					</Typography>
-				</Box>
-			)}
+			{((userSingleResponseWithFeedback?.teacherFeedback &&
+				userSingleResponseWithFeedback.teacherFeedback.trim() !== '') ||
+				userSingleResponseWithFeedback?.teacherAudioFeedbackUrl) && (
+					<Box sx={{ width: '90%', margin: '1.5rem auto 0 auto' }}>
+						<InstructorFeedbackPanel
+							title="Instructor's Feedback for Question"
+							sx={{ mt: 1 }}
+							titleFontSize={isMobileSize ? '0.85rem' : '0.9rem'}>
+							{userSingleResponseWithFeedback?.teacherFeedback?.trim() && (
+								<Typography
+									variant='body2'
+									sx={{
+										fontSize: isMobileSize ? '0.75rem' : '0.825rem',
+										lineHeight: 1.7,
+										color: theme.textColor?.primary?.main,
+									}}>
+									{userSingleResponseWithFeedback.teacherFeedback}
+								</Typography>
+							)}
+							{userSingleResponseWithFeedback?.teacherAudioFeedbackUrl && (
+								<CustomAudioPlayer
+									audioUrl={userSingleResponseWithFeedback.teacherAudioFeedbackUrl}
+									sx={{
+										marginTop: userSingleResponseWithFeedback?.teacherFeedback?.trim() ? '1.25rem' : 0,
+										width: '100%',
+									}}
+								/>
+							)}
+						</InstructorFeedbackPanel>
+					</Box>
+				)}
 			<CustomCancelButton
 				sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
 				onClick={() => setOpenQuestionFeedbackModal(false)}>
@@ -305,160 +314,148 @@ const SubmissionFeedbackDetails = () => {
 				</Box>
 			) : (
 				<>
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'space-around',
-					width: '90%',
-					margin: isMobileSize ? '1rem 0rem' : '2rem',
-					boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0, 0, 0, 0.2)',
-					borderRadius: '0.35rem',
-					padding: '0.75rem 0',
-				}}>
-				{[
-					{ label: 'Quiz Name', value: quizName },
-					{ label: 'Chapter', value: chapterName },
-					{ label: 'Course Name', value: courseName },
-					{ label: 'Status', value: isChecked ? 'Checked' : 'Unchecked' },
-				]?.map(({ label, value }, index) => (
-					<Box key={index} sx={{ textAlign: 'center' }}>
-						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
-							{label}
-						</Typography>
-						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
-							{value}
-						</Typography>
+					<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
+						<QuizSubmissionSummaryBar
+							quizName={quizName}
+							chapterName={chapterName}
+							courseName={courseName}
+							isChecked={isChecked}
+							compact={isMobileSizeSmall}
+						/>
 					</Box>
-				))}
-			</Box>
 
-			<Box sx={{ width: '90%', margin: isMobileSize ? '0.5rem' : '1rem' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						width: '100%',
-						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
-					}}>
-					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-							Questions
-						</Typography>
-						{totalPossible > 0 &&
-							(() => {
-								const totalEarned =
-									userResponseData?.reduce((sum: number, response: any) => {
-										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
-									}, 0) || 0;
-								const percentage = calculateScorePercentage(totalEarned, totalPossible);
-								return (
-									<Box
-										sx={{
-											display: 'inline-flex',
-											alignItems: 'center',
-											backgroundColor: theme.palette.primary.main,
-											color: 'white',
-											padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
-											borderRadius: '1.5rem',
-											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
-											fontWeight: 600,
-											fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
-											boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
-											whiteSpace: 'nowrap',
-										}}>
-										{totalEarned}/{totalPossible} pts
-										{percentage !== null && (
-											<Typography
-												component='span'
-												display={isMobilePortrait ? 'none' : ''}
+					<Box sx={{ width: '90%', margin: isMobileSize ? '0.5rem' : '1rem' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								width: '100%',
+								margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
+							}}>
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+									Questions
+								</Typography>
+								{totalPossible > 0 &&
+									(() => {
+										const totalEarned =
+											userResponseData?.reduce((sum: number, response: any) => {
+												return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
+											}, 0) || 0;
+										const percentage = calculateScorePercentage(totalEarned, totalPossible);
+										return (
+											<Box
 												sx={{
-													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-													color: '#ffff',
-													ml: '0.25rem',
+													display: 'inline-flex',
+													alignItems: 'center',
+													backgroundColor: theme.palette.primary.main,
+													color: 'white',
+													padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
+													borderRadius: '1.5rem',
+													fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+													fontWeight: 600,
+													fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+													boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+													whiteSpace: 'nowrap',
 												}}>
-												- ({percentage}%)
-											</Typography>
-										)}
-									</Box>
-								);
-							})()}
+												{totalEarned}/{totalPossible} pts
+												{percentage !== null && (
+													<Typography
+														component='span'
+														display={isMobilePortrait ? 'none' : ''}
+														sx={{
+															fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+															color: '#ffff',
+															ml: '0.25rem',
+														}}>
+														- ({percentage}%)
+													</Typography>
+												)}
+											</Box>
+										);
+									})()}
+							</Box>
+							<CustomInfoMessageAlignedRight
+								message={isVerySmallScreen ? 'Click on a question to view details' : 'Click on a question to view details and feedback (if available)'}
+								sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
+							/>
+						</Box>
+						{userResponseData?.map((response: any, index: number) => (
+							<QuestionResponseCard
+								key={response._id}
+								response={response}
+								index={index}
+								fetchQuestionTypeName={fetchQuestionTypeName}
+								onCardClick={(response, index) => {
+									setOpenQuestionFeedbackModal(true);
+									setUserSingleResponseWithFeedback(response);
+									setCurrentResponseIndex(index);
+								}}
+							/>
+						))}
 					</Box>
-					<CustomInfoMessageAlignedRight
-						message={isVerySmallScreen ? 'Click on a question to view details' : 'Click on a question to view details and feedback (if available)'}
-						sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
-					/>
-				</Box>
-				{userResponseData?.map((response: any, index: number) => (
-					<QuestionResponseCard
-						key={response._id}
-						response={response}
-						index={index}
-						fetchQuestionTypeName={fetchQuestionTypeName}
-						onCardClick={(response, index) => {
-							setOpenQuestionFeedbackModal(true);
-							setUserSingleResponseWithFeedback(response);
-							setCurrentResponseIndex(index);
-						}}
-					/>
-				))}
-			</Box>
 
-			{openQuestionFeedbackModal && (
-				<>
-					<IconButton
-						onClick={() => handleResponseNavigation('prev')}
-						disabled={currentResponseIndex === 0}
-						sx={{
-							'position': 'fixed',
-							'left': isMobileSize ? '2%' : '10%',
-							'top': '50%',
-							'transform': 'translateY(-50%)',
-							'backgroundColor': theme.bgColor?.greenPrimary,
-							'color': 'white',
-							'border': 'none',
-							'borderRadius': '50%',
-							'padding': isMobileSize ? '0.5rem' : '0.75rem',
-							'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
-							'zIndex': 13000,
-							':hover': { backgroundColor: theme.bgColor?.adminHeader },
-						}}>
-						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-					</IconButton>
-					<IconButton
-						onClick={() => handleResponseNavigation('next')}
-						disabled={currentResponseIndex === userResponseData.length - 1}
-						sx={{
-							'position': 'fixed',
-							'right': isMobileSize ? '2%' : '10%',
-							'top': '50%',
-							'transform': 'translateY(-50%)',
-							'backgroundColor': theme.bgColor?.greenPrimary,
-							'color': 'white',
-							'border': 'none',
-							'borderRadius': '50%',
-							'padding': isMobileSize ? '0.5rem' : '0.75rem',
-							'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
-							'zIndex': 13000,
-							':hover': { backgroundColor: theme.bgColor?.adminHeader },
-						}}>
-						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-					</IconButton>
-				</>
-			)}
+					{openQuestionFeedbackModal && (
+						<>
+							<IconButton
+								onClick={() => handleResponseNavigation('prev')}
+								disabled={currentResponseIndex === 0}
+								sx={{
+									'position': 'fixed',
+									'left': isMobileSize ? '2%' : '10%',
+									'top': '50%',
+									'transform': 'translateY(-50%)',
+									'backgroundColor': theme.bgColor?.greenPrimary,
+									'color': 'white',
+									'border': 'none',
+									'borderRadius': '50%',
+									'padding': isMobileSize ? '0.5rem' : '0.75rem',
+									'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
+									'zIndex': 13000,
+									':hover': { backgroundColor: theme.bgColor?.adminHeader },
+								}}>
+								<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+							</IconButton>
+							<IconButton
+								onClick={() => handleResponseNavigation('next')}
+								disabled={currentResponseIndex === userResponseData.length - 1}
+								sx={{
+									'position': 'fixed',
+									'right': isMobileSize ? '2%' : '10%',
+									'top': '50%',
+									'transform': 'translateY(-50%)',
+									'backgroundColor': theme.bgColor?.greenPrimary,
+									'color': 'white',
+									'border': 'none',
+									'borderRadius': '50%',
+									'padding': isMobileSize ? '0.5rem' : '0.75rem',
+									'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
+									'zIndex': 13000,
+									':hover': { backgroundColor: theme.bgColor?.adminHeader },
+								}}>
+								<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+							</IconButton>
+						</>
+					)}
 
-			{renderFeedbackModal()}
+					{renderFeedbackModal()}
 
-			{quizFeedback && (
-				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
-					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-						Instructor's Feedback for Quiz
-					</Typography>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '1rem' }}>
-						{quizFeedback}
-					</Typography>
-				</Box>
-			)}
+					{quizFeedback && (
+						<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
+							<InstructorFeedbackPanel title="Instructor's Feedback for Quiz" titleFontSize={isMobileSize ? '0.9rem' : '1rem'}>
+								<Typography
+									variant='body2'
+									sx={{
+										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+										lineHeight: 1.7,
+										color: theme.textColor?.primary?.main,
+									}}>
+									{quizFeedback}
+								</Typography>
+							</InstructorFeedbackPanel>
+						</Box>
+					)}
 				</>
 			)}
 		</DashboardPagesLayout>

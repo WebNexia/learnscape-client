@@ -34,7 +34,6 @@ const AdminDocuments = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor } = useAuth();
-
 	const {
 		documents,
 		loading,

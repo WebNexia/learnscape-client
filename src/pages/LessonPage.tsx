@@ -44,6 +44,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
+import InstructorFeedbackPanel from '../components/layouts/quizSubmissions/InstructorFeedbackPanel';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
 import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -1144,7 +1145,7 @@ const LessonPage = () => {
 							borderRadius: isMobileSize ? '1.15rem' : '1.5rem',
 							overflow: 'hidden',
 							position: 'relative',
-							boxShadow: `0 20px 50px rgba(1, 67, 90, 0.18), 0 0 0 1px rgba(1, 67, 90, 0.06), 0 0 80px -20px ${lessonAccent}55`,
+							boxShadow: `0 20px 50px rgba(1, 67, 90, 0.18), 0 0 0 1px rgba(1, 67, 90, 0.06), 0 0 28px -28px ${lessonAccent}55`,
 							'&::before': {
 								content: '""',
 								position: 'absolute',
@@ -1382,30 +1383,21 @@ const LessonPage = () => {
 						</Box>
 					</Box>
 					{isQuiz && teacherQuizFeedback && (
-						<>
-							<Box sx={{ width: '100%', mt: '2rem' }}>
-								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }}>
-									Instructor's Feedback for Quiz
+						<Box sx={{ width: '100%', mt: '2rem' }}>
+							<InstructorFeedbackPanel
+								title="Instructor's Feedback for Quiz"
+								titleFontSize={isMobileSize ? '0.9rem' : '1rem'}>
+								<Typography
+									variant='body2'
+									sx={{
+										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+										lineHeight: 1.7,
+										color: theme.textColor?.primary?.main,
+									}}>
+									{teacherQuizFeedback}
 								</Typography>
-							</Box>
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'flex-start',
-									width: '100%',
-									mt: '1rem',
-									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-									borderRadius: '0.35rem',
-									padding: '2rem',
-								}}>
-								<Box>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{teacherQuizFeedback}
-									</Typography>
-								</Box>
-							</Box>
-						</>
+							</InstructorFeedbackPanel>
+						</Box>
 					)}
 				</Box>
 			)}
@@ -1456,9 +1448,11 @@ const LessonPage = () => {
 								Practice Again
 							</CustomSubmitButton>
 						)}
-						<IconButton onClick={() => setIsHelpDialogOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-							<HelpOutline fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-						</IconButton>
+						{lessonType === LessonType.PRACTICE_LESSON && (
+							<IconButton onClick={() => setIsHelpDialogOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+								<HelpOutline fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+							</IconButton>
+						)}
 						<CustomDialog openModal={isHelpDialogOpen} closeModal={() => setIsHelpDialogOpen(false)} maxWidth='xs'>
 							<DialogContent>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>

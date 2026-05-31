@@ -13,7 +13,6 @@ import { decodeHtmlEntities } from '../utils/utilText';
 import { useNavigate } from 'react-router-dom';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { getConsultationPriceForCountry } from '../utils/getConsultationPriceForCountry';
-
 const DEFAULT_COVER_PLACEHOLDER = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop';
 
 function getDisplayPrice(price: ConsultationPrice | null | undefined): { label: string; currency?: string; amount?: string } {
@@ -319,13 +318,13 @@ const LandingPageConsultations = () => {
 								<Typography
 									sx={{
 										textAlign: 'center',
-										fontSize: { xs: '1rem', sm: '1.25rem' },
-										color: 'text.secondary',
+										fontSize: '1.25rem',
+										color: '#334155',
 										fontFamily: 'Varela Round',
 										mt: 5,
 										mb: 3,
 									}}>
-									Henüz yayınlanmış danışmanlık bulunmamaktadır.
+									Danışmanlıklarımız yakında eklenecektir
 								</Typography>
 							)}
 

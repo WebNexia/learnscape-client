@@ -1,6 +1,7 @@
 import { Box, DialogContent, Typography, Grid, FormControlLabel, Checkbox, Tooltip, Snackbar, Alert, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { ConsultationsContext } from '../contexts/ConsultationsContextProvider';
@@ -30,6 +31,7 @@ const AdminConsultationEditPage = () => {
 
 	const { updateConsultation } = useContext(ConsultationsContext);
 	const { orgId } = useContext(OrganisationContext);
+	const queryClient = useQueryClient();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -195,34 +197,38 @@ const AdminConsultationEditPage = () => {
 	}, [orgForms, singleConsultationBeforeSave?.feedbackFormId, singleConsultationBeforeSave?.feedbackForm, feedbackFormIdString]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (consultationId !== undefined) {
-			try {
-				await axios.patch(`${base_url}/consultations/${consultationId}/toggle-status`, {});
-				setSingleConsultation((prevData) => {
-					if (prevData) {
-						return {
-							...prevData,
-							isActive: !singleConsultationBeforeSave?.isActive,
-						};
-					}
-					return prevData;
-				});
-				setSingleConsultationBeforeSave((prevData) => {
-					if (prevData) {
-						return {
-							...prevData,
-							isActive: !singleConsultationBeforeSave?.isActive,
-						};
-					}
-					return prevData;
-				});
-				updateConsultation({
-					...singleConsultationBeforeSave!,
-					isActive: !singleConsultationBeforeSave?.isActive,
-				});
-			} catch (error) {
-				console.log(error);
+		if (consultationId === undefined || !singleConsultationBeforeSave) {
+			return;
+		}
+
+		const nextIsActive = !singleConsultationBeforeSave.isActive;
+
+		try {
+			const response = await axios.patch(`${base_url}/consultations/${consultationId}`, {
+				isActive: nextIsActive,
+			});
+			const updated = response.data?.data as Consultation | undefined;
+			if (updated) {
+				setSingleConsultation(updated);
+				setSingleConsultationBeforeSave(updated);
+				updateConsultation(updated);
+			} else {
+				const patched = { ...singleConsultationBeforeSave, isActive: nextIsActive };
+				setSingleConsultation(patched);
+				setSingleConsultationBeforeSave(patched);
+				updateConsultation(patched);
 			}
+			if (orgId) {
+				queryClient.invalidateQueries(['landingPageConsultations', orgId]);
+			}
+			setIsSuccessSnackbarOpen(true);
+		} catch (error: unknown) {
+			const message =
+				(error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+				'Yayın durumu güncellenemedi. Lütfen tekrar deneyin.';
+			setUrlErrorMessage(message);
+			setIsUrlErrorOpen(true);
+			console.error('Consultation publish toggle failed:', error);
 		}
 	};
 
