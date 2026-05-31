@@ -30,6 +30,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import QuestionMedia from './QuestionMedia';
 import QuestionText from './QuestionText';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import InstructorFeedbackPanel from '../layouts/quizSubmissions/InstructorFeedbackPanel';
 import VideoRecorder from './VideoRecorder';
 import AudioRecorder from './AudioRecorder';
 import { db, storage } from '../../firebase';
@@ -855,34 +856,35 @@ const QuizQuestion = ({
 						!isAudioVideoQuestion && <FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>}
 
 					{isLessonCompleted && (teacherQuestionFeedback || teacherQuestionAudioFeedback) && (
-						<Box
-							sx={{
-								width: '80%',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-								margin: '3rem auto 1rem auto',
-								padding: '1rem 2rem 2rem 2rem',
-								borderRadius: '0.35rem',
-							}}>
-							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem', fontFamily: 'Poppins, sans-serif' }}>
-								Instructor Feedback
-							</Typography>
-							<Box>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
-									{teacherQuestionFeedback}
-								</Typography>
-							</Box>
-							{teacherQuestionAudioFeedback && (
-								<Box sx={{ textAlign: 'center', width: '100%' }}>
-									<CustomAudioPlayer
-										audioUrl={teacherQuestionAudioFeedback}
-										key={question._id}
+						<Box sx={{ width: '80%', margin: '3rem auto 1rem auto' }}>
+							<InstructorFeedbackPanel title='Instructor Feedback' titleFontSize={isMobileSize ? '0.9rem' : '1rem'}>
+								{teacherQuestionFeedback && (
+									<Typography
+										variant='body2'
 										sx={{
-											marginTop: '1.5rem',
-											width: '80%',
-										}}
-									/>
-								</Box>
-							)}
+											fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											lineHeight: 1.7,
+											fontFamily: 'Poppins, sans-serif',
+											color: theme.textColor?.primary?.main,
+										}}>
+										{teacherQuestionFeedback}
+									</Typography>
+								)}
+								{teacherQuestionAudioFeedback && (
+									<Box sx={{ textAlign: 'center', width: '100%' }}>
+										<CustomAudioPlayer
+											audioUrl={teacherQuestionAudioFeedback}
+											key={question._id}
+											sx={{
+												marginTop: teacherQuestionFeedback ? '1.25rem' : 0,
+												width: '100%',
+												maxWidth: '28rem',
+												mx: 'auto',
+											}}
+										/>
+									</Box>
+								)}
+							</InstructorFeedbackPanel>
 						</Box>
 					)}
 				</FormControl>

@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { MatchingPair, QuizMatchingOption } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
+import { LinkOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
@@ -516,28 +517,70 @@ const MatchingPreview = ({
 			</Container>
 			{isLessonCompleted && fromQuizQuestionUser && (
 				<Box sx={{ margin: isMobileSize ? '2rem 0 1.5rem 0' : '3rem 0 1.5rem 0' }}>
-					<Box sx={{ margin: '1rem 0 1rem 0' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '0.5rem',
+							mb: '0.85rem',
+						}}>
+						<LinkOutlined sx={{ color: theme.bgColor?.greenPrimary, fontSize: isMobileSize ? '1.1rem' : '1.25rem' }} />
+						<Typography
+							variant='subtitle1'
+							sx={{
+								fontWeight: 600,
+								fontSize: isMobileSize ? '0.88rem' : '1rem',
+								color: theme.textColor?.primary?.main,
+							}}>
 							Correct Matching
 						</Typography>
 					</Box>
 					<Box
 						sx={{
-							borderRadius: '0.5rem',
+							borderRadius: '0.55rem',
 							overflow: 'hidden',
-							boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-							border: '1px solid rgba(0,0,0,0.1)',
+							border: '1.5px solid rgba(1, 67, 90, 0.28)',
+							borderLeft: `4px solid ${theme.bgColor?.greenPrimary}`,
+							boxShadow: '0 0.1rem 0.3rem rgba(1, 67, 90, 0.1)',
+							background: 'linear-gradient(135deg, rgba(30, 194, 139, 0.05) 0%, rgba(255, 255, 255, 1) 40%)',
 						}}>
+						<Box
+							sx={{
+								display: 'flex',
+								backgroundColor: 'rgba(1, 67, 90, 0.06)',
+								borderBottom: '1.5px solid rgba(1, 67, 90, 0.24)',
+							}}>
+							{['Prompt', 'Match'].map((label, colIndex) => (
+								<Box
+									key={label}
+									sx={{
+										flex: 1,
+										py: isMobileSize ? '0.45rem' : '0.6rem',
+										px: isMobileSize ? '0.5rem' : '1rem',
+										textAlign: 'center',
+										borderRight: colIndex === 0 ? '1.5px solid rgba(1, 67, 90, 0.22)' : 'none',
+									}}>
+									<Typography
+										variant='caption'
+										sx={{
+											fontWeight: 700,
+											letterSpacing: '0.05em',
+											textTransform: 'uppercase',
+											fontSize: isMobileSize ? '0.58rem' : '0.65rem',
+											color: theme.textColor?.secondary?.main,
+										}}>
+										{label}
+									</Typography>
+								</Box>
+							))}
+						</Box>
 						{initialPairs?.map((pair, index) => {
 							return (
 								<Box
 									sx={{
-										'display': 'flex',
-										'backgroundColor': index % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-										'transition': 'background-color 0.2s ease',
-										'&:hover': {
-											backgroundColor: 'rgba(0,0,0,0.04)',
-										},
+										display: 'flex',
+										backgroundColor: index % 2 === 0 ? 'rgba(30, 194, 139, 0.06)' : 'rgba(255, 255, 255, 0.9)',
+										transition: 'background-color 0.2s ease',
 									}}
 									key={pair.id}>
 									<Box
@@ -546,12 +589,18 @@ const MatchingPreview = ({
 											justifyContent: 'center',
 											alignItems: 'center',
 											flex: 1,
-											borderRight: '1px solid rgba(0,0,0,0.1)',
-											borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-											padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
-											backgroundColor: 'rgba(255,255,255,0.5)',
+											borderRight: '1.5px solid rgba(1, 67, 90, 0.22)',
+											borderBottom: index < initialPairs.length - 1 ? '1.5px solid rgba(1, 67, 90, 0.18)' : 'none',
+											padding: isMobileSize ? '0.5rem 0.65rem' : '0.8rem 1rem',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.question}</Typography>
+										<Typography
+											sx={{
+												fontSize: isMobileSize ? '0.78rem' : '0.88rem',
+												fontWeight: 600,
+												color: theme.textColor?.primary?.main,
+											}}>
+											{pair.question}
+										</Typography>
 									</Box>
 									<Box
 										sx={{
@@ -559,11 +608,17 @@ const MatchingPreview = ({
 											justifyContent: 'center',
 											alignItems: 'center',
 											flex: 1,
-											borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-											padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
-											backgroundColor: 'rgba(255,255,255,0.5)',
+											borderBottom: index < initialPairs.length - 1 ? '1.5px solid rgba(1, 67, 90, 0.18)' : 'none',
+											padding: isMobileSize ? '0.5rem 0.65rem' : '0.8rem 1rem',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.answer}</Typography>
+										<Typography
+											sx={{
+												fontSize: isMobileSize ? '0.78rem' : '0.88rem',
+												fontWeight: 600,
+												color: theme.bgColor?.greenPrimary,
+											}}>
+											{pair.answer}
+										</Typography>
 									</Box>
 								</Box>
 							);

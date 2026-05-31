@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import theme from "../../themes";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useMemo } from "react";
 import { MediaQueryContext } from "../../contexts/MediaQueryContextProvider";
 import { useDocumentCart } from "../../contexts/DocumentCartContextProvider";
 import { useConsultationCart } from "../../contexts/ConsultationCartContextProvider";
@@ -56,61 +56,72 @@ const Header = () => {
   const { count: documentCartCount } = useDocumentCart();
   const { count: consultationCartCount } = useConsultationCart();
   const cartCount = documentCartCount + consultationCartCount;
+  const navItems = useMemo(() => {
+    const items: Array<{
+      label: string;
+      action: () => void;
+      isActive?: boolean;
+      NavIcon?: typeof SchoolOutlined;
+    }> = [
+      {
+        label: "Ana Sayfa",
+        action: () => {
+          navigate("/");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+      },
+      {
+        label: "Kurslar",
+        NavIcon: SchoolOutlined,
+        action: () => {
+          navigate("/landing-page-courses");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        isActive: location.pathname === "/landing-page-courses",
+      },
+      {
+        label: "Kaynaklar",
+        NavIcon: MenuBookOutlined,
+        action: () => {
+          navigate("/landing-page-resources");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        isActive: location.pathname === "/landing-page-resources",
+      },
+      {
+        label: "Danışmanlık",
+        NavIcon: GroupsOutlined,
+        action: () => {
+          navigate("/landing-page-consultations");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        isActive: location.pathname === "/landing-page-consultations",
+      },
+    ];
 
-  const navItems = [
-    {
-      label: "Ana Sayfa",
-      action: () => {
-        navigate("/");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    items.push(
+      {
+        label: "İletişim",
+        NavIcon: MailOutline,
+        action: () => {
+          navigate("/contact-us");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        isActive: location.pathname === "/contact-us",
       },
-    },
-    {
-      label: "Kurslar",
-      NavIcon: SchoolOutlined,
-      action: () => {
-        navigate("/landing-page-courses");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      {
+        label: "Hakkımızda",
+        NavIcon: InfoOutlined,
+        action: () => {
+          navigate("/about-us");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        isActive: location.pathname === "/about-us",
       },
-      isActive: location.pathname === "/landing-page-courses",
-    },
-    {
-      label: "Kaynaklar",
-      NavIcon: MenuBookOutlined,
-      action: () => {
-        navigate("/landing-page-resources");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      },
-      isActive: location.pathname === "/landing-page-resources",
-    },
-    {
-      label: "Danışmanlık",
-      NavIcon: GroupsOutlined,
-      action: () => {
-        navigate("/landing-page-consultations");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      },
-      isActive: location.pathname === "/landing-page-consultations",
-    },
-    {
-      label: "İletişim",
-      NavIcon: MailOutline,
-      action: () => {
-        navigate("/contact-us");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      },
-      isActive: location.pathname === "/contact-us",
-    },
-    {
-      label: "Hakkımızda",
-      NavIcon: InfoOutlined,
-      action: () => {
-        navigate("/about-us");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      },
-      isActive: location.pathname === "/about-us",
-    },
-  ];
+    );
+
+    return items;
+  }, [location.pathname, navigate]);
 
   return (
     <AppBar position="sticky" sx={{ background: "none", boxShadow: "none" }}>

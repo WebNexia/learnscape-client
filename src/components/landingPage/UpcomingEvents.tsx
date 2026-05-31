@@ -6,6 +6,7 @@ import {
 	CardMedia,
 	Chip,
 	Button,
+	CircularProgress,
 	useMediaQuery,
 	useTheme,
 	MobileStepper,
@@ -56,7 +57,7 @@ const EVENTS_SECTION_BG =
 export default function UpcomingEvents() {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const defaultOrgId = import.meta.env.VITE_ORG_ID;
-	const { upcomingEvents } = useContext(LandingPageUpcomingPublicEventsContext);
+	const { upcomingEvents, loading: upcomingEventsLoading } = useContext(LandingPageUpcomingPublicEventsContext);
 	const [isRegisterForEventModalOpen, setIsRegisterForEventModalOpen] = useState<boolean>(false);
 	const [isRegisterForEventSuccess, setIsRegisterForEventSuccess] = useState<boolean>(false);
 	const [isRegisterForEventSending, setIsRegisterForEventSending] = useState<boolean>(false);
@@ -621,6 +622,8 @@ export default function UpcomingEvents() {
 
 	const theme = useTheme();
 	const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+	const hasEvents = (upcomingEvents?.length ?? 0) > 0;
+
 	return (
 		<Box
 			sx={{
@@ -686,10 +689,25 @@ export default function UpcomingEvents() {
 					}}>
 					Yaklaşan Etkinlikler
 				</Typography>
-				{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
-				{upcomingEvents && upcomingEvents.length === 0 && (
-					<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem', marginBottom: '3rem' }}>
-						Henüz yaklaşan etkinlik bulunmamaktadır.
+				{upcomingEventsLoading ? (
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 6 }}>
+						<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+						<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+					</Box>
+				) : hasEvents ? (
+					isDesktop ? <TimelineDesktop /> : <CarouselMobile />
+				) : (
+					<Typography
+						sx={{
+							textAlign: 'center',
+							fontFamily: 'Varela Round',
+							color: '#475569',
+							fontSize: { xs: '1rem', sm: '1.125rem' },
+							py: 6,
+							px: 2,
+							maxWidth: 520,
+						}}>
+						Etkinliklerimiz yakında eklenecektir
 					</Typography>
 				)}
 				<CustomDialog

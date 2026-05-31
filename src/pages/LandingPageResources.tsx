@@ -244,7 +244,7 @@ const LandingPageResources = () => {
 											{resources.length === 0 && (
 												<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
 													<Typography variant='h6' align='center' color='#334155' sx={{ fontFamily: 'Varela Round' }}>
-														{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kaynak bulunamadı.' : 'Şu anda kaynak bulunmamaktadır.'}
+														{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kaynak bulunamadı.' : 'Yeni kaynaklar yakında eklenecektir'}
 													</Typography>
 												</Grid>
 											)}
