@@ -1,8 +1,8 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, useMediaQuery } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import Hero_Img from '../../assets/man-writing-notebook-with-giant-pen.png';
+import Hero_Img from '../../assets/HeroSecImage.png';
 import { PlayCircle } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -17,18 +17,13 @@ import ReactPlayer from 'react-player';
 const HeroSection = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const {
-		isSmallScreen,
-		isRotatedMedium,
-		isMobileLandscape,
-		isMobilePortrait,
-		isTabletLandscape,
-		isTabletPortrait,
-		isDesktopLandscape,
-		isDesktopPortrait,
-		isSmallMobilePortrait,
-		isSmallMobileLandscape,
-	} = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
+
+	/** Stack text + image: narrow, portrait, or short landscape (rotate / phone sideways) */
+	const stackHeroLayout = useMediaQuery(
+		'(max-width: 899px), (orientation: portrait), (max-height: 550px) and (orientation: landscape)',
+	);
+	const compactControls = isSmallScreen || isRotatedMedium || isRotated;
 
 	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
@@ -116,89 +111,66 @@ const HeroSection = () => {
 	return (
 		<Box
 			sx={{
-				height: isMobileLandscape ? 'auto' : { xs: '100vh', sm: 'auto', md: '100vh', lg: '100vh' },
 				display: 'flex',
 				justifyContent: 'center',
 				alignItems: 'center',
 				background: 'transparent',
 				position: 'relative',
-				pt: isSmallMobileLandscape ? '26vh' : isMobileLandscape ? '15vh' : isMobilePortrait ? '10vh' : '10vh',
+				width: '100%',
+				minHeight: stackHeroLayout ? 'auto' : { xs: 'auto', md: 'min(100vh, 920px)' },
+				pt: {
+					xs: 'clamp(4.25rem, 11vh, 6.5rem)',
+					md: 'clamp(4.75rem, 10vh, 7rem)',
+				},
+				pb: { xs: 2, sm: 3, md: 4 },
 				overflow: 'hidden',
+				boxSizing: 'border-box',
 			}}>
 			<Box
 				sx={{
-					display: 'flex',
-					flexDirection: isMobileLandscape
-						? 'column'
-						: isMobilePortrait
-							? 'column'
-							: isTabletLandscape
-								? 'row'
-								: isTabletPortrait
-									? 'column'
-									: isDesktopLandscape
-										? 'row'
-										: isDesktopPortrait
-											? 'column'
-											: 'row',
-					justifyContent: 'center',
-					alignItems: 'center',
+					display: 'grid',
 					width: '100%',
-					px: '5%',
-					py: '5%',
+					maxWidth: '1400px',
+					mx: 'auto',
+					px: { xs: '4%', sm: '5%', md: '4%', lg: '3.5%' },
+					py: { xs: 1.5, sm: 2.5, md: 3 },
+					gap: { xs: 2, sm: 2.5, md: 3, lg: 4 },
+					alignItems: 'center',
+					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.12fr) minmax(0, 0.88fr)' },
+					gridTemplateAreas: stackHeroLayout
+						? '"copy" "visual"'
+						: { md: '"copy visual"' },
 				}}>
-				{/* Content */}
-
 				<motion.div
 					initial={{ opacity: 0, x: -50 }}
 					animate={{ opacity: 1, x: 0 }}
 					transition={{ duration: 0.8 }}
 					style={{
-						flex: 3,
+						gridArea: 'copy',
+						width: '100%',
+						minWidth: 0,
 						display: 'flex',
 						flexDirection: 'column',
 						justifyContent: 'center',
-						alignItems: 'flex-start',
-						width: '100%',
+						alignItems: stackHeroLayout ? 'center' : 'flex-start',
+						textAlign: stackHeroLayout ? 'center' : 'left',
 						position: 'relative',
 						zIndex: 2,
-						height: isSmallMobileLandscape ? '100vh' : 'auto',
-						marginBottom: isSmallMobilePortrait
-							? '1rem'
-							: isMobilePortrait
-								? '1.75rem'
-								: isMobileLandscape
-									? '2.25rem'
-									: isTabletPortrait
-										? '2.5rem'
-										: '',
 					}}>
-					<Box>
+					<Box sx={{ width: '100%', maxWidth: stackHeroLayout ? '36rem' : 'none' }}>
 						<Typography
 							variant='h2'
 							className='kaizen-title'
 							sx={{
-								fontSize: isSmallMobilePortrait
-									? '1.35rem'
-									: isSmallMobileLandscape
-										? '1.75rem'
-										: isMobilePortrait
-											? '1.85rem'
-											: isMobileLandscape
-												? '2.25rem'
-												: isTabletPortrait
-													? '2.75rem'
-													: isTabletLandscape
-														? '3rem'
-														: isDesktopPortrait
-															? '2.75rem'
-															: isDesktopLandscape
-																? '3.25rem'
-																: '3rem',
+								fontSize: {
+									xs: 'clamp(1.35rem, 2.2vw + 0.85rem, 2.85rem)',
+									md: 'clamp(1.85rem, 2.45vw + 0.8rem, 3.55rem)',
+									lg: 'clamp(2.1rem, 2.25vw + 1rem, 3.95rem)',
+								},
 								fontWeight: 700,
-								mb: { xs: 1.5, sm: 2 },
+								mb: { xs: 1, sm: 1.5, md: 3.5 },
 								letterSpacing: '-0.02em',
-								lineHeight: 1.2,
+								lineHeight: 1.15,
 								fontFamily: 'Varela Round',
 								background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
 								WebkitBackgroundClip: 'text',
@@ -211,26 +183,14 @@ const HeroSection = () => {
 							variant='h2'
 							sx={{
 								fontFamily: 'Varela Round',
-								fontSize: isSmallMobilePortrait
-									? '0.95rem'
-									: isSmallMobileLandscape
-										? '1.15rem'
-										: isMobilePortrait
-											? '1.5rem'
-											: isMobileLandscape
-												? '1.5rem'
-												: isTabletPortrait
-													? '2rem'
-													: isTabletLandscape
-														? '2.15rem'
-														: isDesktopPortrait
-															? '2.5rem'
-															: isDesktopLandscape
-																? '2.5rem'
-																: '3rem',
+								fontSize: {
+									xs: 'clamp(0.95rem, 1.35vw + 0.55rem, 2.25rem)',
+									md: 'clamp(1.15rem, 1.55vw + 0.52rem, 2.85rem)',
+									lg: 'clamp(1.3rem, 1.45vw + 0.58rem, 3.15rem)',
+								},
 								color: '#152238',
 								fontWeight: 600,
-								lineHeight: 1.3,
+								lineHeight: 1.35,
 							}}>
 							Size hayal satmıyoruz. İngilizceyi öğrenirken karşınıza çıkan zorlukları ve problemleri biliyoruz
 						</Typography>
@@ -238,54 +198,33 @@ const HeroSection = () => {
 							variant='h5'
 							sx={{
 								color: '#1e3a5f',
-								fontSize: isSmallMobilePortrait
-									? '0.8rem'
-									: isSmallMobileLandscape
-										? '0.85rem'
-										: isMobilePortrait
-											? '1rem'
-											: isMobileLandscape
-												? '1.35rem'
-												: isTabletPortrait
-													? '1.35rem'
-													: isTabletLandscape
-														? '1.35rem'
-														: isDesktopPortrait
-															? '1.5rem'
-															: isDesktopLandscape
-																? '1.5rem'
-																: { sm: '1rem', md: '1rem' },
+								fontSize: {
+									xs: 'clamp(0.8rem, 0.55vw + 0.65rem, 1.35rem)',
+									md: 'clamp(0.95rem, 0.62vw + 0.64rem, 1.7rem)',
+									lg: 'clamp(1.05rem, 0.55vw + 0.72rem, 1.9rem)',
+								},
 								fontWeight: 400,
-								lineHeight: 1.7,
+								lineHeight: 1.65,
 								fontFamily: 'Varela Round',
-								margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0',
+								mt: { xs: 1, md: 2.5 },
 							}}>
 							Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik
 						</Typography>
-						<Typography variant='h6' sx={{
-							color: '#1e3a5f',
-							fontSize: isSmallMobilePortrait
-								? '0.75rem'
-								: isSmallMobileLandscape
-									? '0.8rem'
-									: isMobilePortrait
-										? '0.9rem'
-										: isMobileLandscape
-											? '1.15rem'
-											: isTabletPortrait
-												? '1.15rem'
-												: isTabletLandscape
-													? '1.15rem'
-													: isDesktopPortrait
-														? '1.25rem'
-														: isDesktopLandscape
-															? '1.25rem'
-															: { sm: '1rem', md: '1rem' },
-							fontWeight: 400,
-							lineHeight: 1.7,
-							fontFamily: 'Varela Round',
-							margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0 1.5rem 0',
-						}}>
+						<Typography
+							variant='h6'
+							sx={{
+								color: '#1e3a5f',
+								fontSize: {
+									xs: 'clamp(0.75rem, 0.4vw + 0.62rem, 1.15rem)',
+									md: 'clamp(0.88rem, 0.45vw + 0.62rem, 1.45rem)',
+									lg: 'clamp(0.95rem, 0.42vw + 0.7rem, 1.6rem)',
+								},
+								fontWeight: 400,
+								lineHeight: 1.65,
+								fontFamily: 'Varela Round',
+								mt: { xs: 0.75, md: 2 },
+								mb: { xs: 0.5, md: 1.5 },
+							}}>
 							Kurslarımızı keşfedin!
 						</Typography>
 					</Box>
@@ -293,51 +232,44 @@ const HeroSection = () => {
 					<Box
 						sx={{
 							display: 'flex',
-							gap: 2,
+							gap: { xs: 1, sm: 1.5, md: 2 },
 							flexWrap: 'wrap',
-							justifyContent: { xs: 'center', md: 'flex-start' },
-							height: isSmallMobilePortrait
-								? '2rem'
-								: isSmallMobileLandscape
-									? '3.5rem'
-									: isMobileLandscape
-										? '4rem'
-										: isMobilePortrait
-											? '3.5rem'
-											: '4rem',
-							mt: isSmallMobilePortrait ? '1rem' : isMobilePortrait ? '1.5rem' : isMobileLandscape ? '1rem' : '',
+							justifyContent: stackHeroLayout ? 'center' : 'flex-start',
+							width: '100%',
+							mt: { xs: 1.25, sm: 1.75, md: 2 },
 						}}>
 						<Button
 							variant='contained'
 							endIcon={<PlayCircle />}
 							onClick={() => setIsIntroVideoModalOpen(true)}
 							sx={{
-								'fontFamily': 'Varela Round',
-								'border': '1px solid rgba(0, 76, 153, 0.35)',
-								'color': '#FFFFFF',
-								'background': '#0052a3',
-								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
-								'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
-								'fontSize': { xs: '0.8rem', sm: '0.85rem', md: '0.9rem', lg: '1rem' },
-								'fontWeight': 500,
-								'boxShadow': '0 4px 14px rgba(0, 76, 153, 0.4)',
+								fontFamily: 'Varela Round',
+								border: '1px solid rgba(0, 76, 153, 0.35)',
+								color: '#FFFFFF',
+								background: '#0052a3',
+								borderRadius: { xs: '0.65rem', sm: '0.75rem', md: '0.9rem' },
+								px: compactControls ? { xs: 1, sm: 1.15 } : { xs: 1.15, sm: 1.35, md: 1.65 },
+								py: compactControls ? 0.35 : { xs: 0.4, md: 0.45 },
+								fontSize: {
+									xs: 'clamp(0.72rem, 0.3vw + 0.58rem, 0.88rem)',
+									md: 'clamp(0.78rem, 0.28vw + 0.6rem, 0.95rem)',
+									lg: 'clamp(0.85rem, 0.25vw + 0.65rem, 1.05rem)',
+								},
+								fontWeight: 500,
+								minHeight: { xs: '2rem', sm: '2.1rem', md: '2.5rem', lg: '2.75rem' },
+								'& .MuiButton-endIcon': {
+									marginLeft: { xs: 0.5, md: 0.65 },
+									'& svg': { fontSize: { xs: '1.05rem', md: '1.15rem' } },
+								},
+								boxShadow: '0 4px 14px rgba(0, 76, 153, 0.4)',
+								textTransform: 'capitalize',
 								'&:hover': {
 									background: '#0066CC',
 									borderColor: 'rgba(0, 82, 163, 0.5)',
 									transform: 'translateY(-3px)',
 									boxShadow: '0 6px 20px rgba(0, 76, 153, 0.5)',
 								},
-								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-								'textTransform': 'capitalize',
-								'height': isSmallMobilePortrait
-									? '2rem'
-									: isSmallMobileLandscape
-										? '2.25rem'
-										: isMobileLandscape
-											? '2.5rem'
-											: isMobilePortrait
-												? '2.75rem'
-												: '3rem',
+								transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 							}}>
 							Tanıtımı İzle
 						</Button>
@@ -345,45 +277,42 @@ const HeroSection = () => {
 							variant='contained'
 							onClick={() => setIsGetMoreDetailsModalOpen(true)}
 							sx={{
-								'fontFamily': 'Varela Round',
-								'background': '#FF6B3D',
-								'color': '#FFFFFF',
-								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
-								'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
-								'fontSize': { xs: '0.8rem', sm: '0.85rem', md: '0.9rem', lg: '1rem' },
-								'fontWeight': 700,
-								'letterSpacing': '0.02em',
-								'textTransform': 'capitalize',
-								'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+								fontFamily: 'Varela Round',
+								background: '#FF6B3D',
+								color: '#FFFFFF',
+								borderRadius: { xs: '0.65rem', sm: '0.75rem', md: '0.9rem' },
+								px: compactControls ? { xs: 1, sm: 1.15 } : { xs: 1.15, sm: 1.35, md: 1.65 },
+								py: compactControls ? 0.35 : { xs: 0.4, md: 0.45 },
+								fontSize: {
+									xs: 'clamp(0.72rem, 0.3vw + 0.58rem, 0.88rem)',
+									md: 'clamp(0.78rem, 0.28vw + 0.6rem, 0.95rem)',
+									lg: 'clamp(0.85rem, 0.25vw + 0.65rem, 1.05rem)',
+								},
+								fontWeight: 700,
+								letterSpacing: '0.02em',
+								textTransform: 'capitalize',
+								minHeight: { xs: '2rem', sm: '2.1rem', md: '2.35rem', lg: '2.45rem' },
+								boxShadow: '0 4px 15px rgba(255, 107, 61, 0.35)',
 								'&:hover': {
 									background: '#ff7d55',
 									transform: 'translateY(-2px)',
 									boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 								},
-								'transition': 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-								'height': isSmallMobilePortrait
-									? '2rem'
-									: isSmallMobileLandscape
-										? '2.25rem'
-										: isMobileLandscape
-											? '2.5rem'
-											: isMobilePortrait
-												? '2.75rem'
-												: '3rem',
+								transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
 							}}>
 							Daha Fazla Bilgi
 						</Button>
 					</Box>
 				</motion.div>
 
-				{/* Instructor Image */}
 				<motion.div
 					initial={{ opacity: 0, x: 50 }}
 					animate={{ opacity: 1, x: 0 }}
 					transition={{ duration: 0.8, delay: 0.2 }}
 					style={{
-						flex: 1,
+						gridArea: 'visual',
 						width: '100%',
+						minWidth: 0,
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
@@ -395,20 +324,22 @@ const HeroSection = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							width: '100%',
+							maxWidth: stackHeroLayout ? 'min(100%, 22rem)' : 'min(100%, 32rem)',
 							position: 'relative',
+							mx: 'auto',
 						}}>
 						<Box
 							sx={{
-								'position': 'absolute',
-								'top': '50%',
-								'left': '50%',
-								'transform': 'translate(-50%, -50%)',
-								'width': { xs: '250px', sm: '250px', md: '400px' },
-								'height': { xs: '250px', sm: '250px', md: '400px' },
-								'borderRadius': '50%',
-								'background': 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
-								'filter': 'blur(40px)',
-								'animation': 'pulseGlow 3s ease-in-out infinite',
+								position: 'absolute',
+								top: '50%',
+								left: '50%',
+								transform: 'translate(-50%, -50%)',
+								width: 'min(100%, 400px)',
+								height: 'min(100%, 400px)',
+								borderRadius: '50%',
+								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
+								filter: 'blur(40px)',
+								animation: 'pulseGlow 3s ease-in-out infinite',
 								'@keyframes pulseGlow': {
 									'0%, 100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.6 },
 									'50%': { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 0.8 },
@@ -420,30 +351,19 @@ const HeroSection = () => {
 							src={Hero_Img}
 							alt='Student learning'
 							sx={{
-								'maxHeight': isSmallMobilePortrait
-									? '42.5vh'
-									: isSmallMobileLandscape
-										? '20rem'
-										: isMobilePortrait
-											? '40vh'
-											: isMobileLandscape
-												? '25rem'
-												: isTabletPortrait
-													? '27.5rem'
-													: isTabletLandscape
-														? '30rem'
-														: isDesktopPortrait
-															? '35rem'
-															: isDesktopLandscape
-																? '35rem'
-																: { xs: 'auto', sm: 'auto', md: '25rem', lg: 'auto' },
-								'borderRadius': '50%',
-								'transition': 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-								'position': 'relative',
-								'objectFit': 'contain',
-								'zIndex': 1,
-								'&:hover': {
-									transform: 'scale(1.05) translateY(-10px)',
+								width: '100%',
+								height: 'auto',
+								maxHeight: stackHeroLayout
+									? 'clamp(10rem, 38vh, 22rem)'
+									: { md: 'clamp(14rem, 52vh, 28rem)', lg: 'clamp(16rem, 58vh, 32rem)' },
+								objectFit: 'contain',
+								position: 'relative',
+								zIndex: 1,
+								transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+								'@media (hover: hover)': {
+									'&:hover': {
+										transform: 'scale(1.02) translateY(-8px)',
+									},
 								},
 							}}
 						/>
