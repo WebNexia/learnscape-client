@@ -106,7 +106,7 @@ const Footer = () => {
 								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							info@adenacademy.com
+							info@adenacademy.co.uk
 						</Typography>
 						<Box
 							component='a'
