@@ -34,6 +34,7 @@ const Header = () => {
   const {
     isVerySmallScreen,
     isSmallScreen,
+    isDesktop,
     isRotated,
     isRotatedMedium,
     isMobileLandscape,
@@ -42,6 +43,8 @@ const Header = () => {
   } = useContext(MediaQueryContext);
   const isMobileSize = isSmallScreen || isRotatedMedium;
   const isMobileSizeSmall = isVerySmallScreen || isRotated;
+  /** Inline nav only on wide desktop; tablet + rotated/short viewports use drawer */
+  const showInlineNav = isDesktop && !isRotatedMedium && !isRotated;
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
@@ -63,41 +66,41 @@ const Header = () => {
       isActive?: boolean;
       NavIcon?: typeof SchoolOutlined;
     }> = [
-      {
-        label: "Ana Sayfa",
-        action: () => {
-          navigate("/");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        {
+          label: "Ana Sayfa",
+          action: () => {
+            navigate("/");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
         },
-      },
-      {
-        label: "Kurslar",
-        NavIcon: SchoolOutlined,
-        action: () => {
-          navigate("/landing-page-courses");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        {
+          label: "Kurslar",
+          NavIcon: SchoolOutlined,
+          action: () => {
+            navigate("/landing-page-courses");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive: location.pathname === "/landing-page-courses",
         },
-        isActive: location.pathname === "/landing-page-courses",
-      },
-      {
-        label: "Kaynaklar",
-        NavIcon: MenuBookOutlined,
-        action: () => {
-          navigate("/landing-page-resources");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        {
+          label: "Kaynaklar",
+          NavIcon: MenuBookOutlined,
+          action: () => {
+            navigate("/landing-page-resources");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive: location.pathname === "/landing-page-resources",
         },
-        isActive: location.pathname === "/landing-page-resources",
-      },
-      {
-        label: "Danışmanlık",
-        NavIcon: GroupsOutlined,
-        action: () => {
-          navigate("/landing-page-consultations");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        {
+          label: "Danışmanlık",
+          NavIcon: GroupsOutlined,
+          action: () => {
+            navigate("/landing-page-consultations");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive: location.pathname === "/landing-page-consultations",
         },
-        isActive: location.pathname === "/landing-page-consultations",
-      },
-    ];
+      ];
 
     items.push(
       {
@@ -131,15 +134,12 @@ const Header = () => {
             display: "flex",
             justifyContent: "space-between",
             width: "100%",
-            height: isMobileLandscape
-              ? "10vh"
-              : isMobilePortrait
-                ? "10vh"
-                : isTabletPortrait
-                  ? "10vh"
-                  : isSmallScreen
-                    ? "10vh"
-                    : { md: "13vh", lg: "13vh" },
+            minHeight: {
+              xs: "3.25rem",
+              sm: "3.5rem",
+              md: "clamp(3.5rem, 9vh, 5.5rem)",
+            },
+            height: "auto",
             backgroundColor: isScrolled ? "#FFFFFF" : "transparent",
             boxShadow: isScrolled ? "0 1px 8px rgba(0, 0, 0, 0.04)" : "none",
             borderBottom: isScrolled
@@ -147,15 +147,16 @@ const Header = () => {
               : "1px solid transparent",
             position: "fixed",
             top: 0,
-            px: isMobileSizeSmall ? "0.35rem" : "0.75rem",
+            px: { xs: "0.35rem", sm: "0.5rem", md: "0.75rem", lg: "1rem" },
+            gap: { xs: 0.5, sm: 0.75 },
             transition:
               "background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease",
             zIndex: 1201,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", flex: "0 0 auto" }}>
-            {(isSmallScreen || isRotatedMedium) && (
-              <IconButton onClick={() => setIsDrawerOpen(true)}>
+            {!showInlineNav && (
+              <IconButton onClick={() => setIsDrawerOpen(true)} aria-label="Menü">
                 <Menu
                   sx={{ color: theme.textColor?.primary.main, padding: 0 }}
                   fontSize="small"
@@ -179,9 +180,9 @@ const Header = () => {
                 src={logo}
                 alt="logo"
                 sx={{
-                  height: { xs: "6vh", sm: "6vh", md: "10vh" },
-                  minHeight: "2rem",
-                  maxHeight: "4.5rem",
+                  height: { xs: "2.25rem", sm: "2.5rem", md: "clamp(2.5rem, 7vh, 4rem)" },
+                  minHeight: "1.75rem",
+                  maxHeight: { xs: "2.75rem", md: "4rem" },
                   width: "auto",
                 }}
               />
@@ -193,7 +194,7 @@ const Header = () => {
             navItems={navItems}
           />
 
-          {!(isSmallScreen || isRotatedMedium) && (
+          {showInlineNav && (
             <Box
               sx={{
                 display: "flex",
@@ -202,8 +203,9 @@ const Header = () => {
                 flex: "1 1 auto",
                 minWidth: 0,
                 flexWrap: "nowrap",
-                gap: { md: 0.5, lg: 0.75 },
-                px: { md: 0.5, lg: 1 },
+                gap: { md: 0.35, lg: 0.65 },
+                px: { md: 0.25, lg: 0.75 },
+                overflow: "hidden",
               }}
             >
               {navItems
@@ -232,8 +234,8 @@ const Header = () => {
                         transformOrigin: "center",
                         transform: "scale(1)",
                         borderRadius: "999px",
-                        px: { md: "0.55rem", lg: "0.85rem" },
-                        py: { md: "0.35rem", lg: "0.45rem" },
+                        px: { md: "0.45rem", lg: "0.75rem" },
+                        py: { md: "0.3rem", lg: "0.4rem" },
                         border: "1.5px solid",
                         borderColor: item.isActive
                           ? "rgba(255, 107, 61, 0.65)"
@@ -248,39 +250,39 @@ const Header = () => {
                           "transform 0.25s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease",
                         ...(item.isActive
                           ? {
-                              "&:hover": {
-                                transform: "scale(1.07)",
-                                borderColor: "rgba(255, 255, 255, 0.35)",
-                                background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
-                                boxShadow:
-                                  "0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-                              },
-                              "&:hover .nav-pill-icon": {
-                                color: "#FFFFFF",
-                                fontSize: { md: "1.06rem", lg: "1.16rem" },
-                              },
-                              "&:hover .nav-pill-label": {
-                                color: "#FFFFFF",
-                                fontSize: { md: "0.84rem", lg: "0.96rem" },
-                              },
-                            }
+                            "&:hover": {
+                              transform: "scale(1.07)",
+                              borderColor: "rgba(255, 255, 255, 0.35)",
+                              background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
+                              boxShadow:
+                                "0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+                            },
+                            "&:hover .nav-pill-icon": {
+                              color: "#FFFFFF",
+                              fontSize: { md: "1.06rem", lg: "1.16rem" },
+                            },
+                            "&:hover .nav-pill-label": {
+                              color: "#FFFFFF",
+                              fontSize: { md: "0.84rem", lg: "0.96rem" },
+                            },
+                          }
                           : {
-                              "&:hover": {
-                                transform: "scale(1.07)",
-                                borderColor: "rgba(255, 255, 255, 0.35)",
-                                background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
-                                boxShadow:
-                                  "0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-                              },
-                              "&:hover .nav-pill-icon": {
-                                color: "#FFFFFF",
-                                fontSize: { md: "1.06rem", lg: "1.16rem" },
-                              },
-                              "&:hover .nav-pill-label": {
-                                color: "#FFFFFF",
-                                fontSize: { md: "0.84rem", lg: "0.96rem" },
-                              },
-                            }),
+                            "&:hover": {
+                              transform: "scale(1.07)",
+                              borderColor: "rgba(255, 255, 255, 0.35)",
+                              background: `linear-gradient(145deg, ${ADEN_BLUE_DEEP} 0%, ${ADEN_BLUE} 45%, ${ADEN_BLUE_BRIGHT} 100%)`,
+                              boxShadow:
+                                "0 8px 26px rgba(0, 76, 153, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+                            },
+                            "&:hover .nav-pill-icon": {
+                              color: "#FFFFFF",
+                              fontSize: { md: "1.06rem", lg: "1.16rem" },
+                            },
+                            "&:hover .nav-pill-label": {
+                              color: "#FFFFFF",
+                              fontSize: { md: "0.84rem", lg: "0.96rem" },
+                            },
+                          }),
                         "&:focus-visible": {
                           outline: "2px solid #FF6B3D",
                           outlineOffset: 2,
@@ -307,7 +309,7 @@ const Header = () => {
                           fontFamily: "Varela Round",
                           color: item.isActive ? "#c43d15" : "#01435A",
                           fontWeight: item.isActive ? 700 : 600,
-                          fontSize: { md: "0.78rem", lg: "0.88rem" },
+                          fontSize: { md: "0.72rem", lg: "0.86rem" },
                           lineHeight: 1.2,
                           whiteSpace: "nowrap",
                           transition:
@@ -327,7 +329,8 @@ const Header = () => {
               justifyContent: "flex-end",
               flex: "0 0 auto",
               alignItems: "center",
-              gap: 2.5,
+              gap: { xs: 0.75, sm: 1.25, md: 1.75 },
+              flexShrink: 0,
             }}
           >
             <Badge
@@ -361,7 +364,7 @@ const Header = () => {
               >
                 <ShoppingCart
                   fontSize={isMobileSizeSmall ? "small" : "large"}
-                  sx={{ fontSize: isMobileSizeSmall ? "1.6rem" : "1.75rem" }}
+                  sx={{ fontSize: isMobileSizeSmall ? "1.35rem" : "1.75rem" }}
                 />
               </IconButton>
             </Badge>
@@ -370,13 +373,13 @@ const Header = () => {
                 fontFamily: "Varela Round",
                 textTransform: "capitalize",
                 fontSize: isMobileSizeSmall
-                  ? "0.7rem"
+                  ? "0.75rem"
                   : isMobileSize
                     ? "0.85rem"
-                    : "1rem",
+                    : "0.95rem",
                 color: "#FFFFFF",
                 background: "#FF6B3D",
-                padding: isMobileSize ? "0.4rem 1rem" : "0.5rem 1.75rem",
+                padding: isMobileSize ? "0.25rem 0.85rem" : "0.5rem 1.75rem",
                 borderRadius: { xs: "0.75rem", sm: "1rem", md: "1.25rem" },
                 fontWeight: 500,
                 boxShadow: "0 4px 15px rgba(255, 107, 61, 0.35)",
@@ -389,7 +392,7 @@ const Header = () => {
               }}
               onClick={() => navigate("/auth")}
             >
-              Giriş Yap
+              {isMobileSizeSmall ? "Giriş" : "Giriş Yap"}
             </Button>
           </Box>
         </Toolbar>
