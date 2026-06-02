@@ -163,9 +163,9 @@ const HeroSection = () => {
 							className='kaizen-title'
 							sx={{
 								fontSize: {
-									xs: 'clamp(1.35rem, 2.2vw + 0.85rem, 2.85rem)',
-									md: 'clamp(1.85rem, 2.45vw + 0.8rem, 3.55rem)',
-									lg: 'clamp(2.1rem, 2.25vw + 1rem, 3.95rem)',
+									xs: 'clamp(1.45rem, 2.35vw + 0.9rem, 3rem)',
+									md: 'clamp(1.95rem, 2.5vw + 0.85rem, 3.7rem)',
+									lg: 'clamp(2.15rem, 2.3vw + 1.05rem, 4.1rem)',
 								},
 								fontWeight: 700,
 								mb: { xs: 1, sm: 1.5, md: 3.5 },
@@ -184,9 +184,9 @@ const HeroSection = () => {
 							sx={{
 								fontFamily: 'Varela Round',
 								fontSize: {
-									xs: 'clamp(0.95rem, 1.35vw + 0.55rem, 2.25rem)',
-									md: 'clamp(1.15rem, 1.55vw + 0.52rem, 2.85rem)',
-									lg: 'clamp(1.3rem, 1.45vw + 0.58rem, 3.15rem)',
+									xs: 'clamp(1rem, 1.45vw + 0.58rem, 2.4rem)',
+									md: 'clamp(1.2rem, 1.6vw + 0.55rem, 2.95rem)',
+									lg: 'clamp(1.35rem, 1.5vw + 0.62rem, 3.25rem)',
 								},
 								color: '#152238',
 								fontWeight: 600,
@@ -199,9 +199,9 @@ const HeroSection = () => {
 							sx={{
 								color: '#1e3a5f',
 								fontSize: {
-									xs: 'clamp(0.8rem, 0.55vw + 0.65rem, 1.35rem)',
-									md: 'clamp(0.95rem, 0.62vw + 0.64rem, 1.7rem)',
-									lg: 'clamp(1.05rem, 0.55vw + 0.72rem, 1.9rem)',
+									xs: 'clamp(0.86rem, 0.58vw + 0.68rem, 1.45rem)',
+									md: 'clamp(1rem, 0.65vw + 0.66rem, 1.8rem)',
+									lg: 'clamp(1.1rem, 0.58vw + 0.75rem, 2rem)',
 								},
 								fontWeight: 400,
 								lineHeight: 1.65,
@@ -215,9 +215,9 @@ const HeroSection = () => {
 							sx={{
 								color: '#1e3a5f',
 								fontSize: {
-									xs: 'clamp(0.75rem, 0.4vw + 0.62rem, 1.15rem)',
-									md: 'clamp(0.88rem, 0.45vw + 0.62rem, 1.45rem)',
-									lg: 'clamp(0.95rem, 0.42vw + 0.7rem, 1.6rem)',
+									xs: 'clamp(0.8rem, 0.44vw + 0.65rem, 1.22rem)',
+									md: 'clamp(0.92rem, 0.48vw + 0.65rem, 1.52rem)',
+									lg: 'clamp(1rem, 0.45vw + 0.72rem, 1.68rem)',
 								},
 								fontWeight: 400,
 								lineHeight: 1.65,
@@ -324,7 +324,9 @@ const HeroSection = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							width: '100%',
-							maxWidth: stackHeroLayout ? 'min(100%, 22rem)' : 'min(100%, 32rem)',
+							maxWidth: stackHeroLayout
+								? { xs: 'min(100%, 16rem)', sm: 'min(100%, 18rem)' }
+								: 'min(100%, 32rem)',
 							position: 'relative',
 							mx: 'auto',
 						}}>
@@ -334,8 +336,8 @@ const HeroSection = () => {
 								top: '50%',
 								left: '50%',
 								transform: 'translate(-50%, -50%)',
-								width: 'min(100%, 400px)',
-								height: 'min(100%, 400px)',
+								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 400px)',
+								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 400px)',
 								borderRadius: '50%',
 								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
 								filter: 'blur(40px)',
@@ -354,7 +356,7 @@ const HeroSection = () => {
 								width: '100%',
 								height: 'auto',
 								maxHeight: stackHeroLayout
-									? 'clamp(10rem, 38vh, 22rem)'
+									? { xs: 'clamp(7.5rem, 28vh, 16rem)', sm: 'clamp(8.5rem, 30vh, 17rem)' }
 									: { md: 'clamp(14rem, 52vh, 28rem)', lg: 'clamp(16rem, 58vh, 32rem)' },
 								objectFit: 'contain',
 								position: 'relative',
