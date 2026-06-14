@@ -105,7 +105,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 						}}>
 						Son Eklenen Kurslar
 					</Typography>
-					<IconButton
+					{/* <IconButton
 						size='small'
 						sx={{
 							ml: { xs: '0.5rem', sm: '0.75rem' },
@@ -119,7 +119,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 						}}
 						onClick={() => setIsInfoDialogOpen(true)}>
 						<InfoOutlined />
-					</IconButton>
+					</IconButton> */}
 				</Box>
 
 				<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem', px: { xs: 1.5, sm: 2 } }}>
