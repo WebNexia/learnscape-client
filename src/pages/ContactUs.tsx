@@ -188,7 +188,7 @@ const ContactUs = () => {
 								background: 'transparent',
 								color: '#fff',
 								textAlign: 'center',
-								marginTop: { xs: '10vh', md: '13vh' },
+								marginTop: { xs: '10vh', md: '10vh' },
 							}}>
 							<Container maxWidth='md' sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: '1rem' }}>
 								<Typography

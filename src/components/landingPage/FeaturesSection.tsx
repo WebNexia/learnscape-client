@@ -3,6 +3,7 @@ import { School, Psychology, Devices, EmojiEvents } from '@mui/icons-material';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { responsiveStyles } from '../../styles/responsiveStyles';
+import LandingPageSectionHeader from './LandingPageSectionHeader';
 
 const cardOuterRadius = responsiveStyles.components.card.borderRadius;
 
@@ -14,26 +15,26 @@ const cardInnerRadius = { xs: 'calc(0.5rem - 4px)', sm: 'calc(0.75rem - 4px)', m
 const features = [
 	{
 		icon: <School sx={{ fontSize: '3rem', fontWeight: 600 }} />,
-		title: 'Expert Instructors',
-		description: 'Learn from certified English teachers with years of experience.',
+		title: 'Uzman Eğitmenler',
+		description: 'Alanında deneyimli öğretmenlerimizle birebir ilgi ve güçlü akademik rehberlik.',
 		color: '#004c99',
 	},
 	{
 		icon: <Psychology sx={{ fontSize: '3rem', fontWeight: 600 }} />,
-		title: 'Personalized Learning',
-		description: 'Customized lessons tailored to your learning style and goals.',
+		title: 'Sistemli Öğrenme',
+		description: 'Seviyenize uygun müfredat ve düzenli ilerleme takibiyle verimli çalışın.',
 		color: '#4ECDC4',
 	},
 	{
 		icon: <Devices sx={{ fontSize: '3rem', fontWeight: 700, strokeWidth: 1.5 }} />,
-		title: 'Learn Anywhere',
-		description: 'Access your courses on any device, anytime, anywhere.',
+		title: 'Canlı Dersler',
+		description: 'İnteraktif canlı oturumlarla konuları pekiştirin, sorularınızı anında yanıtlayın.',
 		color: '#0066CC',
 	},
 	{
 		icon: <EmojiEvents sx={{ fontSize: '3rem', fontWeight: 600 }} />,
-		title: 'Track Progress',
-		description: 'Monitor your improvement with detailed progress reports.',
+		title: 'Etüt Programları',
+		description: 'Etüt saatlerinde ek destek, tekrar ve sınav hazırlığı için planlı çalışma.',
 		color: '#4ECDC4',
 	},
 ];
@@ -51,36 +52,11 @@ const FeaturesSection = () => {
 				position: 'relative',
 			}}>
 			<Container maxWidth='lg'>
-				<Box
-					sx={{
-						textAlign: 'center',
-						mb: responsiveStyles.spacing.section,
-						px: responsiveStyles.spacing.item,
-					}}>
-					<Typography
-						sx={{
-							mb: responsiveStyles.spacing.item,
-							fontSize: responsiveStyles.typography.h2,
-							background: 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-							WebkitBackgroundClip: 'text',
-							WebkitTextFillColor: 'transparent',
-							backgroundClip: 'text',
-							fontWeight: 700,
-							fontFamily: 'Varela Round',
-						}}>
-						Neden Aden Academy?
-					</Typography>
-					<Typography
-						variant='h5'
-						sx={{
-							color: '#334155',
-							fontSize: responsiveStyles.typography.h5,
-							fontFamily: 'Varela Round',
-							fontWeight: 400,
-						}}>
-						Öğrenme platformumuzu benzersiz kılan özellikleri keşfedin
-					</Typography>
-				</Box>
+				<LandingPageSectionHeader
+					title='Neden Aden Academy?'
+					subtitle='İngilizce ve sınav hazırlığında canlı ders, etüt ve dijital öğrenmeyi bir arada sunuyoruz. Hedefinize odaklı, destekleyici bir eğitim ortamı.'
+					sx={{ mb: responsiveStyles.spacing.section }}
+				/>
 				<Grid container spacing={responsiveStyles.spacing.item} sx={{ px: responsiveStyles.spacing.item }}>
 					{features?.map((feature, index) => (
 						<Grid item xs={12} sm={6} md={3} key={index} sx={{ mb: { xs: 2 } }}>
@@ -133,18 +109,18 @@ const FeaturesSection = () => {
 											mb: 2,
 											p: 3,
 											borderRadius: '50%',
-											background:
-												feature.title === 'Learn Anywhere'
-													? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
-													: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
-											boxShadow: feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
+										background:
+											feature.title === 'Canlı Dersler'
+												? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
+												: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
+										boxShadow: feature.title === 'Canlı Dersler' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
 											transition: 'transform 0.2s ease-out',
 											display: 'flex',
 											alignItems: 'center',
 											justifyContent: 'center',
 											'& svg': {
 												filter:
-													feature.title === 'Learn Anywhere'
+													feature.title === 'Canlı Dersler'
 														? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
 														: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
 											},
@@ -164,13 +140,7 @@ const FeaturesSection = () => {
 											fontSize: isMobileSize ? '1.2rem' : '1.4rem',
 											fontFamily: 'Varela Round',
 										}}>
-										{feature.title === 'Expert Instructors'
-											? 'Uzman Eğitmenler'
-											: feature.title === 'Personalized Learning'
-												? 'Sistemli Öğrenme'
-												: feature.title === 'Learn Anywhere'
-													? 'Canlı Dersler'
-													: 'Etüt Programları'}
+										{feature.title}
 									</Typography>
 									<Typography
 										variant='body1'
@@ -180,13 +150,7 @@ const FeaturesSection = () => {
 											fontFamily: 'Varela Round',
 											lineHeight: 1.6,
 										}}>
-										{feature.description === 'Learn from certified English teachers with years of experience.'
-											? 'Yılların deneyimine sahip İngilizce öğretmenlerinden öğrenin'
-											: feature.description === 'Customized lessons tailored to your learning style and goals.'
-												? 'Kendi hızınızda interaktif öğrenme deneyimi'
-												: feature.description === 'Access your courses on any device, anytime, anywhere.'
-													? 'İnteraktif derslerle öğrendiklerinizi pekiştirme ve canlı pratik fırsatı'
-													: 'Etüt saatlerinde ders çalışma fırsatı ve ders planlama desteği'}
+										{feature.description}
 									</Typography>
 								</Box>
 							</Box>

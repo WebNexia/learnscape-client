@@ -11,6 +11,12 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 
+const landingHeaderStickyTop = {
+	xs: '3.25rem',
+	sm: '3.5rem',
+	md: 'clamp(3.5rem, 9vh, 5.5rem)',
+} as const;
+
 const LandingPageResources = () => {
 	const {
 		resources,
@@ -175,22 +181,25 @@ const LandingPageResources = () => {
 						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
 							{/* Spacer for fixed header */}
 							<Box sx={{ height: isMobileSize ? '10vh' : '13vh', flexShrink: 0 }} />
+
+							{/* Search / filter — sticks below site header */}
 							<Box
 								sx={{
 									display: 'flex',
 									flexDirection: 'column',
 									alignItems: 'center',
-									justifyContent: 'center',
 									width: '100%',
 									position: 'sticky',
-									top: isMobileSize ? '10vh' : '13vh',
+									top: landingHeaderStickyTop,
 									zIndex: 1000,
-									paddingTop: isScrolled ? 0 : isMobileSize ? '1rem' : '1.25rem',
-									paddingBottom: isScrolled ? 0 : '0.25rem',
-									backgroundColor: 'transparent',
-									transition: 'padding 0.25s ease',
+									pt: isScrolled ? 0 : isMobileSize ? '1rem' : '1.25rem',
+									pb: 0,
+									backgroundColor: isScrolled ? '#FFFFFF' : 'transparent',
+									boxShadow: isScrolled ? '0 1px 8px rgba(0, 0, 0, 0.04)' : 'none',
+									borderBottom: isScrolled ? '1px solid rgba(0, 0, 0, 0.04)' : '1px solid transparent',
+									transition: 'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, padding 0.25s ease',
 								}}>
-								<Box sx={{ width: '85%', mt: '0rem' }}>
+								<Box sx={{ width: '85%' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}
@@ -210,6 +219,23 @@ const LandingPageResources = () => {
 										isScrolled={isScrolled}
 									/>
 								</Box>
+							</Box>
+
+							{/* Intro — scrolls with page */}
+							<Box sx={{ width: '85%', pb: { xs: 1, sm: 1.5 }, px: { xs: 0, sm: 1 } }}>
+								<Typography
+									align='center'
+									sx={{
+										color: '#475569',
+										fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
+										fontFamily: 'Varela Round',
+										fontWeight: 400,
+										lineHeight: 1.65,
+										maxWidth: { xs: '100%', sm: '36rem', md: '42rem' },
+										mx: 'auto',
+									}}>
+									Ders notları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kaynakları arayıp indirebilirsiniz.
+								</Typography>
 							</Box>
 
 							<Box
@@ -243,8 +269,19 @@ const LandingPageResources = () => {
 											))}
 											{resources.length === 0 && (
 												<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
-													<Typography variant='h6' align='center' color='#334155' sx={{ fontFamily: 'Varela Round' }}>
-														{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kaynak bulunamadı.' : 'Yeni kaynaklar yakında eklenecektir'}
+													<Typography
+														align='center'
+														sx={{
+															fontFamily: 'Varela Round',
+															color: '#475569',
+															fontSize: { xs: '1rem', sm: '1.05rem' },
+															lineHeight: 1.65,
+															maxWidth: '28rem',
+															px: 2,
+														}}>
+														{searchedValue || activeFilter
+															? 'Arama kriterlerinize uygun kaynak bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
+															: 'Yeni kaynaklarımız yakında eklenecek. Güncel materyaller için sayfayı düzenli kontrol edebilirsiniz.'}
 													</Typography>
 												</Grid>
 											)}

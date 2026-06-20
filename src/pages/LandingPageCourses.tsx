@@ -9,6 +9,7 @@ import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import SearchFilter from '../components/landingPage/SearchFilter';
+import LandingPageSectionHeader from '../components/landingPage/LandingPageSectionHeader';
 import { SEO, StructuredData } from '../components/seo';
 
 const LandingPageCourses = () => {
@@ -157,6 +158,13 @@ const LandingPageCourses = () => {
 					<LandingPageLayout>
 						{/* Spacer for fixed header */}
 						<Box sx={{ height: isMobileSize ? '10vh' : '13vh', flexShrink: 0 }} />
+						<Box sx={{ width: '85%', mx: 'auto' }}>
+							<LandingPageSectionHeader
+								title=''
+								subtitle='Genel İngilizce ve İngilizce sınavlarına yönelik kurslarımızı keşfedin. Size uygun programı bulun, detayları inceleyin ve kayıt olun.'
+								sx={{ mb: { xs: 1, sm: 2 }, px: { xs: 0, sm: 1 } }}
+							/>
+						</Box>
 						<Box
 							sx={{
 								position: 'sticky',
@@ -291,13 +299,18 @@ const LandingPageCourses = () => {
 									<Typography
 										sx={{
 											textAlign: 'center',
-											fontSize: { xs: '1rem', sm: '1.25rem' },
-											color: 'text.secondary',
+											fontSize: { xs: '1rem', sm: '1.05rem' },
+											color: '#475569',
 											fontFamily: 'Varela Round',
+											lineHeight: 1.65,
+											maxWidth: '28rem',
 											mt: '3rem',
 											marginBottom: '3rem',
+											px: 2,
 										}}>
-										{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kurs bulunamadı.' : 'Henüz yayınlanmış kurs bulunmamaktadır.'}
+										{searchedValue || activeFilter
+											? 'Arama kriterlerinize uygun kurs bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
+											: 'Yeni kurslarımız çok yakında burada olacak. Programlar hakkında bilgi almak için bizimle iletişime geçebilirsiniz.'}
 									</Typography>
 								)}
 							</Box>

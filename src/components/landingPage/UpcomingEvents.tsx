@@ -37,6 +37,7 @@ import CustomDialogActions from '../../components/layouts/dialog/CustomDialogAct
 import CustomErrorMessage from '../../components/forms/customFields/CustomErrorMessage';
 import logo from '../../assets/logo.png';
 import { mulberry32, scatterNonOverlapping } from '../../utils/lpDecorScatter';
+import LandingPageSectionHeader from './LandingPageSectionHeader';
 
 /** LP etkinlik dekoru — Header ile uyumlu Outlined seti */
 const EVENT_DECOR_ICONS = [
@@ -666,29 +667,10 @@ export default function UpcomingEvents() {
 					flexDirection: 'column',
 					alignItems: 'center',
 				}}>
-				<Typography
-					sx={{
-						'fontSize': responsiveStyles.typography.h2,
-						'fontFamily': 'Varela Round',
-						'background': 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-						'WebkitBackgroundClip': 'text',
-						'WebkitTextFillColor': 'transparent',
-						'backgroundClip': 'text',
-						'backgroundSize': '200% 200%',
-						'animation': 'gradientShift 5s ease infinite',
-						'letterSpacing': '-0.02em',
-						'lineHeight': 1.2,
-						'fontWeight': 700,
-						'filter':
-							'drop-shadow(0 0 10px rgba(240, 244, 248, 0.95)) drop-shadow(0 0 22px rgba(232, 240, 248, 0.85)) drop-shadow(0 0 36px rgba(228, 238, 248, 0.55))',
-						'@keyframes gradientShift': {
-							'0%': { backgroundPosition: '0% 50%' },
-							'50%': { backgroundPosition: '100% 50%' },
-							'100%': { backgroundPosition: '0% 50%' },
-						},
-					}}>
-					Yaklaşan Etkinlikler
-				</Typography>
+				<LandingPageSectionHeader
+					title='Yaklaşan Etkinlikler'
+					subtitle='Seminerler, deneme sınavları ve özel buluşmalarla akademik takvimimizi takip edin. Uygun etkinliğe kayıt olarak yerinizi ayırtın.'
+				/>
 				{upcomingEventsLoading ? (
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 6 }}>
 						<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
@@ -702,12 +684,13 @@ export default function UpcomingEvents() {
 							textAlign: 'center',
 							fontFamily: 'Varela Round',
 							color: '#475569',
-							fontSize: { xs: '1rem', sm: '1.125rem' },
+							fontSize: { xs: '1rem', sm: '1.05rem' },
+							lineHeight: 1.65,
 							py: 6,
 							px: 2,
 							maxWidth: 520,
 						}}>
-						Etkinliklerimiz yakında eklenecektir
+						Yeni etkinliklerimiz yakında duyurulacak. Güncel program için sayfayı düzenli kontrol edebilirsiniz.
 					</Typography>
 				)}
 				<CustomDialog
