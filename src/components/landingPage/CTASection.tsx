@@ -71,13 +71,15 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 							variant='h5'
 							sx={{
 								mb: responsiveStyles.spacing.container,
-								fontSize: responsiveStyles.typography.h5,
-								color: '#334155',
+								fontSize: responsiveStyles.typography.body1,
+								color: '#475569',
 								fontWeight: 400,
 								fontFamily: 'Varela Round',
-								lineHeight: 1.6,
+								lineHeight: 1.65,
+								maxWidth: { xs: '100%', sm: '36rem' },
+								mx: 'auto',
 							}}>
-							Eğitim yoluyla hayatlarını değiştiren binlerce öğrenciye katılın
+							Hesabınızı oluşturun, kurslarımızı keşfedin ve Aden Academy ile öğrenme yolculuğunuza bugün adım atın
 						</Typography>
 						<Box
 							sx={{

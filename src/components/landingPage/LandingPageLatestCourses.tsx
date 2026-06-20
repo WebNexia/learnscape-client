@@ -1,13 +1,13 @@
-import { InfoOutlined, SchoolOutlined, MenuBookOutlined } from '@mui/icons-material';
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import DashboardCourseCard from '../userCourses/DashboardCourseCard';
 import { forwardRef, useContext, useMemo, useState } from 'react';
 import { LandingPageLatestCoursesContext } from '../../contexts/LandingPageLatestCoursesContextProvider';
 import { SingleCourse } from '../../interfaces/course';
 import LandingPageCoursesInfoDialog from './LandingPageCoursesInfoDialog';
-import { responsiveStyles } from '../../styles/responsiveStyles';
+import LandingPageSectionHeader from './LandingPageSectionHeader';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import { mulberry32, scatterNonOverlapping } from '../../utils/lpDecorScatter';
+import { SchoolOutlined, MenuBookOutlined } from '@mui/icons-material';
 
 const DIALOG_FONT = 'Varela Round';
 
@@ -78,51 +78,12 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 				))}
 			</Box>
 			<Box sx={{ position: 'relative', zIndex: 1 }}>
-				<Box
-					sx={{
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						width: '100%',
-						textAlign: 'center',
-						mb: { xs: 2, sm: 3 },
-						px: 2,
-					}}>
-					<Typography
-						sx={{
-							fontSize: responsiveStyles.typography.h2,
-							fontFamily: DIALOG_FONT,
-							background: 'linear-gradient(135deg, #004c99 0%, #0052a3 50%, #0066CC 100%)',
-							WebkitBackgroundClip: 'text',
-							WebkitTextFillColor: 'transparent',
-							backgroundClip: 'text',
-							letterSpacing: '-0.02em',
-							lineHeight: 1.2,
-							fontWeight: 700,
-							// Soft halo so BG icons do not read through the gradient text (no separate title bar)
-							filter:
-								'drop-shadow(0 0 10px rgba(240, 244, 248, 0.95)) drop-shadow(0 0 22px rgba(232, 240, 248, 0.85)) drop-shadow(0 0 36px rgba(228, 238, 248, 0.55))',
-						}}>
-						Son Eklenen Kurslar
-					</Typography>
-					{/* <IconButton
-						size='small'
-						sx={{
-							ml: { xs: '0.5rem', sm: '0.75rem' },
-							'& svg': {
-								fontSize: { xs: '1.1rem', sm: '1.25rem' },
-								color: '#64748b',
-								filter:
-									'drop-shadow(0 0 6px rgba(240, 244, 248, 0.98)) drop-shadow(0 0 14px rgba(232, 240, 248, 0.9))',
-							},
-							'&:hover': { backgroundColor: 'rgba(91, 141, 239, 0.12)' },
-						}}
-						onClick={() => setIsInfoDialogOpen(true)}>
-						<InfoOutlined />
-					</IconButton> */}
-				</Box>
+				<LandingPageSectionHeader
+					title='Son Eklenen Kurslar'
+					subtitle='Güncel programlarımızdan öne çıkan kurslara göz atın. Size en uygun eğitimi seçerek hemen öğrenmeye başlayın.'
+				/>
 
-				<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem', px: { xs: 1.5, sm: 2 } }}>
+				<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: { xs: 2, sm: 3 }, px: { xs: 1.5, sm: 2 } }}>
 					{publishedCourses && publishedCourses.length > 0 ? (
 						publishedCourses?.map((course: SingleCourse) => {
 							return (
@@ -142,12 +103,15 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 						<Typography
 							sx={{
 								textAlign: 'center',
-								fontSize: '1.25rem',
-								color: '#334155',
+								fontSize: '1.05rem',
+								color: '#475569',
 								fontFamily: DIALOG_FONT,
-								mt: '3rem',
+								lineHeight: 1.65,
+								maxWidth: '28rem',
+								mt: '2rem',
+								px: 2,
 							}}>
-							Henüz yayınlanmış kurs bulunmamaktadır.
+							Yeni kurslarımız çok yakında burada olacak. Programlar hakkında bilgi almak için bizimle iletişime geçebilirsiniz.
 						</Typography>
 					)}
 				</Box>
