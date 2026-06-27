@@ -51,11 +51,8 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
 
-	// Check if we're on any landing page route (courses page or individual course page)
-	// Exclude logged-in user course routes that contain '/userCourseId/'
-	const isLandingPageRoute =
-		location.pathname === '/landing-page-courses' ||
-		(location.pathname.startsWith('/landing-page-course/') && !location.pathname?.includes('/userCourseId/'));
+	// Only fetch the paginated list on the courses listing page (detail/payment use single-course queries)
+	const isLandingPageCoursesListRoute = location.pathname === '/landing-page-courses';
 
 	// State for pagination
 	const [currentPage, setCurrentPage] = useState(1);
@@ -120,7 +117,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 		isFetching,
 		isError,
 	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search], fetchCourses, {
-		enabled: !!orgId && isLandingPageRoute,
+		enabled: !!orgId && isLandingPageCoursesListRoute,
 		staleTime: 60 * 60 * 1000, // 1 hour
 		cacheTime: 60 * 60 * 1000, // 1 hour
 		refetchOnWindowFocus: false,

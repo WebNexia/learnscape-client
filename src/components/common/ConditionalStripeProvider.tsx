@@ -1,6 +1,7 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { Box, CircularProgress } from '@mui/material';
 
 // Singleton to prevent multiple Stripe instances
 let stripePromiseInstance: any = null;
@@ -46,9 +47,22 @@ const ConditionalStripeProvider: React.FC<ConditionalStripeProviderProps> = ({ c
 		loadStripePromise();
 	}, []);
 
-	// Don't render Elements until Stripe is fully loaded and stable
+	// Show loading indicator while Stripe.js initializes
 	if (isLoading || !stripePromise) {
-		return <div style={{ display: 'none' }}></div>;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					minHeight: 120,
+					py: 3,
+				}}
+				aria-busy='true'
+				aria-label='Loading payment form'>
+				<CircularProgress size={32} />
+			</Box>
+		);
 	}
 
 	// Use a stable key to prevent re-renders

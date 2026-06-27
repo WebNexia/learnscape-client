@@ -20,6 +20,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import theme from '../themes';
 import { COUNTRY_LIST } from '../data/countries';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -49,6 +50,7 @@ export default function LandingPageCart() {
 	const navigate = useNavigate();
 	const location = useGeoLocation();
 	const { orgId: contextOrgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -59,6 +61,13 @@ export default function LandingPageCart() {
 			setCheckoutGuestCountry(found ? code : 'TR');
 		}
 	}, [location?.countryCode]);
+
+	useEffect(() => {
+		if (!user) return;
+		if (user.firstName) setCheckoutGuestFirstName(user.firstName);
+		if (user.lastName) setCheckoutGuestLastName(user.lastName);
+		if (user.email) setCheckoutGuestEmail(user.email);
+	}, [user?._id, user?.firstName, user?.lastName, user?.email]);
 
 	const { items: consultationItems, removeItem: removeConsultation, clearCart: clearConsultationCart } = useConsultationCart();
 	const { items: documentItems, removeItem: removeDocument, clearCart: clearDocumentCart } = useDocumentCart();
@@ -114,6 +123,15 @@ export default function LandingPageCart() {
 			setError('Ödemeye devam etmek için Kullanıcı Sözleşmesi ve Gizlilik Politikasını kabul etmeniz gerekmektedir.');
 			return;
 		}
+		const currencyKeys = Object.entries(getCartTotals(documentItems, consultationItems))
+			.filter(([, amount]) => amount > 0)
+			.map(([currency]) => currency);
+		if (currencyKeys.length > 1) {
+			setError(
+				'Sepetinizde birden fazla para birimi var. Lütfen yalnızca aynı para birimindeki ürünlerle ödeme yapın (farklı para birimlerini ayrı ayrı satın alın).'
+			);
+			return;
+		}
 		setPayAllLoading(true);
 		try {
 			const guestName = `${firstName} ${lastName}`.trim();
@@ -149,6 +167,7 @@ export default function LandingPageCart() {
 				firstName,
 				lastName,
 				email,
+				...(user?._id ? { userId: user._id } : {}),
 			});
 			const { paymentIntents, consultationAppointmentIds: appointmentIds } = res.data;
 
@@ -157,7 +176,12 @@ export default function LandingPageCart() {
 					type: 'document' as const,
 					clientSecret: pi.clientSecret,
 					paymentIntentId: pi.paymentIntentId,
-					capturePayload: { firstName, lastName, email },
+					capturePayload: {
+						firstName,
+						lastName,
+						email,
+						...(user?._id ? { userId: user._id } : {}),
+					},
 				})
 			);
 
@@ -223,6 +247,7 @@ export default function LandingPageCart() {
 	const isEmpty = totalCount === 0 && !cartPaymentOpen;
 	const cartTotals = getCartTotals(documentItems, consultationItems);
 	const totalCurrencies = Object.entries(cartTotals).filter(([, v]) => v > 0);
+	const hasMixedCurrencies = totalCurrencies.length > 1;
 
 	if (isEmpty) {
 		return (
@@ -436,7 +461,21 @@ export default function LandingPageCart() {
 												fullWidth
 												required
 												placeholder="ornek@email.com"
-												InputProps={{ inputProps: { maxLength: 254 } }}
+												InputProps={{
+													readOnly: !!user,
+													inputProps: { maxLength: 254 },
+													sx: user
+														? {
+																backgroundColor: 'action.hover',
+																cursor: 'default',
+															}
+														: undefined,
+												}}
+												helperText={
+													user
+														? 'E-posta adresiniz hesabınıza bağlıdır. Farklı bir e-posta kullanmak için çıkış yapın.'
+														: undefined
+												}
 											/>
 											<Box sx={{ '& .react-tel-input': { fontFamily: 'Varela Round' }, '& .form-control': { width: '100% !important', fontFamily: 'Varela Round' } }}>
 												<PhoneInput
@@ -758,11 +797,16 @@ export default function LandingPageCart() {
 														</Box>
 													)}
 												</Box>
+												{hasMixedCurrencies && (
+													<Alert severity="warning" sx={{ mb: 2, fontFamily: 'Varela Round', borderRadius: 2 }}>
+														Sepetinizde birden fazla para birimi var. Ödeme yapmak için yalnızca tek para biriminde ürün bırakın.
+													</Alert>
+												)}
 												<Button
 													variant="outlined"
 													fullWidth
 													onClick={handlePayAll}
-													disabled={payAllLoading}
+													disabled={payAllLoading || hasMixedCurrencies}
 													// startIcon={!payAllLoading ? <Lock sx={{ fontSize: 18 }} /> : null}
 													sx={{
 														border: 'none',

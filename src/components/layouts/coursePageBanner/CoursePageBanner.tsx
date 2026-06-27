@@ -665,15 +665,17 @@ const CoursePageBanner = ({
 					</Box>
 				</Box>
 
-				<PaymentDialogWrapper
-					course={course}
-					isPaymentDialogOpen={isPaymentDialogOpen}
-					setIsPaymentDialogOpen={setIsPaymentDialogOpen}
-					courseRegistration={courseRegistration}
-					fromHomePage={fromHomePage}
-					setDisplayEnrollmentMsg={setDisplayEnrollmentMsg}
-					setIsEnrolledStatus={setIsEnrolledStatus}
-				/>
+				{!fromHomePage && (
+					<PaymentDialogWrapper
+						course={course}
+						isPaymentDialogOpen={isPaymentDialogOpen}
+						setIsPaymentDialogOpen={setIsPaymentDialogOpen}
+						courseRegistration={courseRegistration}
+						fromHomePage={fromHomePage}
+						setDisplayEnrollmentMsg={setDisplayEnrollmentMsg}
+						setIsEnrolledStatus={setIsEnrolledStatus}
+					/>
+				)}
 			</Box>
 
 			{introVideoUrl && (

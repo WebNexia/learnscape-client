@@ -9,6 +9,7 @@ import { UserAuthContext } from './UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
 import { SingleCourse } from '../interfaces/course';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
+import { shouldFetchStaffCoursesList } from '../utils/staffCoursesDataRoutes';
 
 interface CoursesContextTypes {
 	courses: SingleCourse[];
@@ -63,10 +64,11 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	// Role-based endpoint detection - separate routes for clarity
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const isStaff = hasAdminAccess || isInstructor;
 
 	// Learners: only load the org catalogue on the browse page (not on dashboard login, calendar, etc.).
 	// Exclude utility routes under /courses/ (e.g. /courses/certificates/verify/:id) from triggering the catalogue fetch.
@@ -75,12 +77,15 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		(pathname === '/courses' || pathname.startsWith('/courses/')) &&
 		!pathname.startsWith('/courses/certificates');
 
+	// Admin / instructor: defer full courses list until routes that need it (not dashboard, messages, etc.).
+	const isStaffCoursesRoute = isStaff && shouldFetchStaffCoursesList(pathname);
+
 	const fetchEnabled =
 		isEnabled &&
 		!!orgId &&
 		isAuthenticated &&
 		!isLandingPageRoute &&
-		(hasAdminAccess || isInstructor || (isLearner && isLearnerCatalogRoute));
+		(isStaffCoursesRoute || (isLearner && isLearnerCatalogRoute));
 	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
 
 	const {
@@ -130,7 +135,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		<CoursesContext.Provider
 			value={{
 				courses,
-				loading: isLoading || (fetchEnabled && isEnabled && !courses),
+				loading: fetchEnabled && isLoading,
 				error: isError ? 'Failed to fetch courses' : null,
 				fetchCourses,
 				fetchMoreCourses,

@@ -372,8 +372,6 @@ const PaymentDialog = ({
 				return;
 			}
 
-			let usersUsedCode = [...usersUsedPromoCode];
-
 			try {
 				// Step 1: Create PaymentIntent (manual capture)
 				const response = await axiosInstance.post(`${base_url}/payments`, {
@@ -441,104 +439,9 @@ const PaymentDialog = ({
 				}
 
 				// Step 4: Register the course
+				let userCourseId: string;
 				try {
-					const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
-
-					// Step 5: Capture the authorized payment
-					try {
-						await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
-							userId: resolvedUserId,
-							orgId: resolvedOrgId,
-							courseId: course?._id,
-							firstName: resolvedFirstName,
-							lastName: resolvedLastName,
-							email: email || user?.email,
-							paymentType: 'course',
-						});
-
-						// Update hasRegisteredCourse using public endpoint (no authentication required)
-						if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
-							await axiosInstance.post(`${base_url}/users/public-update-registration-status`, {
-								userId: resolvedUserId,
-								email: email || user?.email,
-								courseId: course?._id,
-								paymentIntentId: paymentIntentId,
-							});
-
-							setUser((prevUser) => {
-								if (prevUser) {
-									return { ...prevUser, hasRegisteredCourse: true };
-								}
-								return prevUser;
-							});
-						}
-					} catch (captureError) {
-						resetForm(true);
-						console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
-
-						try {
-							// Use public rollback endpoint that doesn't require authentication
-							await axiosInstance.post(`${base_url}/userCourses/public-rollback`, {
-								userId: resolvedUserId,
-								courseId: course?._id,
-								email: email || user?.email,
-								paymentIntentId: paymentIntentId,
-							});
-
-							if (isPromoCodeApplied && promoCodeId) {
-								try {
-									const rolledBackUsers = usersUsedPromoCode?.filter((id) => id !== resolvedUserId) || [];
-									await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
-										usersUsed: rolledBackUsers,
-									});
-									console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
-								} catch (promoRollbackErr) {
-									console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
-								}
-							}
-
-							// Invalidate React Query cache to refresh context data
-							await queryClient.invalidateQueries(['userCourseData']);
-							await queryClient.invalidateQueries(['userLessonsForCourse', course?._id, resolvedUserId]);
-						} catch (cleanupErr) {
-							resetForm(true);
-							console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);
-						}
-
-						resetForm(true);
-						setErrorMessage(
-							fromHomePage
-								? 'Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.'
-								: 'Payment processing failed. Please try again or contact support.'
-						);
-						return;
-					}
-
-					// Step 6: Update promo code (if applied)
-					const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
-					const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
-
-					setUsersUsedPromoCode(updatedUsersUsedCode);
-					usersUsedCode = [...updatedUsersUsedCode];
-
-					if (isPromoCodeApplied) {
-						await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
-							usersUsed: usersUsedCode,
-						});
-					}
-
-					// ✅ Final UI actions (ONLY if everything succeeded)
-					setIsPaymentDialogOpen(false);
-					resetForm();
-					setIsProcessing(false);
-
-					if (setIsEnrolledStatus) setIsEnrolledStatus(true);
-
-					setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
-
-					if (!fromHomePage) {
-						navigate(`/course/${course?._id}/userCourseId/${userCourseId}?isEnrolled=true`);
-					}
+					userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
 				} catch (regErr) {
 					resetForm(true);
 					setErrorMessage(
@@ -546,6 +449,84 @@ const PaymentDialog = ({
 					);
 					resetRecaptcha();
 					return;
+				}
+
+				// Step 5: Capture the authorized payment
+				try {
+					await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
+						userId: resolvedUserId,
+						orgId: resolvedOrgId,
+						courseId: course?._id,
+						firstName: resolvedFirstName,
+						lastName: resolvedLastName,
+						email: email || user?.email,
+						paymentType: 'course',
+						...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
+					});
+
+					// Update hasRegisteredCourse using public endpoint (no authentication required)
+					if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
+						await axiosInstance.post(`${base_url}/users/public-update-registration-status`, {
+							userId: resolvedUserId,
+							email: email || user?.email,
+							courseId: course?._id,
+							paymentIntentId: paymentIntentId,
+						});
+
+						setUser((prevUser) => {
+							if (prevUser) {
+								return { ...prevUser, hasRegisteredCourse: true };
+							}
+							return prevUser;
+						});
+					}
+				} catch (captureError) {
+					resetForm(true);
+					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
+
+					try {
+						// Use public rollback endpoint that doesn't require authentication
+						await axiosInstance.post(`${base_url}/userCourses/public-rollback`, {
+							userId: resolvedUserId,
+							courseId: course?._id,
+							email: email || user?.email,
+							paymentIntentId: paymentIntentId,
+						});
+
+						// Invalidate React Query cache to refresh context data
+						await queryClient.invalidateQueries(['userCourseData']);
+						await queryClient.invalidateQueries(['userLessonsForCourse', course?._id, resolvedUserId]);
+					} catch (cleanupErr) {
+						resetForm(true);
+						console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);
+					}
+
+					resetForm(true);
+					setErrorMessage(
+						fromHomePage
+							? 'Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.'
+							: 'Payment processing failed. Please try again or contact support.'
+					);
+					return;
+				}
+
+				// Promo usage is recorded server-side during capture
+				if (isPromoCodeApplied && promoCodeId) {
+					const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
+					setUsersUsedPromoCode([...usersUsedPromoCode, updatedUserId]);
+				}
+
+				// Final UI actions after successful capture + registration
+				setIsPaymentDialogOpen(false);
+				resetForm();
+				setIsProcessing(false);
+
+				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+
+				setDisplayEnrollmentMsg(true);
+
+				if (!fromHomePage) {
+					navigate(`/course/${course?._id}/userCourseId/${userCourseId}?isEnrolled=true`);
 				}
 			} catch (err) {
 				console.log(err);
