@@ -23,6 +23,7 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
 const DIALOG_BORDERRADIUS = '0.75rem';
@@ -118,6 +119,13 @@ const PaymentDialog = ({
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [selectedGroupName, setSelectedGroupName] = useState<string>('');
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState<boolean>(true);
+
+	const syncEnrollmentAccessOnClient = () => {
+		const patch = getPostEnrollmentUserPatch(user, course);
+		if (patch) {
+			setUser((prevUser) => (prevUser ? { ...prevUser, ...patch } : prevUser));
+		}
+	};
 
 	// Collapse group selection when user interacts with other fields
 	useEffect(() => {
@@ -286,6 +294,7 @@ const PaymentDialog = ({
 					if (isCourseFree) {
 						try {
 							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+							syncEnrollmentAccessOnClient();
 
 							setIsPaymentDialogOpen(false);
 							resetForm();
@@ -338,6 +347,7 @@ const PaymentDialog = ({
 			if (isCourseFree && !fromHomePage) {
 				try {
 					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+					syncEnrollmentAccessOnClient();
 
 					setIsPaymentDialogOpen(false);
 					resetForm();
@@ -464,7 +474,7 @@ const PaymentDialog = ({
 						...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 					});
 
-					// Update hasRegisteredCourse using public endpoint (no authentication required)
+					// Update learner platform access on client after successful payment
 					if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
 						await axiosInstance.post(`${base_url}/users/public-update-registration-status`, {
 							userId: resolvedUserId,
@@ -479,6 +489,8 @@ const PaymentDialog = ({
 							}
 							return prevUser;
 						});
+					} else if (course?.courseManagement?.isExternal) {
+						syncEnrollmentAccessOnClient();
 					}
 				} catch (captureError) {
 					resetForm(true);

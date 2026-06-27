@@ -42,7 +42,8 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 	const progressGreen = theme.palette.success?.main || '#1EC28B';
 	const hoverBorderGradient = `linear-gradient(90deg, ${topAccent} 0%, ${topAccent}80 100%)`;
 	const isLoggedInDashboard = Boolean(user && !fromHomePage);
-	const shouldFetchProgress = Boolean(isEnrolled && course._id);
+	const isExternalCourse = Boolean(course.courseManagement?.isExternal);
+	const shouldFetchProgress = Boolean(isEnrolled && course._id && !isExternalCourse);
 
 	const { data: userLessonsData, isLoading: isProgressLoading } = useUserLessonsForCourse(course._id || '', {
 		enabled: shouldFetchProgress,
@@ -223,7 +224,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 					}}>
 					<Box
 						sx={{
-							visibility: isEnrolled ? 'visible' : 'hidden',
+							visibility: isEnrolled && !isExternalCourse ? 'visible' : 'hidden',
 							width: '90%',
 							alignSelf: 'center',
 							mb: 0.75,

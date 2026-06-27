@@ -196,7 +196,7 @@ export default function LandingPageCart() {
 		}
 	};
 
-	const handleCartPaymentSuccess = async () => {
+	const handleCartPaymentSuccess = async (result?: { documentDeliveryFailed?: boolean; documentDeliveryMessage?: string }) => {
 		// Link consultation form submissions to appointments (guest name/email + appointmentId)
 		const firstName = checkoutGuestFirstName.trim();
 		const lastName = checkoutGuestLastName.trim();
@@ -239,7 +239,12 @@ export default function LandingPageCart() {
 		setCartPaymentOpen(false);
 		setPaymentQueue([]);
 		setConsultationAppointmentIds([]);
-		setSuccessMessage('Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin; kaynaklar ve randevu onayları e-posta ile gönderilir.');
+		setSuccessMessage(
+			result?.documentDeliveryFailed
+				? result.documentDeliveryMessage ||
+						'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin; ekibimiz size dokümanı manuel olarak iletecektir.'
+				: 'Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin; kaynaklar ve randevu onayları e-posta ile gönderilir.'
+		);
 		setSuccessSnack(true);
 	};
 

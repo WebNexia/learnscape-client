@@ -40,6 +40,7 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 
 const FONT = 'Varela Round';
 const INPUT_RADIUS = '0.5rem';
@@ -351,6 +352,11 @@ export default function CoursePaymentForm({
 						paymentIntentId,
 					});
 					setUser((prev) => (prev ? { ...prev, hasRegisteredCourse: true } : prev));
+				} else {
+					const patch = getPostEnrollmentUserPatch(user, course);
+					if (patch) {
+						setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+					}
 				}
 
 				if (isPromoCodeApplied && promoCodeId) {

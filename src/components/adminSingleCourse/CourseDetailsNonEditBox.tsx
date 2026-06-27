@@ -342,8 +342,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 			</Box>
 
-			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
+			<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center' }}>
 							<Typography variant='h5'>CHAPTERS</Typography>
@@ -360,8 +359,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							)}
 						</Box>
 
-						{!singleCourse?.courseManagement.isExternal && (
-							<CustomSubmitButton
+						<CustomSubmitButton
 								type='button'
 								onClick={() => {
 									if (courseId) {
@@ -372,7 +370,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 								sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
 								Public Forms
 							</CustomSubmitButton>
-						)}
 					</Box>
 					{singleCourse?.chapterIds?.length === 0 ? (
 						<NoContentBoxAdmin content='No chapter for this course' />
@@ -633,9 +630,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						</>
 					)}
 				</Box>
-			)}
-			{!singleCourse?.courseManagement.isExternal && (
-				<Box
+
+			<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
@@ -672,16 +668,14 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						<NoContentBoxAdmin content='No material for this course' />
 					)}
 				</Box>
-			)}
 
-			{!singleCourse?.courseManagement.isExternal && (
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'flex-start',
-						width: '100%',
-						mb: '4rem',
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'flex-start',
+					width: '100%',
+					mb: '4rem',
 						padding: isMobileSize ? '1rem' : '1.25rem',
 						...cardSx,
 					}}>
@@ -711,7 +705,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						<NoContentBoxAdmin content='No video for this course' />
 					)}
 				</Box>
-			)}
 
 			{/* Description Modal */}
 			<CustomDialog openModal={isDescriptionModalOpen} closeModal={() => setIsDescriptionModalOpen(false)} title='Course Description' maxWidth='sm'>

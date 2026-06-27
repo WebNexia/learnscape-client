@@ -21,6 +21,7 @@ interface UserAuthContextTypes {
 	user?: User | undefined;
 	userId: string;
 	firebaseUserId: string;
+	isAuthReady: boolean;
 	setUser: React.Dispatch<React.SetStateAction<User | undefined>>;
 	setUserId: React.Dispatch<React.SetStateAction<string>>;
 	fetchUserData: (userId: string, skipIfSignup?: boolean) => Promise<void>;
@@ -37,6 +38,7 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 	user: undefined,
 	userId: '',
 	firebaseUserId: '',
+	isAuthReady: false,
 	setUser: () => {},
 	setUserId: () => {},
 	fetchUserData: async () => {},
@@ -53,6 +55,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
+	const [isAuthReady, setIsAuthReady] = useState(false);
 	const [userCourseData, setUserCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>(undefined);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
@@ -134,6 +137,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					setTimeout(() => {
 						isLoginInProgressRef.current = false;
 					}, 500);
+					setIsAuthReady(true);
 				}
 			} else {
 				lastAuthHandlerUidRef.current = null;
@@ -144,6 +148,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					setUserId('');
 					setFirebaseUserId('');
 				}
+				setIsAuthReady(true);
 			}
 		});
 
@@ -276,6 +281,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				user,
 				userId,
 				firebaseUserId,
+				isAuthReady,
 				setUser,
 				setUserId,
 				fetchUserData,

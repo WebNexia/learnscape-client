@@ -22,6 +22,7 @@ import { useUserLessonsForCourse } from '../../../hooks/useUserLessonsForCourse'
 import { getCourseProgress } from '../../../utils/courseProgress';
 import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
+import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 import { extractVideoId } from '../../../utils/videoUrlUtils';
 
 const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
@@ -82,16 +83,19 @@ const CoursePageBanner = ({
 	const [userGroup, setUserGroup] = useState<{ name: string; description: string } | null>(null);
 
 	const { courseId } = useParams();
-	const { user } = useContext(UserAuthContext);
+	const { user, setUser } = useContext(UserAuthContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessons = userLessonsData || [];
 
+	const isExternalCourse = Boolean(course.courseManagement?.isExternal);
+	const showCourseProgress = isEnrolledStatus && !isExternalCourse;
+
 	const courseProgress = useMemo(() => {
-		if (!isEnrolledStatus) return { completed: 0, total: 0, percentage: 0 };
+		if (!showCourseProgress) return { completed: 0, total: 0, percentage: 0 };
 		return getCourseProgress(course, parsedUserLessons);
-	}, [isEnrolledStatus, course, parsedUserLessons]);
+	}, [showCourseProgress, course, parsedUserLessons]);
 
 	const hasCourseMaterials = useMemo(() => {
 		const docsWithUrl = (course.documents ?? []).filter(
@@ -171,11 +175,8 @@ const CoursePageBanner = ({
 
 			const userCourseId = response.data._id;
 
-			// The server creates the initial userLesson during enrollment.
-			if (!course.courseManagement?.isExternal) {
-				// Invalidate user lessons cache to refresh lesson data
-				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
-			}
+			// The server creates the initial userLesson during enrollment when chapters exist.
+			await queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
 
 			// Invalidate React Query cache to refresh context data
 			await queryClient.invalidateQueries(['userCourseData']);
@@ -210,6 +211,10 @@ const CoursePageBanner = ({
 					setIsProcessing(false);
 				} else {
 					await courseRegistration(user?._id!, course?.orgId!);
+					const patch = getPostEnrollmentUserPatch(user, course);
+					if (patch) {
+						setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+					}
 					setDisplayEnrollmentMsg(true);
 					if (setIsEnrolledStatus) setIsEnrolledStatus(true);
 				}
@@ -347,7 +352,7 @@ const CoursePageBanner = ({
 								margin: '0rem 0 1rem 0',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							{course.title} {fromHomePage && course.courseManagement.isExternal ? `(Partner Kursu)` : `(Platform Kursu)`}
+							{course.title} {/*{fromHomePage && course.courseManagement.isExternal ? `(Partner Kursu)` : `(Platform Kursu)`} */}
 						</Typography>
 						<Typography
 							variant='body2'
@@ -645,12 +650,28 @@ const CoursePageBanner = ({
 							fromHomePage={fromHomePage}
 						/>
 						<CoursePageBannerDataCard
-							title={isEnrolledStatus ? (fromHomePage ? 'İlerleme' : 'Progress') : fromHomePage ? 'Fiyat' : 'Price'}
+							title={
+								showCourseProgress
+									? fromHomePage
+										? 'İlerleme'
+										: 'Progress'
+									: isEnrolledStatus
+										? fromHomePage
+											? 'Durum'
+											: 'Status'
+										: fromHomePage
+											? 'Fiyat'
+											: 'Price'
+							}
 							content={
-								isEnrolledStatus
+								showCourseProgress
 									? `${courseProgress.percentage}%`
-									: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
-									}`
+									: isEnrolledStatus
+										? fromHomePage
+											? 'Kayıtlı'
+											: 'Enrolled'
+										: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
+										}`
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
