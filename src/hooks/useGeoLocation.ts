@@ -35,6 +35,33 @@ const defaultGeo: GeoLocation = {
 	query: '',
 };
 
+const GEO_CACHE_KEY = 'learnscape_geo_v1';
+const GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function readGeoCache(): GeoLocation | null {
+	if (typeof window === 'undefined') return null;
+	try {
+		const raw = sessionStorage.getItem(GEO_CACHE_KEY);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw) as { location?: GeoLocation; cachedAt?: number };
+		if (!parsed.location || !parsed.cachedAt || Date.now() - parsed.cachedAt > GEO_CACHE_TTL_MS) {
+			return null;
+		}
+		return parsed.location;
+	} catch {
+		return null;
+	}
+}
+
+function writeGeoCache(location: GeoLocation) {
+	if (typeof window === 'undefined') return;
+	try {
+		sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ location, cachedAt: Date.now() }));
+	} catch {
+		// Ignore quota / private mode errors
+	}
+}
+
 /** One shared in-flight / resolved lookup for the whole app (many components use this hook). */
 let geoLocationPromise: Promise<GeoLocation> | null = null;
 
@@ -53,13 +80,21 @@ function fetchGeoLocationOnce(): Promise<GeoLocation> {
 		return geoLocationPromise;
 	}
 
+	const cached = readGeoCache();
+	if (cached) {
+		geoLocationPromise = Promise.resolve(cached);
+		return geoLocationPromise;
+	}
+
 	geoLocationPromise = (async () => {
 		const isLocalhost =
 			typeof window !== 'undefined' &&
 			(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 		if (isLocalhost) {
-			return getBrowserFallbackLocation() ?? defaultGeo;
+			const result = getBrowserFallbackLocation() ?? defaultGeo;
+			writeGeoCache(result);
+			return result;
 		}
 
 		const providers = [
@@ -107,14 +142,18 @@ function fetchGeoLocationOnce(): Promise<GeoLocation> {
 
 		for (const provider of providers) {
 			try {
-				return await provider();
+				const result = await provider();
+				writeGeoCache(result);
+				return result;
 			} catch {
 				// Try the next provider silently. Public IP services commonly
 				// fail due to rate limits, CORS, or regional blocking.
 			}
 		}
 
-		return getBrowserFallbackLocation() ?? defaultGeo;
+		const fallback = getBrowserFallbackLocation() ?? defaultGeo;
+		writeGeoCache(fallback);
+		return fallback;
 	})();
 
 	return geoLocationPromise;
@@ -125,9 +164,12 @@ export function useGeoLocation() {
 
 	useEffect(() => {
 		let isMounted = true;
+		const cached = readGeoCache();
 		const browserFallback = getBrowserFallbackLocation();
 
-		if (browserFallback) {
+		if (cached) {
+			setLocation(cached);
+		} else if (browserFallback) {
 			setLocation(browserFallback);
 		}
 

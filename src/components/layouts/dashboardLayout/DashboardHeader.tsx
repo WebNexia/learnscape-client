@@ -19,6 +19,7 @@ import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
 import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
 import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
 import { useAuth } from '../../../hooks/useAuth';
+import { useLearnerPlatformAccess } from '../../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 
 interface DashboardHeaderProps {
@@ -35,6 +36,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const { hasAdminAccess } = useAuth();
+	const hasPlatformAccess = useLearnerPlatformAccess();
 
 	// Memoize expensive computations
 	const hasActiveSubscriptionMemo = useMemo(() => {
@@ -264,7 +266,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					{/* Subscribe/Unsubscribe Button */}
-					{isSubscriptionsProductEnabled && user?.role === Roles.USER && !user?.hasRegisteredCourse && (
+					{isSubscriptionsProductEnabled && user?.role === Roles.USER && !hasPlatformAccess && (
 						<>
 							{!hasActiveSubscriptionMemo(user) ? (
 								<Tooltip

@@ -4,6 +4,7 @@ import { Cancel, Chat, TurnLeftOutlined } from '@mui/icons-material';
 import { Chat as ChatType, Message } from '../../pages/Messages';
 import { formatMessageTime } from '../../utils/formatTime';
 import { renderMessageWithEmojis } from '../../utils/renderMessageWithEmojis';
+import { useLearnerPlatformAccess } from '../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../config/features';
 
 interface MessageListProps {
@@ -33,6 +34,8 @@ const MessageList = ({
 	isGroupChat,
 	globalBlockedUsers,
 }: MessageListProps) => {
+	const hasPlatformAccess = useLearnerPlatformAccess();
+
 	if (!activeChat) {
 		return (
 			<Box
@@ -46,7 +49,7 @@ const MessageList = ({
 					width: '100%',
 				}}>
 				<Box>
-					{user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) || user?.role !== 'learner' ? (
+					{hasPlatformAccess || user?.role !== 'learner' ? (
 						<>
 							<Chat sx={{ fontSize: '5rem', color: '#fff' }} />
 							<Typography sx={{ color: '#fff' }}>Select an existing chat or start a new chat by adding a user</Typography>

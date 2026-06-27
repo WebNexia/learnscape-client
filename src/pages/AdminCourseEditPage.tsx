@@ -402,89 +402,6 @@ const AdminCourseEditPage = () => {
 			return;
 		}
 
-		// If course is external, skip all chapter/lesson/document creation/updating
-		if (singleCourseBeforeSave?.courseManagement?.isExternal) {
-			const extStartingDate = new Date(singleCourseBeforeSave?.startingDate || '');
-			const extDurationWeeks = singleCourseBeforeSave?.durationWeeks || 0;
-			const extValidUntil =
-				!isNaN(extStartingDate.getTime()) && extDurationWeeks > 0
-					? new Date(extStartingDate.getTime() + extDurationWeeks * 7 * 24 * 60 * 60 * 1000)
-					: null;
-
-			const updatedCourse = {
-				...singleCourseBeforeSave,
-				chapters: [],
-				chapterIds: [],
-				documents: [],
-				documentIds: [],
-				isExpired: extValidUntil ? extValidUntil < new Date() : false,
-				groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
-				videoURLs: singleCourseBeforeSave.videoURLs || [], // Explicitly include videoURLs
-			};
-
-			try {
-				const landingPageSectionsClean = (singleCourseBeforeSave.landingPageSections || []).map(({ title, body }) => ({
-					title: title ?? '',
-					body: body ?? '',
-				}));
-
-				const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
-					...updatedCourse,
-					landingPageSections: landingPageSectionsClean,
-				});
-
-				const responseUpdatedData = response.data.data;
-
-				const landingPageSectionsAfterSave: CourseLandingPageSection[] | undefined = Array.isArray(
-					responseUpdatedData.landingPageSections
-				)
-					? responseUpdatedData.landingPageSections.map((s: { title?: string; body?: string }) => ({
-							title: s.title || '',
-							body: s.body || '',
-							rowKey: generateUniqueId('lpsec_'),
-						}))
-					: updatedCourse.landingPageSections;
-
-				setSingleCourseBeforeSave({
-					...updatedCourse,
-					...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave } : {}),
-					updatedAt: responseUpdatedData.updatedAt,
-					updatedByName: responseUpdatedData.updatedByName,
-					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
-					updatedByRole: responseUpdatedData.updatedByRole,
-				});
-
-				setSingleCourse({
-					...updatedCourse,
-					...(landingPageSectionsAfterSave !== undefined
-						? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) }
-						: {}),
-					updatedAt: responseUpdatedData.updatedAt,
-					updatedByName: responseUpdatedData.updatedByName,
-					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
-					updatedByRole: responseUpdatedData.updatedByRole,
-				});
-
-				updateCourse({
-					...updatedCourse,
-					...(landingPageSectionsAfterSave !== undefined
-						? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) }
-						: {}),
-					updatedAt: responseUpdatedData.updatedAt,
-					updatedByName: responseUpdatedData.updatedByName,
-					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
-					updatedByRole: responseUpdatedData.updatedByRole,
-				});
-
-				setHasUnsavedChanges(false);
-				setIsEditMode(false);
-				window.scrollTo({ top: 0, behavior: 'smooth' });
-			} catch (error) {
-				console.error('Error updating external course:', error);
-			}
-			return; // Stop further processing
-		}
-
 		// Calculate validUntil here
 		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
 		const durationWeeks = singleCourseBeforeSave?.durationWeeks || 0;
@@ -994,8 +911,7 @@ const AdminCourseEditPage = () => {
 								setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 								setHasUnsavedChanges={setHasUnsavedChanges}
 							/>
-							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ mt: '2rem', minHeight: '30vh' }}>
+							<Box sx={{ mt: '2rem', minHeight: '30vh' }}>
 									<Box
 										sx={{
 											display: 'flex',
@@ -1099,7 +1015,6 @@ const AdminCourseEditPage = () => {
 										</Reorder.Group>
 									)}
 								</Box>
-							)}
 
 							{chapterLessonDataBeforeSave.length > 2 && (
 								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '1rem 0 2rem 0' }}>
@@ -1116,8 +1031,7 @@ const AdminCourseEditPage = () => {
 							)}
 
 							{/* 5) Course Materials */}
-							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ ...sectionSx, mt: '2rem' }}>
+							<Box sx={{ ...sectionSx, mt: '2rem' }}>
 									<HandleDocUploadURL
 										label='Course Materials'
 										onDocUploadLogic={(url, docName) => {
@@ -1243,11 +1157,9 @@ const AdminCourseEditPage = () => {
 										/>
 									</Box>
 								</Box>
-							)}
 
 							{/* 5) Course Videos */}
-							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ ...sectionSx, mt: '2rem', mb: '4rem' }}>
+							<Box sx={{ ...sectionSx, mt: '2rem', mb: '4rem' }}>
 									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '0.5rem' }}>
 										<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '1rem' : '0.75rem' }}>
 											Course Videos
@@ -1486,7 +1398,6 @@ const AdminCourseEditPage = () => {
 												))}
 									</Box>
 								</Box>
-							)}
 						</form>
 					</Box>
 				)}

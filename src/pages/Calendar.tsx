@@ -22,7 +22,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { isSubscriptionsProductEnabled } from '../config/features';
+import { useLearnerPlatformAccess } from '../hooks/useLearnerPlatformAccess';
 
 const locales = {
 	'en-US': enUS,
@@ -42,6 +42,7 @@ const EventCalendar = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor, isLearner, hasAdminAccess } = useAuth();
+	const hasPlatformAccess = useLearnerPlatformAccess();
 
 	const navigate = useNavigate();
 
@@ -116,10 +117,7 @@ const EventCalendar = () => {
 		}
 
 		if (user?.role === Roles.USER) {
-				if (
-					selectedEvent.createdBy === user?._id &&
-					(user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed))
-				) {
+				if (selectedEvent.createdBy === user?._id && hasPlatformAccess) {
 					setEditEventModalOpen(true);
 				} else {
 					setEventDetailsModalOpen(true);
@@ -135,7 +133,7 @@ const EventCalendar = () => {
 			} else {
 				setEditEventModalOpen(true);
 			}
-	}, [selectedEvent, user?.role, user?._id, user?.hasRegisteredCourse, isInstructor, hasAdminAccess]);
+	}, [selectedEvent, user?.role, user?._id, hasPlatformAccess, isInstructor, hasAdminAccess]);
 
 	const closeEventDialogs = useCallback(() => {
 		setEventDetailsModalOpen(false);
@@ -165,7 +163,7 @@ const EventCalendar = () => {
 		if (
 			hasAdminAccess ||
 			isInstructor ||
-			(isLearner && (user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed)))
+			(isLearner && hasPlatformAccess)
 		) {
 			const isMonthView = start.getHours() === 0 && end.getHours() === 0;
 			const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;

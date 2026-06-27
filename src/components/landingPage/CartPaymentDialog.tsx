@@ -36,7 +36,7 @@ interface CartPaymentDialogProps {
 	firstName: string;
 	lastName: string;
 	email: string;
-	onSuccess: () => void;
+	onSuccess: (result?: { documentDeliveryFailed?: boolean; documentDeliveryMessage?: string }) => void;
 }
 
 export default function CartPaymentDialog({
@@ -103,6 +103,7 @@ export default function CartPaymentDialog({
 		}
 		setIsProcessing(true);
 		try {
+			let captureWarning: { documentDeliveryFailed?: boolean; documentDeliveryMessage?: string } | undefined;
 			for (let i = 0; i < queue.length; i++) {
 				setCurrentIndex(i + 1);
 				const item = queue[i];
@@ -125,12 +126,18 @@ export default function CartPaymentDialog({
 					return;
 				}
 
-				const { error } = await stripe.confirmCardPayment(item.clientSecret, {
+				const { error, paymentIntent } = await stripe.confirmCardPayment(item.clientSecret, {
 					payment_method: paymentMethod.id,
 					return_url: typeof window !== 'undefined' ? window.location.href : undefined,
 				});
-				if (error) {
-					let msg = error.message ?? (error as { decline_code?: string }).decline_code ?? `Ödeme başarısız (${i + 1}. kalem).`;
+				if (error || paymentIntent?.status !== 'requires_capture') {
+					let msg =
+						error?.message ??
+						(error as { decline_code?: string }).decline_code ??
+						`Ödeme başarısız (${i + 1}. kalem).`;
+					if (!error && paymentIntent?.status !== 'requires_capture') {
+						msg = 'Ödeme onaylanamadı. Lütfen tekrar deneyin.';
+					}
 					if ((error as { code?: string }).code === 'payment_intent_unexpected_state') {
 						msg = 'Bu ödeme zaten işlendi veya iptal edildi. Sepetinizi kontrol edin.';
 					} else if (msg.toLowerCase().includes('processing error')) {
@@ -140,10 +147,16 @@ export default function CartPaymentDialog({
 					setIsProcessing(false);
 					return;
 				}
-				await axios.patch(`${base_url}/payments/capture/${item.paymentIntentId}`, item.capturePayload);
+				const captureResponse = await axios.patch(`${base_url}/payments/capture/${item.paymentIntentId}`, item.capturePayload);
+				if (captureResponse.data?.documentDeliveryFailed) {
+					captureWarning = {
+						documentDeliveryFailed: true,
+						documentDeliveryMessage: captureResponse.data.documentDeliveryMessage,
+					};
+				}
 			}
 
-			onSuccess();
+			onSuccess(captureWarning);
 			onClose();
 		} catch (err: unknown) {
 			const e = err as { message?: string; response?: { data?: { error?: { message?: string }; message?: string } } };

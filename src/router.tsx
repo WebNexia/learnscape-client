@@ -18,7 +18,6 @@ import UsersContextProvider from './contexts/UsersContextProvider';
 import LessonsContextProvider from './contexts/LessonsContextProvider';
 import QuestionsContextProvider from './contexts/QuestionsContextProvider';
 import DocumentsContextProvider from './contexts/DocumentsContextProvider';
-import CoursesContextProvider from './contexts/CoursesContextProvider';
 import { RecycleBinQuestionsProvider } from './contexts/RecycleBinQuestionsContextProvider';
 import { RecycleBinDocumentsProvider } from './contexts/RecycleBinDocumentsContextProvider';
 import ResourcesContextProvider from './contexts/ResourcesContextProvider';
@@ -231,9 +230,7 @@ export const router = createBrowserRouter([
 				path: 'admin/course-roster/course/:courseId',
 				element: (
 					<AdminRouteGuard>
-						<CoursesContextProvider>
-							<CourseRoster />
-						</CoursesContextProvider>
+						<CourseRoster />
 					</AdminRouteGuard>
 				),
 			},
@@ -580,9 +577,7 @@ export const router = createBrowserRouter([
 				path: 'instructor/course-roster/course/:courseId',
 				element: (
 					<InstructorRouteGuard>
-						<CoursesContextProvider>
-							<CourseRoster />
-						</CoursesContextProvider>
+						<CourseRoster />
 					</InstructorRouteGuard>
 				),
 			},

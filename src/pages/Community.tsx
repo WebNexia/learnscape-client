@@ -22,6 +22,7 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { useAuth } from '../hooks/useAuth';
+import { useLearnerPlatformAccess } from '../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../config/features';
 
 export interface NewTopic {
@@ -37,6 +38,7 @@ const Community = () => {
 	const { user } = useContext(UserAuthContext);
 
 	const { isLearner, hasAdminAccess } = useAuth();
+	const hasPlatformAccess = useLearnerPlatformAccess();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -202,7 +204,7 @@ const Community = () => {
 						{
 							label: isMobileSize ? 'Create' : 'Create Topic',
 							onClick: () => {
-								if (user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) || !isLearner) {
+								if (hasPlatformAccess || !isLearner) {
 									setCreateTopicModalOpen(true);
 								} else {
 									setMessageNonRegisteredModalOpen(true);

@@ -5,7 +5,7 @@ import theme from '../../themes';
 import { formatMessageTime } from '../../utils/formatTime';
 import { Chat as ChatType } from '../../pages/Messages';
 import { useAuth } from '../../hooks/useAuth';
-import { isSubscriptionsProductEnabled } from '../../config/features';
+import { useLearnerPlatformAccess } from '../../hooks/useLearnerPlatformAccess';
 
 interface ChatListProps {
 	filteredChatList: ChatType[];
@@ -49,6 +49,7 @@ const ChatList = ({
 	globalBlockedUsers,
 }: ChatListProps) => {
 	const { hasAdminAccess } = useAuth();
+	const hasPlatformAccess = useLearnerPlatformAccess();
 	return (
 		<>
 			{!isChatsListVisible && isVerySmallScreen && (
@@ -96,21 +97,13 @@ const ChatList = ({
 								placeholder='Username or Group Name'
 								value={searchChatValue}
 								onChange={onFilterChats}
-								disabled={
-									!user?.hasRegisteredCourse &&
-									!hasAdminAccess &&
-									!(isSubscriptionsProductEnabled && user?.isSubscribed)
-								}
+								disabled={!hasPlatformAccess && !hasAdminAccess}
 							/>
 						</Box>
 						<Box sx={{ flex: 1 }}>
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
-									disabled={
-										!user?.hasRegisteredCourse &&
-										user?.role === 'learner' &&
-										!(isSubscriptionsProductEnabled && user?.isSubscribed)
-									}
+									disabled={!hasPlatformAccess && user?.role === 'learner'}
 									sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />

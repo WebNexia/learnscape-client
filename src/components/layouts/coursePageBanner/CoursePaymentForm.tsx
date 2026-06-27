@@ -40,6 +40,7 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 
 const FONT = 'Varela Round';
 const INPUT_RADIUS = '0.5rem';
@@ -282,7 +283,6 @@ export default function CoursePaymentForm({
 			return;
 		}
 
-		let usersUsedCode = [...usersUsedPromoCode];
 		try {
 			const response = await axiosInstance.post(`${base_url}/payments`, {
 				amount: lockedAmount,
@@ -322,7 +322,15 @@ export default function CoursePaymentForm({
 				return;
 			}
 
-			const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+			try {
+				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+			} catch (regErr) {
+				resetForm(true);
+				setErrorMessage('Kurs kaydı başarısız oldu. Ücretlendirilmediniz.');
+				resetRecaptcha();
+				setIsProcessing(false);
+				return;
+			}
 
 			try {
 				await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
@@ -333,6 +341,7 @@ export default function CoursePaymentForm({
 					lastName: resolvedLastName,
 					email,
 					paymentType: 'course',
+					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 				});
 
 				if (!user?.hasRegisteredCourse && !course?.courseManagement?.isExternal) {
@@ -343,12 +352,15 @@ export default function CoursePaymentForm({
 						paymentIntentId,
 					});
 					setUser((prev) => (prev ? { ...prev, hasRegisteredCourse: true } : prev));
+				} else {
+					const patch = getPostEnrollmentUserPatch(user, course);
+					if (patch) {
+						setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+					}
 				}
 
-				usersUsedCode = [...usersUsedPromoCode, resolvedUserId];
-				setUsersUsedPromoCode(usersUsedCode);
 				if (isPromoCodeApplied && promoCodeId) {
-					await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, { usersUsed: usersUsedCode });
+					setUsersUsedPromoCode([...usersUsedPromoCode, resolvedUserId]);
 				}
 
 				resetForm();
@@ -366,18 +378,6 @@ export default function CoursePaymentForm({
 						paymentIntentId,
 					});
 
-					if (isPromoCodeApplied && promoCodeId) {
-						try {
-							const rolledBackUsers = usersUsedPromoCode?.filter((id) => id !== resolvedUserId) || [];
-							await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
-								usersUsed: rolledBackUsers,
-							});
-							console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
-						} catch (promoRollbackErr) {
-							console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
-						}
-					}
-
 					await queryClient.invalidateQueries(['userCourseData']);
 					await queryClient.invalidateQueries(['userLessonsForCourse', course._id, resolvedUserId]);
 				} catch (cleanupErr) {
@@ -388,9 +388,10 @@ export default function CoursePaymentForm({
 				setErrorMessage('Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.');
 				resetRecaptcha();
 			}
-		} catch (regErr) {
+		} catch (err) {
+			console.error(err);
 			resetForm(true);
-			setErrorMessage('Kurs kaydı başarısız oldu. Ücretlendirilmediniz.');
+			setErrorMessage('Ödeme işlenirken bir hata oluştu.');
 			resetRecaptcha();
 		} finally {
 			setIsProcessing(false);

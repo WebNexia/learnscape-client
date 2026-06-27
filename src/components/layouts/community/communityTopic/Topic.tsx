@@ -11,6 +11,7 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomCancelButton from '../../../forms/customButtons/CustomCancelButton';
 import theme from '../../../../themes';
 import { useAuth } from '../../../../hooks/useAuth';
+import { useLearnerPlatformAccess } from '../../../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../../../config/features';
 
 interface TopicProps {
@@ -21,6 +22,7 @@ const Topic = ({ topic }: TopicProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess, isInstructor } = useAuth();
+	const hasPlatformAccess = useLearnerPlatformAccess();
 
 	const { isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -60,11 +62,7 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								if (
-									user?.hasRegisteredCourse ||
-									(isSubscriptionsProductEnabled && user?.isSubscribed) ||
-									user?.role !== Roles.USER
-								) {
+								if (hasPlatformAccess || user?.role !== Roles.USER) {
 									const basePath =
 										user?.role === Roles.USER
 											? 'community'
