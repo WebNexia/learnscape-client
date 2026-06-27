@@ -7,6 +7,8 @@ const storage = admin.storage();
 
 const FIREBASE_STORAGE_URL_REGEX = /^https:\/\/(firebasestorage\.googleapis\.com|storage\.googleapis\.com)\/v0\/b\/([^/]+)\/o\/(.+?)(\?|$)/;
 
+const PROTECTED_STORAGE_PREFIXES = ['ProfileImages/'];
+
 function extractBucketAndPathFromStorageUrl(url: string): { bucket: string; path: string } | null {
 	if (typeof url !== 'string' || !url.trim()) return null;
 	const match = url.trim().match(FIREBASE_STORAGE_URL_REGEX);
@@ -36,6 +38,7 @@ async function deleteStorageUrlsFromMessages(
 	for (const url of unique) {
 		const parsed = extractBucketAndPathFromStorageUrl(url);
 		if (!parsed) continue;
+		if (PROTECTED_STORAGE_PREFIXES.some((prefix) => parsed.path.startsWith(prefix))) continue;
 		try {
 			await storage.bucket(parsed.bucket).file(parsed.path).delete({ ignoreNotFound: true });
 			deleted++;
