@@ -315,7 +315,7 @@ const HeroSection = () => {
 						minWidth: 0,
 						display: 'flex',
 						justifyContent: 'center',
-						alignItems: 'center',
+						alignItems: stackHeroLayout ? 'center' : 'flex-end',
 						position: 'relative',
 						zIndex: 2,
 					}}>
@@ -323,21 +323,23 @@ const HeroSection = () => {
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
+							alignItems: 'flex-end',
 							width: '100%',
 							maxWidth: stackHeroLayout
-								? { xs: 'min(100%, 16rem)', sm: 'min(100%, 18rem)' }
-								: 'min(100%, 32rem)',
+								? { xs: 'min(100%, 18rem)', sm: 'min(100%, 22rem)' }
+								: { md: 'min(100%, 38rem)', lg: 'min(100%, 44rem)' },
 							position: 'relative',
 							mx: 'auto',
+							minHeight: stackHeroLayout ? 'auto' : { md: 'clamp(18rem, 55vh, 36rem)', lg: 'clamp(20rem, 62vh, 42rem)' },
 						}}>
 						<Box
 							sx={{
 								position: 'absolute',
-								top: '50%',
+								top: stackHeroLayout ? '50%' : '42%',
 								left: '50%',
 								transform: 'translate(-50%, -50%)',
-								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 400px)',
-								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 400px)',
+								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 480px)',
+								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 480px)',
 								borderRadius: '50%',
 								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
 								filter: 'blur(40px)',
@@ -356,9 +358,14 @@ const HeroSection = () => {
 								width: '100%',
 								height: 'auto',
 								maxHeight: stackHeroLayout
-									? { xs: 'clamp(7.5rem, 28vh, 16rem)', sm: 'clamp(8.5rem, 30vh, 17rem)' }
-									: { md: 'clamp(14rem, 52vh, 28rem)', lg: 'clamp(16rem, 58vh, 32rem)' },
+									? { xs: 'clamp(9rem, 32vh, 18rem)', sm: 'clamp(10rem, 34vh, 20rem)' }
+									: {
+										md: 'clamp(18rem, 58vh, 38rem)',
+										lg: 'clamp(22rem, 68vh, 44rem)',
+										xl: 'clamp(24rem, 72vh, 48rem)',
+									},
 								objectFit: 'contain',
+								objectPosition: 'center bottom',
 								position: 'relative',
 								zIndex: 1,
 								transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
