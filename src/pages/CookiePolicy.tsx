@@ -1,9 +1,10 @@
 import { Box, Container, Typography, Paper, Divider, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import { Link } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
+
+const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
 const CookiePolicy = () => {
 	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -74,10 +75,18 @@ const CookiePolicy = () => {
 					title: 'Form Gönderim Takibi:',
 					description: 'Tekrarlayan form gönderimlerini önler ve form tamamlama durumunuzu hatırlar.',
 				},
+				{
+					title: 'Konum Önbelleği (sessionStorage):',
+					description: 'Ülke ve para birimi tercihlerinizi iyileştirmek için IP tabanlı konum bilgisini geçici olarak saklar.',
+				},
+				{
+					title: 'Gömülü Video Platformları:',
+					description: 'YouTube, Vimeo ve Dailymotion gibi gömülü videolar kendi çerezlerini ayarlayabilir.',
+				},
 			],
 			section2_3Title: '2.3 Analitik Çerezler (İsteğe Bağlı)',
 			section2_3Content:
-				'Bu çerezler, ziyaretçilerin web sitemizle nasıl etkileşim kurduğunu anlamamıza yardımcı olur ve bilgileri anonim olarak toplar ve raporlar. Hizmetlerimizi ve kullanıcı deneyimini iyileştirmemize olanak tanır.',
+				'Platformda Google Analytics, Meta Pixel veya benzeri reklam/pazarlama izleme araçları kullanılmamaktadır. Yalnızca aşağıdaki isteğe bağlı analitik çerezler söz konusu olabilir:',
 			analyticsCookies: [
 				{
 					title: 'Stripe Analitik:',
@@ -118,6 +127,36 @@ const CookiePolicy = () => {
 					linkText: 'TinyMCE Gizlilik Politikası',
 					url: 'https://www.tiny.cloud/legal/privacy/',
 				},
+				{
+					name: 'YouTube (Google):',
+					description: 'Gömülü video oynatma ve etkinlik kayıtları.',
+					linkText: 'Google Gizlilik Politikası',
+					url: 'https://policies.google.com/privacy',
+				},
+				{
+					name: 'Vimeo:',
+					description: 'Gömülü kurs ve ders videoları.',
+					linkText: 'Vimeo Gizlilik Politikası',
+					url: 'https://vimeo.com/privacy',
+				},
+				{
+					name: 'Dailymotion:',
+					description: 'Gömülü video içerikleri.',
+					linkText: 'Dailymotion Gizlilik Politikası',
+					url: 'https://www.dailymotion.com/legal/privacy',
+				},
+				{
+					name: 'Google Fonts:',
+					description: 'Web sitesi tipografisi için font dosyalarının yüklenmesi.',
+					linkText: 'Google Gizlilik Politikası',
+					url: 'https://policies.google.com/privacy',
+				},
+				{
+					name: 'ipapi.co / ipwho.is:',
+					description: 'IP tabanlı konum tespiti (ülke/şehir).',
+					linkText: 'ipapi.co Gizlilik Politikası',
+					url: 'https://ipapi.co/privacy/',
+				},
 			],
 			section4Title: '4. Çerez Tercihlerinizi Yönetme',
 			section4Content: 'Çerez tercihlerinizi şu şekillerde yönetebilirsiniz:',
@@ -131,9 +170,7 @@ const CookiePolicy = () => {
 			section5Content:
 				'Bu Çerez Politikasını zaman zaman güncelleyebiliriz. Yeni Çerez Politikasını bu sayfaya yayınlayarak ve "Son güncelleme" tarihini güncelleyerek size herhangi bir değişiklikten haberdar edeceğiz.',
 			section6Title: '6. İletişim',
-			section6Content: 'Çerez Politikamız hakkında herhangi bir sorunuz varsa, lütfen',
-			contactLink: 'İletişim',
-			section6End: 'sayfamızdan bizimle iletişime geçin.',
+			section6Content: 'Çerez Politikamız hakkında herhangi bir sorunuz varsa bizimle iletişime geçin:',
 		},
 		en: {
 			title: 'Cookie Policy',
@@ -181,10 +218,18 @@ const CookiePolicy = () => {
 					title: 'Form Submission Tracking:',
 					description: 'Prevents duplicate form submissions and remembers your form completion status.',
 				},
+				{
+					title: 'Location Cache (sessionStorage):',
+					description: 'Temporarily stores IP-based location information to improve country and currency preferences.',
+				},
+				{
+					title: 'Embedded Video Platforms:',
+					description: 'Embedded videos from YouTube, Vimeo, and Dailymotion may set their own cookies.',
+				},
 			],
 			section2_3Title: '2.3 Analytics Cookies (Optional)',
 			section2_3Content:
-				'These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously. They enable us to improve our services and user experience.',
+				'The platform does not use Google Analytics, Meta Pixel, or similar advertising/marketing tracking tools. Only the following optional analytics cookies may apply:',
 			analyticsCookies: [
 				{
 					title: 'Stripe Analytics:',
@@ -225,6 +270,36 @@ const CookiePolicy = () => {
 					linkText: 'TinyMCE Privacy Policy',
 					url: 'https://www.tiny.cloud/legal/privacy/',
 				},
+				{
+					name: 'YouTube (Google):',
+					description: 'Embedded video playback and event recordings.',
+					linkText: 'Google Privacy Policy',
+					url: 'https://policies.google.com/privacy',
+				},
+				{
+					name: 'Vimeo:',
+					description: 'Embedded course and lesson videos.',
+					linkText: 'Vimeo Privacy Policy',
+					url: 'https://vimeo.com/privacy',
+				},
+				{
+					name: 'Dailymotion:',
+					description: 'Embedded video content.',
+					linkText: 'Dailymotion Privacy Policy',
+					url: 'https://www.dailymotion.com/legal/privacy',
+				},
+				{
+					name: 'Google Fonts:',
+					description: 'Loading font files for website typography.',
+					linkText: 'Google Privacy Policy',
+					url: 'https://policies.google.com/privacy',
+				},
+				{
+					name: 'ipapi.co / ipwho.is:',
+					description: 'IP-based location detection (country/city).',
+					linkText: 'ipapi.co Privacy Policy',
+					url: 'https://ipapi.co/privacy/',
+				},
 			],
 			section4Title: '4. Managing Your Cookie Preferences',
 			section4Content: 'You can manage your cookie preferences at any time by:',
@@ -238,9 +313,7 @@ const CookiePolicy = () => {
 			section5Content:
 				'We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last updated" date.',
 			section6Title: '6. Contact Us',
-			section6Content: 'If you have any questions about our Cookie Policy, please contact us through our',
-			contactLink: 'Contact Us',
-			section6End: 'page.',
+			section6Content: 'If you have any questions about our Cookie Policy, please contact us at:',
 		},
 	};
 
@@ -457,10 +530,9 @@ const CookiePolicy = () => {
 						variant='body2'
 						sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '2rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage }}>
 						{currentContent.section6Content}{' '}
-						<Link to='/contact-us' style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
-							{currentContent.contactLink}
-						</Link>{' '}
-						{currentContent.section6End}
+						<a href={`mailto:${CONTACT_EMAIL}`} style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
+							{CONTACT_EMAIL}
+						</a>
 					</Typography>
 				</Paper>
 			</Container>

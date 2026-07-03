@@ -14,7 +14,7 @@ import {
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomTextField from '../forms/customFields/CustomTextField';
-import { FeedbackForm, FeedbackFormField } from '../../interfaces/feedbackForm';
+import { FeedbackForm, FeedbackFormField, FeedbackFormPostSubmitEmail, FeedbackFormPostSubmitRewardType } from '../../interfaces/feedbackForm';
 import { FeedbackFormTemplate } from '../../interfaces/feedbackFormTemplate';
 import { useContext, useState, useEffect, useRef } from 'react';
 import { FeedbackFormsContext } from '../../contexts/FeedbackFormsContextProvider';
@@ -37,6 +37,17 @@ interface CreateFeedbackFormDialogProps {
 	onSuccess: () => void;
 }
 
+const defaultPostSubmitEmail = (): FeedbackFormPostSubmitEmail => ({
+	enabled: false,
+	subject: '',
+	message: '',
+	rewardType: 'none',
+	downloadUrl: '',
+	linkButtonLabel: 'İndir',
+	attachmentFileName: '',
+	attachmentUrl: '',
+});
+
 const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuccess }: CreateFeedbackFormDialogProps) => {
 	const { createForm, updateForm, templates, fetchTemplates, templatesLoading } = useContext(FeedbackFormsContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -50,6 +61,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 	const [submissionDeadline, setSubmissionDeadline] = useState<string>('');
 	const [showResultsToSubmitters, setShowResultsToSubmitters] = useState<boolean>(false);
 	const [useForConsultation, setUseForConsultation] = useState<boolean>(false);
+	const [postSubmitEmail, setPostSubmitEmail] = useState<FeedbackFormPostSubmitEmail>(defaultPostSubmitEmail());
 
 	// Template selection state
 	const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -101,6 +113,10 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setSubmissionDeadline(isoToDateTimeLocal(formToEdit.submissionDeadline));
 			setShowResultsToSubmitters(formToEdit.showResultsToSubmitters ?? false);
 			setUseForConsultation(formToEdit.useForConsultation ?? false);
+			setPostSubmitEmail({
+				...defaultPostSubmitEmail(),
+				...(formToEdit.postSubmitEmail || {}),
+			});
 			if (formToEdit.useForConsultation) {
 				setAllowAnonymous(true);
 				setAllowMultipleSubmissions(true);
@@ -137,6 +153,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setSubmissionDeadline('');
 			setShowResultsToSubmitters(false);
 			setUseForConsultation(false);
+			setPostSubmitEmail(defaultPostSubmitEmail());
 			setSelectedCourse(null);
 			setSearchCourseValue('');
 			setSelectedTemplateId('');
@@ -158,7 +175,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			return;
 		}
 
-		if (fields.length === 0) {
+		if (!postSubmitEmail.enabled && fields.length === 0) {
 			setErrorMessage('At least one field is required');
 			return;
 		}
@@ -172,6 +189,31 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			if ((field.type === 'multiple-choice' || field.type === 'checkbox') && (!field.options || field.options.length === 0)) {
 				setErrorMessage(`${field.type} fields must have at least one option`);
 				return;
+			}
+		}
+
+		if (postSubmitEmail.enabled) {
+			if (useForConsultation) {
+				setErrorMessage('Consultation forms cannot send post-submit emails');
+				return;
+			}
+			if (!postSubmitEmail.subject?.trim()) {
+				setErrorMessage('Email subject is required when post-submit email is enabled');
+				return;
+			}
+			if (postSubmitEmail.rewardType === 'link' && !postSubmitEmail.downloadUrl?.trim()) {
+				setErrorMessage('HTTPS download URL is required when reward type is link');
+				return;
+			}
+			if (postSubmitEmail.rewardType === 'attachment') {
+				if (!postSubmitEmail.attachmentUrl?.trim()) {
+					setErrorMessage('HTTPS attachment URL is required when reward type is attachment');
+					return;
+				}
+				if (!postSubmitEmail.attachmentFileName?.trim()) {
+					setErrorMessage('Attachment file name is required when reward type is attachment');
+					return;
+				}
 			}
 		}
 
@@ -193,11 +235,22 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 					...field,
 					order: index,
 				})),
-				allowAnonymous: useForConsultation ? true : allowAnonymous,
+				allowAnonymous: postSubmitEmail.enabled ? false : useForConsultation ? true : allowAnonymous,
 				allowMultipleSubmissions: useForConsultation ? true : allowMultipleSubmissions,
 				submissionDeadline: submissionDeadline || undefined,
 				showResultsToSubmitters,
 				useForConsultation,
+				postSubmitEmail: {
+					...postSubmitEmail,
+					enabled: Boolean(postSubmitEmail.enabled),
+					subject: postSubmitEmail.subject?.trim() || '',
+					message: postSubmitEmail.message?.trim() || '',
+					rewardType: postSubmitEmail.rewardType || 'none',
+					downloadUrl: postSubmitEmail.downloadUrl?.trim() || '',
+					linkButtonLabel: postSubmitEmail.linkButtonLabel?.trim() || 'İndir',
+					attachmentFileName: postSubmitEmail.attachmentFileName?.trim() || '',
+					attachmentUrl: postSubmitEmail.attachmentUrl?.trim() || '',
+				},
 			};
 
 			if (formToEdit) {
@@ -422,7 +475,9 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 						<Typography
 							variant='body2'
 							sx={{ color: 'text.secondary', fontStyle: 'italic', marginTop: '1rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-							No fields added yet. Click the "+" button to add a field.
+							{postSubmitEmail.enabled
+								? 'İsim ve e-posta otomatik toplanır. Ek alan eklemek opsiyoneldir.'
+								: 'No fields added yet. Click the "+" button to add a field.'}
 						</Typography>
 					) : (
 						<Reorder.Group axis='y' values={fields} onReorder={setFields}>
@@ -557,6 +612,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 												if (checked) {
 													setAllowAnonymous(true);
 													setAllowMultipleSubmissions(true);
+													setPostSubmitEmail(defaultPostSubmitEmail());
 												}
 											}}
 											size='small'
@@ -586,6 +642,109 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 							}}
 						/>
 					</Box>
+				</Box>
+
+				{/* Post-submit email (lead magnet) */}
+				<Box sx={{ margin: isMobileSize ? '0.75rem 0' : '1.5rem 1rem 0.5rem 1rem' }}>
+					<Typography variant='h6' sx={{ marginBottom: '0.5rem', fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
+						Submit Sonrası E-posta
+					</Typography>
+					<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1.5, fontSize: isMobileSize ? '0.68rem' : '0.75rem' }}>
+						Form gönderildikten sonra katılımcıya e-posta gönderin (indirme linki veya ek dosya). E-posta için isim ve e-posta alanları zorunlu olur.
+					</Typography>
+
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={Boolean(postSubmitEmail.enabled)}
+								disabled={useForConsultation}
+								onChange={(e) => {
+									const checked = e.target.checked;
+									setPostSubmitEmail((prev) => ({ ...prev, enabled: checked }));
+									if (checked) {
+										setAllowAnonymous(false);
+									}
+								}}
+								size='small'
+							/>
+						}
+						label='Submit sonrası e-posta gönder'
+						sx={{ 'marginBottom': '0.75rem', '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
+					/>
+
+					{postSubmitEmail.enabled && (
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pl: { xs: 0, sm: 1 } }}>
+							<CustomTextField
+								label='E-posta konusu'
+								required
+								value={postSubmitEmail.subject || ''}
+								onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, subject: e.target.value }))}
+							/>
+							<CustomTextField
+								label='E-posta mesajı'
+								required={false}
+								multiline
+								rows={3}
+								value={postSubmitEmail.message || ''}
+								onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, message: e.target.value }))}
+								placeholder='Teşekkür mesajınız...'
+							/>
+							<FormControl size='small' sx={{ maxWidth: 320 }}>
+								<Typography variant='caption' sx={{ mb: 0.5, fontSize: isMobileSize ? '0.68rem' : '0.75rem' }}>
+									Ödül türü
+								</Typography>
+								<Select
+									value={postSubmitEmail.rewardType || 'none'}
+									onChange={(e) =>
+										setPostSubmitEmail((prev) => ({
+											...prev,
+											rewardType: e.target.value as FeedbackFormPostSubmitRewardType,
+										}))
+									}>
+									<MenuItem value='none'>Sadece teşekkür mesajı</MenuItem>
+									<MenuItem value='link'>İndirme linki</MenuItem>
+									<MenuItem value='attachment'>E-posta eki (PDF vb.)</MenuItem>
+								</Select>
+							</FormControl>
+
+							{postSubmitEmail.rewardType === 'link' && (
+								<>
+									<CustomTextField
+										label='İndirme linki (HTTPS)'
+										required
+										value={postSubmitEmail.downloadUrl || ''}
+										onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, downloadUrl: e.target.value }))}
+										placeholder='https://...'
+									/>
+									<CustomTextField
+										label='Buton metni'
+										required={false}
+										value={postSubmitEmail.linkButtonLabel || 'İndir'}
+										onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, linkButtonLabel: e.target.value }))}
+									/>
+								</>
+							)}
+
+							{postSubmitEmail.rewardType === 'attachment' && (
+								<>
+									<CustomTextField
+										label='Dosya URL (HTTPS)'
+										required
+										value={postSubmitEmail.attachmentUrl || ''}
+										onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, attachmentUrl: e.target.value }))}
+										placeholder='https://storage.../kitap.pdf'
+									/>
+									<CustomTextField
+										label='Ek dosya adı'
+										required
+										value={postSubmitEmail.attachmentFileName || ''}
+										onChange={(e) => setPostSubmitEmail((prev) => ({ ...prev, attachmentFileName: e.target.value }))}
+										placeholder='ucretsiz-kitap.pdf'
+									/>
+								</>
+							)}
+						</Box>
+					)}
 				</Box>
 
 				{errorMessage && (

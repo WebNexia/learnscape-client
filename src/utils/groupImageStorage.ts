@@ -38,14 +38,19 @@ export async function cleanupGroupChatImages(
 	const keep = (keepImageUrl || '').trim();
 	const previous = (previousImageUrl || '').trim();
 	const keepPath = keep && isStorageUrl(keep) ? pathFromStorageUrl(keep) : null;
+	const scopedPrefix = `${GROUP_IMAGES_FOLDER}/${chatId}/`;
 
 	try {
 		const folderRef = ref(storage, `${GROUP_IMAGES_FOLDER}/${chatId}`);
 		const listing = await listAll(folderRef);
 		await Promise.allSettled(
 			listing.items.map(async (item) => {
+				if (!keep) {
+					await deleteObject(item);
+					return;
+				}
 				if (keepPath && item.fullPath === keepPath) return;
-				await deleteObject(item);
+				if (keepPath) await deleteObject(item);
 			})
 		);
 	} catch {
@@ -54,7 +59,7 @@ export async function cleanupGroupChatImages(
 
 	if (previous && isStorageUrl(previous) && previous !== keep) {
 		const previousPath = pathFromStorageUrl(previous);
-		if (!previousPath || !keepPath || previousPath !== keepPath) {
+		if (previousPath?.startsWith(scopedPrefix) && (!keepPath || previousPath !== keepPath)) {
 			await deleteFirebaseStorageUrls([previous]);
 		}
 	}

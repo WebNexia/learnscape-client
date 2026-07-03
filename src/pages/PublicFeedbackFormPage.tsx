@@ -22,8 +22,62 @@ const isValidEmail = (email: string): boolean => {
 	return emailRegex.test(email) && email.length <= 254;
 };
 
+const FORM_CARD_MAX_WIDTH = 440;
+
+const publicFormCompactFieldStyles = {
+	'& .MuiOutlinedInput-root': {
+		'borderRadius': { xs: '12px', sm: '8px' },
+		'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+		'boxShadow': { xs: '0 2px 8px rgba(0, 0, 0, 0.08)', sm: '0 1px 4px rgba(0, 0, 0, 0.06)' },
+		'&:hover': {
+			backgroundColor: 'rgba(255, 255, 255, 1)',
+			boxShadow: { xs: '0 4px 12px rgba(102, 126, 234, 0.15)', sm: '0 2px 8px rgba(102, 126, 234, 0.12)' },
+		},
+		'&.Mui-focused': {
+			backgroundColor: 'rgba(255, 255, 255, 1)',
+			boxShadow: { xs: '0 6px 20px rgba(102, 126, 234, 0.25)', sm: '0 2px 10px rgba(102, 126, 234, 0.18)' },
+		},
+		'& fieldset': {
+			borderColor: 'rgba(102, 126, 234, 0.3)',
+			borderWidth: { xs: '2px', sm: '1px' },
+		},
+		'&:hover fieldset': {
+			borderColor: 'rgba(102, 126, 234, 0.5)',
+		},
+		'&.Mui-focused fieldset': {
+			borderColor: 'rgba(102, 126, 234, 0.8)',
+			borderWidth: { xs: '2px', sm: '1px' },
+		},
+	},
+	'& .MuiInputLabel-root': {
+		fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+		fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+	},
+	'& .MuiInputBase-input': {
+		fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+		fontSize: { xs: '0.95rem', sm: '0.875rem' },
+		padding: { xs: '14px 16px', sm: '10px 12px' },
+	},
+	'& .MuiFormLabel-root': {
+		fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+	},
+};
+
+const publicFormFieldLabelSx = {
+	mb: { xs: '0.5rem', sm: '0.375rem' },
+	display: 'block',
+	color: theme.textColor?.primary.main,
+	fontWeight: 600,
+	fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+	fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+};
+
+const publicFormFieldSpacingSx = {
+	mb: { xs: '1.5rem', sm: '1rem' },
+};
+
 const PublicFeedbackFormPage = () => {
-	const { publicLink } = useParams<{ publicLink: string }>();
+	const { formId } = useParams<{ formId: string }>();
 	const navigate = useNavigate();
 	const { isSmallScreen } = useContext(MediaQueryContext);
 	const [form, setForm] = useState<FeedbackForm | null>(null);
@@ -31,6 +85,7 @@ const PublicFeedbackFormPage = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState<boolean>(false);
 	const [submitted, setSubmitted] = useState<boolean>(false);
+	const [submitSuccessEmailHint, setSubmitSuccessEmailHint] = useState<boolean>(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [responses, setResponses] = useState<Record<string, any>>({});
 	const [userName, setUserName] = useState<string>('');
@@ -40,18 +95,18 @@ const PublicFeedbackFormPage = () => {
 
 	// Check if form has already been submitted (using localStorage)
 	useEffect(() => {
-		if (form && publicLink) {
-			const submissionKey = `form_submitted_${publicLink}`;
+		if (form && formId) {
+			const submissionKey = `form_submitted_${formId}`;
 			const hasSubmitted = localStorage.getItem(submissionKey);
 			if (hasSubmitted === 'true' && !form.allowMultipleSubmissions) {
 				setSubmitted(true);
 			}
 		}
-	}, [form, publicLink]);
+	}, [form, formId]);
 
 	useEffect(() => {
 		const fetchForm = async () => {
-			if (!publicLink) {
+			if (!formId) {
 				setError('Geçersiz form bağlantısı');
 				setLoading(false);
 				return;
@@ -59,7 +114,7 @@ const PublicFeedbackFormPage = () => {
 
 			try {
 				setLoading(true);
-				const formData = await feedbackFormsService.getFeedbackFormByPublicLink(publicLink);
+				const formData = await feedbackFormsService.getPublicFeedbackForm(formId);
 
 				// Check if form deadline has passed
 				if (formData.submissionDeadline && new Date(formData.submissionDeadline) < new Date()) {
@@ -77,7 +132,7 @@ const PublicFeedbackFormPage = () => {
 		};
 
 		fetchForm();
-	}, [publicLink]);
+	}, [formId]);
 
 	// Security constants
 	const MAX_TEXT_LENGTH = 500;
@@ -225,7 +280,7 @@ const PublicFeedbackFormPage = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (!form || !publicLink) return;
+		if (!form || !formId) return;
 
 		// Check reCAPTCHA
 		if (!recaptchaToken) {
@@ -322,9 +377,9 @@ const PublicFeedbackFormPage = () => {
 				...(form.allowAnonymous
 					? {}
 					: {
-							userName: validateInputLength(sanitizeTextInput(userName).trim(), MAX_NAME_LENGTH),
-							userEmail: validateInputLength(sanitizeEmailInput(userEmail).trim().toLowerCase(), MAX_EMAIL_LENGTH),
-						}),
+						userName: validateInputLength(sanitizeTextInput(userName).trim(), MAX_NAME_LENGTH),
+						userEmail: validateInputLength(sanitizeEmailInput(userEmail).trim().toLowerCase(), MAX_EMAIL_LENGTH),
+					}),
 			};
 
 			// Final validation before submission
@@ -335,11 +390,13 @@ const PublicFeedbackFormPage = () => {
 				}
 			}
 
-			await feedbackFormsService.submitFeedbackForm(publicLink, submissionData);
+			await feedbackFormsService.submitFeedbackForm(formId, submissionData).then((result) => {
+				setSubmitSuccessEmailHint(Boolean(result.sendConfirmationEmail || form.sendConfirmationEmail));
+			});
 
 			// Mark as submitted in localStorage to prevent duplicate submissions on refresh
-			if (!form.allowMultipleSubmissions && publicLink) {
-				localStorage.setItem(`form_submitted_${publicLink}`, 'true');
+			if (!form.allowMultipleSubmissions && formId) {
+				localStorage.setItem(`form_submitted_${formId}`, 'true');
 			}
 
 			// Reset reCAPTCHA
@@ -369,16 +426,7 @@ const PublicFeedbackFormPage = () => {
 			case 'text':
 				return (
 					<>
-						<FormLabel
-							required={isRequired}
-							sx={{
-								mb: '0.5rem',
-								display: 'block',
-								color: theme.textColor?.primary.main,
-								fontWeight: 600,
-								fontSize: '0.95rem',
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-							}}>
+						<FormLabel required={isRequired} sx={publicFormFieldLabelSx}>
 							{field.label}
 						</FormLabel>
 						<CustomTextField
@@ -390,47 +438,8 @@ const PublicFeedbackFormPage = () => {
 							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
 							variant='outlined'
 							type='text'
-							sx={{
-								'mb': '1.5rem',
-								'& .MuiOutlinedInput-root': {
-									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-									'borderRadius': '12px',
-
-									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-									'&:hover': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
-									},
-									'&.Mui-focused': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-									},
-									'& fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.3)',
-										borderWidth: '2px',
-									},
-									'&:hover fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.5)',
-									},
-									'&.Mui-focused fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.8)',
-										borderWidth: '2px',
-									},
-								},
-								'& .MuiInputLabel-root': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									fontSize: '0.95rem',
-								},
-								'& .MuiInputBase-input': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-									fontSize: '0.95rem',
-									padding: '14px 16px',
-								},
-								'& .MuiInputBase-input::placeholder': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									opacity: 0.6,
-								},
-							}}
+							size={isSmallScreen ? 'medium' : 'small'}
+							sx={publicFormFieldSpacingSx}
 						/>
 					</>
 				);
@@ -438,16 +447,7 @@ const PublicFeedbackFormPage = () => {
 			case 'textarea':
 				return (
 					<>
-						<FormLabel
-							required={isRequired}
-							sx={{
-								mb: '0.5rem',
-								display: 'block',
-								color: theme.textColor?.primary.main,
-								fontWeight: 600,
-								fontSize: '0.95rem',
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-							}}>
+						<FormLabel required={isRequired} sx={publicFormFieldLabelSx}>
 							{field.label}
 						</FormLabel>
 						<CustomTextField
@@ -463,53 +463,16 @@ const PublicFeedbackFormPage = () => {
 								handleFieldChange(field.fieldId, limited);
 							}}
 							multiline
-							rows={4}
+							rows={isSmallScreen ? 4 : 3}
 							variant='outlined'
+							size={isSmallScreen ? 'medium' : 'small'}
 							disableSanitization={true}
 							InputProps={{
 								inputProps: {
 									maxLength: MAX_TEXTAREA_LENGTH,
 								},
 							}}
-							sx={{
-								'mb': '2rem',
-								'& .MuiOutlinedInput-root': {
-									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-									'borderRadius': '12px',
-									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-									'&:hover': {
-										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-									},
-									'&.Mui-focused': {
-										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-									},
-									'& fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.3)',
-										borderWidth: '2px',
-									},
-									'&:hover fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.3)',
-									},
-									'&.Mui-focused fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.8)',
-										borderWidth: '2px',
-									},
-								},
-								'& .MuiInputLabel-root': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									fontSize: '0.95rem',
-								},
-								'& .MuiInputBase-input': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-									fontSize: '0.95rem',
-									padding: '0 0.5rem',
-									lineHeight: 1.6,
-								},
-								'& .MuiInputBase-input::placeholder': {
-									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-									opacity: 0.6,
-								},
-							}}
+							sx={{ mb: { xs: '2rem', sm: '1.25rem' } }}
 						/>
 					</>
 				);
@@ -519,27 +482,18 @@ const PublicFeedbackFormPage = () => {
 					<Box
 						key={field.fieldId}
 						sx={{
-							'mb': '2rem',
-							'p': 2,
-							'borderRadius': '12px',
+							'mb': { xs: '2rem', sm: '1.25rem' },
+							'p': { xs: 2, sm: 1.5 },
+							'borderRadius': { xs: '12px', sm: '8px' },
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-							'border': '2px solid rgba(102, 126, 234, 0.3)',
+							'border': { xs: '2px solid rgba(102, 126, 234, 0.3)', sm: '1px solid rgba(102, 126, 234, 0.3)' },
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
 								borderColor: 'rgba(102, 126, 234, 0.5)',
 							},
 						}}>
-						<FormLabel
-							required={isRequired}
-							sx={{
-								mb: '0.5rem',
-								display: 'block',
-								color: theme.textColor?.primary.main,
-								fontWeight: 600,
-								fontSize: '0.95rem',
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-							}}>
+						<FormLabel required={isRequired} sx={publicFormFieldLabelSx}>
 							{field.label}
 						</FormLabel>
 						<Rating
@@ -552,7 +506,7 @@ const PublicFeedbackFormPage = () => {
 								handleFieldChange(field.fieldId, clampedValue);
 							}}
 							max={field.maxRating || 5}
-							size='large'
+							size={isSmallScreen ? 'large' : 'medium'}
 							sx={{
 								'& .MuiRating-iconFilled': {
 									color: '#667eea',
@@ -1100,6 +1054,13 @@ const PublicFeedbackFormPage = () => {
 					</Typography>
 					<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main, mb: 3 }}>
 						Yanıtınız başarıyla gönderildi.
+						{submitSuccessEmailHint && (
+							<>
+								<br />
+								<br />
+								E-posta adresinize kısa süre içinde bir mesaj göndereceğiz. Gelen kutunuzu (ve spam klasörünü) kontrol edin.
+							</>
+						)}
 					</Typography>
 				</Paper>
 			</Box>
@@ -1113,6 +1074,10 @@ const PublicFeedbackFormPage = () => {
 		<Box
 			sx={{
 				'minHeight': '100vh',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'alignItems': 'center',
+				'justifyContent': { xs: 'flex-start', sm: 'center' },
 				'position': 'relative',
 				'overflow': 'auto',
 				// Aden solid gradient (no image - cleaner UX)
@@ -1171,12 +1136,20 @@ const PublicFeedbackFormPage = () => {
 				'& .tertiary-color': {
 					color: '#64748b',
 				},
-				'padding': { xs: 2, sm: 4 },
-				'py': 4,
+				'padding': { xs: 2, sm: 3 },
+				'py': { xs: 4, sm: 3 },
 			}}>
-			<Container maxWidth='md' sx={{ position: 'relative', zIndex: 1 }}>
+			<Container
+				maxWidth={false}
+				sx={{
+					position: 'relative',
+					zIndex: 1,
+					width: '100%',
+					maxWidth: { xs: '100%', sm: FORM_CARD_MAX_WIDTH },
+					px: { xs: 2, sm: 0 },
+				}}>
 				{/* Header with Logo */}
-				<Box sx={{ textAlign: 'center', mb: 3 }}>
+				<Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 2 } }}>
 					<Box
 						onClick={() => navigate('/')}
 						sx={{
@@ -1186,7 +1159,15 @@ const PublicFeedbackFormPage = () => {
 								opacity: 0.8,
 							},
 						}}>
-						<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '1rem', filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }} />
+						<img
+							src={logo}
+							alt='Logo'
+							style={{
+								height: isSmallScreen ? '80px' : '52px',
+								marginBottom: isSmallScreen ? '1rem' : '0.75rem',
+								filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+							}}
+						/>
 					</Box>
 				</Box>
 
@@ -1194,32 +1175,64 @@ const PublicFeedbackFormPage = () => {
 				<Paper
 					elevation={8}
 					sx={{
-						p: { xs: 3, sm: 5 },
-						backgroundColor: 'rgba(255, 255, 255, 0.95)',
-						borderRadius: 3,
-						boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+						p: { xs: 3, sm: 2.5 },
+						width: '100%',
+						maxWidth: FORM_CARD_MAX_WIDTH,
+						mx: 'auto',
+						backgroundColor: 'rgba(255, 255, 255, 0.98)',
+						borderRadius: { xs: 3, sm: 2 },
+						border: { sm: '1px solid rgba(0, 82, 163, 0.08)' },
+						boxShadow: {
+							xs: '0 8px 32px rgba(0, 0, 0, 0.1)',
+							sm: '0 16px 48px rgba(0, 0, 0, 0.12)',
+						},
 						position: 'relative',
 						zIndex: 1,
-						mb: '2rem',
+						mb: { xs: '2rem', sm: '1rem' },
+						...publicFormCompactFieldStyles,
 					}}>
 					{/* Form Title */}
-					<Typography variant='h4' sx={{ color: theme.textColor?.primary.main, fontWeight: 700, mb: 1, textAlign: 'center' }}>
+					<Typography
+						variant='h4'
+						sx={{
+							color: theme.textColor?.primary.main,
+							fontWeight: 700,
+							mb: 1,
+							textAlign: 'center',
+							fontSize: { xs: '1.75rem', sm: '1.25rem' },
+							lineHeight: { sm: 1.35 },
+						}}>
 						{form.title}
 					</Typography>
 
 					{/* Form Description */}
 					{form.description && (
-						<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main, mb: 4, textAlign: 'center' }}>
+						<Typography
+							variant='body1'
+							sx={{
+								color: theme.textColor?.secondary.main,
+								mb: { xs: 4, sm: 2 },
+								textAlign: 'center',
+								fontSize: { xs: '1rem', sm: '0.8125rem' },
+								lineHeight: { sm: 1.5 },
+							}}>
 							{form.description}
 						</Typography>
 					)}
 
-					<Divider sx={{ my: 3 }} />
+					<Divider sx={{ my: { xs: 3, sm: 2 } }} />
 
 					{/* User Info (if not anonymous) */}
 					{!form.allowAnonymous && (
-						<Box sx={{ mb: 4 }}>
-							<Typography variant='h6' sx={{ color: theme.textColor?.primary.main, mb: 2, fontWeight: 600 }}>
+						<Box sx={{ mb: { xs: 4, sm: 2.5 } }}>
+							<Typography
+								variant='h6'
+								sx={{
+									color: theme.textColor?.primary.main,
+									mb: { xs: 2, sm: 1.25 },
+									fontWeight: 600,
+									fontSize: { xs: '1.25rem', sm: '0.9375rem' },
+								}}>
 								Bilgileriniz
 							</Typography>
 							<CustomTextField
@@ -1233,47 +1246,13 @@ const PublicFeedbackFormPage = () => {
 									setUserName(sanitized);
 								}}
 								variant='outlined'
+								size={isSmallScreen ? 'medium' : 'small'}
 								InputProps={{
 									inputProps: {
 										maxLength: MAX_NAME_LENGTH,
 									},
 								}}
-								sx={{
-									'mb': 2,
-									'& .MuiOutlinedInput-root': {
-										'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-										'borderRadius': '12px',
-										'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-										'&:hover': {
-											backgroundColor: 'rgba(255, 255, 255, 1)',
-											boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
-										},
-										'&.Mui-focused': {
-											backgroundColor: 'rgba(255, 255, 255, 1)',
-											boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-										},
-										'& fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.3)',
-											borderWidth: '2px',
-										},
-										'&:hover fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.5)',
-										},
-										'&.Mui-focused fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.8)',
-											borderWidth: '2px',
-										},
-									},
-									'& .MuiInputLabel-root': {
-										fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-										fontSize: '0.95rem',
-									},
-									'& .MuiInputBase-input': {
-										fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-										fontSize: '0.95rem',
-										padding: '14px 16px',
-									},
-								}}
+								sx={{ mb: { xs: 2, sm: 1.5 } }}
 							/>
 							<CustomTextField
 								fullWidth
@@ -1286,44 +1265,10 @@ const PublicFeedbackFormPage = () => {
 									setUserEmail(sanitized);
 								}}
 								variant='outlined'
+								size={isSmallScreen ? 'medium' : 'small'}
 								InputProps={{
 									inputProps: {
 										maxLength: MAX_EMAIL_LENGTH,
-									},
-								}}
-								sx={{
-									'& .MuiOutlinedInput-root': {
-										'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-										'borderRadius': '12px',
-										'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-										'&:hover': {
-											backgroundColor: 'rgba(255, 255, 255, 1)',
-											boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
-										},
-										'&.Mui-focused': {
-											backgroundColor: 'rgba(255, 255, 255, 1)',
-											boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-										},
-										'& fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.3)',
-											borderWidth: '2px',
-										},
-										'&:hover fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.5)',
-										},
-										'&.Mui-focused fieldset': {
-											borderColor: 'rgba(102, 126, 234, 0.8)',
-											borderWidth: '2px',
-										},
-									},
-									'& .MuiInputLabel-root': {
-										fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-										fontSize: '0.95rem',
-									},
-									'& .MuiInputBase-input': {
-										fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-										fontSize: '0.95rem',
-										padding: '14px 16px',
 									},
 								}}
 							/>
@@ -1344,7 +1289,15 @@ const PublicFeedbackFormPage = () => {
 						))}
 
 						{/* reCAPTCHA */}
-						<Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								mt: { xs: 3, sm: 2 },
+								mb: { xs: 2, sm: 1.5 },
+								transform: { sm: 'scale(0.92)' },
+								transformOrigin: 'top center',
+							}}>
 							<ReCAPTCHA
 								ref={recaptchaRef}
 								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
@@ -1363,16 +1316,17 @@ const PublicFeedbackFormPage = () => {
 						</Box>
 
 						{/* Submit Button */}
-						<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+						<Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 4, sm: 2 } }}>
 							<Button
 								type='submit'
 								variant='contained'
-								size='medium'
+								size={isSmallScreen ? 'medium' : 'small'}
+								fullWidth={!isSmallScreen}
 								disabled={submitting}
 								sx={{
-									'px': 3,
-									'py': 1,
-									'fontSize': '1rem',
+									'px': { xs: 3, sm: 2 },
+									'py': { xs: 1, sm: 0.75 },
+									'fontSize': { xs: '1rem', sm: '0.8125rem' },
 									'fontWeight': 600,
 									'fontFamily': "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
 									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
@@ -1384,8 +1338,9 @@ const PublicFeedbackFormPage = () => {
 									},
 									'textTransform': 'uppercase',
 									'borderRadius': '0.5rem',
+									'maxWidth': { sm: '100%' },
 								}}>
-								{submitting ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Gönder'}
+								{submitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Gönder'}
 							</Button>
 						</Box>
 					</form>
@@ -1397,7 +1352,7 @@ const PublicFeedbackFormPage = () => {
 						display: 'flex',
 						justifyContent: 'center',
 						width: '100%',
-						mt: 2,
+						mt: 6,
 						mb: 1,
 						position: 'relative',
 						zIndex: 1,

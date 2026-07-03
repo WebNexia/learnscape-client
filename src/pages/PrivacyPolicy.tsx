@@ -5,6 +5,8 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
 
+const CONTACT_EMAIL = 'info@adenacademy.co.uk';
+
 const PrivacyPolicy = () => {
 	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -27,145 +29,469 @@ const PrivacyPolicy = () => {
 	const content = {
 		tr: {
 			title: 'Gizlilik Politikası',
-			lastUpdated: 'Son güncelleme:',
-			intro:
-				'Bu Gizlilik Politikası, Birleşik Krallık (UK), Avrupa Birliği (AB) ve Türkiye\'deki kullanıcılarımız dahil olmak üzere kişisel verilerinizi nasıl topladığımızı, kullandığımızı ve koruduğumuzu açıklar. AB Genel Veri Koruma Yönetmeliği (GDPR), UK GDPR ve ilgili veri koruma yasalarına uygun olarak hazırlanmıştır. Türkiye\'de bulunan kullanıcılar için kişisel veriler, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında da işlenmektedir.',
-			section1Title: '1. Veri Sorumlusu',
+			subtitle: 'Aden Academy',
+			business: 'İşletme: NEXTEDU LTD',
+			address: '124-128 City Road, London EC1V 2NX, England',
+			registration: 'Registered in England & Wales | SIC: 85590',
+			brand: 'Marka: Aden Academy',
+			lastUpdated: 'Son Güncelleme:',
+			section1Title: '1. Giriş',
 			section1Content:
-				'Kişisel verilerinizin sorumlusu (veri sorumlusu), hizmeti sunan ve bu web sitesini işleten tüzel kişidir. Veri sorumlusu Birleşik Krallık\'ta yerleşiktir. İletişim bilgileri ve hak talepleriniz için aşağıdaki "İletişim" bölümüne bakın.',
-			section2Title: '2. Topladığımız Veriler',
+				'Bu Gizlilik Politikası, Aden Academy üzerinden hizmet alan kullanıcıların kişisel verilerinin nasıl toplandığını, kullanıldığını, saklandığını ve korunduğunu açıklar.',
+			section1Note:
+				'Bu politika; Birleşik Krallık (UK), Avrupa Birliği (AB) ve Türkiye\'de bulunan kullanıcılar dahil olmak üzere UK GDPR, General Data Protection Regulation ve Kişisel Verilerin Korunması Kanunu (KVKK No. 6698) kapsamında hazırlanmıştır.',
+			section1Acceptance: 'Platformu kullanarak bu politikayı kabul etmiş sayılırsınız.',
+			section2Title: '2. Veri Sorumlusu',
 			section2Content:
-				'Hizmet sunumu, ödeme işlemleri, danışmanlık randevuları ve iletişim amacıyla aşağıdaki kategorilerde kişisel veri toplayabiliriz:',
-			dataTypes: [
-				{ title: 'Kimlik ve iletişim bilgileri:', desc: 'Ad, soyad, e-posta adresi, telefon numarası, ülke.' },
-				{ title: 'Hesap bilgileri:', desc: 'Kayıt ve giriş için kullandığınız e-posta ve kimlik doğrulama bilgileri (örn. Firebase).' },
-				{ title: 'Ödeme bilgileri:', desc: 'Ödeme işlemleri Stripe üzerinden yapılır; kart numarası bizde saklanmaz. Fatura/ödeme kayıtları (alıcı adı, e-posta, tutar, tarih) saklanabilir.' },
-				{ title: 'Randevu ve danışmanlık verileri:', desc: 'Danışmanlık randevu tarihleri, seçilen danışman, anket/form cevapları (randevuya bağlı).' },
-				{ title: 'Kullanım verileri:', desc: 'Oturum, çerez ve benzeri teknolojilerle toplanan veriler; Çerez Politikamızda ayrıntılı açıklanmıştır.' },
-			],
-			section3Title: '3. Hukuki Dayanak ve Amaçlar',
+				'Kişisel verilerinizin veri sorumlusu NEXTEDU LTD\'dir (Aden Academy markası altında faaliyet göstermektedir). İngiltere ve Galler\'de kayıtlıdır.',
+			section2Note: 'Veri koruma talepleriniz için aşağıdaki iletişim bilgilerini kullanabilirsiniz.',
+			section3Title: '3. Toplanan Veriler',
 			section3Content:
-				'Verilerinizi şu hukuki dayanaklarla işliyoruz:',
+				'Hizmet sunumu, ödeme işlemleri ve iletişim amacıyla aşağıdaki kategorilerde kişisel veriler toplanabilir:',
+			dataCategories: [
+				{
+					title: '3.1 Kimlik ve İletişim Bilgileri',
+					items: [
+						'Ad ve soyad',
+						'Kullanıcı adı (username)',
+						'E-posta adresi',
+						'Telefon numarası (varsa)',
+						'Ülke ve şehir bilgisi (IP tabanlı konum servisleri aracılığıyla)',
+						'Profil görseli (varsa)',
+					],
+				},
+				{
+					title: '3.2 Hesap Bilgileri',
+					items: [
+						'Giriş ve kimlik doğrulama bilgileri (Firebase)',
+						'Şifre (şifrelenmiş şekilde saklanır)',
+						'Platform içi kullanım ve aktivite bilgileri',
+						'Oturum ve cihaz tanımlayıcıları',
+						'Pazarlama e-posta onayı (varsa)',
+					],
+				},
+				{
+					title: '3.3 Ödeme Bilgileri',
+					items: [
+						'Ödemeler Stripe üzerinden işlenir; kart bilgileri tarafımızda saklanmaz',
+						'Fatura, işlem kayıtları ve ödeme onay bilgileri',
+						'Stripe Connect kapsamında organizasyon/satıcı hesap bilgileri (varsa)',
+						'Komisyon ve ödeme denetim kayıtları',
+					],
+				},
+				{
+					title: '3.4 Danışmanlık ve Randevu Verileri',
+					items: [
+						'Randevu tarihleri ve danışman tercihleri',
+						'Form ve anket yanıtları',
+						'Zoom toplantı bağlantı bilgileri (varsa)',
+						'Misafir ödeme ve iletişim bilgileri (varsa)',
+					],
+				},
+				{
+					title: '3.5 Eğitim, Quiz ve Geri Bildirim Verileri',
+					items: [
+						'Kurs ilerleme, ders tamamlama ve platform etkileşim bilgileri',
+						'Quiz cevapları ve teslim kayıtları',
+						'Eğitmen geri bildirimleri (quiz değerlendirmeleri)',
+						'Pratik ders cevapları ve isteğe bağlı anlık AI geri bildirimi (yalnızca pratik derslerde)',
+					],
+				},
+				{
+					title: '3.6 Mesajlaşma, Topluluk ve Bildirimler',
+					items: [
+						'Kullanıcılar arası mesajlaşma içerikleri (metin, görsel, ses)',
+						'Topluluk forumu gönderileri ve yorumları',
+						'Platform içi bildirimler',
+						'Kullanıcı engelleme kayıtları',
+					],
+				},
+				{
+					title: '3.7 Kullanıcı Tarafından Yüklenen İçerik',
+					items: [
+						'Profil görselleri',
+						'Quiz, pratik ders veya topluluk bağlamında yüklenen ses, video ve görseller',
+					],
+				},
+				{
+					title: '3.8 Form, Etkinlik ve Destek Verileri',
+					items: [
+						'İletişim, hakkımızda ve etkinlik kayıt formları',
+						'Geri bildirim formu yanıtları (IP adresi ve tarayıcı bilgisi dahil)',
+						'Hata raporları',
+						'Kaynak indirme ve misafir pazarlama onay kayıtları (varsa)',
+					],
+				},
+				{
+					title: '3.9 Teknik ve Kullanım Verileri',
+					items: [
+						'IP adresi',
+						'Tarayıcı ve cihaz bilgileri',
+						'Çerez ve localStorage verileri',
+						'Rate limit ve güvenlik logları',
+					],
+				},
+			],
+			section4Title: '4. Verilerin İşlenme Amaçları ve Hukuki Dayanak',
+			section4Content: 'Kişisel verileriniz aşağıdaki amaçlarla ve hukuki dayanaklarla işlenir:',
 			legalBasis: [
-				{ basis: 'Sözleşmenin ifası:', desc: 'Hesap oluşturma, kurs/kaynak satışı, danışmanlık randevuları ve ödeme işlemleri için gerekli veriler.' },
-				{ basis: 'Yasal yükümlülük:', desc: 'Vergi, muhasebe ve yasal saklama süreleri (örn. ödeme kayıtları).' },
-				{ basis: 'Meşru menfaat:', desc: 'Güvenlik, dolandırıcılık önleme ve hizmet iyileştirmesi (hakkınızda şikayette bulunma hakkınız saklıdır).' },
-				{ basis: 'Rıza:', desc: 'İsteğe bağlı çerezler veya pazarlama iletişimi gibi, açık rıza gerektiren işlemler.' },
+				{
+					title: '4.1 Sözleşmenin İfası',
+					items: [
+						'Hesap oluşturma ve yönetimi',
+						'Kurs, döküman ve ürün erişimi',
+						'Danışmanlık hizmetlerinin sağlanması',
+						'Ödeme işlemleri ve Stripe Connect ödemeleri',
+						'Quiz değerlendirmesi ve eğitmen geri bildirimi',
+						'Mesajlaşma ve topluluk hizmetleri',
+					],
+				},
+				{
+					title: '4.2 Yasal Yükümlülükler',
+					items: ['Vergi ve muhasebe işlemleri', 'Yasal kayıt saklama yükümlülükleri'],
+				},
+				{
+					title: '4.3 Meşru Menfaat',
+					items: [
+						'Platform güvenliği',
+						'Dolandırıcılık önleme',
+						'Hizmet kalitesini geliştirme',
+						'Pratik derslerde eğitim amaçlı AI geri bildirimi',
+					],
+				},
+				{
+					title: '4.4 Açık Rıza',
+					items: ['Pazarlama e-posta iletişimleri', 'Opsiyonel çerez kullanımı'],
+				},
 			],
-			section4Title: '4. Verilerin Saklama Süresi',
-			section4Content:
-				'Kişisel verilerinizi yalnızca gerekli süre boyunca saklarız. Hesap ve iletişim verileri hesap silinene veya erişim talep edilene kadar; ödeme ve fatura kayıtları yasal zorunluluklar nedeniyle daha uzun (örn. 6–7 yıl) saklanabilir. Danışmanlık ve anket verileri, hizmetin sunulması süresince ve ilgili yasal yükümlülükler doğrultusunda saklanır; bu süreler kategori bazında talep üzerine kullanıcılarla paylaşılır.',
-			section5Title: '5. Haklarınız',
-			section5Content:
-				'GDPR ve UK GDPR kapsamında aşağıdaki haklara sahipsiniz:',
-			rights: [
-				'Erişim: Verilerinize erişim talep etme.',
-				'Düzeltme: Yanlış veya eksik verilerin düzeltilmesini isteme.',
-				'Silme: Belirli koşullarda verilerinizin silinmesini talep etme ("unutulma hakkı").',
-				'Veri taşınabilirliği: Verilerinizi yapılandırılmış, yaygın kullanılan bir formatta alma.',
-				'İtiraz ve kısıtlama: Belirli işlemlere itiraz etme veya işlemeyi kısıtlama talep etme.',
-				'Rızayı geri çekme: Rızaya dayalı işlemlerde rızanızı geri çekme.',
+			section5Title: '5. Verilerin Paylaşımı',
+			section5Intro: 'Kişisel verileriniz satılmaz ve izinsiz üçüncü taraflarla paylaşılmaz.',
+			section5Note: 'Ancak aşağıdaki durumlarda paylaşılabilir:',
+			sharingCategories: [
+				{
+					title: '5.1 Hizmet Sağlayıcılar (Veri İşleyenler)',
+					items: [
+						'Stripe ve Stripe Connect (ödeme işlemleri ve organizasyon ödemeleri)',
+						'Firebase / Google Cloud (kimlik doğrulama, veritabanı, dosya depolama, bulut fonksiyonları)',
+						'Google reCAPTCHA (güvenlik ve spam önleme)',
+						'Zoom (canlı ders, danışmanlık ve görüşmeler)',
+						'YouTube, Vimeo ve Dailymotion (gömülü video içerikleri)',
+						'OpenAI (yalnızca pratik ders AI geri bildirimi ve yönetici içerik oluşturma araçları)',
+						'MongoDB (uygulama veritabanı)',
+						'Redis (oturum, önbellek ve rate limit)',
+						'Netlify (web sitesi barındırma)',
+						'ipapi.co ve ipwho.is (IP tabanlı konum tespiti)',
+						'Frankfurter API (döviz kuru dönüşümü)',
+						'TinyMCE (içerik düzenleme)',
+						'Google Fonts (tipografi)',
+						'SMTP tabanlı e-posta servis sağlayıcıları (Nodemailer)',
+					],
+					note: 'Bu sağlayıcılar yalnızca hizmet sunumu amacıyla veri işler.',
+				},
+				{
+					title: '5.2 Yasal Yükümlülükler',
+					items: ['Mahkeme kararları', 'Resmi kurum talepleri'],
+				},
 			],
-			section5Note:
-				'Bu hakları kullanmak için iletişim bölümündeki adres üzerinden bize yazabilirsiniz. Ayrıca Birleşik Krallık\'ta ICO (ico.org.uk), AB\'de ilgili veri koruma otoritesine şikayette bulunma hakkınız vardır.',
-			section5Extra:
-				'Türkiye\'de bulunan kullanıcılar için KVKK kapsamında yapılan başvurular, yasalarca öngörülen süre içinde (ör. 30 gün) yanıtlanır. Kişisel veriler, KVKK\'da sayılan ilkelere (hukuka ve dürüstlük kurallarına uygunluk, doğruluk, belirli açık meşru amaçla işleme, amaçla bağlantılı sınırlı ve ölçülü olma, gerekli süre kadar muhafaza) uygun işlenmektedir. Bizimle üçüncü kişilerin kişisel verilerini paylaşıyorsanız, bu kişileri aydınlatma ve kanunen gerekliyse açık rıza alma yükümlülüğü size aittir.',
-			section6Title: '6. Otomatik Karar Verme ve Profil Oluşturma',
+			section6Title: '6. Uluslararası Veri Aktarımı',
 			section6Content:
-				'Platformumuzda, kullanıcılar üzerinde hukuki veya benzeri önemli etkiler doğuran otomatik karar verme veya profil çıkarma işlemleri yapılmamaktadır.',
-			section7Title: '7. Güvenlik',
-			section7Content:
-				'Verilerinizi kayıp, yetkisiz erişim veya değişiklikten korumak için uygun teknik ve idari önlemler kullanıyoruz. Ödemeler Stripe gibi güvenli altyapılar üzerinden işlenir; kart detayları doğrudan bizde tutulmaz. Kişisel verileri etkileyen bir veri ihlali durumunda, yasal yükümlülükler çerçevesinde ilgili denetim otoriteleri ve etkilenen kullanıcılar bilgilendirilir.',
-			section8Title: '8. Veri Paylaşımı ve İşleyenler',
-			section8Content:
-				'Kişisel verilerinizi yalnızca hizmet sunumu, ödeme ve altyapı için gerekli olduğu ölçüde aşağıdaki gibi işleyenlerle (processor) paylaşıyoruz. Bu taraflar kendi gizlilik politikalarına tabidir:',
-			processors: [
-				{ name: 'Firebase (Google):', desc: 'Kimlik doğrulama ve veritabanı.', linkText: 'Firebase Gizlilik', url: 'https://firebase.google.com/support/privacy' },
-				{ name: 'Stripe:', desc: 'Ödeme işleme.', linkText: 'Stripe Gizlilik', url: 'https://stripe.com/privacy' },
-				{ name: 'Zoom:', desc: 'Danışmanlık görüşmeleri (video).', linkText: 'Zoom Gizlilik', url: 'https://explore.zoom.us/en/privacy/' },
-				{ name: 'Google (reCAPTCHA vb.):', desc: 'Güvenlik ve spam önleme.', linkText: 'Google Gizlilik', url: 'https://policies.google.com/privacy' },
+				'Verileriniz, Birleşik Krallık dışındaki ülkelere (örneğin ABD ve AB ülkeleri) aktarılabilir. Bu durumlarda uygun güvenlik önlemleri alınır ve standart sözleşme hükümleri (SCCs) gibi yasal mekanizmalar uygulanır.',
+			section7Title: '7. Veri Saklama Süresi',
+			section7Content: 'Kişisel veriler aşağıdaki süreler boyunca saklanır:',
+			retentionItems: [
+				'Hesap aktif olduğu sürece',
+				'Hizmetin sunulması için gerekli süre boyunca',
+				'Yasal yükümlülükler kapsamında (örneğin 6–7 yıl)',
+				'Mesajlaşma ve bildirim verileri, hizmet gereksinimlerine göre sınırlı sürelerle (ör. 14–30 gün)',
 			],
-			section9Title: '9. Uluslararası Aktarım',
+			section8Title: '8. Kullanıcı Hakları',
+			section8Content: 'Kullanıcılar aşağıdaki haklara sahiptir:',
+			rights: [
+				'Verilere erişim talep etme',
+				'Yanlış verileri düzeltme',
+				'Verilerin silinmesini talep etme',
+				'İşlemeyi kısıtlama',
+				'Veri taşınabilirliği',
+				'İşlemeye itiraz etme',
+				'Rızayı geri çekme',
+			],
+			section8ComplaintTitle: 'Şikayet hakkı:',
+			complaintRights: ['UK kullanıcıları: ICO', 'AB kullanıcıları: ilgili veri koruma otoritesi'],
+			section8KvkkNote: 'Türkiye\'deki kullanıcılar için başvurular KVKK kapsamında 30 gün içinde yanıtlanır.',
+			section9Title: '9. Otomatik Karar Verme',
 			section9Content:
-				'Verileriniz UK, AB ve Türkiye dışındaki ülkelere (ör. ABD) aktarılabilir. Bu durumda, yasal gerekliliklere uygun olarak standart sözleşme hükümleri veya benzeri garantiler kullanılır. Detaylar talep üzerine verilebilir.',
-			section10Title: '10. Politika Değişiklikleri',
-			section10Content:
-				'Bu Gizlilik Politikasını zaman zaman güncelleyebiliriz. Önemli değişiklikler bu sayfada ve "Son güncelleme" tarihi ile yansıtılacaktır. Değişiklikler yayımlandıktan sonra hizmeti kullanmaya devam etmeniz, güncel politikayı kabul ettiğiniz anlamına gelir.',
-			section11Title: '11. İletişim',
-			section11Content: 'Gizlilik ile ilgili sorularınız veya hak talepleriniz için lütfen',
-			contactLink: 'İletişim',
-			section11End: 'sayfamızdan bizimle iletişime geçin.',
+				'Platformda, kullanıcılar üzerinde önemli hukuki sonuç doğuran otomatik karar verme veya profil oluşturma yapılmamaktadır.',
+			section9Note:
+				'Pratik derslerde eğitim amaçlı AI geri bildirimi kullanılabilir; bu işlem hukuki sonuç doğurmaz ve quiz değerlendirmelerinde eğitmen geri bildirimi esas alınır.',
+			section10Title: '10. Veri Güvenliği',
+			section10Intro: 'Aden Academy:',
+			securityMeasures: [
+				'SSL şifreleme kullanır',
+				'Güvenli ödeme altyapıları ile çalışır',
+				'Yetkisiz erişimi önleyici teknik ve idari önlemler uygular',
+			],
+			section10Note: 'Ancak internet üzerinden veri iletimi tamamen güvenli olmayabilir.',
+			section11Title: '11. Çerezler (Cookies)',
+			section11Content: 'Çerezler ve benzeri teknolojiler aşağıdaki amaçlarla kullanılır:',
+			cookiePurposes: [
+				'Oturum yönetimi ve kimlik doğrulama',
+				'Güvenlik (reCAPTCHA) ve ödeme işlemleri',
+				'Kullanıcı tercihlerinin hatırlanması',
+				'Gömülü video platformları (YouTube, Vimeo, Dailymotion) tarafından ayarlanan çerezler',
+			],
+			section11Note:
+				'Platformda üçüncü taraf reklam veya pazarlama izleme pikselleri (Meta Pixel, Google Analytics vb.) kullanılmamaktadır. Pazarlama iletişimleri yalnızca açık e-posta onayınız ile yapılır.',
+			section11LinkPrefix: 'Detaylı bilgi için',
+			section11Link: 'Çerez Politikası',
+			section11LinkSuffix: 'incelenmelidir.',
+			section12Title: '12. Üçüncü Taraf Bağlantılar ve Gömülü İçerikler',
+			section12Content:
+				'Platform, üçüncü taraf web sitelerine yönlendirme ve YouTube, Vimeo, Dailymotion gibi gömülü video içerikleri içerebilir. Bu sitelerin veri koruma uygulamalarından Aden Academy sorumlu değildir.',
+			section13Title: '13. Çocukların Gizliliği',
+			section13Content:
+				'Hizmetler 18 yaş ve üzeri kullanıcılar içindir. Bilerek 18 yaş altı bireylerden veri toplanmaz.',
+			section14Title: '14. Politika Değişiklikleri',
+			section14Content: 'Bu politika zaman zaman güncellenebilir. Güncellemeler:',
+			policyChanges: ['Web sitesinde yayınlanır', '"Son Güncelleme" tarihi ile belirtilir'],
+			section14Note:
+				'Platformu kullanmaya devam etmeniz, güncellenmiş politikayı kabul ettiğiniz anlamına gelir.',
+			section15Title: '15. İletişim',
+			section15Content: 'Kişisel verilerinizle ilgili talepleriniz için:',
+			contactName: 'Aden Academy (NEXTEDU LTD)',
+			contactAddress: '124-128 City Road, London EC1V 2NX',
 		},
 		en: {
 			title: 'Privacy Policy',
-			lastUpdated: 'Last updated:',
-			intro:
-				'This Privacy Policy describes how we collect, use, and protect your personal data, including for users in the United Kingdom (UK), the European Union (EU), and Turkey. It is prepared in line with the EU General Data Protection Regulation (GDPR), UK GDPR, and applicable data protection laws. For users located in Turkey, personal data is also processed within the scope of Law No. 6698 on the Protection of Personal Data (KVKK).',
-			section1Title: '1. Data Controller',
+			subtitle: 'Aden Academy',
+			business: 'Business: NEXTEDU LTD',
+			address: '124-128 City Road, London EC1V 2NX, England',
+			registration: 'Registered in England & Wales | SIC: 85590',
+			brand: 'Brand: Aden Academy',
+			lastUpdated: 'Last Updated:',
+			section1Title: '1. Introduction',
 			section1Content:
-				'The controller of your personal data is the legal entity that provides the service and operates this website. The controller is established in the United Kingdom. For contact details and to exercise your rights, see the "Contact" section below.',
-			section2Title: '2. Data We Collect',
+				'This Privacy Policy explains how personal data of users receiving services through Aden Academy is collected, used, stored, and protected.',
+			section1Note:
+				'This policy has been prepared in accordance with UK GDPR, the General Data Protection Regulation, and the Personal Data Protection Law (KVKK No. 6698), including for users located in the United Kingdom (UK), the European Union (EU), and Turkey.',
+			section1Acceptance: 'By using the platform, you are deemed to have accepted this policy.',
+			section2Title: '2. Data Controller',
 			section2Content:
-				'We may collect personal data in the following categories for providing our services, processing payments, managing consultation appointments, and communication:',
-			dataTypes: [
-				{ title: 'Identity and contact details:', desc: 'First and last name, email address, phone number, country.' },
-				{ title: 'Account information:', desc: 'Email and authentication details used for registration and login (e.g. Firebase).' },
-				{ title: 'Payment information:', desc: 'Payments are processed via Stripe; we do not store card numbers. Transaction records (payee name, email, amount, date) may be retained.' },
-				{ title: 'Appointment and consultation data:', desc: 'Consultation dates, chosen consultant, and survey/form responses linked to the appointment.' },
-				{ title: 'Usage data:', desc: 'Data collected via session, cookies, and similar technologies, as described in our Cookie Policy.' },
-			],
-			section3Title: '3. Legal Basis and Purposes',
+				'The data controller of your personal data is NEXTEDU LTD (operating under the Aden Academy brand). It is registered in England and Wales.',
+			section2Note: 'You may use the contact details below for data protection requests.',
+			section3Title: '3. Data Collected',
 			section3Content:
-				'We process your data on the following legal bases:',
+				'Personal data in the following categories may be collected for the provision of services, payment processing, and communication:',
+			dataCategories: [
+				{
+					title: '3.1 Identity and Contact Information',
+					items: [
+						'First and last name',
+						'Username',
+						'Email address',
+						'Phone number (if provided)',
+						'Country and city information (via IP-based location services)',
+						'Profile image (if provided)',
+					],
+				},
+				{
+					title: '3.2 Account Information',
+					items: [
+						'Login and authentication details (Firebase)',
+						'Password (stored in encrypted form)',
+						'In-platform usage and activity information',
+						'Session and device identifiers',
+						'Marketing email consent (if provided)',
+					],
+				},
+				{
+					title: '3.3 Payment Information',
+					items: [
+						'Payments are processed via Stripe; card details are not stored by us',
+						'Invoice, transaction records, and payment confirmation details',
+						'Organisation/seller account information under Stripe Connect (if applicable)',
+						'Commission and payment audit records',
+					],
+				},
+				{
+					title: '3.4 Consultation and Appointment Data',
+					items: [
+						'Appointment dates and consultant preferences',
+						'Form and survey responses',
+						'Zoom meeting link details (if applicable)',
+						'Guest checkout and contact details (if applicable)',
+					],
+				},
+				{
+					title: '3.5 Education, Quiz, and Feedback Data',
+					items: [
+						'Course progress, lesson completion, and platform interaction information',
+						'Quiz answers and submission records',
+						'Instructor feedback on quiz assessments',
+						'Practice lesson answers and optional instant AI feedback (practice lessons only)',
+					],
+				},
+				{
+					title: '3.6 Messaging, Community, and Notifications',
+					items: [
+						'Direct messaging content between users (text, images, audio)',
+						'Community forum posts and comments',
+						'In-platform notifications',
+						'User block records',
+					],
+				},
+				{
+					title: '3.7 User-Uploaded Content',
+					items: [
+						'Profile images',
+						'Audio, video, and images uploaded in quiz, practice, or community contexts',
+					],
+				},
+				{
+					title: '3.8 Form, Event, and Support Data',
+					items: [
+						'Contact, about, and event registration forms',
+						'Feedback form responses (including IP address and browser information)',
+						'Bug reports',
+						'Resource download and guest marketing consent records (if applicable)',
+					],
+				},
+				{
+					title: '3.9 Technical and Usage Data',
+					items: [
+						'IP address',
+						'Browser and device information',
+						'Cookie and localStorage data',
+						'Rate limit and security logs',
+					],
+				},
+			],
+			section4Title: '4. Purposes and Legal Basis for Processing',
+			section4Content: 'Your personal data is processed for the following purposes and on the following legal bases:',
 			legalBasis: [
-				{ basis: 'Performance of contract:', desc: 'Data necessary for account creation, course/resource purchases, consultation bookings, and payments.' },
-				{ basis: 'Legal obligation:', desc: 'Tax, accounting, and legal retention requirements (e.g. payment records).' },
-				{ basis: 'Legitimate interest:', desc: 'Security, fraud prevention, and service improvement (you have the right to object).' },
-				{ basis: 'Consent:', desc: 'Where required, e.g. optional cookies or marketing communications.' },
+				{
+					title: '4.1 Performance of Contract',
+					items: [
+						'Account creation and management',
+						'Access to courses, documents, and products',
+						'Provision of consultation services',
+						'Payment processing and Stripe Connect payouts',
+						'Quiz assessment and instructor feedback',
+						'Messaging and community services',
+					],
+				},
+				{
+					title: '4.2 Legal Obligations',
+					items: ['Tax and accounting operations', 'Legal record retention obligations'],
+				},
+				{
+					title: '4.3 Legitimate Interest',
+					items: [
+						'Platform security',
+						'Fraud prevention',
+						'Improving service quality',
+						'Educational AI feedback in practice lessons',
+					],
+				},
+				{
+					title: '4.4 Explicit Consent',
+					items: ['Marketing email communications', 'Optional cookie usage'],
+				},
 			],
-			section4Title: '4. Retention',
-			section4Content:
-				'We keep your personal data only as long as necessary. Account and contact data are retained until you delete your account or request erasure; payment and invoice records may be kept longer for legal obligations (e.g. 6–7 years). Consultation and survey data are retained for the duration of the provision of the service and in line with applicable legal obligations; these periods are shared with users on request, by category.',
-			section5Title: '5. Your Rights',
-			section5Content:
-				'Under GDPR and UK GDPR you have the following rights:',
-			rights: [
-				'Access: Request access to your data.',
-				'Rectification: Request correction of inaccurate or incomplete data.',
-				'Erasure: Request deletion of your data in certain circumstances ("right to be forgotten").',
-				'Data portability: Receive your data in a structured, commonly used format.',
-				'Objection and restriction: Object to certain processing or request restriction of processing.',
-				'Withdraw consent: Withdraw consent where processing is based on consent.',
+			section5Title: '5. Data Sharing',
+			section5Intro: 'Your personal data is not sold and is not shared with third parties without permission.',
+			section5Note: 'However, it may be shared in the following circumstances:',
+			sharingCategories: [
+				{
+					title: '5.1 Service Providers (Data Processors)',
+					items: [
+						'Stripe and Stripe Connect (payments and organisation payouts)',
+						'Firebase / Google Cloud (authentication, database, file storage, cloud functions)',
+						'Google reCAPTCHA (security and spam prevention)',
+						'Zoom (live lessons, consultations, and meetings)',
+						'YouTube, Vimeo, and Dailymotion (embedded video content)',
+						'OpenAI (practice lesson AI feedback and admin content creation tools only)',
+						'MongoDB (application database)',
+						'Redis (session, cache, and rate limiting)',
+						'Netlify (website hosting)',
+						'ipapi.co and ipwho.is (IP-based location detection)',
+						'Frankfurter API (currency conversion)',
+						'TinyMCE (content editing)',
+						'Google Fonts (typography)',
+						'SMTP-based email service providers (Nodemailer)',
+					],
+					note: 'These providers process data solely for the purpose of delivering services.',
+				},
+				{
+					title: '5.2 Legal Obligations',
+					items: ['Court orders', 'Requests from official authorities'],
+				},
 			],
-			section5Note:
-				'To exercise these rights, please contact us using the details in the Contact section. You also have the right to lodge a complaint with the ICO in the UK (ico.org.uk) or the relevant data protection authority in the EU.',
-			section5Extra:
-				'Requests made under KVKK by users in Turkey will be answered within the period required by law (e.g. 30 days). Personal data is processed in accordance with the principles set out in KVKK (lawfulness and fairness, accuracy, purpose limitation, data minimisation, storage limitation). If you share with us personal data of third parties, you are responsible for informing them and, where required by law, obtaining their consent.',
-			section6Title: '6. Automated Decision-Making and Profiling',
+			section6Title: '6. International Data Transfers',
 			section6Content:
-				'We do not carry out automated decision-making or profiling that has legal or similarly significant effects on users on our platform.',
-			section7Title: '7. Security',
-			section7Content:
-				'We use appropriate technical and organisational measures to protect your data from loss, unauthorised access, or alteration. Payments are processed through secure providers such as Stripe; we do not store full card details. In the event of a data breach affecting personal data, the relevant supervisory authorities and affected users are informed in accordance with legal obligations.',
-			section8Title: '8. Data Sharing and Processors',
-			section8Content:
-				'We share your personal data only with processors necessary for delivering our service, payments, and infrastructure. These parties are subject to their own privacy policies:',
-			processors: [
-				{ name: 'Firebase (Google):', desc: 'Authentication and database.', linkText: 'Firebase Privacy', url: 'https://firebase.google.com/support/privacy' },
-				{ name: 'Stripe:', desc: 'Payment processing.', linkText: 'Stripe Privacy', url: 'https://stripe.com/privacy' },
-				{ name: 'Zoom:', desc: 'Consultation video calls.', linkText: 'Zoom Privacy', url: 'https://explore.zoom.us/en/privacy/' },
-				{ name: 'Google (reCAPTCHA etc.):', desc: 'Security and spam prevention.', linkText: 'Google Privacy', url: 'https://policies.google.com/privacy' },
+				'Your data may be transferred to countries outside the United Kingdom (e.g. the USA and EU countries). In such cases, appropriate security measures are taken and legal mechanisms such as Standard Contractual Clauses (SCCs) are applied.',
+			section7Title: '7. Data Retention Period',
+			section7Content: 'Personal data is retained for the following periods:',
+			retentionItems: [
+				'While the account remains active',
+				'For as long as necessary to provide the service',
+				'Within the scope of legal obligations (e.g. 6–7 years)',
+				'Messaging and notification data for limited periods as required by the service (e.g. 14–30 days)',
 			],
-			section9Title: '9. International Transfers',
+			section8Title: '8. User Rights',
+			section8Content: 'Users have the following rights:',
+			rights: [
+				'Request access to their data',
+				'Rectify inaccurate data',
+				'Request deletion of their data',
+				'Restrict processing',
+				'Data portability',
+				'Object to processing',
+				'Withdraw consent',
+			],
+			section8ComplaintTitle: 'Right to lodge a complaint:',
+			complaintRights: ['UK users: ICO', 'EU users: the relevant data protection authority'],
+			section8KvkkNote: 'Applications from users in Turkey are responded to within 30 days under KVKK.',
+			section9Title: '9. Automated Decision-Making',
 			section9Content:
-				'Your data may be transferred to countries outside the UK, EU, and Turkey (e.g. the USA). Where this happens, we use appropriate safeguards such as standard contractual clauses. Details can be provided on request.',
-			section10Title: '10. Changes to This Policy',
-			section10Content:
-				'We may update this Privacy Policy from time to time. Material changes will be reflected on this page and the "Last updated" date. Continued use of the service after changes constitutes acceptance of the updated policy.',
-			section11Title: '11. Contact',
-			section11Content: 'For any questions about privacy or to exercise your rights, please contact us via our',
-			contactLink: 'Contact',
-			section11End: 'page.',
+				'The platform does not carry out automated decision-making or profiling that produces significant legal effects on users.',
+			section9Note:
+				'Educational AI feedback may be used in practice lessons; this does not produce legal effects, and quiz assessments rely on instructor feedback.',
+			section10Title: '10. Data Security',
+			section10Intro: 'Aden Academy:',
+			securityMeasures: [
+				'Uses SSL encryption',
+				'Works with secure payment infrastructures',
+				'Applies technical and administrative measures to prevent unauthorised access',
+			],
+			section10Note: 'However, data transmission over the internet may not be completely secure.',
+			section11Title: '11. Cookies',
+			section11Content: 'Cookies and similar technologies are used for the following purposes:',
+			cookiePurposes: [
+				'Session management and authentication',
+				'Security (reCAPTCHA) and payment processing',
+				'Remembering user preferences',
+				'Cookies set by embedded video platforms (YouTube, Vimeo, Dailymotion)',
+			],
+			section11Note:
+				'The platform does not use third-party advertising or marketing tracking pixels (Meta Pixel, Google Analytics, etc.). Marketing communications are sent only with your explicit email consent.',
+			section11LinkPrefix: 'For detailed information, please refer to the',
+			section11Link: 'Cookie Policy',
+			section11LinkSuffix: '.',
+			section12Title: '12. Third-Party Links and Embedded Content',
+			section12Content:
+				'The platform may contain links to third-party websites and embedded video content from YouTube, Vimeo, and Dailymotion. Aden Academy is not responsible for the data protection practices of these sites.',
+			section13Title: '13. Children\'s Privacy',
+			section13Content:
+				'Services are intended for users aged 18 and over. Data is not knowingly collected from individuals under the age of 18.',
+			section14Title: '14. Policy Changes',
+			section14Content: 'This policy may be updated from time to time. Updates will:',
+			policyChanges: ['Be published on the website', 'Be indicated with a "Last Updated" date'],
+			section14Note:
+				'Your continued use of the platform constitutes acceptance of the updated policy.',
+			section15Title: '15. Contact',
+			section15Content: 'For requests regarding your personal data:',
+			contactName: 'Aden Academy (NEXTEDU LTD)',
+			contactAddress: '124-128 City Road, London EC1V 2NX',
 		},
 	};
 
@@ -185,6 +511,15 @@ const PrivacyPolicy = () => {
 		mt: '2rem',
 		fontFamily: fontFamilyLandingPage,
 	};
+	const subHeadingSx = {
+		fontSize: isMobileSize ? '0.8rem' : '0.95rem',
+		fontWeight: 600,
+		mb: '0.5rem',
+		mt: '1rem',
+		fontFamily: fontFamilyLandingPage,
+	};
+	const listSx = { pl: '1.5rem', mb: '1rem' };
+	const listItemSx = { ...bodySx, mb: '0.5rem' };
 
 	return (
 		<LandingPageLayout>
@@ -213,11 +548,27 @@ const PrivacyPolicy = () => {
 						sx={{
 							fontSize: isMobileSizeSmall ? '1.25rem' : isMobileSize ? '1.5rem' : '2rem',
 							fontWeight: 700,
-							mb: '1rem',
+							mb: '0.5rem',
 							textAlign: 'center',
 							fontFamily: fontFamilyLandingPage,
 						}}>
 						{currentContent.title}
+					</Typography>
+
+					<Typography variant='body2' sx={{ ...bodySx, textAlign: 'center', mb: '0.25rem' }}>
+						{currentContent.subtitle}
+					</Typography>
+					<Typography variant='body2' sx={{ ...bodySx, textAlign: 'center', mb: '0.25rem' }}>
+						{currentContent.business}
+					</Typography>
+					<Typography variant='body2' sx={{ ...bodySx, textAlign: 'center', mb: '0.25rem' }}>
+						{currentContent.address}
+					</Typography>
+					<Typography variant='body2' sx={{ ...bodySx, textAlign: 'center', mb: '0.25rem' }}>
+						{currentContent.registration}
+					</Typography>
+					<Typography variant='body2' sx={{ ...bodySx, textAlign: 'center', mb: '1rem' }}>
+						{currentContent.brand}
 					</Typography>
 
 					<Typography variant='body2' sx={{ ...bodySx, mb: '2rem' }}>
@@ -227,78 +578,134 @@ const PrivacyPolicy = () => {
 
 					<Divider sx={{ mb: '2rem' }} />
 
-					<Typography variant='body2' sx={bodySx}>{currentContent.intro}</Typography>
-
 					<Typography variant='h6' sx={headingSx}>{currentContent.section1Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section1Content}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section1Note}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section1Acceptance}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section2Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section2Content}</Typography>
-					<Box component='ul' sx={{ pl: '1.5rem', mb: '1rem' }}>
-						{currentContent.dataTypes.map((item, index) => (
-							<Box key={index} component='li' sx={{ ...bodySx, mb: '0.75rem' }}>
-								<strong>{item.title}</strong> {item.desc}
-							</Box>
-						))}
-					</Box>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section2Note}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section3Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section3Content}</Typography>
-					<Box component='ul' sx={{ pl: '1.5rem', mb: '1rem' }}>
-						{currentContent.legalBasis.map((item, index) => (
-							<Box key={index} component='li' sx={{ ...bodySx, mb: '0.75rem' }}>
-								<strong>{item.basis}</strong> {item.desc}
+					{currentContent.dataCategories.map((category, index) => (
+						<Box key={index}>
+							<Typography variant='body2' sx={subHeadingSx}>{category.title}</Typography>
+							<Box component='ul' sx={listSx}>
+								{category.items.map((item, itemIndex) => (
+									<Box key={itemIndex} component='li' sx={listItemSx}>{item}</Box>
+								))}
 							</Box>
-						))}
-					</Box>
+						</Box>
+					))}
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section4Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section4Content}</Typography>
+					{currentContent.legalBasis.map((basis, index) => (
+						<Box key={index}>
+							<Typography variant='body2' sx={subHeadingSx}>{basis.title}</Typography>
+							<Box component='ul' sx={listSx}>
+								{basis.items.map((item, itemIndex) => (
+									<Box key={itemIndex} component='li' sx={listItemSx}>{item}</Box>
+								))}
+							</Box>
+						</Box>
+					))}
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section5Title}</Typography>
-					<Typography variant='body2' sx={bodySx}>{currentContent.section5Content}</Typography>
-					<Box component='ul' sx={{ pl: '1.5rem', mb: '1rem' }}>
-						{currentContent.rights.map((right, index) => (
-							<Box key={index} component='li' sx={{ ...bodySx, mb: '0.5rem' }}>
-								{right}
+					<Typography variant='body2' sx={bodySx}>{currentContent.section5Intro}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section5Note}</Typography>
+					{currentContent.sharingCategories.map((category, index) => (
+						<Box key={index}>
+							<Typography variant='body2' sx={subHeadingSx}>{category.title}</Typography>
+							<Box component='ul' sx={listSx}>
+								{category.items.map((item, itemIndex) => (
+									<Box key={itemIndex} component='li' sx={listItemSx}>{item}</Box>
+								))}
 							</Box>
-						))}
-					</Box>
-					<Typography variant='body2' sx={{ ...bodySx, fontStyle: 'italic' }}>{currentContent.section5Note}</Typography>
-					<Typography variant='body2' sx={bodySx}>{currentContent.section5Extra}</Typography>
+							{category.note && <Typography variant='body2' sx={bodySx}>{category.note}</Typography>}
+						</Box>
+					))}
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section6Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section6Content}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section7Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section7Content}</Typography>
-
-					<Typography variant='h6' sx={headingSx}>{currentContent.section8Title}</Typography>
-					<Typography variant='body2' sx={bodySx}>{currentContent.section8Content}</Typography>
-					<Box component='ul' sx={{ pl: '1.5rem', mb: '1rem' }}>
-						{currentContent.processors.map((p, index) => (
-							<Box key={index} component='li' sx={{ ...bodySx, mb: '0.75rem' }}>
-								<strong>{p.name}</strong> {p.desc}{' '}
-								<a href={p.url} target='_blank' rel='noopener noreferrer' style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
-									{p.linkText}
-								</a>
-							</Box>
+					<Box component='ul' sx={listSx}>
+						{currentContent.retentionItems.map((item, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
 						))}
 					</Box>
 
+					<Typography variant='h6' sx={headingSx}>{currentContent.section8Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section8Content}</Typography>
+					<Box component='ul' sx={listSx}>
+						{currentContent.rights.map((right, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{right}</Box>
+						))}
+					</Box>
+					<Typography variant='body2' sx={{ ...subHeadingSx, mt: '1rem' }}>{currentContent.section8ComplaintTitle}</Typography>
+					<Box component='ul' sx={listSx}>
+						{currentContent.complaintRights.map((item, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
+						))}
+					</Box>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section8KvkkNote}</Typography>
+
 					<Typography variant='h6' sx={headingSx}>{currentContent.section9Title}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section9Content}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section9Note}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section10Title}</Typography>
-					<Typography variant='body2' sx={bodySx}>{currentContent.section10Content}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section10Intro}</Typography>
+					<Box component='ul' sx={listSx}>
+						{currentContent.securityMeasures.map((item, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
+						))}
+					</Box>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section10Note}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section11Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section11Content}</Typography>
+					<Box component='ul' sx={listSx}>
+						{currentContent.cookiePurposes.map((item, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
+						))}
+					</Box>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section11Note}</Typography>
 					<Typography variant='body2' sx={{ ...bodySx, mb: '2rem' }}>
-						{currentContent.section11Content}{' '}
-						<Link to='/contact-us' style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
-							{currentContent.contactLink}
+						{currentContent.section11LinkPrefix}{' '}
+						<Link to='/cookie-policy' style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
+							{currentContent.section11Link}
 						</Link>{' '}
-						{currentContent.section11End}
+						{currentContent.section11LinkSuffix}
+					</Typography>
+
+					<Typography variant='h6' sx={headingSx}>{currentContent.section12Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section12Content}</Typography>
+
+					<Typography variant='h6' sx={headingSx}>{currentContent.section13Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section13Content}</Typography>
+
+					<Typography variant='h6' sx={headingSx}>{currentContent.section14Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section14Content}</Typography>
+					<Box component='ul' sx={listSx}>
+						{currentContent.policyChanges.map((item, index) => (
+							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
+						))}
+					</Box>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section14Note}</Typography>
+
+					<Typography variant='h6' sx={headingSx}>{currentContent.section15Title}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section15Content}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.contactName}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.contactAddress}</Typography>
+					<Typography variant='body2' sx={{ ...bodySx, mb: '2rem' }}>
+						<a href={`mailto:${CONTACT_EMAIL}`} style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
+							{CONTACT_EMAIL}
+						</a>
 					</Typography>
 				</Paper>
 			</Container>

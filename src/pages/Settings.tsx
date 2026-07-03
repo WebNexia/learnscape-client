@@ -316,8 +316,17 @@ const Settings = () => {
 			// For other profile updates (not email)
 			if (isProfileUpdated) {
 				try {
+					// Profile photo is saved only via handleProfilePictureSave / Remove — never on general profile save
+					// (avoids stale/empty imageUrl triggering server cleanup that deletes Storage files).
+					if (enterImageUrl) {
+						const trimmedImageUrl = imageUrl.trim();
+						if (trimmedImageUrl && trimmedImageUrl !== (user?.imageUrl || '').trim()) {
+							await axios.patch(`${base_url}/users/${user?._id}`, { imageUrl: trimmedImageUrl });
+							setUser((prevData) => (prevData ? { ...prevData, imageUrl: trimmedImageUrl } : prevData));
+						}
+					}
+
 					await axios.patch(`${base_url}/users/${user?._id}`, {
-						imageUrl,
 						username,
 						firstName,
 						lastName,
@@ -331,7 +340,6 @@ const Settings = () => {
 							return {
 								...prevData,
 								username,
-								imageUrl,
 								firstName,
 								lastName,
 								phone,

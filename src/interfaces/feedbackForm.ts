@@ -1,3 +1,16 @@
+export type FeedbackFormPostSubmitRewardType = 'none' | 'link' | 'attachment';
+
+export interface FeedbackFormPostSubmitEmail {
+	enabled?: boolean;
+	subject?: string;
+	message?: string;
+	rewardType?: FeedbackFormPostSubmitRewardType;
+	downloadUrl?: string;
+	linkButtonLabel?: string;
+	attachmentFileName?: string;
+	attachmentUrl?: string;
+}
+
 export type FeedbackFormFieldType = 'text' | 'textarea' | 'rating' | 'multiple-choice' | 'checkbox' | 'date';
 
 export interface FeedbackFormField {
@@ -34,7 +47,7 @@ export interface FeedbackForm {
 	unpublishedAt?: string;
 
 	// Access Control
-	publicLink?: string; // Generated unique link: /feedback-form/{publicLink}
+	publicLink?: string; // Legacy slug; public URL uses /form/{_id}
 	allowAnonymous?: boolean; // Allow submissions without login
 
 	// Settings
@@ -42,6 +55,11 @@ export interface FeedbackForm {
 	submissionDeadline?: string; // Optional deadline
 	showResultsToSubmitters?: boolean;
 	useForConsultation?: boolean; // If true, form appears in Consultation form (optional) dropdown
+
+	// Post-submit email (admin only — not returned on public link API)
+	postSubmitEmail?: FeedbackFormPostSubmitEmail;
+	/** Public API only: whether a confirmation email is sent after submit */
+	sendConfirmationEmail?: boolean;
 
 	// Metadata
 	submissionCount?: number; // Cached count

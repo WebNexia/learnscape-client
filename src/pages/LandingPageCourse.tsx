@@ -9,6 +9,7 @@ import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import LandingPageCourseDetailSections from '../components/landingPage/LandingPageCourseDetailSections';
+import LandingPageCourseEnrollCta from '../components/landingPage/LandingPageCourseEnrollCta';
 import { SEO, StructuredData } from '../components/seo';
 import axios from 'axios';
 import { useQuery } from 'react-query';
@@ -304,6 +305,7 @@ const LandingPageCourse = () => {
 									<InstructorCard instructor={course.instructor} />
 								</Box>
 								<LandingPageCourseDetailSections sections={(course.landingPageSections || []).map(({ title, body }) => ({ title, body }))} />
+								<LandingPageCourseEnrollCta course={course} />
 							</>
 						)}
 

@@ -6,6 +6,13 @@ const isFirebaseStorageUrl = (url: string): boolean =>
 	url.trim().length > 0 &&
 	(url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com'));
 
+/** Paths that must never be deleted via chat/message cleanup (profile photos, etc.) */
+const PROTECTED_STORAGE_PREFIXES = ['ProfileImages/'];
+
+function isProtectedStoragePath(path: string): boolean {
+	return PROTECTED_STORAGE_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
 /** Extract storage path from a Firebase Storage download URL (e.g. .../o/path%2Fto%2Ffile?...) */
 function pathFromStorageUrl(url: string): string | null {
 	const match = url.trim().match(/\/o\/(.+?)(\?|$)/);
@@ -29,7 +36,7 @@ export async function deleteFirebaseStorageUrls(urls: string[]): Promise<void> {
 		toDelete.map(async (url) => {
 			try {
 				const path = pathFromStorageUrl(url);
-				if (!path) return;
+				if (!path || isProtectedStoragePath(path)) return;
 				const storageRef = ref(storage, path);
 				await deleteObject(storageRef);
 			} catch (err) {

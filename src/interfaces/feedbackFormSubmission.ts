@@ -26,6 +26,10 @@ export interface FeedbackFormSubmission {
 	ipAddress?: string; // For tracking (optional)
 	userAgent?: string; // For tracking (optional)
 
+	confirmationEmailStatus?: 'skipped' | 'sent' | 'failed';
+	confirmationEmailSentAt?: string;
+	confirmationEmailError?: string;
+
 	// Timestamps
 	createdAt?: string;
 	updatedAt?: string;

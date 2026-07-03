@@ -363,6 +363,7 @@ const CoursePageBanner = ({
 								textAlign: 'left',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								mb: '3.5rem',
+								whiteSpace: 'pre-wrap',
 							}}>
 							{course.description}
 						</Typography>

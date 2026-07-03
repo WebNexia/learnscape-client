@@ -158,7 +158,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 							</>
 						)}
 
-						{form.publicLink && (
+						{form.isPublished && form._id && (
 							<>
 								<Grid item xs={3}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -172,7 +172,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 											wordBreak: 'break-all',
 										}}>
-										{window.location.origin}/feedback-form/{form.publicLink}
+										{window.location.origin}/form/{form._id}
 									</Typography>
 								</Grid>
 							</>
