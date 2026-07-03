@@ -910,7 +910,16 @@ export const router = createBrowserRouter([
 			},
 			// Public Feedback Form Route (no authentication required)
 			{
-				path: 'feedback-form/:publicLink',
+				path: 'form/:formId',
+				element: (
+					<React.Suspense>
+						<PublicFeedbackFormPage />
+					</React.Suspense>
+				),
+			},
+			// Legacy public form URLs (publicLink slug)
+			{
+				path: 'feedback-form/:formId',
 				element: (
 					<React.Suspense>
 						<PublicFeedbackFormPage />

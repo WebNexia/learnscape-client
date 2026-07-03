@@ -125,8 +125,11 @@ export default function ConsultationBookingModal({
 	const priceObj = consultation ? getPriceForConsultation(consultation, location?.countryCode) : null;
 	const isFree = priceObj?.amount === '0';
 	const requireForm = Boolean(consultation?.requireFormSubmission && consultation?.feedbackFormId);
-	const feedbackForm = consultation?.feedbackFormId as unknown as { publicLink?: string } | undefined;
-	const publicLink = feedbackForm?.publicLink ?? (consultation as unknown as { feedbackForm?: { publicLink?: string } })?.feedbackForm?.publicLink;
+	const feedbackForm = consultation?.feedbackFormId as unknown as { _id?: string } | undefined;
+	const feedbackFormId =
+		typeof feedbackForm === 'string'
+			? feedbackForm
+			: feedbackForm?._id ?? (consultation as unknown as { feedbackForm?: { _id?: string } })?.feedbackForm?._id;
 
 	const stepCount = requireForm ? 5 : 4;
 	const stepLabels = requireForm ? STEP_LABELS : STEP_LABELS.filter((_, i) => i !== 4);
@@ -171,10 +174,10 @@ export default function ConsultationBookingModal({
 	useEffect(() => {
 		if (!open || !consultation) return;
 		const reqForm = Boolean(consultation.requireFormSubmission && consultation.feedbackFormId);
-		const fb = consultation.feedbackFormId as unknown as { publicLink?: string } | undefined;
-		const link = fb?.publicLink ?? (consultation as unknown as { feedbackForm?: { publicLink?: string } }).feedbackForm?.publicLink;
-		if (reqForm && link) {
-			feedbackFormsService.getFeedbackFormByPublicLink(link).then(setForm).catch(() => setForm(null));
+		const fb = consultation.feedbackFormId as unknown as { _id?: string } | string | undefined;
+		const id = typeof fb === 'string' ? fb : fb?._id ?? (consultation as unknown as { feedbackForm?: { _id?: string } }).feedbackForm?._id;
+		if (reqForm && id) {
+			feedbackFormsService.getPublicFeedbackForm(id).then(setForm).catch(() => setForm(null));
 		} else {
 			setForm(null);
 		}
@@ -243,7 +246,7 @@ export default function ConsultationBookingModal({
 	};
 
 	const handleFormSubmit = async () => {
-		if (!form || !publicLink) {
+		if (!form || !feedbackFormId) {
 			setFormError('Lütfen anketi doldurun.');
 			return;
 		}
@@ -256,15 +259,15 @@ export default function ConsultationBookingModal({
 		setFormSubmitting(true);
 		setFormError(null);
 		try {
-			const saved = await feedbackFormsService.submitFeedbackForm(publicLink, {
+			const { submission: saved } = await feedbackFormsService.submitFeedbackForm(feedbackFormId, {
 				responses,
 				userName: '',
 				userEmail: '',
 				consultationId: consultation?._id,
 			});
 			setFormSubmitted(true);
-			if (saved && typeof (saved as { _id?: string })._id === 'string') {
-				setFormSubmissionId((saved as { _id: string })._id);
+			if (saved && typeof saved._id === 'string') {
+				setFormSubmissionId(saved._id);
 			}
 		} catch (e: unknown) {
 			const apiMsg = (e as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message ?? (e as { message?: string })?.message;

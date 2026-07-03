@@ -200,9 +200,9 @@ const AdminCourseFeedbackForms = () => {
 		}
 	};
 
-	const handleCopyPublicLink = (publicLink: string) => {
+	const handleCopyPublicLink = (formId: string) => {
 		const baseUrl = window.location.origin;
-		const fullLink = `${baseUrl}/feedback-form/${publicLink}`;
+		const fullLink = `${baseUrl}/form/${formId}`;
 		navigator.clipboard.writeText(fullLink).then(
 			() => {
 				setSuccessMessage('Public link copied to clipboard');
@@ -453,9 +453,9 @@ const AdminCourseFeedbackForms = () => {
 												sx={{
 													textAlign: 'center',
 												}}>
-												{form.isPublished && form.publicLink && (
+												{form.isPublished && form._id && (
 													<Tooltip title='Copy Public Link' placement='top' arrow>
-														<IconButton size='small' onClick={() => handleCopyPublicLink(form.publicLink!)}>
+														<IconButton size='small' onClick={() => handleCopyPublicLink(form._id)}>
 															<ContentCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
 														</IconButton>
 													</Tooltip>

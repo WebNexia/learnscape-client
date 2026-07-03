@@ -22,8 +22,14 @@ export const feedbackFormsService = {
 		return response.data.data;
 	},
 
-	getFeedbackFormByPublicLink: async (publicLink: string): Promise<FeedbackForm> => {
-		const response = await axiosInstance.get(`${base_url}/feedback-forms/public/${publicLink}`);
+	getPublicFeedbackForm: async (formId: string): Promise<FeedbackForm> => {
+		const response = await axiosInstance.get(`${base_url}/feedback-forms/public/${formId}`);
+		return response.data.data;
+	},
+
+	/** @deprecated Use getPublicFeedbackForm */
+	getFeedbackFormByPublicLink: async (formId: string): Promise<FeedbackForm> => {
+		const response = await axiosInstance.get(`${base_url}/feedback-forms/public/${formId}`);
 		return response.data.data;
 	},
 
@@ -72,7 +78,7 @@ export const feedbackFormsService = {
 	},
 
 	submitFeedbackForm: async (
-		publicLink: string,
+		formId: string,
 		submissionData: {
 			responses: Array<{ fieldId: string; value: any }>;
 			userName?: string;
@@ -82,9 +88,12 @@ export const feedbackFormsService = {
 			consultationId?: string;
 			consultationAppointmentId?: string;
 		}
-	): Promise<FeedbackFormSubmission> => {
-		const response = await axiosInstance.post(`${base_url}/feedback-forms/public/${publicLink}/submit`, submissionData);
-		return response.data.data;
+	): Promise<{ submission: FeedbackFormSubmission; sendConfirmationEmail?: boolean }> => {
+		const response = await axiosInstance.post(`${base_url}/feedback-forms/public/${formId}/submit`, submissionData);
+		return {
+			submission: response.data.data,
+			sendConfirmationEmail: response.data.sendConfirmationEmail,
+		};
 	},
 
 	/** Link a consultation-booking form submission to an appointment after payment (set guest name/email). */
