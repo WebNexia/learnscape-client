@@ -31,6 +31,7 @@ export interface Consultation {
 	feedbackForm?: import('./feedbackForm').FeedbackForm; // Populated when present
 	requireFormSubmission?: boolean; // When true, booking flow requires form submission
 	meetingType?: 'video';
+	hasAvailableSlots?: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

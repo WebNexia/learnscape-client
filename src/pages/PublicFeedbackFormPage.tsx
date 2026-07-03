@@ -25,55 +25,59 @@ const isValidEmail = (email: string): boolean => {
 const FORM_CARD_MAX_WIDTH = 440;
 
 const publicFormCompactFieldStyles = {
+	'& .MuiTextField-root': {
+		marginBottom: '0.65rem',
+	},
 	'& .MuiOutlinedInput-root': {
-		'borderRadius': { xs: '12px', sm: '8px' },
-		'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-		'boxShadow': { xs: '0 2px 8px rgba(0, 0, 0, 0.08)', sm: '0 1px 4px rgba(0, 0, 0, 0.06)' },
+		borderRadius: '8px',
+		backgroundColor: 'rgba(255, 255, 255, 0.95)',
+		boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
 		'&:hover': {
 			backgroundColor: 'rgba(255, 255, 255, 1)',
-			boxShadow: { xs: '0 4px 12px rgba(102, 126, 234, 0.15)', sm: '0 2px 8px rgba(102, 126, 234, 0.12)' },
+			boxShadow: '0 2px 8px rgba(102, 126, 234, 0.12)',
 		},
 		'&.Mui-focused': {
 			backgroundColor: 'rgba(255, 255, 255, 1)',
-			boxShadow: { xs: '0 6px 20px rgba(102, 126, 234, 0.25)', sm: '0 2px 10px rgba(102, 126, 234, 0.18)' },
+			boxShadow: '0 2px 10px rgba(102, 126, 234, 0.18)',
 		},
 		'& fieldset': {
 			borderColor: 'rgba(102, 126, 234, 0.3)',
-			borderWidth: { xs: '2px', sm: '1px' },
+			borderWidth: '1px',
 		},
 		'&:hover fieldset': {
 			borderColor: 'rgba(102, 126, 234, 0.5)',
 		},
 		'&.Mui-focused fieldset': {
 			borderColor: 'rgba(102, 126, 234, 0.8)',
-			borderWidth: { xs: '2px', sm: '1px' },
+			borderWidth: '1px',
 		},
 	},
 	'& .MuiInputLabel-root': {
 		fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-		fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+		fontSize: '0.8125rem !important',
 	},
-	'& .MuiInputBase-input': {
+	'& .MuiInputBase-input, & .MuiInputBase-inputMultiline': {
 		fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-		fontSize: { xs: '0.95rem', sm: '0.875rem' },
-		padding: { xs: '14px 16px', sm: '10px 12px' },
+		fontSize: '0.875rem !important',
+		padding: '9px 12px !important',
+		lineHeight: '1.4 !important',
 	},
 	'& .MuiFormLabel-root': {
-		fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+		fontSize: '0.8125rem',
 	},
 };
 
 const publicFormFieldLabelSx = {
-	mb: { xs: '0.5rem', sm: '0.375rem' },
+	mb: '0.375rem',
 	display: 'block',
 	color: theme.textColor?.primary.main,
 	fontWeight: 600,
-	fontSize: { xs: '0.95rem', sm: '0.8125rem' },
+	fontSize: '0.8125rem',
 	fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 };
 
 const publicFormFieldSpacingSx = {
-	mb: { xs: '1.5rem', sm: '1rem' },
+	mb: '1rem',
 };
 
 const PublicFeedbackFormPage = () => {
@@ -438,7 +442,7 @@ const PublicFeedbackFormPage = () => {
 							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
 							variant='outlined'
 							type='text'
-							size={isSmallScreen ? 'medium' : 'small'}
+							size='small'
 							sx={publicFormFieldSpacingSx}
 						/>
 					</>
@@ -463,16 +467,16 @@ const PublicFeedbackFormPage = () => {
 								handleFieldChange(field.fieldId, limited);
 							}}
 							multiline
-							rows={isSmallScreen ? 4 : 3}
+							rows={3}
 							variant='outlined'
-							size={isSmallScreen ? 'medium' : 'small'}
+							size='small'
 							disableSanitization={true}
 							InputProps={{
 								inputProps: {
 									maxLength: MAX_TEXTAREA_LENGTH,
 								},
 							}}
-							sx={{ mb: { xs: '2rem', sm: '1.25rem' } }}
+							sx={{ mb: '1.25rem' }}
 						/>
 					</>
 				);
@@ -482,12 +486,12 @@ const PublicFeedbackFormPage = () => {
 					<Box
 						key={field.fieldId}
 						sx={{
-							'mb': { xs: '2rem', sm: '1.25rem' },
-							'p': { xs: 2, sm: 1.5 },
-							'borderRadius': { xs: '12px', sm: '8px' },
+							'mb': '1.25rem',
+							'p': 1.5,
+							'borderRadius': '8px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-							'border': { xs: '2px solid rgba(102, 126, 234, 0.3)', sm: '1px solid rgba(102, 126, 234, 0.3)' },
+							'border': '1px solid rgba(102, 126, 234, 0.3)',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
 								borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -506,7 +510,7 @@ const PublicFeedbackFormPage = () => {
 								handleFieldChange(field.fieldId, clampedValue);
 							}}
 							max={field.maxRating || 5}
-							size={isSmallScreen ? 'large' : 'medium'}
+							size='medium'
 							sx={{
 								'& .MuiRating-iconFilled': {
 									color: '#667eea',
@@ -1136,8 +1140,8 @@ const PublicFeedbackFormPage = () => {
 				'& .tertiary-color': {
 					color: '#64748b',
 				},
-				'padding': { xs: 2, sm: 3 },
-				'py': { xs: 4, sm: 3 },
+				'padding': 2,
+				'py': 3,
 			}}>
 			<Container
 				maxWidth={false}
@@ -1145,11 +1149,11 @@ const PublicFeedbackFormPage = () => {
 					position: 'relative',
 					zIndex: 1,
 					width: '100%',
-					maxWidth: { xs: '100%', sm: FORM_CARD_MAX_WIDTH },
-					px: { xs: 2, sm: 0 },
+					maxWidth: FORM_CARD_MAX_WIDTH,
+					px: { xs: 1.5, sm: 0 },
 				}}>
 				{/* Header with Logo */}
-				<Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 2 } }}>
+				<Box sx={{ textAlign: 'center', mb: 2 }}>
 					<Box
 						onClick={() => navigate('/')}
 						sx={{
@@ -1163,8 +1167,8 @@ const PublicFeedbackFormPage = () => {
 							src={logo}
 							alt='Logo'
 							style={{
-								height: isSmallScreen ? '80px' : '52px',
-								marginBottom: isSmallScreen ? '1rem' : '0.75rem',
+								height: '48px',
+								marginBottom: '0.625rem',
 								filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
 							}}
 						/>
@@ -1175,20 +1179,17 @@ const PublicFeedbackFormPage = () => {
 				<Paper
 					elevation={8}
 					sx={{
-						p: { xs: 3, sm: 2.5 },
+						p: 2.25,
 						width: '100%',
 						maxWidth: FORM_CARD_MAX_WIDTH,
 						mx: 'auto',
 						backgroundColor: 'rgba(255, 255, 255, 0.98)',
-						borderRadius: { xs: 3, sm: 2 },
-						border: { sm: '1px solid rgba(0, 82, 163, 0.08)' },
-						boxShadow: {
-							xs: '0 8px 32px rgba(0, 0, 0, 0.1)',
-							sm: '0 16px 48px rgba(0, 0, 0, 0.12)',
-						},
+						borderRadius: 2,
+						border: '1px solid rgba(0, 82, 163, 0.08)',
+						boxShadow: '0 12px 40px rgba(0, 0, 0, 0.1)',
 						position: 'relative',
 						zIndex: 1,
-						mb: { xs: '2rem', sm: '1rem' },
+						mb: '1rem',
 						...publicFormCompactFieldStyles,
 					}}>
 					{/* Form Title */}
@@ -1197,10 +1198,10 @@ const PublicFeedbackFormPage = () => {
 						sx={{
 							color: theme.textColor?.primary.main,
 							fontWeight: 700,
-							mb: 1,
+							mb: 0.75,
 							textAlign: 'center',
-							fontSize: { xs: '1.75rem', sm: '1.25rem' },
-							lineHeight: { sm: 1.35 },
+							fontSize: '1.2rem',
+							lineHeight: 1.35,
 						}}>
 						{form.title}
 					</Typography>
@@ -1211,27 +1212,27 @@ const PublicFeedbackFormPage = () => {
 							variant='body1'
 							sx={{
 								color: theme.textColor?.secondary.main,
-								mb: { xs: 4, sm: 2 },
+								mb: 1.5,
 								textAlign: 'center',
-								fontSize: { xs: '1rem', sm: '0.8125rem' },
-								lineHeight: { sm: 1.5 },
+								fontSize: '0.8125rem',
+								lineHeight: 1.5,
 							}}>
 							{form.description}
 						</Typography>
 					)}
 
-					<Divider sx={{ my: { xs: 3, sm: 2 } }} />
+					<Divider sx={{ my: 1.5 }} />
 
 					{/* User Info (if not anonymous) */}
 					{!form.allowAnonymous && (
-						<Box sx={{ mb: { xs: 4, sm: 2.5 } }}>
+						<Box sx={{ mb: 2 }}>
 							<Typography
 								variant='h6'
 								sx={{
 									color: theme.textColor?.primary.main,
-									mb: { xs: 2, sm: 1.25 },
+									mb: 1,
 									fontWeight: 600,
-									fontSize: { xs: '1.25rem', sm: '0.9375rem' },
+									fontSize: '0.875rem',
 								}}>
 								Bilgileriniz
 							</Typography>
@@ -1246,13 +1247,13 @@ const PublicFeedbackFormPage = () => {
 									setUserName(sanitized);
 								}}
 								variant='outlined'
-								size={isSmallScreen ? 'medium' : 'small'}
+								size='small'
 								InputProps={{
 									inputProps: {
 										maxLength: MAX_NAME_LENGTH,
 									},
 								}}
-								sx={{ mb: { xs: 2, sm: 1.5 } }}
+								sx={{ mb: 1.25 }}
 							/>
 							<CustomTextField
 								fullWidth
@@ -1265,7 +1266,7 @@ const PublicFeedbackFormPage = () => {
 									setUserEmail(sanitized);
 								}}
 								variant='outlined'
-								size={isSmallScreen ? 'medium' : 'small'}
+								size='small'
 								InputProps={{
 									inputProps: {
 										maxLength: MAX_EMAIL_LENGTH,
@@ -1277,7 +1278,7 @@ const PublicFeedbackFormPage = () => {
 
 					{/* Error Message */}
 					{submitError && (
-						<Alert severity='error' sx={{ mb: 3 }}>
+						<Alert severity='error' sx={{ mb: 2, py: 0.25, fontSize: '0.8125rem' }}>
 							{submitError}
 						</Alert>
 					)}
@@ -1293,9 +1294,9 @@ const PublicFeedbackFormPage = () => {
 							sx={{
 								display: 'flex',
 								justifyContent: 'center',
-								mt: { xs: 3, sm: 2 },
-								mb: { xs: 2, sm: 1.5 },
-								transform: { sm: 'scale(0.92)' },
+								mt: 2,
+								mb: 1.25,
+								transform: 'scale(0.88)',
 								transformOrigin: 'top center',
 							}}>
 							<ReCAPTCHA
@@ -1316,17 +1317,17 @@ const PublicFeedbackFormPage = () => {
 						</Box>
 
 						{/* Submit Button */}
-						<Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 4, sm: 2 } }}>
+						<Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
 							<Button
 								type='submit'
 								variant='contained'
-								size={isSmallScreen ? 'medium' : 'small'}
-								fullWidth={!isSmallScreen}
+								size='small'
+								fullWidth
 								disabled={submitting}
 								sx={{
-									'px': { xs: 3, sm: 2 },
-									'py': { xs: 1, sm: 0.75 },
-									'fontSize': { xs: '1rem', sm: '0.8125rem' },
+									'px': 2,
+									'py': 0.625,
+									'fontSize': '0.8125rem',
 									'fontWeight': 600,
 									'fontFamily': "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
 									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
@@ -1338,9 +1339,8 @@ const PublicFeedbackFormPage = () => {
 									},
 									'textTransform': 'uppercase',
 									'borderRadius': '0.5rem',
-									'maxWidth': { sm: '100%' },
 								}}>
-								{submitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Gönder'}
+								{submitting ? <CircularProgress size={18} sx={{ color: 'white' }} /> : 'Gönder'}
 							</Button>
 						</Box>
 					</form>
