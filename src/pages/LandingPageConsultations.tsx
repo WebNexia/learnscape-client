@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Card, CardContent, CardMedia, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, CardMedia, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import React, { useContext, useState, Suspense } from 'react';
@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { getConsultationPriceForCountry } from '../utils/getConsultationPriceForCountry';
 const DEFAULT_COVER_PLACEHOLDER = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop';
+const CONSULTATION_CARD_DESCRIPTION_PREVIEW = 200;
 
 function getDisplayPrice(price: ConsultationPrice | null | undefined): { label: string; currency?: string; amount?: string } {
 	if (!price) return { label: 'Ücretsiz' };
@@ -34,6 +35,7 @@ const LandingPageConsultations = () => {
 	const navigate = useNavigate();
 	const [bookingModalOpen, setBookingModalOpen] = useState(false);
 	const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+	const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
 
 	const openBookingModal = (c: Consultation) => {
 		setSelectedConsultation(c);
@@ -159,16 +161,18 @@ const LandingPageConsultations = () => {
 									}}>
 									{consultations.map((c: Consultation) => {
 										const displayPrice = getDisplayPrice(getConsultationPriceForCountry(c, geoLocation?.countryCode));
+										const hasAvailableSlots = c.hasAvailableSlots !== false;
 										return (
 											<Card
 												key={c._id}
 												sx={{
 													display: 'flex',
 													flexDirection: isMobileSize ? 'column' : 'row',
+													alignItems: 'stretch',
 													width: isMobileSize ? '90%' : '100%',
 													mx: isMobileSize ? 'auto' : 0,
 													maxWidth: { md: 480 },
-													minHeight: isMobileSize ? undefined : 280,
+													minHeight: isMobileSize ? undefined : 320,
 													borderRadius: '0.75rem',
 													overflow: 'hidden',
 													position: 'relative',
@@ -193,18 +197,29 @@ const LandingPageConsultations = () => {
 														'&::before': { transform: 'scaleX(1)' },
 													},
 												}}>
-												<CardMedia
-													component='img'
-													image={c.coverImageUrl || DEFAULT_COVER_PLACEHOLDER}
-													alt={c.title}
+												<Box
 													sx={{
 														width: isMobileSize ? '100%' : 220,
 														minWidth: isMobileSize ? undefined : 220,
-														height: isMobileSize ? 200 : 280,
-														objectFit: 'cover',
 														flexShrink: 0,
-													}}
-												/>
+														alignSelf: 'stretch',
+														position: 'relative',
+														minHeight: isMobileSize ? 200 : undefined,
+													}}>
+													<CardMedia
+														component='img'
+														image={c.coverImageUrl || DEFAULT_COVER_PLACEHOLDER}
+														alt={c.title}
+														sx={{
+															position: isMobileSize ? 'relative' : 'absolute',
+															inset: isMobileSize ? undefined : 0,
+															width: '100%',
+															height: isMobileSize ? 200 : '100%',
+															objectFit: 'cover',
+															display: 'block',
+														}}
+													/>
+												</Box>
 												<CardContent
 													sx={{
 														flex: 1,
@@ -233,22 +248,51 @@ const LandingPageConsultations = () => {
 															}}>
 															{c.title}
 														</Typography>
-														{c.description && (
-															<Typography
-																sx={{
-																	fontFamily: 'Varela Round',
-																	color: '#64748b',
-																	fontSize: { xs: '0.75rem', sm: '0.8rem' },
-																	lineHeight: 1.45,
-																	display: '-webkit-box',
-																	WebkitLineClamp: 7,
-																	WebkitBoxOrient: 'vertical',
-																	overflow: 'hidden',
-																	wordBreak: 'break-word',
-																}}>
-																{decodeHtmlEntities(c.description)}
-															</Typography>
-														)}
+														{c.description && (() => {
+															const fullDescription = decodeHtmlEntities(c.description);
+															const isLong = fullDescription.length > CONSULTATION_CARD_DESCRIPTION_PREVIEW;
+															const preview = isLong
+																? `${fullDescription.slice(0, CONSULTATION_CARD_DESCRIPTION_PREVIEW).trim()}…`
+																: fullDescription;
+															return (
+																<Typography
+																	component='div'
+																	sx={{
+																		fontFamily: 'Varela Round',
+																		color: '#64748b',
+																		fontSize: { xs: '0.75rem', sm: '0.8rem' },
+																		lineHeight: 1.55,
+																		wordBreak: 'break-word',
+																	}}>
+																	{preview}
+																	{isLong && (
+																		<Box
+																			component='span'
+																			role='button'
+																			tabIndex={0}
+																			onClick={() =>
+																				setDescriptionModal({ title: c.title, description: fullDescription })
+																			}
+																			onKeyDown={(e) => {
+																				if (e.key === 'Enter' || e.key === ' ') {
+																					e.preventDefault();
+																					setDescriptionModal({ title: c.title, description: fullDescription });
+																				}
+																			}}
+																			sx={{
+																				color: '#0052a3',
+																				cursor: 'pointer',
+																				fontWeight: 600,
+																				ml: 0.5,
+																				whiteSpace: 'nowrap',
+																				'&:hover': { textDecoration: 'underline' },
+																			}}>
+																			fazlası için tıkla
+																		</Box>
+																	)}
+																</Typography>
+															);
+														})()}
 													</Box>
 													<Box
 														sx={{
@@ -258,56 +302,73 @@ const LandingPageConsultations = () => {
 															gap: 1,
 															mt: 1.5,
 														}}>
-														{displayPrice.label !== 'Ücretsiz' && (
+														{hasAvailableSlots ? (
+															<>
+																{displayPrice.label !== 'Ücretsiz' && (
+																	<Typography
+																		sx={{
+																			fontFamily: 'Varela Round',
+																			fontWeight: 700,
+																			color: '#0052a3',
+																			fontSize: '0.9rem',
+																			px: 1,
+																			py: 0.25,
+																			borderRadius: '0.5rem',
+																			bgcolor: 'rgba(0, 82, 163, 0.1)',
+																		}}>
+																		{displayPrice.label}
+																	</Typography>
+																)}
+																{displayPrice.label === 'Ücretsiz' && (
+																	<Typography
+																		sx={{
+																			fontFamily: 'Varela Round',
+																			fontWeight: 600,
+																			color: '#059669',
+																			fontSize: '0.9rem',
+																		}}>
+																		Ücretsiz
+																	</Typography>
+																)}
+																<Button
+																	variant='contained'
+																	size='small'
+																	onClick={() => openBookingModal(c)}
+																	sx={{
+																		ml: 'auto',
+																		fontFamily: 'Varela Round',
+																		fontWeight: 600,
+																		textTransform: 'capitalize',
+																		fontSize: '0.8rem',
+																		py: 0.5,
+																		px: 1.5,
+																		borderRadius: '0.75rem',
+																		background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+																		boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
+																		'&:hover': {
+																			background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+																			boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+																			transform: 'translateY(-2px)',
+																		},
+																		transition: 'all 0.25s ease',
+																	}}>
+																	Randevu Al
+																</Button>
+															</>
+														) : (
 															<Typography
 																sx={{
 																	fontFamily: 'Varela Round',
-																	fontWeight: 700,
-																	color: '#0052a3',
-																	fontSize: '0.9rem',
-																	px: 1,
-																	py: 0.25,
-																	borderRadius: '0.5rem',
-																	bgcolor: 'rgba(0, 82, 163, 0.1)',
+																	fontWeight: 500,
+																	color: '#64748b',
+																	fontSize: '0.85rem',
+																	fontStyle: 'italic',
+																	width: '100%',
+																	textAlign: { xs: 'center', md: 'left' },
 																}}>
-																{displayPrice.label}
+																Yeni oturumlar yakında başlayacak
 															</Typography>
 														)}
-														{displayPrice.label === 'Ücretsiz' && (
-															<Typography
-																sx={{
-																	fontFamily: 'Varela Round',
-																	fontWeight: 600,
-																	color: '#059669',
-																	fontSize: '0.9rem',
-																}}>
-																Ücretsiz
-															</Typography>
-														)}
-														<Button
-															variant='contained'
-															size='small'
-															onClick={() => openBookingModal(c)}
-															sx={{
-																ml: 'auto',
-																fontFamily: 'Varela Round',
-																fontWeight: 600,
-																textTransform: 'capitalize',
-																fontSize: '0.8rem',
-																py: 0.5,
-																px: 1.5,
-																borderRadius: '0.75rem',
-																background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
-																boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
-																'&:hover': {
-																	background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
-																	boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
-																	transform: 'translateY(-2px)',
-																},
-																transition: 'all 0.25s ease',
-															}}>
-															Randevu Al
-														</Button>
 													</Box>
 												</CardContent>
 											</Card>
@@ -375,6 +436,42 @@ const LandingPageConsultations = () => {
 					/>
 				</Suspense>
 			)}
+
+			<Dialog
+				open={Boolean(descriptionModal)}
+				onClose={() => setDescriptionModal(null)}
+				maxWidth='sm'
+				fullWidth
+				PaperProps={{ sx: { borderRadius: '0.75rem', mx: 2 } }}>
+				<DialogTitle sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0f172a', pb: 1 }}>
+					{descriptionModal?.title}
+				</DialogTitle>
+				<DialogContent>
+					<Typography
+						sx={{
+							fontFamily: 'Varela Round',
+							color: '#64748b',
+							fontSize: '0.875rem',
+							lineHeight: 1.6,
+							whiteSpace: 'pre-wrap',
+							wordBreak: 'break-word',
+						}}>
+						{descriptionModal?.description}
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 2 }}>
+					<Button
+						onClick={() => setDescriptionModal(null)}
+						sx={{
+							fontFamily: 'Varela Round',
+							fontWeight: 600,
+							textTransform: 'capitalize',
+							color: '#0052a3',
+						}}>
+						Kapat
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</>
 	);
 };

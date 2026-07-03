@@ -504,12 +504,12 @@ const AdminConsultationEditPage = () => {
 											required
 											InputProps={{
 												inputProps: {
-													maxLength: 150,
+													maxLength: 1000,
 												},
 											}}
 										/>
 										<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', textAlign: 'right' }}>
-											{(singleConsultationBeforeSave?.description || '').length}/150 Characters
+											{(singleConsultationBeforeSave?.description || '').length}/1000 Characters
 										</Typography>
 									</Box>
 

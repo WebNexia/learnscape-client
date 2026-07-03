@@ -98,12 +98,12 @@ const CreateConsultationDialog = ({
 						}}
 						InputProps={{
 							inputProps: {
-								maxLength: 150,
+								maxLength: 1000,
 							},
 						}}
 					/>
 					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-						{(singleConsultation?.description || '').length}/150 Characters
+						{(singleConsultation?.description || '').length}/1000 Characters
 					</Typography>
 				</Box>
 
