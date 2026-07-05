@@ -71,9 +71,14 @@ const CoursePage = () => {
 
 	const userCourseData: UserCoursesIdsWithCourseIds[] = userCoursesData || [];
 
-	const currentUserCourse = userCourseData.find((data) => data.courseId === courseId);
+	const currentUserCourse = userCourseData.find((data) => data.courseId === courseId && data.isActive !== false);
 	const isCourseCompleted = currentUserCourse?.isCourseCompleted ?? false;
 	const currentUserCourseId = currentUserCourse?.userCourseId;
+
+	const isEnrollmentRemoved = useMemo(() => {
+		const enrollment = userCourseData.find((data) => data.courseId === courseId);
+		return enrollment != null && enrollment.isActive === false;
+	}, [userCourseData, courseId]);
 
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
 	const [videoThumbnailLoadErrors, setVideoThumbnailLoadErrors] = useState<Record<string, boolean>>({});
@@ -91,7 +96,9 @@ const CoursePage = () => {
 	const hasCourseMaterials = courseMaterials.length > 0 || (activeCourse?.documentIds?.length ?? 0) > 0;
 
 	useEffect(() => {
-		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
+		setIsEnrolledStatus(
+			userCourseData?.some((data) => data.courseId === courseId && data.isActive !== false) || false
+		);
 	}, [courseId, userCourseData]);
 
 	return (
@@ -102,6 +109,7 @@ const CoursePage = () => {
 					<CoursePageBanner
 						course={activeCourse}
 						isEnrolledStatus={isEnrolledStatus}
+						isEnrollmentRemoved={isEnrollmentRemoved}
 						setIsEnrolledStatus={setIsEnrolledStatus}
 						documentsRef={documentsRef}
 						fromHomePage={false}

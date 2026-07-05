@@ -16,14 +16,17 @@ import {
 	CircularProgress,
 	Tooltip,
 	DialogActions,
+	Chip,
+	Checkbox,
+	TableContainer,
 } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useState, useMemo } from 'react';
+import { useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import { Edit, Visibility } from '@mui/icons-material';
+import { Edit, Visibility, PersonOff, PersonAdd, Delete } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { dateFormatter } from '../utils/dateFormatter';
@@ -38,6 +41,7 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { useAuth } from '../hooks/useAuth';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 
 interface RosterUser {
 	_id?: string;
@@ -49,26 +53,58 @@ interface RosterUser {
 	imageUrl?: string;
 	userCourseId?: string;
 	currentGroupName?: string | null;
+	isActive?: boolean;
+	enrollmentCreatedAt?: string;
+	removedAt?: string | null;
+	refundEligible?: boolean;
+	refundProcessed?: boolean;
 }
 
 // Responsive column configuration
-const getColumns = (isMobileSize: boolean) => {
-	return isMobileSize
-		? [
-				{ key: 'avatar', label: '' },
-				{ key: 'name', label: 'Name' },
-				{ key: 'email', label: 'Email' },
-				{ key: 'group', label: 'Group' },
-				{ key: 'actions', label: '' },
-			]
-		: [
-				{ key: 'avatar', label: '' },
-				{ key: 'name', label: 'Name' },
-				{ key: 'username', label: 'Username' },
-				{ key: 'email', label: 'Email' },
-				{ key: 'group', label: 'Group' },
-				{ key: 'actions', label: '' },
-			];
+const getRosterColumnWidths = (isMobileSize: boolean, showAdminColumns: boolean): string[] => {
+	if (isMobileSize) {
+		if (showAdminColumns) {
+			return ['6%', '20%', '30%', '16%', '10%', '10%'];
+		}
+		return ['8%', '24%', '36%', '18%', '14%'];
+	}
+	if (showAdminColumns) {
+		return ['4%', '14%', '10%', '22%', '12%', '8%', '8%', '10%'];
+	}
+	return ['5%', '17%', '12%', '26%', '18%', '12%'];
+};
+
+const getColumns = (isMobileSize: boolean, showAdminColumns: boolean) => {
+	const widths = getRosterColumnWidths(isMobileSize, showAdminColumns);
+	const withWidth = (columns: { key: string; label: string }[]) =>
+		columns.map((col, index) => ({ ...col, width: widths[index] }));
+
+	if (isMobileSize) {
+		const columns = [
+			{ key: 'avatar', label: '' },
+			{ key: 'name', label: 'Name' },
+			{ key: 'email', label: 'Email' },
+			{ key: 'group', label: 'Group' },
+		];
+		if (showAdminColumns) {
+			columns.push({ key: 'status', label: 'Status' });
+		}
+		columns.push({ key: 'actions', label: '' });
+		return withWidth(columns);
+	}
+
+	const columns = [
+		{ key: 'avatar', label: '' },
+		{ key: 'name', label: 'Name' },
+		{ key: 'username', label: 'User' },
+		{ key: 'email', label: 'Email' },
+		{ key: 'group', label: 'Group' },
+	];
+	if (showAdminColumns) {
+		columns.push({ key: 'status', label: 'Status' }, { key: 'refund', label: 'Refund' });
+	}
+	columns.push({ key: 'actions', label: '' });
+	return withWidth(columns);
 };
 
 const CourseRoster = () => {
@@ -111,6 +147,36 @@ const CourseRoster = () => {
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 	const [searchedValue, setSearchedValue] = useState<string>('');
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [removeTarget, setRemoveTarget] = useState<RosterUser | null>(null);
+	const [isRemovingEnrollment, setIsRemovingEnrollment] = useState<boolean>(false);
+	const [hardDeleteTarget, setHardDeleteTarget] = useState<RosterUser | null>(null);
+	const [isHardDeleting, setIsHardDeleting] = useState<boolean>(false);
+
+	const showAdminColumns = hasAdminAccess && !isInstructor;
+	const rosterColumns = useMemo(() => getColumns(isMobileSize, showAdminColumns), [isMobileSize, showAdminColumns]);
+	const rosterColumnWidths = useMemo(() => getRosterColumnWidths(isMobileSize, showAdminColumns), [isMobileSize, showAdminColumns]);
+
+	const buildRosterParams = useCallback(() => {
+		const params = new URLSearchParams();
+		params.append('page', currentPage.toString());
+		params.append('limit', pageSize.toString());
+		if (filterValue && filterValue.trim()) {
+			params.append('groupName', filterValue === 'unassigned' ? '' : filterValue);
+		}
+		if (searchButtonClicked && searchedValue.trim()) {
+			params.append('search', searchedValue.trim());
+		}
+		return params;
+	}, [currentPage, pageSize, filterValue, searchButtonClicked, searchedValue]);
+
+	const refreshRoster = useCallback(async () => {
+		if (!courseId) return;
+		const params = buildRosterParams();
+		const response = await axios.get(`${base_url}/userCourses/course/${courseId}?${params.toString()}`);
+		setRoster(response.data.users || []);
+		setTotalItems(response.data.totalItems || 0);
+		setTotalPages(response.data.totalPages || 1);
+	}, [base_url, buildRosterParams, courseId]);
 
 	// Get course from context or fetch if not available
 	useEffect(() => {
@@ -143,20 +209,7 @@ const CourseRoster = () => {
 			if (!courseId) return;
 			setLoading(true);
 			try {
-				const params = new URLSearchParams();
-				params.append('page', currentPage.toString());
-				params.append('limit', pageSize.toString());
-				if (filterValue && filterValue.trim()) {
-					// Send groupName directly (backend will handle conversion)
-					params.append('groupName', filterValue === 'unassigned' ? '' : filterValue);
-				}
-				if (searchButtonClicked && searchedValue.trim()) {
-					params.append('search', searchedValue.trim());
-				}
-				const response = await axios.get(`${base_url}/userCourses/course/${courseId}?${params.toString()}`);
-				setRoster(response.data.users || []);
-				setTotalItems(response.data.totalItems || 0);
-				setTotalPages(response.data.totalPages || 1);
+				await refreshRoster();
 			} catch (err: any) {
 				setError(err.response?.data?.message || 'Failed to load roster');
 			} finally {
@@ -164,12 +217,12 @@ const CourseRoster = () => {
 			}
 		};
 		fetchRoster();
-	}, [courseId, filterValue, base_url, searchedValue, searchButtonClicked, currentPage, pageSize]);
+	}, [courseId, refreshRoster]);
 
 	// Sort roster on frontend
 	const sortedRoster = useMemo(() => {
 		if (!roster || roster.length === 0) return [];
-		
+
 		const sorted = [...roster].sort((a, b) => {
 			let aValue = '';
 			let bValue = '';
@@ -283,23 +336,106 @@ const CourseRoster = () => {
 				groupName: newGroupName || null,
 			});
 
-			// Refresh roster - preserve search and filter (sorting done on FE)
-			const params = new URLSearchParams();
-			params.append('page', currentPage.toString());
-			params.append('limit', pageSize.toString());
-			if (filterValue && filterValue.trim()) {
-				params.append('groupName', filterValue === 'unassigned' ? '' : filterValue);
-			}
-			if (searchButtonClicked && searchedValue.trim()) {
-				params.append('search', searchedValue.trim());
-			}
-			const response = await axios.get(`${base_url}/userCourses/course/${courseId}?${params.toString()}`);
-			setRoster(response.data.users || []);
-			setTotalItems(response.data.totalItems || 0);
-			setTotalPages(response.data.totalPages || 1);
-			setSelectedUserIds(new Set()); // Clear selection after update
+			await refreshRoster();
+			setSelectedUserIds(new Set());
 		} catch (error) {
 			console.error('Error updating student group:', error);
+		} finally {
+			setUpdatingUserCourseIds((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(userCourseId);
+				return newSet;
+			});
+		}
+	};
+
+	const handleRestoreEnrollment = async (userCourseId: string) => {
+		setUpdatingUserCourseIds((prev) => new Set(prev).add(userCourseId));
+
+		try {
+			await axios.patch(`${base_url}/userCourses/${userCourseId}`, {
+				isActive: true,
+			});
+			await refreshRoster();
+		} catch (err) {
+			console.error('Error restoring enrollment:', err);
+		} finally {
+			setUpdatingUserCourseIds((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(userCourseId);
+				return newSet;
+			});
+		}
+	};
+
+	const handleRemoveEnrollment = async () => {
+		if (!removeTarget?.userCourseId) return;
+
+		setIsRemovingEnrollment(true);
+		setUpdatingUserCourseIds((prev) => new Set(prev).add(removeTarget.userCourseId!));
+
+		try {
+			await axios.patch(`${base_url}/userCourses/${removeTarget.userCourseId}`, {
+				isActive: false,
+			});
+			setRemoveTarget(null);
+			await refreshRoster();
+		} catch (err) {
+			console.error('Error removing enrollment:', err);
+		} finally {
+			setIsRemovingEnrollment(false);
+			setUpdatingUserCourseIds((prev) => {
+				const newSet = new Set(prev);
+				if (removeTarget?.userCourseId) {
+					newSet.delete(removeTarget.userCourseId);
+				}
+				return newSet;
+			});
+		}
+	};
+
+	const handleHardDeleteEnrollment = async () => {
+		if (!hardDeleteTarget?._id || !courseId) return;
+
+		const userCourseId = hardDeleteTarget.userCourseId;
+		setIsHardDeleting(true);
+		if (userCourseId) {
+			setUpdatingUserCourseIds((prev) => new Set(prev).add(userCourseId));
+		}
+
+		try {
+			await axios.delete(`${base_url}/userCourses/remove-by-user-course`, {
+				data: { userId: hardDeleteTarget._id, courseId },
+			});
+			setHardDeleteTarget(null);
+			await refreshRoster();
+		} catch (err) {
+			console.error('Error permanently deleting enrollment:', err);
+		} finally {
+			setIsHardDeleting(false);
+			if (userCourseId) {
+				setUpdatingUserCourseIds((prev) => {
+					const newSet = new Set(prev);
+					newSet.delete(userCourseId);
+					return newSet;
+				});
+			}
+		}
+	};
+
+	const getRosterStudentName = (user: RosterUser | null) =>
+		`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username || 'this student';
+
+	const handleRefundProcessedChange = async (userCourseId: string, checked: boolean) => {
+		setUpdatingUserCourseIds((prev) => new Set(prev).add(userCourseId));
+
+		try {
+			await axios.patch(`${base_url}/userCourses/${userCourseId}`, {
+				refundProcessed: checked,
+			});
+			await refreshRoster();
+		} catch (err) {
+			console.error('Error updating refund status:', err);
 		} finally {
 			setUpdatingUserCourseIds((prev) => {
 				const newSet = new Set(prev);
@@ -382,7 +518,7 @@ const CourseRoster = () => {
 			}
 			const response = await axios.get(`${base_url}/userCourses/course/${courseId}?${params.toString()}`);
 			let dataToExport = response.data.users || [];
-			
+
 			// Apply sorting to exported data (same as display)
 			dataToExport = dataToExport.sort((a: RosterUser, b: RosterUser) => {
 				let aValue = '';
@@ -423,6 +559,12 @@ const CourseRoster = () => {
 					'Username': user.username || '',
 					'Email': user.email || '',
 					'Group': groupName,
+					...(showAdminColumns
+						? {
+							'Status': user.isActive === false ? 'Removed' : 'Active',
+							'Refund Processed': user.refundEligible ? (user.refundProcessed ? 'Yes' : 'No') : 'N/A',
+						}
+						: {}),
 				};
 			});
 
@@ -451,7 +593,7 @@ const CourseRoster = () => {
 	return (
 		<AdminPageErrorBoundary pageName={`Course Roster${course ? ` - ${course.title}` : ''}`}>
 			<DashboardPagesLayout pageName={isMobileSize ? (course?.title || 'Course Roster') : `Roster${course ? ` - ${course.title}` : ''}`} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			
+
 
 				<FilterSearchRow
 					filterValue={filterValue}
@@ -497,221 +639,272 @@ const CourseRoster = () => {
 						sx={{
 							display: 'flex',
 							flexDirection: 'column',
-							alignItems: 'center',
-							padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+							alignItems: 'stretch',
+							padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0.5rem 2rem 0.5rem',
 							width: '100%',
+							maxWidth: '100%',
+							boxSizing: 'border-box',
 						}}>
-						<Table
-							sx={{
-								'mb': '2rem',
-								'tableLayout': 'fixed',
-								'width': '100%',
-								'borderCollapse': 'collapse',
-								'borderSpacing': 0,
-								'& .MuiTableHead-root': {
-									position: 'fixed',
-									top:
-										(isSearchActive && searchedValue) || (isSearchActive && filterValue && filterValue.trim())
-											? !isMobileSize
-												? '10rem'
-												: '12.5rem'
-											: isMobileSize
-												? '10.25rem'
-												: '8rem',
-									left: isMobileSize ? 0 : '10rem',
-									right: 0,
-									zIndex: 99,
-									backgroundColor: theme.bgColor?.secondary,
-									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-									display: 'table',
-									tableLayout: 'fixed',
-									width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root': {
-									backgroundColor: theme.bgColor?.secondary,
-									padding: '0.75rem 1rem',
-									boxSizing: 'border-box',
-									margin: 0,
-									verticalAlign: 'center',
-									fontWeight: 600,
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:last-child': {
-									borderRight: 'none',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root': {
-									padding: '0.5rem 1rem',
-									boxSizing: 'border-box',
-									margin: 0,
-									verticalAlign: 'center',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:last-child': {
-									borderRight: 'none',
-								},
-								// Column widths for header cells
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
-									minWidth: isMobileSize ? '40px' : '50px',
-									width: isMobileSize ? '10%' : '5%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
-									minWidth: isMobileSize ? '40px' : '50px',
-									width: isMobileSize ? '15%' : '15%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
-									minWidth: isMobileSize ? '100px' : '150px',
-									width: isMobileSize ? '30%' : '25%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
-									minWidth: isMobileSize ? '0px' : '120px',
-									width: isMobileSize ? '35%' : '20%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
-									minWidth: isMobileSize ? '120px' : '150px',
-									width: isMobileSize ? '10%' : '25%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
-									minWidth: isMobileSize ? '120px' : '150px',
-									width: isMobileSize ? '0%' : '5%',
-								},
-							
-								// Column widths for body cells - exact same as header
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
-									minWidth: isMobileSize ? '40px' : '50px',
-									width: isMobileSize ? '10%' : '5%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
-									minWidth: isMobileSize ? '40px' : '50px',
-									width: isMobileSize ? '15%' : '15%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
-									minWidth: isMobileSize ? '100px' : '150px',
-									width: isMobileSize ? '30%' : '25%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
-									minWidth: isMobileSize ? '0px' : '120px',
-									width: isMobileSize ? '35%' : '20%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
-									minWidth: isMobileSize ? '120px' : '150px',
-									width: isMobileSize ? '10%' : '25%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
-									minWidth: isMobileSize ? '120px' : '150px',
-									width: isMobileSize ? '0%' : '5%',
-								},
-							
-							}}
-							size='small'
-							aria-label='roster table'>
-							<TableBody>
-								<TableRow sx={{visibility: 'hidden' }}>
-									<TableCell sx={{ width: isMobileSize ? '10%' : '5%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isMobileSize ? '35%' : '20%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isMobileSize ? '10%' : '25%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isMobileSize ? '0%' : '5%', padding: 0, border: 'none' }} />
-								</TableRow>
-							</TableBody>
-							<CustomTableHead
-								orderBy={orderBy as any}
-								order={order}
-								handleSort={handleSort}
-								columns={getColumns(isMobileSize)}
-								selectAll={selectedUserIds.size === paginatedRoster.length && paginatedRoster.length > 0}
-								onSelectAll={handleSelectAll}
-							/>
-							<TableBody>
-								{paginatedRoster.length === 0 ? (
-									<TableRow>
-										<TableCell colSpan={getColumns(isMobileSize).length} align='center' sx={{ py: '2rem' }}>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												No students found
-											</Typography>
-										</TableCell>
+						<TableContainer sx={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
+							<Table
+								sx={{
+									'mb': '2rem',
+									'tableLayout': 'fixed',
+									'width': '100%',
+									'minWidth': showAdminColumns && !isMobileSize ? 720 : 480,
+									'borderCollapse': 'collapse',
+									'borderSpacing': 0,
+									'& .MuiTableHead-root': {
+										position: 'fixed',
+										top:
+											(isSearchActive && searchedValue) || (isSearchActive && filterValue && filterValue.trim())
+												? !isMobileSize
+													? '10rem'
+													: '12.5rem'
+												: isMobileSize
+													? '10.25rem'
+													: '8rem',
+										left: isMobileSize ? 0 : '10rem',
+										right: 0,
+										zIndex: 99,
+										backgroundColor: theme.bgColor?.secondary,
+										boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+										display: 'table',
+										tableLayout: 'fixed',
+										width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+										maxWidth: isMobileSize ? '100%' : 'calc(100vw - 10rem)',
+									},
+									'& .MuiTableHead-root .MuiTableCell-root': {
+										backgroundColor: theme.bgColor?.secondary,
+										padding: isMobileSize ? '0.5rem 0.35rem' : '0.5rem 0.4rem',
+										boxSizing: 'border-box',
+										margin: 0,
+										verticalAlign: 'center',
+										fontWeight: 600,
+										overflow: 'hidden',
+									},
+									'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+										borderRight: 'none',
+									},
+									'& .MuiTableBody-root .MuiTableCell-root': {
+										padding: isMobileSize ? '0.35rem 0.35rem' : '0.4rem 0.4rem',
+										boxSizing: 'border-box',
+										margin: 0,
+										verticalAlign: 'middle',
+										overflow: 'hidden',
+									},
+									'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+										borderRight: 'none',
+									},
+								}}
+								size='small'
+								aria-label='roster table'>
+								<colgroup>
+									{rosterColumnWidths.map((width, index) => (
+										<col key={`roster-col-${index}`} style={{ width }} />
+									))}
+								</colgroup>
+								<TableBody>
+									<TableRow sx={{ visibility: 'hidden' }}>
+										{rosterColumnWidths.map((width, index) => (
+											<TableCell key={`roster-spacer-${index}`} sx={{ width, padding: 0, border: 'none' }} />
+										))}
 									</TableRow>
-								) : (
-									paginatedRoster.map((user, index) => {
-										const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
-										const isUpdating = updatingUserCourseIds.has(user.userCourseId || '');
-										const currentGroupName = user.currentGroupName || '';
+								</TableBody>
+								<CustomTableHead
+									orderBy={orderBy as any}
+									order={order}
+									handleSort={handleSort}
+									columns={rosterColumns}
+									selectAll={selectedUserIds.size === paginatedRoster.length && paginatedRoster.length > 0}
+									onSelectAll={handleSelectAll}
+								/>
+								<TableBody>
+									{paginatedRoster.length === 0 ? (
+										<TableRow>
+											<TableCell colSpan={rosterColumns.length} align='center' sx={{ py: '2rem' }}>
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													No students found
+												</Typography>
+											</TableCell>
+										</TableRow>
+									) : (
+										paginatedRoster.map((user, index) => {
+											const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
+											const isUpdating = updatingUserCourseIds.has(user.userCourseId || '');
+											const currentGroupName = user.currentGroupName || '';
+											const isEnrollmentActive = user.isActive !== false;
 
-										return (
-											<TableRow key={user.userCourseId || index} hover>
-												<TableCell>
-													<Avatar
-														src={user.imageUrl}
-														sx={{
-															width: isMobileSize ? 32 : 40,
-															height: isMobileSize ? 32 : 40,
-															bgcolor: theme.bgColor?.primary,
-														}}>
-														{fullName.charAt(0).toUpperCase()}
-													</Avatar>
-												</TableCell>
-												<CustomTableCell value={fullName} />
-												<CustomTableCell value={user.username || 'N/A'} />
-												{!isMobileSize && <CustomTableCell value={user.email || 'N/A'} />}
-												<TableCell sx={{ textAlign:'center'}}>
-													<FormControl size='small' sx={{ minWidth: isMobileSize ? '6.5rem' : '10rem' }}>
-														<Select
-															value={currentGroupName}
-															onChange={(e: SelectChangeEvent<string>) => {
-																if (user.userCourseId) {
-																	handleGroupChange(user.userCourseId, e.target.value || null, currentGroupName);
-																}
-															}}
-															disabled={isUpdating}
-															displayEmpty
-															renderValue={(selected) => {
-																if (!selected || selected === '') {
-																	return <Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>Unassigned</Typography>;
-																}
-																return <Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{selected}</Typography>;
-															}}
+											return (
+												<TableRow
+													key={user.userCourseId || index}
+													hover
+													sx={{
+														opacity: isEnrollmentActive ? 1 : 0.65,
+														backgroundColor: isEnrollmentActive ? 'inherit' : 'action.hover',
+													}}>
+													<TableCell sx={{ px: 0.5 }}>
+														<Avatar
+															src={user.imageUrl}
 															sx={{
-																fontSize: isMobileSize ? '0.7rem' : '0.75rem',
-																backgroundColor: theme.bgColor?.common,
+																width: isMobileSize ? 28 : 34,
+																height: isMobileSize ? 28 : 34,
+																bgcolor: theme.bgColor?.primary,
+																mx: 'auto',
 															}}>
-															<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-																Unassigned
-															</MenuItem>
-															{course?.groups?.map((group) => (
-																<MenuItem key={group._id || group.name} value={group.name || ''} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
-																	{group.name}
+															{fullName.charAt(0).toUpperCase()}
+														</Avatar>
+													</TableCell>
+													<CustomTableCell value={fullName} cellSx={{ px: 0.5, maxWidth: 0 }} />
+													{!isMobileSize && (
+														<CustomTableCell value={user.username || 'N/A'} cellSx={{ px: 0.5, maxWidth: 0 }} />
+													)}
+													<CustomTableCell value={user.email || 'N/A'} cellSx={{ px: 0.5, maxWidth: 0 }} />
+													<TableCell sx={{ textAlign: 'center', px: 0.5 }}>
+														<FormControl size='small' sx={{ minWidth: 0, width: '100%', maxWidth: isMobileSize ? '5.5rem' : '6.5rem', mx: 'auto' }}>
+															<Select
+																value={currentGroupName}
+																onChange={(e: SelectChangeEvent<string>) => {
+																	if (user.userCourseId) {
+																		handleGroupChange(user.userCourseId, e.target.value || null, currentGroupName);
+																	}
+																}}
+																disabled={isUpdating || !isEnrollmentActive}
+																displayEmpty
+																renderValue={(selected) => {
+																	if (!selected || selected === '') {
+																		return <Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>Unassigned</Typography>;
+																	}
+																	return <Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{selected}</Typography>;
+																}}
+																sx={{
+																	fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+																	backgroundColor: theme.bgColor?.common,
+																}}>
+																<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+																	Unassigned
 																</MenuItem>
-															))}
-														</Select>
-													</FormControl>
-												</TableCell>
-												<TableCell sx={{ textAlign: 'center' }}>
-													<Tooltip title='Progress' placement='top' arrow>
-													<IconButton
-														size='small'
-														onClick={() => {
-															if (user._id) {
-																openStudentDetailsModal(index, user._id);
-															}
-														}}
-														sx={{
-															padding: isMobileSize ? '0.25rem' : '0.5rem',
-														}}>
-														<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', color: theme.textColor?.primary.main }} />
-													</IconButton>
-													</Tooltip>
-												</TableCell>
-											</TableRow>
-										);
-									})
-								)}
-							</TableBody>
-						</Table>
+																{course?.groups?.map((group) => (
+																	<MenuItem key={group._id || group.name} value={group.name || ''} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+																		{group.name}
+																	</MenuItem>
+																))}
+															</Select>
+														</FormControl>
+													</TableCell>
+													{showAdminColumns && (
+														<TableCell sx={{ textAlign: 'center', px: 0.25 }}>
+															<Tooltip title={isEnrollmentActive ? 'Active' : 'Removed'} placement='top' arrow>
+																<Chip
+																	label={isEnrollmentActive ? 'Active' : 'Removed'}
+																	size='small'
+																	color={isEnrollmentActive ? 'success' : 'default'}
+																	variant={isEnrollmentActive ? 'outlined' : 'filled'}
+																	sx={{
+																		fontSize: '0.65rem',
+																		height: 22,
+																		maxWidth: '100%',
+																		'& .MuiChip-label': { px: 0.75 },
+																	}}
+																/>
+															</Tooltip>
+														</TableCell>
+													)}
+													{showAdminColumns && !isMobileSize && (
+														<TableCell sx={{ textAlign: 'center', px: 0.25 }}>
+															{user.refundEligible ? (
+																<Tooltip
+																	title={user.refundProcessed ? 'Refund processed' : 'Mark refund as processed'}
+																	placement='top'
+																	arrow>
+																	<Checkbox
+																		size='small'
+																		checked={!!user.refundProcessed}
+																		disabled={isUpdating}
+																		sx={{ p: 0.25 }}
+																		onChange={(e) => {
+																			if (user.userCourseId) {
+																				handleRefundProcessedChange(user.userCourseId, e.target.checked);
+																			}
+																		}}
+																	/>
+																</Tooltip>
+															) : (
+																<Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.65rem' }}>
+																	N/A
+																</Typography>
+															)}
+														</TableCell>
+													)}
+													<TableCell sx={{ textAlign: 'center', whiteSpace: 'nowrap', px: 0.25 }}>
+														<Tooltip title='Progress' placement='top' arrow>
+															<IconButton
+																size='small'
+																onClick={() => {
+																	if (user._id) {
+																		openStudentDetailsModal(index, user._id);
+																	}
+																}}
+																sx={{
+																	padding: isMobileSize ? '0.25rem' : '0.5rem',
+																}}>
+																<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', color: theme.textColor?.primary.main }} />
+															</IconButton>
+														</Tooltip>
+														{showAdminColumns && isEnrollmentActive && (
+															<Tooltip title='Remove enrollment' placement='top' arrow>
+																<IconButton
+																	size='small'
+																	disabled={isUpdating}
+																	onClick={() => setRemoveTarget(user)}
+																	sx={{ padding: isMobileSize ? '0.25rem' : '0.5rem' }}>
+																	<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', color: theme.palette.error.main }} />
+																</IconButton>
+															</Tooltip>
+														)}
+														{showAdminColumns && !isEnrollmentActive && (
+															<Tooltip title='Restore enrollment' placement='top' arrow>
+																<IconButton
+																	size='small'
+																	disabled={isUpdating}
+																	onClick={() => {
+																		if (user.userCourseId) {
+																			handleRestoreEnrollment(user.userCourseId);
+																		}
+																	}}
+																	sx={{ padding: isMobileSize ? '0.25rem' : '0.5rem' }}>
+																	<PersonAdd fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', color: theme.palette.success.main }} />
+																</IconButton>
+															</Tooltip>
+														)}
+														{showAdminColumns && user._id && user.userCourseId && (
+															<Tooltip title='Permanently delete enrollment' placement='top' arrow>
+																<IconButton
+																	size='small'
+																	disabled={isUpdating}
+																	onClick={() => setHardDeleteTarget(user)}
+																	sx={{ padding: isMobileSize ? '0.25rem' : '0.5rem' }}>
+																	<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', color: theme.palette.error.dark }} />
+																</IconButton>
+															</Tooltip>
+														)}
+													</TableCell>
+												</TableRow>
+											);
+										})
+									)}
+								</TableBody>
+							</Table>
+						</TableContainer>
 
 						{/* Pagination */}
-						<CustomTablePagination
-							count={totalPages}
-							page={currentPage}
-							onChange={handlePageChange}
-						/>
+						<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+							<CustomTablePagination
+								count={totalPages}
+								page={currentPage}
+								onChange={handlePageChange}
+							/>
+						</Box>
 					</Box>
 				)}
 
@@ -799,12 +992,59 @@ const CourseRoster = () => {
 								)}
 							</DialogContent>
 							<DialogActions>
-								<CustomCancelButton 
-								sx={{margin:'0 0.5rem 0.5rem 0'}}onClick={() => closeStudentDetailsModal(index)}>Close</CustomCancelButton>
+								<CustomCancelButton
+									sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => closeStudentDetailsModal(index)}>Close</CustomCancelButton>
 							</DialogActions>
 						</CustomDialog>
 					);
 				})}
+
+				<CustomDialog
+					title='Remove Enrollment'
+					openModal={!!removeTarget}
+					closeModal={() => !isRemovingEnrollment && setRemoveTarget(null)}
+					maxWidth='xs'>
+					<DialogContent sx={{ p: '1.5rem' }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+							Remove <strong>{getRosterStudentName(removeTarget)}</strong> from this course? The student will lose access but remain visible on the roster as removed.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => setRemoveTarget(null)}
+						onDelete={handleRemoveEnrollment}
+						deleteBtn
+						deleteBtnText='Remove'
+						disableBtn={isRemovingEnrollment}
+						disableCancelBtn={isRemovingEnrollment}
+						isDeleting={isRemovingEnrollment}
+						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
+					/>
+				</CustomDialog>
+
+				<CustomDialog
+					title='Permanently Delete Enrollment'
+					openModal={!!hardDeleteTarget}
+					closeModal={() => !isHardDeleting && setHardDeleteTarget(null)}
+					maxWidth='xs'>
+					<DialogContent sx={{ p: '1.5rem' }}>
+						<Typography variant='body2' sx={{ mb: '1rem', lineHeight: 1.7 }}>
+							Permanently delete <strong>{getRosterStudentName(hardDeleteTarget)}</strong> from this course?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+							This will remove the enrollment and all course progress. This action cannot be undone.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => setHardDeleteTarget(null)}
+						onDelete={handleHardDeleteEnrollment}
+						deleteBtn
+						deleteBtnText='Delete'
+						disableBtn={isHardDeleting}
+						disableCancelBtn={isHardDeleting}
+						isDeleting={isHardDeleting}
+						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
+					/>
+				</CustomDialog>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

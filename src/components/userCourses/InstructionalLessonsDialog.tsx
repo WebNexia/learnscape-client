@@ -130,12 +130,19 @@ const InstructionalLessonsDialog = ({
 									) : (
 										<>
 											{selectedLesson.videoUrl && (
-												<Box sx={{ width: '100%', height: isMobileSize ? '14rem' : '20rem', mb: '1rem', mt: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+												<Box
+													sx={{
+														width: '90%',
+														aspectRatio: '16 / 9',
+														mb: '1rem',
+														mt: '0.5rem',
+														mx: 'auto',
+														boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.2)',
+													}}>
 													<UniversalVideoPlayer
 														url={selectedLesson.videoUrl}
-														width='90%'
+														width='100%'
 														height='100%'
-														style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.2)' }}
 														controls
 													/>
 												</Box>

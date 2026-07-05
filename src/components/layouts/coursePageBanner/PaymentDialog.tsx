@@ -24,6 +24,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
+import { getCourseAccessCheckoutCopy } from '../../../utils/courseAccessCheckoutCopy';
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
 const DIALOG_BORDERRADIUS = '0.75rem';
@@ -84,9 +85,11 @@ const PaymentDialog = ({
 	}, [user, location, course, isPromoCodeApplied]);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+	const checkoutCopy = getCourseAccessCheckoutCopy(course, fromHomePage ? 'tr' : 'en');
 
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [agreed, setAgreed] = useState<boolean>(false);
+	const [agreedWithdrawalWaiver, setAgreedWithdrawalWaiver] = useState<boolean>(false);
 	const [cardBrand, setCardBrand] = useState<string>('unknown');
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -201,6 +204,12 @@ const PaymentDialog = ({
 		// Validate agreement to User Agreement and Privacy Policy
 		if (!agreed) {
 			setErrorMessage(fromHomePage ? 'Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.' : 'Please accept the User Agreement and Privacy Policy.');
+			setIsProcessing(false);
+			setIsSubmitted(false);
+			return;
+		}
+		if (checkoutCopy.needsWithdrawalWaiver && !agreedWithdrawalWaiver) {
+			setErrorMessage(checkoutCopy.waiverRequiredError);
 			setIsProcessing(false);
 			setIsSubmitted(false);
 			return;
@@ -664,6 +673,7 @@ const PaymentDialog = ({
 		setDiscountedAmount(isNaN(amount) ? 0 : amount);
 		setIsPromoCodeApplied(false);
 		setAgreed(false);
+		setAgreedWithdrawalWaiver(false);
 
 		if (!preserveError) {
 			setErrorMessage('');
@@ -1302,13 +1312,13 @@ const PaymentDialog = ({
 								<Box
 									sx={{
 										display: 'flex',
-										flexDirection: isSmallScreen ? 'row' : 'column',
-										alignItems: isSmallScreen ? 'center' : 'flex-start',
-										justifyContent: isSmallScreen ? 'flex-start' : 'space-between',
+										flexDirection: 'column',
+										alignItems: 'flex-start',
+										justifyContent: 'flex-start',
 										width: '100%',
-										height: '5rem',
 										flex: 2,
 										py: '0.5rem',
+										gap: 0.75,
 									}}>
 									<FormControlLabel
 										required
@@ -1341,8 +1351,57 @@ const PaymentDialog = ({
 												{fromHomePage ? " nı okudum ve kabul ediyorum." : '.'}
 											</Typography>
 										}
-										sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+										sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
 									/>
+									{checkoutCopy.showCohortNotice && (
+										<Typography
+											component="p"
+											sx={{
+												fontSize: isMobileSize ? '0.62rem' : '0.68rem',
+												fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+												color: 'text.secondary',
+												lineHeight: 1.6,
+												pl: '0.25rem',
+											}}>
+											{checkoutCopy.cohortNotice}
+										</Typography>
+									)}
+									{checkoutCopy.needsWithdrawalWaiver && (
+										<FormControlLabel
+											required
+											control={
+												<Checkbox
+													checked={agreedWithdrawalWaiver}
+													onChange={(e) => {
+														setAgreedWithdrawalWaiver(e.target.checked);
+														setErrorMessage('');
+														resetRecaptcha();
+													}}
+													size="small"
+													sx={{
+														'color': 'rgba(0,0,0,0.6)',
+														'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' },
+														'& .MuiSvgIcon-root': {
+															fontSize: isMobileSize ? '0.9rem' : '1.15rem',
+														},
+													}}
+												/>
+											}
+											label={
+												<Typography
+													component="span"
+													sx={{
+														fontSize: isMobileSize ? '0.62rem' : '0.68rem',
+														fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+														color: 'text.secondary',
+														lineHeight: 1.6,
+													}}>
+													{checkoutCopy.withdrawalWaiverLabel}
+												</Typography>
+											}
+											sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+										/>
+									)}
 								</Box>
 								<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
 									<ReCAPTCHA

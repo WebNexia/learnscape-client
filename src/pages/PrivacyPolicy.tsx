@@ -37,7 +37,9 @@ const PrivacyPolicy = () => {
 			lastUpdated: 'Son Güncelleme:',
 			section1Title: '1. Giriş',
 			section1Content:
-				'Bu Gizlilik Politikası, Aden Academy üzerinden hizmet alan kullanıcıların kişisel verilerinin nasıl toplandığını, kullanıldığını, saklandığını ve korunduğunu açıklar.',
+				'Bu Gizlilik Politikası, Aden Academy üzerinden hizmet alan kullanıcıların kişisel verilerinin nasıl toplandığını, kullanıldığını, saklandığını ve korunduğunu açıklar. Platform kullanımına ilişkin genel şartlar için ',
+			section1UserAgreementLink: 'Kullanıcı Sözleşmesi',
+			section1ContentEnd: ' incelenmelidir.',
 			section1Note:
 				'Bu politika; Birleşik Krallık (UK), Avrupa Birliği (AB) ve Türkiye\'de bulunan kullanıcılar dahil olmak üzere UK GDPR, General Data Protection Regulation ve Kişisel Verilerin Korunması Kanunu (KVKK No. 6698) kapsamında hazırlanmıştır.',
 			section1Acceptance: 'Platformu kullanarak bu politikayı kabul etmiş sayılırsınız.',
@@ -270,7 +272,9 @@ const PrivacyPolicy = () => {
 			lastUpdated: 'Last Updated:',
 			section1Title: '1. Introduction',
 			section1Content:
-				'This Privacy Policy explains how personal data of users receiving services through Aden Academy is collected, used, stored, and protected.',
+				'This Privacy Policy explains how personal data of users receiving services through Aden Academy is collected, used, stored, and protected. For general terms of platform use, please see the ',
+			section1UserAgreementLink: 'User Agreement',
+			section1ContentEnd: '.',
 			section1Note:
 				'This policy has been prepared in accordance with UK GDPR, the General Data Protection Regulation, and the Personal Data Protection Law (KVKK No. 6698), including for users located in the United Kingdom (UK), the European Union (EU), and Turkey.',
 			section1Acceptance: 'By using the platform, you are deemed to have accepted this policy.',
@@ -579,7 +583,13 @@ const PrivacyPolicy = () => {
 					<Divider sx={{ mb: '2rem' }} />
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section1Title}</Typography>
-					<Typography variant='body2' sx={bodySx}>{currentContent.section1Content}</Typography>
+					<Typography variant='body2' sx={bodySx}>
+						{currentContent.section1Content}
+						<Link to='/terms' style={{ color: theme.palette.primary.main, textDecoration: 'underline', fontFamily: fontFamilyLandingPage }}>
+							{currentContent.section1UserAgreementLink}
+						</Link>
+						{currentContent.section1ContentEnd}
+					</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section1Note}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section1Acceptance}</Typography>
 

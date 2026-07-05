@@ -50,6 +50,7 @@ const getIntroVideoEmbedSrc = (raw: string): string | null => {
 interface CoursePageBannerProps {
 	course: SingleCourse;
 	isEnrolledStatus?: boolean;
+	isEnrollmentRemoved?: boolean;
 	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>>;
 	documentsRef?: React.RefObject<HTMLDivElement>;
 	fromHomePage?: boolean;
@@ -61,6 +62,7 @@ interface CoursePageBannerProps {
 const CoursePageBanner = ({
 	course,
 	isEnrolledStatus,
+	isEnrollmentRemoved: isEnrollmentRemovedProp,
 	setIsEnrolledStatus,
 	documentsRef,
 	fromHomePage,
@@ -85,6 +87,10 @@ const CoursePageBanner = ({
 	const { courseId } = useParams();
 	const { user, setUser } = useContext(UserAuthContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+
+	const enrollmentRecord = userCoursesData?.find((data) => data.courseId === courseId);
+	const isEnrollmentRemoved =
+		isEnrollmentRemovedProp ?? (enrollmentRecord != null && enrollmentRecord.isActive === false);
 
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessons = userLessonsData || [];
@@ -371,6 +377,7 @@ const CoursePageBanner = ({
 				</Box>
 
 				{!isEnrolledStatus &&
+					!isEnrollmentRemoved &&
 					!course.isExpired &&
 					!isManuallyClosed &&
 					!isCapacityFull &&
@@ -583,7 +590,9 @@ const CoursePageBanner = ({
 						)}
 					</Box>
 				) : (
-					!fromHomePage && (
+					!fromHomePage &&
+					isCourseFree &&
+					!isEnrollmentRemoved && (
 						<Typography
 							variant='body2'
 							sx={{
