@@ -30,10 +30,13 @@ const CustomDeleteButton = ({
 			sx={{
 				...sx,
 				'textTransform': 'capitalize',
-				'backgroundColor': 'error.main',
+				'backgroundColor': '#EF4444',
+				'borderRadius': '10px',
+				'boxShadow': 'none',
 				'ml': '0.75rem',
 				':hover': {
-					backgroundColor: 'error.light',
+					backgroundColor: '#DC2626',
+					boxShadow: '0 2px 8px rgba(239, 68, 68, 0.25)',
 				},
 				'height': isMobileSize ? '1.5rem' : '1.75rem',
 				'fontSize': isMobileSize ? '0.7rem' : '0.85rem',

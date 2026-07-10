@@ -2,6 +2,9 @@ import React, { useContext } from 'react';
 import { Box, FormControl, Select, MenuItem, InputAdornment, Chip, Typography, useTheme } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
+import { useAuth } from '../../hooks/useAuth';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
@@ -78,9 +81,13 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 	sx = {},
 }) => {
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const themeUseTheme = useTheme();
+	const isLearner = !hasAdminAccess && user?.role === Roles.USER;
+	const pageBackground = isLearner ? theme.bgColor?.learnerContentBg : theme.palette.secondary.main || '#FFFF';
 
 	const stickyStyles = isSticky
 		? {
@@ -103,8 +110,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 					: isRecycleBin || isPayments
 						? 99
 						: 100, // Normal z-index
-				backgroundColor: theme.bgColor?.secondary,
-				backdropFilter: 'blur(10px)',
+				backgroundColor: pageBackground,
 				minHeight: 'auto', // Ensure it doesn't collapse
 				paddingTop: isCommunity
 					? '0.5rem' // Community specific padding
@@ -124,7 +130,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 					justifyContent: 'space-between',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '1rem 2rem 0rem 2rem',
 					width: isSmallScreen || isRotatedMedium ? '100%' : 'calc(100% - 10rem)',
-
+					backgroundColor: pageBackground,
 					mb: isSticky ? 0 : '1.25rem',
 					...(isCommunity && isSticky
 						? {

@@ -24,6 +24,7 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { useAuth } from '../hooks/useAuth';
 import { useLearnerPlatformAccess } from '../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../config/features';
+import { LEARNER_SAAS } from '../constants/learnerSaasUi';
 
 export interface NewTopic {
 	title: string;
@@ -39,6 +40,7 @@ const Community = () => {
 
 	const { isLearner, hasAdminAccess } = useAuth();
 	const hasPlatformAccess = useLearnerPlatformAccess();
+	const pageBackground = isLearner ? theme.bgColor?.learnerContentBg : theme.palette.secondary.main || '#FFFF';
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -162,12 +164,11 @@ const Community = () => {
 						left: isMobileSize ? 0 : '10rem', // Account for sidebar width on desktop
 						right: 0,
 						zIndex: 100, // Higher z-index to ensure it's above all content
-						backgroundColor: theme.bgColor?.secondary,
-						backdropFilter: 'blur(10px)',
+						backgroundColor: pageBackground,
 						width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 						padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 2rem',
 					}}>
-					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ textAlign: 'center', fontWeight: 500 }}>
+					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ textAlign: 'center', fontWeight: 600, color: LEARNER_SAAS.pageTitleColor }}>
 						Join the Conversation!
 						<Tooltip title='Introduction to the Community' arrow placement='top'>
 							<IconButton onClick={() => setCommunityIntroModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
@@ -216,7 +217,16 @@ const Community = () => {
 					isCommunity={true}
 				/>
 
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobileSize ? '1.1rem' : '2rem', width: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						padding: isMobileSize ? `${LEARNER_SAAS.pagePaddingMobile} ${LEARNER_SAAS.pagePaddingMobile} 2rem` : `${LEARNER_SAAS.pagePaddingDesktop} ${LEARNER_SAAS.pagePaddingDesktop} 2rem`,
+						width: '100%',
+						maxWidth: '1200px',
+						mx: 'auto',
+					}}>
 					<CustomDialog
 						openModal={communityIntroModalOpen}
 						closeModal={() => setCommunityIntroModalOpen(false)}
@@ -280,46 +290,44 @@ const Community = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							width: '100%',
-							height: 'fit-content',
-							borderRadius: '0.75rem',
+							borderRadius: `${LEARNER_SAAS.cardRadius}px`,
 							overflow: 'hidden',
-							backgroundColor: theme.palette.secondary?.main || '#fff',
-							boxShadow: '0 4px 24px rgba(1, 67, 90, 0.12), 0 2px 6px rgba(0,0,0,0.08)',
-							border: '1px solid rgba(1, 67, 90, 0.1)',
+							backgroundColor: LEARNER_SAAS.cardBg,
+							boxShadow: LEARNER_SAAS.cardShadow,
+							border: `1px solid ${LEARNER_SAAS.border}`,
 						}}>
 						<Box
 							sx={{
 								display: 'flex',
 								justifyContent: 'space-between',
 								alignItems: 'center',
-								height: '3rem',
-								padding: '0.75rem 1rem',
-								background: 'linear-gradient(135deg, rgba(1, 67, 90, 0.08) 0%, rgba(1, 67, 90, 0.04) 100%)',
-								borderBottom: '1px solid rgba(1, 67, 90, 0.1)',
+								minHeight: '3rem',
+								padding: isMobileSize ? '0.65rem 1rem' : '0.75rem 1.25rem',
+								backgroundColor: LEARNER_SAAS.contentBg,
+								borderBottom: `1px solid ${LEARNER_SAAS.border}`,
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
 								<Typography
-									variant='h5'
 									sx={{
-										fontSize: isMobileSize ? '0.85rem' : '1.05rem',
+										fontSize: isMobileSize ? '0.85rem' : '0.95rem',
 										fontWeight: 600,
-										letterSpacing: '-0.01em',
-										color: theme.palette.primary?.main || '#01435A',
+										color: LEARNER_SAAS.pageTitleColor,
 									}}>
 									Topics
 								</Typography>
 								<Tooltip title='Read the Community Rules' arrow placement='top'>
-									<IconButton onClick={() => setRulesModalOpen(true)} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' }, ml: '0.25rem' }}>
+									<IconButton
+										onClick={() => setRulesModalOpen(true)}
+										sx={{ '&:hover': { backgroundColor: 'rgba(15, 23, 42, 0.06)' }, ml: '0.25rem' }}>
 										<PriorityHigh sx={{ mr: '0.25rem' }} color='warning' fontSize={isMobileSize ? 'small' : 'medium'} />
 									</IconButton>
 								</Tooltip>
 							</Box>
-							<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
+							<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center' }}>
 								<Typography
-									variant='body2'
 									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										color: LEARNER_SAAS.secondaryText,
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 										whiteSpace: 'nowrap',
 										fontWeight: 500,
 									}}>
@@ -328,12 +336,12 @@ const Community = () => {
 								</Typography>
 							</Box>
 							<Box>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 500, color: 'text.secondary' }}>
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', fontWeight: 500, color: LEARNER_SAAS.secondaryText }}>
 									Last Message
 								</Typography>
 							</Box>
 						</Box>
-						<Box sx={{ backgroundColor: 'inherit' }}>
+						<Box>
 							{paginatedTopics?.map((topic: CommunityTopic) => (
 								<Topic key={topic._id} topic={topic} />
 							))}

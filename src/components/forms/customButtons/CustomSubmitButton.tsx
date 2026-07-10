@@ -1,6 +1,5 @@
 import { Button, ButtonOwnProps, SxProps, Theme } from '@mui/material';
 import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
-import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomSubmitButtonProps {
@@ -48,10 +47,12 @@ const CustomSubmitButton = ({
 			sx={{
 				...sx,
 				'textTransform': capitalize ? 'capitalize' : 'none',
-				'backgroundColor': unsaved ? '#ff9800' : theme.bgColor?.greenPrimary,
+				'backgroundColor': unsaved ? '#ff9800' : '#14B8A6',
+				'borderRadius': '10px',
+				'boxShadow': 'none',
 				':hover': {
-					backgroundColor: theme.bgColor?.common,
-					color: theme.bgColor?.adminSubmitBtn,
+					backgroundColor: unsaved ? '#f57c00' : '#0D9488',
+					boxShadow: '0 2px 8px rgba(20, 184, 166, 0.25)',
 				},
 				'height': isMobileSize ? '1.5rem' : '1.75rem',
 				'fontSize': isMobileSize ? '0.7rem' : '0.85rem',

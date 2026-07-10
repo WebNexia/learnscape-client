@@ -6,6 +6,7 @@ import { formatMessageTime } from '../../utils/formatTime';
 import { renderMessageWithEmojis } from '../../utils/renderMessageWithEmojis';
 import { useLearnerPlatformAccess } from '../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../config/features';
+import { LEARNER_SAAS } from '../../constants/learnerSaasUi';
 
 interface MessageListProps {
 	messages: Message[];
@@ -36,37 +37,8 @@ const MessageList = ({
 }: MessageListProps) => {
 	const hasPlatformAccess = useLearnerPlatformAccess();
 
-	if (!activeChat) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					textAlign: 'center',
-					height: '100%',
-					width: '100%',
-				}}>
-				<Box>
-					{hasPlatformAccess || user?.role !== 'learner' ? (
-						<>
-							<Chat sx={{ fontSize: '5rem', color: '#fff' }} />
-							<Typography sx={{ color: '#fff' }}>Select an existing chat or start a new chat by adding a user</Typography>
-						</>
-					) : (
-						<Typography sx={{ color: '#fff' }}>
-							{isSubscriptionsProductEnabled
-								? 'To use messages, you must first enroll in a paid course or subscribe'
-								: 'To use messages, you must first enroll in a paid course'}
-						</Typography>
-					)}
-				</Box>
-			</Box>
-		);
-	}
-
-	// Memoize filtered messages to prevent expensive re-computations
+	// Memoize filtered messages to prevent expensive re-computations.
+	// Must run before any early return to keep hook order stable (Rules of Hooks).
 	const filteredMessages = useMemo(() => {
 		if (!messages || !activeChat || !user) return [];
 
@@ -94,6 +66,38 @@ const MessageList = ({
 			}) || []
 		);
 	}, [messages, globalBlockedUsers, user?.firebaseUserId, activeChat]);
+
+	if (!activeChat) {
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					textAlign: 'center',
+					height: '100%',
+					width: '100%',
+				}}>
+				<Box>
+					{hasPlatformAccess || user?.role !== 'learner' ? (
+						<>
+							<Chat sx={{ fontSize: '5rem', color: LEARNER_SAAS.secondaryText, mb: '1rem' }} />
+							<Typography sx={{ color: LEARNER_SAAS.bodyText, fontSize: '0.95rem', maxWidth: '18rem' }}>
+								Select an existing chat or start a new chat by adding a user
+							</Typography>
+						</>
+					) : (
+						<Typography sx={{ color: LEARNER_SAAS.bodyText, fontSize: '0.95rem', maxWidth: '18rem' }}>
+							{isSubscriptionsProductEnabled
+								? 'To use messages, you must first enroll in a paid course or subscribe'
+								: 'To use messages, you must first enroll in a paid course'}
+						</Typography>
+					)}
+				</Box>
+			</Box>
+		);
+	}
 
 	return (
 		<>
@@ -162,7 +166,8 @@ const MessageList = ({
 									borderRadius: '0.75rem',
 									margin: '0.5rem 0',
 									transition: 'background-color 0.5s ease',
-									backgroundColor: msg.senderId === user?.firebaseUserId ? '#DCF8C6' : '#FFF',
+									backgroundColor: msg.senderId === user?.firebaseUserId ? 'rgba(20, 184, 166, 0.12)' : LEARNER_SAAS.cardBg,
+									border: msg.senderId === user?.firebaseUserId ? '1px solid rgba(20, 184, 166, 0.25)' : `1px solid ${LEARNER_SAAS.border}`,
 									alignSelf: msg.senderId === user?.firebaseUserId ? 'flex-end' : 'flex-start',
 									maxWidth: '40%',
 									minWidth: '12.5%',

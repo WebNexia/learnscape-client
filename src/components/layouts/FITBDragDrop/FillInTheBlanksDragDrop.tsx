@@ -141,7 +141,7 @@ const Item = styled.div<{
 	cursor: ${({ $isInteractive }) => ($isInteractive === false ? 'default' : 'pointer')};
 	text-align: center;
 	font-size: 0.78rem;
-	font-family: 'DM Sans', sans-serif;
+	font-family: 'Varela Round', sans-serif;
 	font-weight: 500;
 	color: #2f4d5c;
 	position: relative;

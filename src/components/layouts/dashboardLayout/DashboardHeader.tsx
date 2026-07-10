@@ -68,15 +68,20 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		};
 	}, []);
 
+	const isLearnerHeader = !hasAdminAccess && user?.role === Roles.USER;
+
 	const headerBackgroundColor = useMemo(() => {
 		return hasAdminAccess
 			? theme.bgColor?.adminHeader
 			: user?.role === Roles.INSTRUCTOR
 				? theme.bgColor?.instructorHeader
 				: user?.role === Roles.USER
-					? theme.bgColor?.lessonInProgress
+					? theme.bgColor?.learnerHeader
 					: theme.bgColor?.adminHeader;
 	}, [hasAdminAccess, user?.role]);
+
+	// Learner header is light, so text/icons switch to a dark tone for contrast
+	const headerContentColor = isLearnerHeader ? theme.bgColor?.learnerHeaderText : theme.textColor?.common.main;
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 	const hasUnreadMessages = useUnreadMessages();
@@ -227,7 +232,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	}, []);
 
 	return (
-		<AppBar position='sticky'>
+		<AppBar position='sticky' elevation={isLearnerHeader ? 0 : 4}>
 			<Toolbar
 				sx={{
 					display: 'flex',
@@ -236,6 +241,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					height: '3.5rem',
 					width: '100%',
 					backgroundColor: headerBackgroundColor,
+					borderBottom: isLearnerHeader ? `1px solid ${theme.bgColor?.learnerHeaderBorder}` : 'none',
 					padding: isVerySmallScreen || isRotated ? '0 0.5rem 0 0.25rem' : '0 0rem',
 					position: 'relative',
 				}}>
@@ -251,13 +257,19 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								minHeight: '44px',
 								padding: '0.5rem',
 							}}>
-							<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' />
+							<Menu sx={{ color: headerContentColor, padding: 0 }} fontSize='small' />
 						</IconButton>
 					)}
 
 					<Typography
 						variant={isMobileSize ? 'body2' : 'body1'}
-						sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.8rem' : undefined }}>
+						sx={{
+							color: headerContentColor,
+							fontWeight: isLearnerHeader ? 600 : 500,
+							fontSize: isMobileSize ? '1rem' : isLearnerHeader ? '1.35rem' : undefined,
+							lineHeight: isLearnerHeader ? 1.25 : undefined,
+							ml: isLearnerHeader ? '0.25rem' : 0,
+						}}>
 						{pageName}
 					</Typography>
 				</Box>
@@ -273,7 +285,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 									title={
 										isSubscriptionScheduledForCancellation(user)
 											? getPeriodEndTooltip(user) ||
-												'Subscription is scheduled for cancellation. You cannot re-subscribe until the current period ends.'
+											'Subscription is scheduled for cancellation. You cannot re-subscribe until the current period ends.'
 											: ''
 									}
 									arrow>
@@ -322,7 +334,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 											disabled={isSubscriptionScheduledForCancellation(user)}
 											sx={{
 												'borderColor': theme.textColor?.error.main,
-												'color': '#fff',
+												'color': isLearnerHeader ? theme.textColor?.error.main : '#fff',
 												'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
 												'fontFamily': theme.fontFamily?.main,
 												'textTransform': 'capitalize',
@@ -332,6 +344,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 												'&:hover': {
 													borderColor: theme.textColor?.error.main,
 													backgroundColor: theme.textColor?.error.main,
+													color: '#fff',
 												},
 												'&:disabled': {
 													borderColor: '#ccc',
@@ -361,6 +374,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								fontSize={isMobileSize ? 'small' : 'medium'}
 								sx={{
 									fontSize: isMobileSize ? '1rem' : undefined,
+									color: headerContentColor,
 								}}
 							/>
 						</IconButton>
@@ -415,7 +429,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							<Notifications
 								color='secondary'
 								fontSize={isMobileSize ? 'small' : 'medium'}
-								sx={{ fontSize: isMobileSize ? '1rem' : undefined, mr: '1rem' }}
+								sx={{ fontSize: isMobileSize ? '1rem' : undefined, mr: '1rem', color: headerContentColor }}
 							/>
 						</IconButton>
 					</Badge>
@@ -531,7 +545,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					<Button
 						sx={{
 							textTransform: 'capitalize',
-							color: theme.textColor?.common.main,
+							color: headerContentColor,
 							fontFamily: theme.fontFamily?.main,
 							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 						}}

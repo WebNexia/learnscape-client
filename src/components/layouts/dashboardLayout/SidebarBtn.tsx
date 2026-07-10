@@ -19,12 +19,14 @@ const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: S
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
+	const isLearner = user?.role === Roles.USER;
+
 	// Get role-specific hover color
 	const getHoverColor = () => {
 		if (user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) {
 			return theme.bgColor?.adminSubmitBtn;
 		} else {
-			return theme.submitBtn?.backgroundColor; // Green for both instructor and learner
+			return theme.submitBtn?.backgroundColor; // Green for instructor
 		}
 	};
 
@@ -49,25 +51,50 @@ const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: S
 				</Badge>
 			}
 			sx={{
-				'color': active ? theme.textColor?.primary.main : theme.textColor?.common.main,
-				'backgroundColor': active ? theme.palette.secondary.main : 'transparent',
+				'color': isLearner
+					? active
+						? theme.bgColor?.learnerSidebar
+						: theme.bgColor?.learnerSidebarText
+					: active
+						? theme.textColor?.primary.main
+						: theme.textColor?.common.main,
+				'backgroundColor': active
+					? isLearner
+						? theme.bgColor?.learnerSidebarActive
+						: theme.palette.secondary.main
+					: 'transparent',
 				'textTransform': 'capitalize',
-				'marginBottom': '0.15rem',
+				'marginBottom': isLearner ? '0.35rem' : '0.15rem',
 				'fontFamily': theme.fontFamily?.main,
+				'fontWeight': isLearner && active ? 600 : 500,
 				'fontSize': isMobileSize ? '0.75rem' : '1rem',
-				'lineHeight': '2.25',
-				'width': isMobileSize ? '72%' : '76%',
+				'lineHeight': isLearner ? 1.5 : '2.25',
+				'minHeight': isLearner ? (isMobileSize ? '2.35rem' : '2.65rem') : undefined,
+				'width': isLearner ? (isMobileSize ? 'calc(100% - 1.25rem)' : 'calc(100% - 1.85rem)') : isMobileSize ? '72%' : '76%',
 				'justifyContent': 'flex-start',
-				'paddingRight': '1.5rem',
-				'borderRadius': '1.5rem 0 0 1.5rem',
-				'marginLeft': '1.85rem',
+				'paddingLeft': isLearner ? (isMobileSize ? '0.85rem' : '1rem') : undefined,
+				'paddingRight': isLearner ? '1rem' : '1.5rem',
+				'borderRadius': isLearner ? '2rem 0 0 2rem' : '1.5rem 0 0 1.5rem',
+				'marginLeft': isLearner ? (isMobileSize ? '1.25rem' : '1.85rem') : '1.85rem',
+				'marginRight': isLearner ? 0 : undefined,
 				'border': 'none',
+				'boxShadow': 'none',
 				'cursor': 'pointer',
-				'&:hover': {
-					color: active ? theme.textColor?.primary.main : getHoverColor(),
-					backgroundColor: active ? theme.palette.secondary.main : 'transparent',
-					border: 'none',
+				'& .MuiButton-startIcon': {
+					marginRight: isLearner ? '0.65rem' : undefined,
+					color: 'inherit',
 				},
+				'&:hover': isLearner
+					? {
+							color: active ? theme.bgColor?.learnerSidebar : theme.bgColor?.learnerSidebarText,
+							backgroundColor: active ? theme.bgColor?.learnerSidebarActive : theme.bgColor?.learnerSidebarHover,
+							border: 'none',
+						}
+					: {
+							color: active ? theme.textColor?.primary.main : getHoverColor(),
+							backgroundColor: active ? theme.palette.secondary.main : 'transparent',
+							border: 'none',
+						},
 			}}
 			onClick={onClick}>
 			{btnText}

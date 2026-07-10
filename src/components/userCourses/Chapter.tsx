@@ -35,7 +35,7 @@ export interface ChapterRef {
 	scrollIntoView: () => void;
 }
 
-const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId, isAlternateHeaderTone = false }, ref) => {
+const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
@@ -357,37 +357,43 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	}));
 
 	const validLessons = chapter?.lessons?.filter((lesson) => lesson !== null) || [];
-	const chapterHeaderBackground = isAlternateHeaderTone ? '#1a5a71' : theme.bgColor?.primary;
+	const outlineFont = "'Varela Round', 'Segoe UI', Arial, sans-serif";
+	const isFullyComplete = progressData.percentage === 100 && progressData.total > 0;
+	const chapterAccent = '#01435A';
+	const chapterGradient = 'linear-gradient(90deg, #01313f 0%, #01435A 55%, #045064 100%)';
 
 	return (
 		<Box
 			ref={rootRef}
 			sx={{
-				'marginBottom': isMobileSize ? '1rem' : '1rem',
-				'backgroundColor': '#ffffff',
-				'border': '1px solid #e2e8f0',
-				'borderRadius': '0.35rem',
-				'overflow': 'hidden',
-				'boxShadow': '0 1px 3px rgba(0, 0, 0, 0.1)',
-				'scrollMarginTop': isMobileSize ? '7rem' : '9rem',
-				'transition': 'box-shadow 0.3s ease',
-				'&:hover': {
-					boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-					borderColor: '#cbd5e1',
-				},
+				marginBottom: isMobileSize ? '1rem' : '1.25rem',
+				borderRadius: '0.85rem',
+				overflow: 'hidden',
+				border: isExpanded ? `1px solid ${chapterAccent}33` : '1px solid #e2e8f0',
+				backgroundColor: '#ffffff',
+				boxShadow: isExpanded ? '0 12px 32px rgba(1, 67, 90, 0.14)' : '0 4px 16px rgba(15, 23, 42, 0.06)',
+				scrollMarginTop: isMobileSize ? '7rem' : '9rem',
+				transition: 'box-shadow 0.35s ease, border-color 0.35s ease, transform 0.35s ease',
+				transform: isExpanded ? 'translateY(-2px)' : 'none',
 			}}>
-			{/* Chapter Header - Always Visible */}
+			{/* Chapter Header */}
 			<Box
 				sx={{
-					'backgroundColor': chapterHeaderBackground,
-					'padding': isMobileSize ? '0.5rem' : '0.75rem 1rem 0.75rem 0.25rem',
-					'cursor': 'pointer',
-					'display': 'flex',
-					'alignItems': 'center',
-					'justifyContent': 'space-between',
-					'transition': 'background-color 0.2s ease',
-					'&:hover': {
-						backgroundColor: chapterHeaderBackground,
+					background: chapterGradient,
+					padding: isMobileSize ? '0.75rem 0.65rem' : '0.75rem 1.15rem',
+					cursor: 'pointer',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: '0.75rem',
+					position: 'relative',
+					overflow: 'hidden',
+					'&::before': {
+						content: '""',
+						position: 'absolute',
+						inset: 0,
+						background: 'radial-gradient(circle at 100% 0%, rgba(255,255,255,0.08) 0%, transparent 45%)',
+						pointerEvents: 'none',
 					},
 				}}
 				onClick={handleToggleExpanded}
@@ -401,17 +407,16 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 				}}
 				aria-expanded={isExpanded}
 				aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
-				<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
 					<IconButton
 						sx={{
-							'color': 'white',
-							'marginRight': isMobileSize ? '0.5rem' : '1rem',
-							'padding': '0.25rem',
-							'transform': isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-							'transition': 'transform 0.3s ease',
-							':hover': {
-								border: 'solid 0.5px white',
-							},
+							color: 'white',
+							marginRight: isMobileSize ? '0.5rem' : '0.85rem',
+							padding: '0.2rem',
+							backgroundColor: 'rgba(255,255,255,0.12)',
+							transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+							transition: 'transform 0.3s ease, background-color 0.2s ease',
+							':hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
 						}}
 						aria-hidden='true'>
 						<ExpandMore fontSize='small' />
@@ -419,53 +424,75 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 					<Typography
 						variant='h4'
 						sx={{
-							fontSize: isMobileSize ? '0.8rem' : '0.95rem',
+							fontFamily: outlineFont,
+							fontSize: isMobileSize ? '0.82rem' : '0.98rem',
+							fontWeight: 600,
 							color: 'white',
 							flex: 1,
-							textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+							lineHeight: 1.35,
+							letterSpacing: '0.01em',
 						}}>
 						{chapter.title}
 					</Typography>
 				</Box>
 
 				{/* Progress Indicators */}
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem', position: 'relative', zIndex: 1, flexShrink: 0 }}>
 					{isEnrolledStatus && progressData.total > 0 && (
 						<>
+							<Box
+								sx={{
+									position: 'relative',
+									width: isMobileSize ? '2.1rem' : '2.5rem',
+									height: isMobileSize ? '2.1rem' : '2.5rem',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+								}}>
+								<Box
+									component='svg'
+									viewBox='0 0 36 36'
+									sx={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+									<circle cx='18' cy='18' r='15.5' fill='none' stroke='rgba(255,255,255,0.25)' strokeWidth='3' />
+									<circle
+										cx='18'
+										cy='18'
+										r='15.5'
+										fill='none'
+										stroke={isFullyComplete ? '#ffffff' : '#7ee081'}
+										strokeWidth='3'
+										pathLength={100}
+										strokeDasharray={`${progressData.percentage} ${100 - progressData.percentage}`}
+										strokeLinecap='round'
+									/>
+								</Box>
+								<Typography
+									sx={{
+										position: 'absolute',
+										fontFamily: outlineFont,
+										fontSize: isMobileSize ? '0.48rem' : '0.55rem',
+										fontWeight: 700,
+										color: 'white',
+									}}>
+									{progressData.percentage}%
+								</Typography>
+							</Box>
 							<Chip
-								icon={<PlayCircleOutline />}
+								icon={<PlayCircleOutline sx={{ fontSize: '0.85rem !important' }} />}
 								label={`${progressData.completed}/${progressData.total}`}
 								size='small'
 								sx={{
-									'backgroundColor': 'rgba(255, 255, 255, 0.25)',
-									'color': 'white',
-									'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-									'fontWeight': 600,
-									'height': isMobileSize ? '1.5rem' : '1.8rem',
-									'textShadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
-									'& .MuiChip-icon': {
-										color: 'white',
-										fontSize: isMobileSize ? '0.8rem' : '1rem',
-									},
+									backgroundColor: 'rgba(255, 255, 255, 0.18)',
+									color: 'white',
+									fontFamily: outlineFont,
+									fontSize: isMobileSize ? '0.62rem' : '0.72rem',
+									fontWeight: 600,
+									height: isMobileSize ? '1.45rem' : '1.65rem',
+									border: '1px solid rgba(255,255,255,0.28)',
+									backdropFilter: 'blur(4px)',
+									'& .MuiChip-icon': { color: 'white' },
 								}}
 							/>
-							<Box
-								sx={{
-									width: isMobileSize ? '40px' : '50px',
-									height: isMobileSize ? '6px' : '8px',
-									backgroundColor: 'rgba(255, 255, 255, 0.3)',
-									borderRadius: '4px',
-									overflow: 'hidden',
-								}}>
-								<Box
-									sx={{
-										width: `${progressData.percentage}%`,
-										height: '100%',
-										backgroundColor: progressData.percentage === 100 ? '#4caf50' : '#ff9800',
-										transition: 'width 0.3s ease',
-									}}
-								/>
-							</Box>
 						</>
 					)}
 
@@ -481,12 +508,12 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						arrow>
 						<IconButton
 							sx={{
-								'color': 'white',
-								'padding': '0.25rem',
-								'marginLeft': isEnrolledStatus && progressData.total > 0 ? '0.5rem' : '0',
-								'&:hover': {
-									border: 'solid 0.5px white',
-								},
+								color: 'white',
+								padding: '0.3rem',
+								marginLeft: isEnrolledStatus && progressData.total > 0 ? '0.15rem' : 0,
+								backgroundColor: 'rgba(255,255,255,0.12)',
+								border: '1px solid rgba(255,255,255,0.22)',
+								'&:hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
 							}}
 							onClick={handleOpenChecklistDialog}>
 							<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
@@ -497,7 +524,23 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 
 			{/* Collapsible Content */}
 			<Collapse in={isExpanded} timeout='auto' unmountOnExit>
-				<Box sx={{ boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' }}>
+				<Box
+					sx={{
+						background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
+						borderTop: '1px solid #e2e8f0',
+						position: 'relative',
+						pl: isMobileSize ? '0.65rem' : '1rem',
+						'&::before': {
+							content: '""',
+							position: 'absolute',
+							left: isMobileSize ? '1.35rem' : '1.85rem',
+							top: '0.5rem',
+							bottom: '0.5rem',
+							width: '2px',
+							borderRadius: '999px',
+							background: 'linear-gradient(180deg, #01435A22 0%, #1EC28B44 100%)',
+						},
+					}}>
 					{validLessons.map((lesson: LessonById, index) => {
 						let nextLessonId: string = '';
 						if (index !== validLessons.length - 1) {
@@ -522,6 +565,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 								isLastLessonOfChapter={isLastLessonOfChapter}
 								currentChapterHasChecklist={hasChecklistItems}
 								currentChapterChecklistCompleted={isChecklistCompleted}
+								isLastInChapter={index === validLessons.length - 1}
 							/>
 						);
 					})}

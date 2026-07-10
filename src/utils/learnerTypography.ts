@@ -1,9 +1,9 @@
 /** Shared typography for learner-facing lesson & question rich text. */
-export const LEARNER_TEXT_FONT_FAMILY = "'DM Sans', sans-serif";
+export const LEARNER_TEXT_FONT_FAMILY = "'Varela Round', sans-serif";
 
 export const LEARNER_RICH_TEXT_CLASS = 'learner-rich-text';
 
-/** Strip editor inline font-family so DM Sans applies consistently. */
+/** Strip editor inline font-family so Varela Round applies consistently. */
 export function stripInlineFontFamily(html: string): string {
 	if (!html) return '';
 

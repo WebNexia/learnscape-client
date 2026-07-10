@@ -50,6 +50,15 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		instructorHeader: string;
 		instructorPaper: string;
 		instructorSubmitBtn: string;
+		learnerSidebar: string;
+		learnerSidebarHover: string;
+		learnerSidebarActive: string;
+		learnerSidebarText: string;
+		learnerSidebarSecondaryText: string;
+		learnerHeader: string;
+		learnerHeaderBorder: string;
+		learnerHeaderText: string;
+		learnerContentBg: string;
 		primary: string;
 		secondary: string;
 		lessonInProgress: string;
@@ -79,8 +88,57 @@ const theme = createTheme({
 		success: {
 			main: '#1EC28B',
 		},
+		error: {
+			main: '#EF4444',
+			light: '#F87171',
+		},
+		info: {
+			main: '#3B82F6',
+		},
+	},
+	components: {
+		MuiButton: {
+			styleOverrides: {
+				root: {
+					borderRadius: 10,
+					transition: 'background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease',
+				},
+			},
+		},
+		MuiTableContainer: {
+			styleOverrides: {
+				root: {
+					backgroundColor: '#FFFFFF',
+					borderRadius: 12,
+					border: '1px solid #E2E8F0',
+					boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+				},
+			},
+		},
+		MuiTableCell: {
+			styleOverrides: {
+				root: {
+					borderBottom: '1px solid #F1F5F9',
+				},
+				head: {
+					backgroundColor: '#F8FAFC',
+					fontWeight: 600,
+					color: '#0F172A',
+				},
+			},
+		},
+		MuiTableRow: {
+			styleOverrides: {
+				root: {
+					'&:hover': {
+						backgroundColor: '#F8FAFC',
+					},
+				},
+			},
+		},
 	},
 	typography: {
+		fontFamily: 'Varela Round',
 		h1: {
 			fontSize: '5rem',
 			fontFamily: 'Permanent Marker, cursive',
@@ -88,45 +146,45 @@ const theme = createTheme({
 		},
 		h2: {
 			fontSize: '3rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
 			color: '#01435A',
 		},
 		h3: {
 			fontSize: '1.5rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
 			color: '#01435A',
 		},
 		h4: {
 			fontSize: '1.25rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
 			color: '#01435A',
 		},
 		h5: {
 			fontSize: '1.1rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
 			color: '#01435A',
 		},
 		h6: {
 			fontSize: '1rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
 			color: '#01435A',
 		},
 		body1: {
 			fontSize: '1rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
-			color: '#4D7B8B',
+			color: '#475569',
 		},
 		body2: {
 			fontSize: '0.85rem',
-			fontFamily: 'Poppins',
+			fontFamily: 'Varela Round',
 			fontWeight: 500,
-			color: '#4D7B8B',
+			color: '#64748B',
 		},
 	},
 	tabBtnAuth: {
@@ -152,7 +210,7 @@ const theme = createTheme({
 			main: '#01435A',
 		},
 		secondary: {
-			main: '#4D7B8B',
+			main: '#64748B',
 		},
 		common: {
 			main: '#FFFFFF', // White color
@@ -168,7 +226,7 @@ const theme = createTheme({
 		},
 	},
 	fontFamily: {
-		main: 'Poppins',
+		main: 'Varela Round',
 	},
 
 	border: {
@@ -185,6 +243,15 @@ const theme = createTheme({
 		instructorHeader: '#1C4F8B',
 		instructorPaper: '#0D3562',
 		instructorSubmitBtn: '#1D4ED8',
+		learnerSidebar: '#12344D',
+		learnerSidebarHover: 'rgba(255, 255, 255, 0.08)',
+		learnerSidebarActive: '#FFFFFF',
+		learnerSidebarText: '#F8FAFC',
+		learnerSidebarSecondaryText: '#CBD5E1',
+		learnerHeader: '#FFFFFF',
+		learnerHeaderBorder: '#E2E8F0',
+		learnerHeaderText: '#0F172A',
+		learnerContentBg: '#F8FAFC',
 		primary: '#01435A',
 		secondary: '#FFFF',
 		lessonInProgress: '#4D7B8B',

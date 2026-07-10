@@ -10,6 +10,7 @@ import { truncateText } from '../../../../utils/utilText';
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomCancelButton from '../../../forms/customButtons/CustomCancelButton';
 import theme from '../../../../themes';
+import { LEARNER_SAAS } from '../../../../constants/learnerSaasUi';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useLearnerPlatformAccess } from '../../../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../../../config/features';
@@ -35,12 +36,12 @@ const Topic = ({ topic }: TopicProps) => {
 				display: 'flex',
 				alignItems: 'center',
 				width: '100%',
-				height: isMobileSize ? '3.75rem' : '4.5rem',
-				borderBottom: '1px solid rgba(1, 67, 90, 0.06)',
-				padding: isMobileSize ? '0.1rem 0.5rem' : '0.35rem 0.75rem',
+				minHeight: isMobileSize ? '3.75rem' : '4.5rem',
+				borderBottom: `1px solid ${LEARNER_SAAS.borderLight}`,
+				padding: isMobileSize ? '0.5rem 0.75rem' : '0.65rem 1.25rem',
 				transition: 'background-color 0.2s ease',
 				'&:hover': {
-					backgroundColor: 'rgba(1, 67, 90, 0.06)',
+					backgroundColor: LEARNER_SAAS.contentBg,
 				},
 				'&:last-of-type': {
 					borderBottom: 'none',
@@ -79,29 +80,29 @@ const Topic = ({ topic }: TopicProps) => {
 							sx={{
 								cursor: 'pointer',
 								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								fontWeight: 500,
-								color: theme.palette.primary?.main || '#01435A',
+								fontWeight: 600,
+								color: LEARNER_SAAS.pageTitleColor,
 								transition: 'color 0.2s ease',
 								'&:hover': {
-									color: theme.textColor?.greenPrimary?.main || '#1EC28B',
+									color: theme.palette.primary?.main || '#01435A',
 									textDecoration: 'underline',
 								},
 							}}>
 							{isVerySmallScreen ? truncateText(topic.title, 15) : isMobileSize ? truncateText(topic.title, 35) : topic.title}
 						</Typography>
 					</Box>
-					<Box sx={{ display: 'flex', width: '50%' }}>
-						<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem', mr: '1rem' }}>
+					<Box sx={{ display: 'flex', width: '50%', gap: '0.5rem', flexWrap: 'wrap' }}>
+						<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem', color: LEARNER_SAAS.bodyText }}>
 							{topic?.userId?.username || 'Deactivated User'}
 						</Typography>
-						<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: 'gray' }}>
+						<Typography sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: LEARNER_SAAS.secondaryText }}>
 							{formatMessageTime(topic.createdAt)}
 						</Typography>
 					</Box>
 				</Box>
 			</Box>
 			<Box sx={{ flex: isVerySmallScreen ? 1.5 : 2 }}>
-				<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: LEARNER_SAAS.bodyText }}>
 					Replies: {topic.messageCount}
 				</Typography>
 			</Box>
@@ -109,10 +110,14 @@ const Topic = ({ topic }: TopicProps) => {
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mr: '0.75rem' }}>
 						<Box>
-							<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{topic?.lastMessage?.sender?.username}</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem', color: LEARNER_SAAS.bodyText }}>
+								{topic?.lastMessage?.sender?.username}
+							</Typography>
 						</Box>
 						<Box>
-							<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{formatMessageTime(topic?.lastMessage?.createdAt)}</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem', color: LEARNER_SAAS.secondaryText }}>
+								{formatMessageTime(topic?.lastMessage?.createdAt)}
+							</Typography>
 						</Box>
 					</Box>
 					<Box>

@@ -55,7 +55,7 @@ const Sidebar = () => {
 					? theme.bgColor?.adminSidebar
 					: user?.role === Roles.INSTRUCTOR
 						? theme.bgColor?.instructorSidebar
-						: theme.palette.primary.main,
+						: theme.bgColor?.learnerSidebar,
 				position: 'fixed',
 				left: 0,
 				zIndex: 10,
@@ -94,7 +94,8 @@ const Sidebar = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						justifyContent: 'flex-start',
-						alignItems: 'flex-start',
+						alignItems: 'stretch',
+						width: '100%',
 						marginTop: '1.5rem',
 					}}>
 					{hasAdminAccess && (
