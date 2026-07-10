@@ -27,7 +27,7 @@ interface LessonProps {
 	isLastInChapter?: boolean;
 }
 
-const lessonTypeLabel = (type: LessonType) => {
+const lessonTypeLabel = (type: string) => {
 	if (type === LessonType.INSTRUCTIONAL_LESSON) return 'Lecture';
 	if (type === LessonType.PRACTICE_LESSON) return 'Practice';
 	return 'Quiz';
@@ -175,8 +175,8 @@ const Lesson = ({
 				position: 'relative',
 				':hover': isAccessible
 					? {
-							backgroundColor: isLessonCompleted ? 'rgba(30, 194, 139, 0.12)' : '#f1f5f9',
-						}
+						backgroundColor: isLessonCompleted ? 'rgba(30, 194, 139, 0.12)' : '#f1f5f9',
+					}
 					: {},
 			}}
 			onClick={handleLessonClick}>

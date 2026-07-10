@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
 import theme from '../../../themes';
-import { ReactNode, useContext } from 'react';
+import { CSSProperties, ReactNode, useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../interfaces/enums';
@@ -11,11 +11,7 @@ import { useAuth } from '../../../hooks/useAuth';
 interface DashboardPagesLayoutProps {
 	children: ReactNode;
 	pageName: string;
-	customSettings?: {
-		justifyContent?: string;
-		alignItems?: string;
-		flexDirection?: string;
-	};
+	customSettings?: Pick<CSSProperties, 'justifyContent' | 'alignItems' | 'flexDirection'>;
 	showCopyRight?: boolean;
 }
 
