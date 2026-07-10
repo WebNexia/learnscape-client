@@ -41,6 +41,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
+import { getCourseAccessCheckoutCopy } from '../../../utils/courseAccessCheckoutCopy';
 
 const FONT = 'Varela Round';
 const INPUT_RADIUS = '0.5rem';
@@ -72,6 +73,7 @@ export default function CoursePaymentForm({
 		getPriceForCountry(course, resolvedCountryCode)?.amount === '' ||
 		getPriceForCountry(course, resolvedCountryCode)?.amount === '0';
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const checkoutCopy = getCourseAccessCheckoutCopy(course, 'tr');
 
 	let resolvedUserId = user?._id || '';
 	let resolvedOrgId = orgId;
@@ -80,6 +82,7 @@ export default function CoursePaymentForm({
 
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [agreed, setAgreed] = useState(false);
+	const [agreedWithdrawalWaiver, setAgreedWithdrawalWaiver] = useState(false);
 	const [cardBrand, setCardBrand] = useState('unknown');
 	const [errorMessage, setErrorMessage] = useState('');
 	const [email, setEmail] = useState('');
@@ -178,6 +181,12 @@ export default function CoursePaymentForm({
 		}
 		if (!agreed) {
 			setErrorMessage('Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.');
+			setIsProcessing(false);
+			setIsSubmitted(false);
+			return;
+		}
+		if (checkoutCopy.needsWithdrawalWaiver && !agreedWithdrawalWaiver) {
+			setErrorMessage(checkoutCopy.waiverRequiredError);
 			setIsProcessing(false);
 			setIsSubmitted(false);
 			return;
@@ -722,8 +731,34 @@ export default function CoursePaymentForm({
 										{' nı okudum ve kabul ediyorum.'}
 									</Typography>
 								}
-								sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' }, mb: 2 }}
+								sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' }, mb: checkoutCopy.needsWithdrawalWaiver || checkoutCopy.showCohortNotice ? 1 : 2 }}
 							/>
+							{checkoutCopy.showCohortNotice && (
+								<Typography
+									component="p"
+									sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.68rem' : '0.72rem', color: 'text.secondary', mb: 1, lineHeight: 1.6 }}>
+									{checkoutCopy.cohortNotice}
+								</Typography>
+							)}
+							{checkoutCopy.needsWithdrawalWaiver && (
+								<FormControlLabel
+									required
+									control={
+										<Checkbox
+											checked={agreedWithdrawalWaiver}
+											onChange={(e) => { setAgreedWithdrawalWaiver(e.target.checked); setErrorMessage(''); resetRecaptcha(); }}
+											size="small"
+											sx={{ color: 'rgba(0,0,0,0.6)', '&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' } }}
+										/>
+									}
+									label={
+										<Typography component="span" sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.68rem' : '0.72rem', color: 'text.secondary', lineHeight: 1.6 }}>
+											{checkoutCopy.withdrawalWaiverLabel}
+										</Typography>
+									}
+									sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' }, mb: 2 }}
+								/>
+							)}
 						</Box>
 					</Card>
 				</Grid>

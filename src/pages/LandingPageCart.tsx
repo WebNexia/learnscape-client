@@ -21,8 +21,10 @@ import theme from '../themes';
 import { COUNTRY_LIST } from '../data/countries';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { getDocumentCheckoutCopy } from '../utils/documentCheckoutCopy';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+const documentCheckoutCopy = getDocumentCheckoutCopy('tr');
 
 function parseAmount(amount: string): number {
 	if (!amount || amount.toLowerCase() === 'free') return 0;
@@ -78,6 +80,7 @@ export default function LandingPageCart() {
 	const [checkoutGuestCountry, setCheckoutGuestCountry] = useState('TR');
 	const [checkoutGuestPhone, setCheckoutGuestPhone] = useState('');
 	const [agreeTermsAndPrivacy, setAgreeTermsAndPrivacy] = useState(false);
+	const [agreeDocumentWithdrawalWaiver, setAgreeDocumentWithdrawalWaiver] = useState(false);
 	const [agreeMarketing, setAgreeMarketing] = useState(false);
 
 	const [cartPaymentOpen, setCartPaymentOpen] = useState(false);
@@ -121,6 +124,10 @@ export default function LandingPageCart() {
 		}
 		if (!agreeTermsAndPrivacy) {
 			setError('Ödemeye devam etmek için Kullanıcı Sözleşmesi ve Gizlilik Politikasını kabul etmeniz gerekmektedir.');
+			return;
+		}
+		if (documentItems.length > 0 && documentCheckoutCopy.needsWithdrawalWaiver && !agreeDocumentWithdrawalWaiver) {
+			setError(documentCheckoutCopy.waiverRequiredError);
 			return;
 		}
 		const currencyKeys = Object.entries(getCartTotals(documentItems, consultationItems))
@@ -568,6 +575,30 @@ export default function LandingPageCart() {
 													}
 													sx={{ alignItems: 'center', '& .MuiFormControlLabel-label': { mt: '2px' } }}
 												/>
+												{documentItems.length > 0 && documentCheckoutCopy.needsWithdrawalWaiver && (
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={agreeDocumentWithdrawalWaiver}
+																onChange={(e) => {
+																	setAgreeDocumentWithdrawalWaiver(e.target.checked);
+																	setError(null);
+																}}
+																size="small"
+																sx={{
+																	'color': 'rgba(0, 0, 0, 0.6)',
+																	'&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' },
+																}}
+															/>
+														}
+														label={
+															<Typography component="span" sx={{ fontFamily: 'Varela Round', fontSize: isMobileSize ? '0.75rem' : '0.8rem', color: 'text.secondary' }}>
+																{documentCheckoutCopy.withdrawalWaiverLabel}
+															</Typography>
+														}
+														sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
+													/>
+												)}
 												<FormControlLabel
 													control={
 														<Checkbox

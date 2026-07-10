@@ -1,4 +1,5 @@
 import { Box, DialogActions, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -16,13 +17,16 @@ const DIALOG_BORDERRADIUS = '1.5rem';
 const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
 const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 
+const linkSx = { color: '#0052a3', textDecoration: 'underline', fontFamily: DIALOG_FONT };
+
 const DocumentTermsConditions = ({ termsConditionsModalOpen, setTermsConditionsModalOpen, fromHomePage }: DocumentTermsConditionsProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+	const isTr = fromHomePage !== false;
 
 	return (
 		<CustomDialog
-			title={fromHomePage ? 'Şartlar ve Koşullar' : 'Terms and Conditions'}
+			title={isTr ? 'Dijital Kaynak Şartları' : 'Digital Resource Terms'}
 			titleSx={{
 				fontSize: '1.5rem',
 				fontWeight: 600,
@@ -53,43 +57,50 @@ const DocumentTermsConditions = ({ termsConditionsModalOpen, setTermsConditionsM
 						fontSize: isMobileSize ? '0.9rem' : '1rem',
 						fontFamily: DIALOG_FONT,
 						color: '#223354',
-						lineHeight: 1.6,
-						whiteSpace: 'pre-line',
+						lineHeight: 1.7,
 					}}>
-					{fromHomePage
-						? `1. Hizmet Kullanımı
-Bu platform üzerinden satın alınan kaynaklar, kişisel kullanım için tasarlanmıştır. Kaynakların ticari amaçlarla kullanılması yasaktır.
-
-2. Telif Hakkı
-Tüm kaynaklar telif hakkı ile korunmaktadır. Kaynakların kopyalanması, dağıtılması veya başkalarıyla paylaşılması yasaktır.
-
-3. Ödeme ve İade
-Ödemeler güvenli ödeme sistemleri üzerinden gerçekleştirilir. Satın alınan kaynaklar için iade politikası bulunmamaktadır.
-
-4. Gizlilik
-Kişisel bilgileriniz gizlilik politikamıza uygun olarak korunmaktadır.
-
-5. Sorumluluk Reddi
-Platform üzerinden sağlanan kaynakların doğruluğu ve güncelliği garanti edilmemektedir.`
-						: `1. Service Usage
-Resources purchased through this platform are designed for personal use. Commercial use of resources is prohibited.
-
-2. Copyright
-All resources are protected by copyright. Copying, distributing, or sharing resources with others is prohibited.
-
-3. Payment and Refund
-Payments are processed through secure payment systems. There is no refund policy for purchased resources.
-
-4. Privacy
-Your personal information is protected in accordance with our privacy policy.
-
-5. Disclaimer
-The accuracy and currency of resources provided through the platform are not guaranteed.`}
+					{isTr ? (
+						<>
+							Bu dijital kaynaklar yalnızca kişisel, ticari olmayan kullanım içindir. İçerikler kopyalanamaz, dağıtılamaz veya üçüncü kişilerle paylaşılamaz. Tüm kaynaklar telif hakkı ile korunmaktadır.
+							<br />
+							<br />
+							Satın alma sonrasında dijital kaynağa anında erişim sağlanır. Ödeme adımında dijital içeriğe hemen erişim talep ettiğinizi ve hizmetin başlamasıyla birlikte 14 günlük cayma hakkından feragat ettiğinizi onaylamanız gerekir. Genel kural olarak dijital kaynaklar iade edilmez; teknik erişim sorunu, mükerrer ödeme veya sistemsel hata durumlarında iade değerlendirilebilir.
+							<br />
+							<br />
+							Tam şartlar için{' '}
+							<Link to='/terms' style={linkSx} onClick={() => setTermsConditionsModalOpen(false)}>
+								Kullanıcı Sözleşmesi
+							</Link>{' '}
+							(Bölüm 4.3) ve{' '}
+							<Link to='/privacy-policy' style={linkSx} onClick={() => setTermsConditionsModalOpen(false)}>
+								Gizlilik Politikası
+							</Link>
+							&apos;nı inceleyin.
+						</>
+					) : (
+						<>
+							These digital resources are for personal, non-commercial use only. Content may not be copied, distributed, or shared with third parties. All resources are protected by copyright.
+							<br />
+							<br />
+							Access is granted immediately after purchase. At checkout you must confirm that you request immediate access to digital content and waive your 14-day right of withdrawal once the service has begun. As a general rule, digital resources are non-refundable; refunds may be considered for technical access problems, duplicate payment, or system errors.
+							<br />
+							<br />
+							For full terms, see the{' '}
+							<Link to='/terms' style={linkSx} onClick={() => setTermsConditionsModalOpen(false)}>
+								User Agreement
+							</Link>{' '}
+							(Section 4.3) and{' '}
+							<Link to='/privacy-policy' style={linkSx} onClick={() => setTermsConditionsModalOpen(false)}>
+								Privacy Policy
+							</Link>
+							.
+						</>
+					)}
 				</Typography>
 			</Box>
 			<DialogActions>
 				<CustomCancelButton onClick={() => setTermsConditionsModalOpen(false)} sx={{ margin: '0 1rem 1rem 0', fontFamily: DIALOG_FONT }}>
-					Kapat
+					{isTr ? 'Kapat' : 'Close'}
 				</CustomCancelButton>
 			</DialogActions>
 		</CustomDialog>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GEO_CACHE_SESSION_KEY, hasOptionalCookieConsent } from '../utils/cookieConsentStorage';
 
 interface GeoLocation {
 	countryCode: string;
@@ -35,11 +36,11 @@ const defaultGeo: GeoLocation = {
 	query: '',
 };
 
-const GEO_CACHE_KEY = 'learnscape_geo_v1';
+const GEO_CACHE_KEY = GEO_CACHE_SESSION_KEY;
 const GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function readGeoCache(): GeoLocation | null {
-	if (typeof window === 'undefined') return null;
+	if (typeof window === 'undefined' || !hasOptionalCookieConsent()) return null;
 	try {
 		const raw = sessionStorage.getItem(GEO_CACHE_KEY);
 		if (!raw) return null;
@@ -54,7 +55,7 @@ function readGeoCache(): GeoLocation | null {
 }
 
 function writeGeoCache(location: GeoLocation) {
-	if (typeof window === 'undefined') return;
+	if (typeof window === 'undefined' || !hasOptionalCookieConsent()) return;
 	try {
 		sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ location, cachedAt: Date.now() }));
 	} catch {
@@ -87,6 +88,10 @@ function fetchGeoLocationOnce(): Promise<GeoLocation> {
 	}
 
 	geoLocationPromise = (async () => {
+		if (!hasOptionalCookieConsent()) {
+			return getBrowserFallbackLocation() ?? defaultGeo;
+		}
+
 		const isLocalhost =
 			typeof window !== 'undefined' &&
 			(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');

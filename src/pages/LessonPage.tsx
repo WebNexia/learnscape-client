@@ -1102,25 +1102,20 @@ const LessonPage = () => {
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
-							alignItems: 'center',
 							margin: isMobileSize ? '7rem 0 1rem 0' : '9rem 0 2rem 0',
 							width: '100%',
-							height: '22rem',
 						}}>
 						<Box
 							sx={{
-								height: '100%',
-								flex: 1,
-								display: 'flex',
-								justifyContent: 'center',
-								alignItems: 'flex-start',
+								width: isSmallScreen ? '80%' : isRotatedMedium ? '75%' : '55%',
+								aspectRatio: '16 / 9',
 								ml: isSmallScreen ? '1rem' : '0rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 							}}>
 							<UniversalVideoPlayer
 								url={lesson.videoUrl}
-								width={isSmallScreen ? '80%' : isRotatedMedium ? '75%' : '55%'}
+								width='100%'
 								height='100%'
-								style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)' }}
 								controls
 							/>
 						</Box>

@@ -251,170 +251,170 @@ const ResourceItems = () => {
 						<ResourcesAccessMessage />
 					) : (
 						<>
-					<FilterSearchRow
-						filterValue={filterValue}
-						onFilterChange={handleFilterChange}
-						filterOptions={[
-							{ value: '', label: 'All Resources' },
-						]}
-						filterPlaceholder='Filter Resources'
-						searchValue={searchValue}
-						onSearchChange={setSearchValue}
-						onSearch={handleSearch}
-						onReset={resetAll}
-						searchPlaceholder='Search in name'
-						isSearchLoading={isSearchLoading}
-						isSearchActive={isSearchActive}
-						searchResultsTotalItems={searchResultsTotalItems}
-						totalItems={itemsTotalItems || items?.length || 0}
-						searchedValue={searchedValue}
-						onResetSearch={resetSearch}
-						onResetFilter={resetFilter}
-					actionButtons={[
-						{
-							label: isMobileSize ? 'Back' : 'Resources',
-							onClick: () => {
-								// Determine base path based on current route
-								let basePath = '/admin/resources';
-								if (location.pathname.includes('/instructor')) {
-									basePath = '/instructor/resources';
-								} else if (location.pathname.includes('/resources') && !location.pathname.includes('/admin')) {
-									basePath = '/resources';
-								}
-								setCurrentFolderId(null);
-								navigate(basePath);
-							},
-							startIcon: <ArrowBack />,
-						},
-						...(canEdit
-							? [
+							<FilterSearchRow
+								filterValue={filterValue}
+								onFilterChange={handleFilterChange}
+								filterOptions={[
+									{ value: '', label: 'All Resources' },
+								]}
+								filterPlaceholder='Filter Resources'
+								searchValue={searchValue}
+								onSearchChange={setSearchValue}
+								onSearch={handleSearch}
+								onReset={resetAll}
+								searchPlaceholder='Search in name'
+								isSearchLoading={isSearchLoading}
+								isSearchActive={isSearchActive}
+								searchResultsTotalItems={searchResultsTotalItems}
+								totalItems={itemsTotalItems || items?.length || 0}
+								searchedValue={searchedValue}
+								onResetSearch={resetSearch}
+								onResetFilter={resetFilter}
+								actionButtons={[
 									{
-										label: isMobileSize ? 'Resource' : 'Add Resource',
+										label: isMobileSize ? 'Back' : 'Resources',
 										onClick: () => {
-											setCurrentItem({ type: 'file', folderId });
-											setIsCreateItemOpen(true);
+											// Determine base path based on current route
+											let basePath = '/admin/resources';
+											if (location.pathname.includes('/instructor')) {
+												basePath = '/instructor/resources';
+											} else if (location.pathname.includes('/resources') && !location.pathname.includes('/admin')) {
+												basePath = '/resources';
+											}
+											setCurrentFolderId(null);
+											navigate(basePath);
 										},
-										startIcon: <Add />,
+										startIcon: <ArrowBack />,
 									},
-								]
-							: []),
-					]}
-						isSticky={true}
-					/>
+									...(canEdit
+										? [
+											{
+												label: isMobileSize ? 'Resource' : 'Add Resource',
+												onClick: () => {
+													setCurrentItem({ type: 'file', folderId });
+													setIsCreateItemOpen(true);
+												},
+												startIcon: <Add />,
+											},
+										]
+										: []),
+								]}
+								isSticky={true}
+							/>
 
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							alignItems: 'center',
-							padding: isMobileSize ? '0rem 2rem 2rem 2rem' : '0rem 2rem 2rem 2rem',
-							width: '100%',
-							mt:'-2rem'
-						}}>
-					
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									padding: isMobileSize ? '0rem 2rem 2rem 2rem' : '0rem 2rem 2rem 2rem',
+									width: '100%',
+									mt: '-2rem'
+								}}>
 
-						{/* Items List */}
-						{itemsLoading || isSearchLoading ? (
-							<ResourcesSkeleton isItems={true} />
-						) : itemsError ? (
-							<Alert severity='error'>{itemsError}</Alert>
-						) : sortedItems.length === 0 ? (
-							<Box sx={{ p: '5rem 2rem', textAlign: 'center', borderRadius: 1 }}>
-								<Typography variant='body2' color='text.secondary'>
-									{isSearchActive ? 'No items found matching your search criteria.' : 'No items in this folder. Add your first item.'}
-								</Typography>
-							</Box>
-						) : (
-							<Grid container spacing={3} sx={{ mt: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-								{sortedItems.map((item) => (
-									<Grid item xs={6} sm={4} md={3} lg={2.4} key={item._id} display='flex' justifyContent='center'>
-										<ResourceItemCard
-											item={item}
-											onEdit={canEdit ? (e) => {
-												e.stopPropagation();
-												setCurrentItem(item);
-												setIsEditItemOpen(true);
-											} : undefined}
-											onDelete={canEdit ? (e) => {
-												e.stopPropagation();
-												setItemToDelete(item);
-												setIsDeleteItemOpen(true);
-											} : undefined}
-											onView={() => {
-												if (item.url) {
-													window.open(item.url, '_blank', 'noopener,noreferrer');
-												}
-											}}
-										/>
+
+								{/* Items List */}
+								{itemsLoading || isSearchLoading ? (
+									<ResourcesSkeleton isItems={true} />
+								) : itemsError ? (
+									<Alert severity='error'>{itemsError}</Alert>
+								) : sortedItems.length === 0 ? (
+									<Box sx={{ p: '5rem 2rem', textAlign: 'center', borderRadius: 1 }}>
+										<Typography variant='body2' color='text.secondary'>
+											{isSearchActive ? 'No items found matching your search criteria.' : 'No items in this folder. Add your first item.'}
+										</Typography>
+									</Box>
+								) : (
+									<Grid container spacing={3} sx={{ mt: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+										{sortedItems.map((item) => (
+											<Grid item xs={6} sm={4} md={3} lg={2.4} key={item._id} display='flex' justifyContent='center'>
+												<ResourceItemCard
+													item={item}
+													onEdit={canEdit ? (e) => {
+														e.stopPropagation();
+														setCurrentItem(item);
+														setIsEditItemOpen(true);
+													} : undefined}
+													onDelete={canEdit ? (e) => {
+														e.stopPropagation();
+														setItemToDelete(item);
+														setIsDeleteItemOpen(true);
+													} : undefined}
+													onView={() => {
+														if (item.url) {
+															window.open(item.url, '_blank', 'noopener,noreferrer');
+														}
+													}}
+												/>
+											</Grid>
+										))}
 									</Grid>
-								))}
-							</Grid>
-						)}
-						<Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mt: '4rem' }}>
-						<CustomTablePagination count={itemsNumberOfPages} page={itemsCurrentPage} onChange={handlePageChange} />
-						</Box>
-					</Box>
+								)}
+								<Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mt: '4rem' }}>
+									<CustomTablePagination count={itemsNumberOfPages} page={itemsCurrentPage} onChange={handlePageChange} />
+								</Box>
+							</Box>
 						</>
 					)}
 				</Box>
 
 				{/* Dialogs */}
 				{!resourcesAccessDenied && (
-				<>
-				<CreateResourceItemDialog
-					isOpen={isCreateItemOpen}
-					onClose={() => {
-						setIsCreateItemOpen(false);
-						setCurrentItem(null);
-						setDuplicateNameError(null);
-					}}
-					onSubmit={handleCreateItem}
-					item={currentItem}
-					setItem={setCurrentItem}
-					folderId={folderId || ''}
-					isCreating={isCreating}
-					duplicateNameError={duplicateNameError}
-					onClearError={() => setDuplicateNameError(null)}
-				/>
+					<>
+						<CreateResourceItemDialog
+							isOpen={isCreateItemOpen}
+							onClose={() => {
+								setIsCreateItemOpen(false);
+								setCurrentItem(null);
+								setDuplicateNameError(null);
+							}}
+							onSubmit={handleCreateItem}
+							item={currentItem}
+							setItem={setCurrentItem}
+							folderId={folderId || ''}
+							isCreating={isCreating}
+							duplicateNameError={duplicateNameError}
+							onClearError={() => setDuplicateNameError(null)}
+						/>
 
-				<EditResourceItemDialog
-					isOpen={isEditItemOpen}
-					onClose={() => {
-						setIsEditItemOpen(false);
-						setCurrentItem(null);
-						setDuplicateNameError(null);
-					}}
-					onSubmit={handleUpdateItem}
-					item={currentItem as ResourceItem}
-					setItem={setCurrentItem}
-					isUpdating={isUpdating}
-					duplicateNameError={duplicateNameError}
-					onClearError={() => setDuplicateNameError(null)}
-				/>
+						<EditResourceItemDialog
+							isOpen={isEditItemOpen}
+							onClose={() => {
+								setIsEditItemOpen(false);
+								setCurrentItem(null);
+								setDuplicateNameError(null);
+							}}
+							onSubmit={handleUpdateItem}
+							item={currentItem as ResourceItem}
+							setItem={setCurrentItem}
+							isUpdating={isUpdating}
+							duplicateNameError={duplicateNameError}
+							onClearError={() => setDuplicateNameError(null)}
+						/>
 
-				{/* Delete Confirmation */}
-				<CustomDialog title='Delete Resource' openModal={isDeleteItemOpen} closeModal={() => setIsDeleteItemOpen(false)} maxWidth='xs'>
-					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-							Are you sure you want to delete "{itemToDelete?.title}"?
-						</Typography>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
-							This action cannot be undone.
-						</Typography>
-					</DialogContent>
-					<CustomDialogActions
-						onCancel={() => setIsDeleteItemOpen(false)}
-						deleteBtn={true}
-						onDelete={() => {
-							handleDeleteItem();
-							setIsDeleteItemOpen(false);
-						}}
-						disableBtn={isDeleting}
-						isSubmitting={isDeleting}
-						actionSx={{ mb: '0.5rem' }}
-					/>
-				</CustomDialog>
-				</>
+						{/* Delete Confirmation */}
+						<CustomDialog title='Delete Resource' openModal={isDeleteItemOpen} closeModal={() => setIsDeleteItemOpen(false)} maxWidth='xs'>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+									Are you sure you want to delete "{itemToDelete?.title}"?
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+									This action cannot be undone.
+								</Typography>
+							</DialogContent>
+							<CustomDialogActions
+								onCancel={() => setIsDeleteItemOpen(false)}
+								deleteBtn={true}
+								onDelete={() => {
+									handleDeleteItem();
+									setIsDeleteItemOpen(false);
+								}}
+								disableBtn={isDeleting}
+								isSubmitting={isDeleting}
+								actionSx={{ mb: '0.5rem' }}
+							/>
+						</CustomDialog>
+					</>
 				)}
 
 				{/* Snackbar */}

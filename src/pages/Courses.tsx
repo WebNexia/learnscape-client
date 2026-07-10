@@ -18,7 +18,8 @@ const Courses = () => {
 
 	// Get user course data from context for enrollment and progress tracking
 	const userCourseData: UserCoursesIdsWithCourseIds[] = userCoursesData || [];
-	const enrolledCourseIds = userCourseData?.map((data) => data.courseId) || [];
+	const activeUserCourseData = userCourseData.filter((data) => data.isActive !== false);
+	const enrolledCourseIds = activeUserCourseData.map((data) => data.courseId);
 
 	// Dialog state for course info
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
@@ -172,7 +173,8 @@ const Courses = () => {
 						filteredCourses?.map((course: SingleCourse) => {
 							const isEnrolled: boolean = enrolledCourseIds.includes(course._id);
 
-							const userCourseId: string = userCourseData?.filter((data) => data?.courseId === course._id)?.[0]?.userCourseId || '';
+							const userCourseId: string =
+								userCourseData?.find((data) => data?.courseId === course._id && data.isActive !== false)?.userCourseId || '';
 
 							const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined = userCourseData?.find(
 								(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
