@@ -529,11 +529,10 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
 						borderTop: '1px solid #e2e8f0',
 						position: 'relative',
-						pl: isMobileSize ? '0.65rem' : '1rem',
 						'&::before': {
 							content: '""',
 							position: 'absolute',
-							left: isMobileSize ? '1.35rem' : '1.85rem',
+							left: isMobileSize ? '0.7rem' : '0.85rem',
 							top: '0.5rem',
 							bottom: '0.5rem',
 							width: '2px',
