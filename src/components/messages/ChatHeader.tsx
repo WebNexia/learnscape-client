@@ -5,6 +5,7 @@ import { useState } from 'react';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { useAuth } from '../../hooks/useAuth';
+import { LEARNER_SAAS } from '../../constants/learnerSaasUi';
 
 interface ChatHeaderProps {
 	activeChat: ChatType | null;
@@ -90,12 +91,12 @@ const ChatHeader = ({
 				sx={{
 					display: 'flex',
 					alignItems: 'center',
-					borderBottom: '1px solid rgba(1, 67, 90, 0.1)',
+					borderBottom: `1px solid ${LEARNER_SAAS.border}`,
 					width: '100%',
 					height: '4rem',
 					flexShrink: 0,
-					backgroundColor: '#ffffff',
-					boxShadow: '0 2px 8px rgba(1, 67, 90, 0.06)',
+					backgroundColor: LEARNER_SAAS.cardBg,
+					boxShadow: LEARNER_SAAS.cardShadow,
 				}}>
 				<Box sx={{ display: 'flex', alignItems: 'center', margin: isMobileSize ? '0 0.5rem' : '0 1.5rem', width: '100%' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>

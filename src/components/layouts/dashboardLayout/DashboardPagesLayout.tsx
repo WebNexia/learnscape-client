@@ -4,6 +4,9 @@ import Sidebar from './Sidebar';
 import theme from '../../../themes';
 import { ReactNode, useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { Roles } from '../../../interfaces/enums';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface DashboardPagesLayoutProps {
 	children: ReactNode;
@@ -18,6 +21,10 @@ interface DashboardPagesLayoutProps {
 
 const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRight }: DashboardPagesLayoutProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
+	const isLearner = !hasAdminAccess && user?.role === Roles.USER;
+	const contentBackground = isLearner ? theme.bgColor?.learnerContentBg : theme.palette.secondary.main || '#FFFF';
 
 	return (
 		<Box
@@ -45,7 +52,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRigh
 						justifyContent: customSettings?.justifyContent || 'center',
 						alignItems: customSettings?.alignItems || 'center',
 						minHeight: 'calc(100vh - 4rem)',
-						backgroundColor: theme.palette.secondary.main || '#FFFF',
+						backgroundColor: contentBackground,
 						overflowY: 'auto',
 						position: 'relative',
 					}}>

@@ -6,6 +6,7 @@ import { formatMessageTime } from '../../utils/formatTime';
 import { Chat as ChatType } from '../../pages/Messages';
 import { useAuth } from '../../hooks/useAuth';
 import { useLearnerPlatformAccess } from '../../hooks/useLearnerPlatformAccess';
+import { LEARNER_SAAS } from '../../constants/learnerSaasUi';
 
 interface ChatListProps {
 	filteredChatList: ChatType[];
@@ -50,6 +51,7 @@ const ChatList = ({
 }: ChatListProps) => {
 	const { hasAdminAccess } = useAuth();
 	const hasPlatformAccess = useLearnerPlatformAccess();
+	const isActiveChat = (chatId: string) => chatId === activeChatId;
 	return (
 		<>
 			{!isChatsListVisible && isVerySmallScreen && (
@@ -74,9 +76,9 @@ const ChatList = ({
 						display: 'flex',
 						flexDirection: 'column',
 						flex: 3,
-						borderRight: '1px solid rgba(1, 67, 90, 0.1)',
+						borderRight: `1px solid ${LEARNER_SAAS.border}`,
 						padding: isMobileSize ? '0 0rem 0 0.5rem' : '0 0rem 0 1rem',
-						boxShadow: '2px 0 12px rgba(1, 67, 90, 0.06)',
+						boxShadow: LEARNER_SAAS.cardShadow,
 					}}>
 					<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
 						<Box sx={{ flex: 8 }}>
@@ -140,24 +142,22 @@ const ChatList = ({
 										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 										sx={{
 											'display': 'flex',
-											'border': '1px solid rgba(1, 67, 90, 0.06)',
+											'border': `1px solid ${LEARNER_SAAS.borderLight}`,
 											'borderRight': 'none',
 											'borderBottom': 'none',
-											'transition': 'background-color 0.2s ease',
+											'transition': 'background-color 0.2s ease, border-color 0.2s ease',
 											'&:hover': {
-												backgroundColor: chat.chatId === activeChatId ? undefined : 'rgba(1, 67, 90, 0.03)',
+												backgroundColor: isActiveChat(chat.chatId) ? undefined : LEARNER_SAAS.contentBg,
 											},
 											'&:last-of-type': {
-												borderBottom: '1px solid rgba(1, 67, 90, 0.06)',
+												borderBottom: `1px solid ${LEARNER_SAAS.borderLight}`,
 												borderBottomLeftRadius: '0.5rem',
 											},
 											'&:first-of-type': {
 												borderTopLeftRadius: '0.5rem',
 											},
-											'backgroundImage': chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
-											'backgroundRepeat': 'no-repeat',
-											'backgroundSize': 'cover',
-											'backgroundPosition': 'center',
+											'backgroundColor': isActiveChat(chat.chatId) ? LEARNER_SAAS.cardBg : undefined,
+											'borderLeft': isActiveChat(chat.chatId) ? `3px solid ${theme.bgColor?.learnerSidebar}` : undefined,
 										}}>
 										<Box
 											sx={{
@@ -210,8 +210,9 @@ const ChatList = ({
 														sx={{
 															display: 'flex',
 															alignItems: 'center',
-															color: chat.chatId === activeChatId ? theme.textColor?.common.main : null,
+															color: isActiveChat(chat.chatId) ? LEARNER_SAAS.pageTitleColor : undefined,
 															fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+															fontWeight: isActiveChat(chat.chatId) ? 600 : 500,
 														}}>
 														{chatDisplayName}
 														{(() => {
@@ -230,7 +231,7 @@ const ChatList = ({
 															<Typography
 																variant='caption'
 																sx={{
-																	color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray',
+																	color: LEARNER_SAAS.secondaryText,
 																	fontSize: isMobileSize ? '0.55rem' : '0.7rem',
 																	marginLeft: '0.5rem',
 																}}>
@@ -247,7 +248,7 @@ const ChatList = ({
 												<Typography
 													variant='caption'
 													sx={{
-														color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray',
+														color: LEARNER_SAAS.secondaryText,
 														fontSize: isMobileSize ? '0.6rem' : undefined,
 													}}>
 													{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
@@ -274,7 +275,7 @@ const ChatList = ({
 													<Cancel
 														fontSize='small'
 														sx={{
-															color: chat.chatId === activeChatId ? theme.textColor?.common.main : theme.palette.primary.main,
+															color: isActiveChat(chat.chatId) ? LEARNER_SAAS.secondaryText : theme.palette.primary.main,
 															fontSize: isMobileSize ? '0.8rem' : undefined,
 														}}
 													/>
@@ -283,7 +284,7 @@ const ChatList = ({
 											<Typography
 												variant='caption'
 												sx={{
-													color: chat.chatId !== activeChatId ? 'gray' : '#fff',
+													color: LEARNER_SAAS.secondaryText,
 													fontSize: isMobileSize ? '0.55rem' : '0.65rem',
 													mt: '0.25rem',
 												}}>

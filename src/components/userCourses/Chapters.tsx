@@ -118,75 +118,64 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 		});
 	}, [course, expandAndScrollToChapter]);
 
-	let visibleChapterIndex = -1;
-
 	return (
 		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
 			{/* Chapter Controls Header */}
 			{validChapters.length > 1 && (
-				<Box sx={{ marginBottom: '1.5rem' }}>
-					<Stack
-						direction='row'
-						justifyContent='flex-end'
-						alignItems='center'
-						spacing={2}
-						sx={{
-							borderRadius: '0.35rem',
-						}}>
-						<Stack direction='row' spacing={1}>
-							<Button
-								variant='outlined'
-								size='small'
-								startIcon={<ExpandMore />}
-								onClick={handleExpandAll}
-								disabled={allExpanded}
-								sx={{
-									'fontSize': isMobileSize ? '0.55rem' : '0.7rem',
-									'padding': isMobileSize ? '0.25rem 0.5rem' : '0.5rem 1rem',
-									'minWidth': 'auto',
-									'borderColor': theme.palette.primary.main,
-									'color': theme.palette.primary.main,
-									'fontWeight': 600,
-									'&:hover': {
-										backgroundColor: theme.palette.primary.main,
-										color: 'white',
-										borderColor: theme.palette.primary.main,
-									},
-									'&:disabled': {
-										opacity: 0.4,
-										color: theme.palette.text.disabled,
-										borderColor: theme.palette.text.disabled,
-									},
-								}}>
-								Expand All
-							</Button>
-							<Button
-								variant='outlined'
-								size='small'
-								startIcon={<ExpandLess />}
-								onClick={handleCollapseAll}
-								disabled={!allExpanded}
-								sx={{
-									'fontSize': isMobileSize ? '0.55rem' : '0.7rem',
-									'padding': isMobileSize ? '0.25rem 0.5rem' : '0.5rem 1rem',
-									'minWidth': 'auto',
-									'borderColor': theme.palette.primary.main,
-									'color': theme.palette.primary.main,
-									'fontWeight': 600,
-									'&:hover': {
-										backgroundColor: theme.palette.primary.main,
-										color: 'white',
-										borderColor: theme.palette.primary.main,
-									},
-									'&:disabled': {
-										opacity: 0.4,
-										color: theme.palette.text.disabled,
-										borderColor: theme.palette.text.disabled,
-									},
-								}}>
-								Collapse All
-							</Button>
-						</Stack>
+				<Box sx={{ marginBottom: '1.25rem' }}>
+					<Stack direction='row' justifyContent='flex-end' alignItems='center' spacing={1.5}>
+						<Button
+							variant='outlined'
+							size='small'
+							startIcon={<ExpandMore />}
+							onClick={handleExpandAll}
+							disabled={allExpanded}
+							sx={{
+								fontSize: isMobileSize ? '0.62rem' : '0.72rem',
+								padding: isMobileSize ? '0.35rem 0.75rem' : '0.45rem 1rem',
+								minWidth: 'auto',
+								borderRadius: '999px',
+								borderColor: 'rgba(1, 67, 90, 0.35)',
+								color: theme.palette.primary.main,
+								fontWeight: 600,
+								backgroundColor: '#ffffff',
+								boxShadow: '0 2px 8px rgba(1, 67, 90, 0.08)',
+								'&:hover': {
+									backgroundColor: theme.palette.primary.main,
+									color: 'white',
+									borderColor: theme.palette.primary.main,
+									boxShadow: '0 4px 12px rgba(1, 67, 90, 0.18)',
+								},
+								'&:disabled': { opacity: 0.45 },
+							}}>
+							Expand All
+						</Button>
+						<Button
+							variant='outlined'
+							size='small'
+							startIcon={<ExpandLess />}
+							onClick={handleCollapseAll}
+							disabled={!allExpanded}
+							sx={{
+								fontSize: isMobileSize ? '0.62rem' : '0.72rem',
+								padding: isMobileSize ? '0.35rem 0.75rem' : '0.45rem 1rem',
+								minWidth: 'auto',
+								borderRadius: '999px',
+								borderColor: 'rgba(1, 67, 90, 0.35)',
+								color: theme.palette.primary.main,
+								fontWeight: 600,
+								backgroundColor: '#ffffff',
+								boxShadow: '0 2px 8px rgba(1, 67, 90, 0.08)',
+								'&:hover': {
+									backgroundColor: theme.palette.primary.main,
+									color: 'white',
+									borderColor: theme.palette.primary.main,
+									boxShadow: '0 4px 12px rgba(1, 67, 90, 0.18)',
+								},
+								'&:disabled': { opacity: 0.45 },
+							}}>
+							Collapse All
+						</Button>
 					</Stack>
 				</Box>
 			)}
@@ -198,7 +187,6 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 				course?.chapterIds.length !== 0 &&
 				course?.chapters?.map((chapter, index) => {
 					if (chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) {
-						visibleChapterIndex += 1;
 						let nextChapterFirstLessonId: string = '';
 						// Find the first valid lesson in the next available chapter (skip empty/null chapters)
 						for (let nextIndex = index + 1; nextIndex < course.chapters.length; nextIndex++) {
@@ -218,7 +206,6 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 								course={course}
 								isEnrolledStatus={isEnrolledStatus}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
-								isAlternateHeaderTone={visibleChapterIndex % 2 === 1}
 							/>
 						);
 					}

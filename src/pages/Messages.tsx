@@ -34,7 +34,7 @@ import { useGroupChatManagement } from '../hooks/useGroupChatManagement';
 import { useChatNavigation } from '../hooks/useChatNavigation';
 import { useAuth } from '../hooks/useAuth';
 import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
-import { cleanupGroupChatImages, generateGroupChatId } from '../utils/groupImageStorage';
+import { LEARNER_SAAS } from '../constants/learnerSaasUi';
 
 export interface Message {
 	id: string;
@@ -473,10 +473,7 @@ const Messages = () => {
 								flexGrow: 1,
 								overflowY: 'auto',
 								padding: '1rem',
-								backgroundImage: `linear-gradient(rgba(80, 144, 166, 0.9), rgba(103, 180, 207, 0.95)), url('https://img.freepik.com/premium-vector/dialogue-balloon-chat-bubble-icons-seamless-pattern-textile-pattern-wrapping-paper-linear-vector-print-fabric-seamless-background-wallpaper-backdrop-with-speak-bubbles-chat-message-frame_8071-58894.jpg?w=1060')`,
-								backgroundRepeat: 'repeat',
-								backgroundSize: 'contain',
-								backgroundPosition: 'center',
+								backgroundColor: LEARNER_SAAS.contentBg,
 								maxHeight: '85vh',
 								position: 'relative',
 								borderLeft: 'none',
@@ -625,11 +622,11 @@ const Messages = () => {
 							sx={{
 								display: 'flex',
 								alignItems: 'center',
-								borderTop: '1px solid rgba(1, 67, 90, 0.1)',
+								borderTop: `1px solid ${LEARNER_SAAS.border}`,
 								padding: isMobileSize ? '0.25rem' : '0.75rem',
 								flexShrink: 0,
 								position: 'relative',
-								backgroundColor: '#ffffff',
+								backgroundColor: LEARNER_SAAS.cardBg,
 							}}>
 							<MessageInput
 								activeChat={activeChat}

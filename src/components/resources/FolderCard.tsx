@@ -40,21 +40,31 @@ const FolderCard = ({ folder, onClick, onEdit, onDelete }: FolderCardProps) => {
 		if (onDelete) onDelete(e);
 	};
 
+	const formattedUpdatedAt = folder.updatedAt
+		? new Date(folder.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+		: null;
+	const itemCountLabel = folder.itemCount === 1 ? '1 file' : `${folder.itemCount ?? 0} files`;
+
 	return (
 		<Box
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
-				alignItems: 'center',
+				alignItems: 'flex-start',
 				justifyContent: 'flex-start',
-				padding: '1.5rem',
+				padding: isMobileSize ? '1rem' : '1.25rem',
 				cursor: 'pointer',
 				position: 'relative',
 				width: isMobileSize ? '12rem' : '16rem',
-				transition: 'all 0.2s ease',
-				borderRadius: '0.5rem',
+				backgroundColor: '#FFFFFF',
+				border: '1px solid #E2E8F0',
+				borderRadius: '12px',
+				boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+				transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
 				'&:hover': {
-					transform: 'translateY(-2px)',
+					transform: 'translateY(-3px)',
+					boxShadow: '0 10px 24px rgba(15, 23, 42, 0.1)',
+					borderColor: '#CBD5E1',
 					'& .menu-button': {
 						opacity: 1,
 					},
@@ -67,8 +77,8 @@ const FolderCard = ({ folder, onClick, onEdit, onDelete }: FolderCardProps) => {
 				<Box
 					sx={{
 						position: 'absolute',
-						top: isMobileSize ? '1.75rem' : '1.75rem',
-						right: isMobileSize ? '1rem' : '0.75rem',
+						top: '0.5rem',
+						right: '0.5rem',
 						zIndex: 10,
 					}}
 					onClick={(e) => e.stopPropagation()}>
@@ -117,41 +127,55 @@ const FolderCard = ({ folder, onClick, onEdit, onDelete }: FolderCardProps) => {
 				</Box>
 			)}
 
-			{/* Folder Icon */}
+			{/* Folder Icon tile */}
 			<Box
 				sx={{
-					position: 'relative',
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					mb: '0.5rem',
-					'&:hover ~ .menu-button, & ~ .menu-button:hover': {
-						opacity: 1,
-					},
+					width: isMobileSize ? '2.75rem' : '3rem',
+					height: isMobileSize ? '2.75rem' : '3rem',
+					borderRadius: '10px',
+					backgroundColor: 'rgba(1, 67, 90, 0.06)',
+					mb: '0.85rem',
 				}}>
 				<Folder
 					sx={{
-						fontSize: isMobileSize ? '6rem' : '7rem',
+						fontSize: isMobileSize ? '1.6rem' : '1.85rem',
 						color: 'primary.main',
 					}}
 				/>
-			</Box>	
+			</Box>
 
 			{/* Folder Name */}
 			<Typography
-				variant='body2'
 				sx={{
-					textAlign: 'center',
+					fontWeight: 600,
+					color: '#0F172A',
 					overflow: 'hidden',
 					textOverflow: 'ellipsis',
 					display: '-webkit-box',
-					WebkitLineClamp: 2,
+					WebkitLineClamp: 1,
 					WebkitBoxOrient: 'vertical',
 					width: '100%',
-					fontSize: isMobileSize ? '0.8rem' : '0.85rem',
+					fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+					mb: '0.35rem',
 				}}>
 				{folder.name}
 			</Typography>
+
+			{/* Metadata */}
+			<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+				<Typography sx={{ fontSize: isMobileSize ? '0.68rem' : '0.72rem', color: '#64748B' }}>{itemCountLabel}</Typography>
+				{formattedUpdatedAt && (
+					<>
+						<Box sx={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: '#CBD5E1' }} />
+						<Typography sx={{ fontSize: isMobileSize ? '0.68rem' : '0.72rem', color: '#64748B' }}>
+							Updated {formattedUpdatedAt}
+						</Typography>
+					</>
+				)}
+			</Box>
 		</Box>
 	);
 };

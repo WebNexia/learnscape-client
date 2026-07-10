@@ -65,7 +65,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 						? theme.bgColor?.adminSidebar
 						: user?.role === Roles.INSTRUCTOR
 							? theme.bgColor?.instructorSidebar
-							: theme.palette.primary.main,
+							: theme.bgColor?.learnerSidebar,
 					touchAction: 'pan-y', // Enable touch scrolling on iOS
 					WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
 				},
@@ -123,7 +123,8 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 								display: 'flex',
 								flexDirection: 'column',
 								justifyContent: 'flex-start',
-								alignItems: 'flex-start',
+								alignItems: 'stretch',
+								width: '100%',
 								marginTop: '1rem',
 							}}>
 							{hasAdminAccess && (

@@ -1,11 +1,10 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import theme from '../../themes';
-import { CheckCircleOutlineRounded, Lock } from '@mui/icons-material';
+import { CheckCircleOutlineRounded, Lock, PlayArrowRounded } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import { LessonById } from '../../interfaces/lessons';
 import { useContext, useEffect, useState, useMemo } from 'react';
-import ProgressIcon from '../../assets/ProgressIcon.png';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
@@ -25,7 +24,14 @@ interface LessonProps {
 	isLastLessonOfChapter?: boolean;
 	currentChapterHasChecklist?: boolean;
 	currentChapterChecklistCompleted?: boolean;
+	isLastInChapter?: boolean;
 }
+
+const lessonTypeLabel = (type: LessonType) => {
+	if (type === LessonType.INSTRUCTIONAL_LESSON) return 'Lecture';
+	if (type === LessonType.PRACTICE_LESSON) return 'Practice';
+	return 'Quiz';
+};
 
 const Lesson = ({
 	lesson,
@@ -33,8 +39,8 @@ const Lesson = ({
 	isEnrolledStatus,
 	nextLessonId,
 	nextChapterFirstLessonId,
-	lessonOrder,
 	chapterId,
+	isLastInChapter = false,
 }: LessonProps) => {
 	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
@@ -43,7 +49,6 @@ const Lesson = ({
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	// Fetch user lessons for current course using the new hook
 	const { data: userLessonsData, isLoading: isUserLessonsLoading } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessonData = userLessonsData || [];
 	const isProgressPending = isEnrolledStatus && isUserLessonsLoading;
@@ -54,28 +59,18 @@ const Lesson = ({
 	const [isLessonRegisteredInThisCourse, setIsLessonRegisteredInThisCourse] = useState<boolean>(false);
 
 	useEffect(() => {
-		const fetchUserLessonProgress = () => {
-			// Update local state with hook data
-			setUserLessonData(parsedUserLessonData);
-
-			// Find current lesson data and update states
-			parsedUserLessonData?.forEach((data: UserLessonDataStorage) => {
-				if (data.lessonId === lesson._id && data.courseId === courseId) {
-					setIsLessonInProgress(data.isInProgress);
-					setIsLessonCompleted(data.isCompleted);
-					setIsLessonRegisteredInThisCourse(true);
-				}
-			});
-		};
-
-		fetchUserLessonProgress();
+		setUserLessonData(parsedUserLessonData);
+		parsedUserLessonData?.forEach((data: UserLessonDataStorage) => {
+			if (data.lessonId === lesson._id && data.courseId === courseId) {
+				setIsLessonInProgress(data.isInProgress);
+				setIsLessonCompleted(data.isCompleted);
+				setIsLessonRegisteredInThisCourse(true);
+			}
+		});
 	}, [parsedUserLessonData, lesson._id, courseId]);
 
 	const handleLessonClick = () => {
-		// Don't navigate if lesson is not accessible (locked)
-		if (!isAccessible) {
-			return;
-		}
+		if (!isAccessible) return;
 
 		const navigateToLesson = (targetLessonId: string, nextId?: string) => {
 			const params = new URLSearchParams();
@@ -84,7 +79,6 @@ const Lesson = ({
 			if (nextId) params.set('next', nextId);
 			const query = params.toString();
 			navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}?${query}`);
-
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
 
@@ -99,91 +93,48 @@ const Lesson = ({
 		}
 	};
 
-	// Helper function to get currency for country code
 	const getCurrencyForCountry = (countryCode: string): 'gbp' | 'usd' | 'eur' | 'try' => {
 		if (!countryCode) return 'usd';
 		const code = countryCode.toUpperCase();
-
-		// TR -> TRY
 		if (code === 'TR') return 'try';
-
-		// GB -> GBP
 		if (code === 'GB') return 'gbp';
-
-		// EU countries -> EUR
 		const euCountries = ['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'IE', 'PT', 'GR', 'FI', 'AT', 'LU', 'CY', 'EE', 'LT', 'LV', 'SI', 'SK', 'MT'];
 		if (euCountries.includes(code)) return 'eur';
-
-		// Default to USD
 		return 'usd';
 	};
 
-	// Get price for user's country/currency
-	const getUserPrice = (course: SingleCourse, countryCode: string | undefined): Price | null => {
-		if (!countryCode || !course?.prices) return null;
-
+	const getUserPrice = (courseData: SingleCourse, countryCode: string | undefined): Price | null => {
+		if (!countryCode || !courseData?.prices) return null;
 		const currency = getCurrencyForCountry(countryCode);
-		const price = course.prices.find((p) => p.currency === currency);
-
-		// Fallback to USD if currency not found
-		return price || course.prices.find((p) => p.currency === 'usd') || null;
+		const price = courseData.prices.find((p) => p.currency === currency);
+		return price || courseData.prices.find((p) => p.currency === 'usd') || null;
 	};
 
-	// Check if course is a free platform course (not external and price is free for user's currency)
 	const isFreePlatformCourse = useMemo(() => {
-		// Must be a platform course (not external)
 		if (!course?.courseManagement || course.courseManagement.isExternal) return false;
-
-		// Get user's country code
 		const countryCode = user?.countryCode;
 		if (!countryCode) return false;
-
-		// Get price for user's currency
 		const userPrice = getUserPrice(course, countryCode);
 		if (!userPrice) return false;
-
-		// Check if price is free (empty string, '0', or 'Free')
 		const amount = userPrice.amount;
 		return amount === '' || amount === '0' || amount === 'Free';
 	}, [course, user?.countryCode]);
 
-	// Check if user has subscription access (hasRegisteredCourse OR isSubscribed OR subscriptionValidUntil is valid)
-	// Users with hasRegisteredCourse: true have full access to all features including free platform courses
 	const hasSubscriptionAccess = useMemo(() => {
 		if (!user) return false;
-
-		// Priority 1: If user has registered course, they have full access to everything (free content + all features)
 		if (user.hasRegisteredCourse) return true;
-
 		if (!isSubscriptionsProductEnabled) return false;
-
-		// Priority 2: If user is subscribed, they have access
 		if (user.isSubscribed) return true;
-
-		// Priority 3: Check if subscriptionValidUntil is valid (not null and in the future)
-		// This covers canceled subscriptions that still have access until period end
 		if (user.subscriptionValidUntil) {
 			const validUntil = new Date(user.subscriptionValidUntil);
-			const now = new Date();
-			if (validUntil > now) {
-				return true;
-			}
+			if (validUntil > new Date()) return true;
 		}
-
 		return false;
 	}, [user]);
 
-	const showInProgressStyle = isLessonInProgress && !isLessonCompleted;
-
 	const isAccessible = useMemo(() => {
 		if (!isEnrolledStatus || isProgressPending) return false;
-
-		// For free platform courses, check subscription access
-		// hasRegisteredCourse grants access to free platform courses even without subscription
-		if (isFreePlatformCourse) {
-			if (!hasSubscriptionAccess) return false;
-		}
-
+		if (isFreePlatformCourse && !hasSubscriptionAccess) return false;
 		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
 	}, [
 		isEnrolledStatus,
@@ -195,65 +146,108 @@ const Lesson = ({
 		isLessonCompleted,
 	]);
 
+	const statusAccent = isLessonCompleted
+		? theme.palette.success.main
+		: isLessonInProgress && isAccessible
+			? '#f59e0b'
+			: isAccessible
+				? theme.palette.primary.main
+				: '#cbd5e1';
+
+	const statusBg = isLessonCompleted
+		? 'rgba(30, 194, 139, 0.08)'
+		: isLessonInProgress && isAccessible
+			? 'rgba(245, 158, 11, 0.08)'
+			: '#ffffff';
+
+	const outlineFont = "'Varela Round', 'Segoe UI', Arial, sans-serif";
+
 	return (
 		<Box
 			sx={{
-				'display': 'flex',
-				'height':
-					isEnrolledStatus && showInProgressStyle && isMobileSize
-						? '3.5rem'
-						: !(isEnrolledStatus && showInProgressStyle) && isMobileSize
-							? '2.5rem'
-							: isEnrolledStatus && showInProgressStyle
-								? '4.5rem'
-								: '3rem',
-				'borderBottom': `0.1rem solid ${theme.border.lightMain}`,
-				'backgroundColor': isEnrolledStatus && showInProgressStyle ? '#A8D8A8' : 'white',
-				'cursor': isAccessible ? 'pointer' : '',
-				'borderRadius': lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
-				':hover': {
-					backgroundColor: !showInProgressStyle ? '#F0F2F5' : '',
-					borderColor: theme.border.lightMain,
-				},
+				display: 'flex',
+				alignItems: 'center',
+				minHeight: isMobileSize ? '3.1rem' : '3.55rem',
+				borderBottom: isLastInChapter ? 'none' : '1px solid #eef2f7',
+				backgroundColor: statusBg,
+				cursor: isAccessible ? 'pointer' : 'default',
+				transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+				position: 'relative',
+				':hover': isAccessible
+					? {
+							backgroundColor: isLessonCompleted ? 'rgba(30, 194, 139, 0.12)' : '#f1f5f9',
+						}
+					: {},
 			}}
 			onClick={handleLessonClick}>
+			{/* Timeline dot aligned to chapter rail */}
+			<Box
+				sx={{
+					width: isMobileSize ? '1.4rem' : '1.7rem',
+					flexShrink: 0,
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+				}}>
+				<Box
+					sx={{
+						width: isMobileSize ? '0.55rem' : '0.65rem',
+						height: isMobileSize ? '0.55rem' : '0.65rem',
+						borderRadius: '50%',
+						backgroundColor: isAccessible ? statusAccent : '#ffffff',
+						border: `2px solid ${statusAccent}`,
+						boxShadow: '0 0 0 3px #ffffff',
+						opacity: isAccessible ? 1 : 0.6,
+						zIndex: 1,
+					}}
+				/>
+			</Box>
 			<Box
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					width: '100%',
-					px: isMobileSize ? '0.5rem' : '1rem',
+					pr: isMobileSize ? '0.55rem' : '1rem',
+					pl: isMobileSize ? '0.15rem' : '0.35rem',
+					py: isMobileSize ? '0.45rem' : '0.55rem',
 				}}>
-				<Box sx={{ display: 'flex', alignItems: 'center', flex: 8, gap: isMobileSize ? '0.35rem' : '0.65rem', minWidth: 0 }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', flex: 1, gap: isMobileSize ? '0.5rem' : '0.75rem', minWidth: 0 }}>
 					<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
 					<Typography
 						sx={{
-							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.7rem' : isSmallScreen ? '0.75rem' : '0.8rem',
+							fontFamily: outlineFont,
+							fontSize: isVerySmallScreen ? '0.65rem' : isRotatedMedium ? '0.72rem' : isSmallScreen ? '0.76rem' : '0.84rem',
+							fontWeight: isLessonInProgress && !isLessonCompleted ? 600 : 500,
+							color: isAccessible ? '#1e293b' : '#94a3b8',
+							lineHeight: 1.35,
 						}}>
 						{lesson.title}
 					</Typography>
 				</Box>
 
-				<Box sx={{ display: 'flex', alignItems: 'center', flex: 4, justifyContent: 'flex-end' }}>
-					<Box>
-						<Typography
-							sx={{
-								fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem',
-								marginRight: '1rem',
-							}}>
-							{lesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lecture' : lesson.type === LessonType.PRACTICE_LESSON ? 'Practice' : 'Quiz'}
-						</Typography>
-					</Box>
-					<Box>
-						{isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
-							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						) : isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
-							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
-						) : isProgressPending ? null : !isAccessible ? (
-							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						) : null}
-					</Box>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: isMobileSize ? '0.35rem' : '0.55rem', flexShrink: 0 }}>
+					<Chip
+						label={lessonTypeLabel(lesson.type)}
+						size='small'
+						sx={{
+							height: isMobileSize ? '1.25rem' : '1.4rem',
+							fontFamily: outlineFont,
+							fontSize: isMobileSize ? '0.58rem' : '0.65rem',
+							fontWeight: 600,
+							backgroundColor: 'rgba(1,67,90,0.07)',
+							color: theme.palette.primary.main,
+							border: '1px solid rgba(1,67,90,0.12)',
+							'& .MuiChip-label': { px: isMobileSize ? 0.6 : 0.85 },
+						}}
+					/>
+					{isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
+						<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '1.05rem' : '1.3rem' }} />
+					) : isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
+						<PlayArrowRounded sx={{ color: '#f59e0b', fontSize: isMobileSize ? '1.05rem' : '1.3rem' }} />
+					) : isProgressPending ? null : !isAccessible ? (
+						<Lock sx={{ color: '#cbd5e1', fontSize: isMobileSize ? '1rem' : '1.2rem' }} />
+					) : null}
 				</Box>
 			</Box>
 		</Box>

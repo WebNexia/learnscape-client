@@ -9,6 +9,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import { UserCoursesIdsWithCourseIds, UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import { useLearnerFilterSearch } from '../hooks/useLearnerFilterSearch';
+import { LEARNER_SAAS } from '../constants/learnerSaasUi';
 import CoursesInfoDialog from '../components/layouts/CoursesInfoDialog';
 import { InfoOutlined } from '@mui/icons-material';
 
@@ -117,13 +118,13 @@ const Courses = () => {
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
-						actionButtons={[
-							{
-								label: 'Info',
-								onClick: () => setIsInfoDialogOpen(true),
-								startIcon: <InfoOutlined />,
-							},
-						]}
+						// actionButtons={[
+						// 	{
+						// 		label: 'Info',
+						// 		onClick: () => setIsInfoDialogOpen(true),
+						// 		startIcon: <InfoOutlined />,
+						// 	},
+						// ]}
 						isSticky={true}
 					/>
 					<CoursesSkeleton rows={6} />
@@ -152,13 +153,13 @@ const Courses = () => {
 					searchedValue={searchedValue}
 					onResetSearch={resetSearch}
 					onResetFilter={resetFilter}
-					actionButtons={[
-						{
-							label: 'Info',
-							onClick: () => setIsInfoDialogOpen(true),
-							startIcon: <InfoOutlined />,
-						},
-					]}
+					// actionButtons={[
+					// 	{
+					// 		label: 'Info',
+					// 		onClick: () => setIsInfoDialogOpen(true),
+					// 		startIcon: <InfoOutlined />,
+					// 	},
+					// ]}
 					isSticky={true}
 				/>
 				<Box
@@ -167,7 +168,11 @@ const Courses = () => {
 						flexWrap: 'wrap',
 						justifyContent: 'center',
 						alignItems: 'center',
-						margin: '0 2rem 2rem 2rem',
+						margin: {
+							xs: `0 ${LEARNER_SAAS.pagePaddingMobile} 2rem`,
+							sm: `0 ${LEARNER_SAAS.pagePaddingDesktop} 2rem`,
+						},
+						px: 0,
 					}}>
 					{filteredCourses &&
 						filteredCourses?.map((course: SingleCourse) => {
