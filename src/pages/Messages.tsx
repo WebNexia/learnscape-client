@@ -34,6 +34,7 @@ import { useGroupChatManagement } from '../hooks/useGroupChatManagement';
 import { useChatNavigation } from '../hooks/useChatNavigation';
 import { useAuth } from '../hooks/useAuth';
 import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
+import { cleanupGroupChatImages, generateGroupChatId } from '../utils/groupImageStorage';
 import { LEARNER_SAAS } from '../constants/learnerSaasUi';
 
 export interface Message {
