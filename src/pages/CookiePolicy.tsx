@@ -3,6 +3,14 @@ import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
+import {
+	COMPANY_ADDRESS,
+	COMPANY_BRAND,
+	COMPANY_NAME,
+	COMPANY_REGISTRATION_EN,
+	COMPANY_REGISTRATION_TR,
+	formatLegalLastUpdated,
+} from '../constants/legalConstants';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -28,6 +36,11 @@ const CookiePolicy = () => {
 	const content = {
 		tr: {
 			title: 'Çerez Politikası',
+			subtitle: 'Aden Academy',
+			business: `İşletme: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_TR,
+			brand: `Marka: ${COMPANY_BRAND}`,
 			lastUpdated: 'Son güncelleme:',
 			section1Title: '1. Çerezler Nedir?',
 			section1Content:
@@ -165,7 +178,7 @@ const CookiePolicy = () => {
 				'Tarayıcınızın çerez ayarlarını temizleyerek (not: bu web sitesi işlevselliğini etkileyebilir)',
 				'Tercihlerinizi güncellemek için bizimle iletişime geçerek',
 			],
-			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hala kullanılacaktır. Çerezleri reddetmek bazı özellikleri (Zoom toplantı tercihlerinizi veya editör renk ayarlarınızı hatırlama gibi) sınırlayabilir ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
+			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hâlâ kullanılacaktır. Reddetme; Zoom/TinyMCE tercihleri, form gönderim takibi, IP tabanlı konum önbelleği ve tanıtım videosu tercihleri gibi isteğe bağlı verileri temizler. Gömülü video platformları ve ödeme güvenliği için gerekli üçüncü taraf çerezleri devam edebilir; ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
 			section5Title: '5. Bu Çerez Politikasındaki Değişiklikler',
 			section5Content:
 				'Bu Çerez Politikasını zaman zaman güncelleyebiliriz. Yeni Çerez Politikasını bu sayfaya yayınlayarak ve "Son güncelleme" tarihini güncelleyerek size herhangi bir değişiklikten haberdar edeceğiz.',
@@ -174,6 +187,11 @@ const CookiePolicy = () => {
 		},
 		en: {
 			title: 'Cookie Policy',
+			subtitle: 'Aden Academy',
+			business: `Business: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_EN,
+			brand: `Brand: ${COMPANY_BRAND}`,
 			lastUpdated: 'Last updated:',
 			section1Title: '1. What Are Cookies?',
 			section1Content:
@@ -308,7 +326,7 @@ const CookiePolicy = () => {
 				"Clearing your browser's cookie settings (note: this may affect website functionality)",
 				'Contacting us to update your preferences',
 			],
-			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining cookies may limit some features (such as remembering your Zoom meeting preferences or editor color settings) but will not prevent you from using our core services like accessing courses, taking lessons, or making payments.',
+			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining clears optional data such as Zoom/TinyMCE preferences, form submission tracking, IP-based location cache, and intro video preferences. Third-party cookies required for embedded video platforms and payment security may still apply; however, this will not prevent you from using our core services such as accessing courses, taking lessons, or making payments.',
 			section5Title: '5. Changes to This Cookie Policy',
 			section5Content:
 				'We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last updated" date.',
@@ -318,7 +336,6 @@ const CookiePolicy = () => {
 	};
 
 	const currentContent = content[language];
-	const dateLocale = language === 'tr' ? 'tr-TR' : 'en-US';
 
 	return (
 		<LandingPageLayout>
@@ -354,17 +371,33 @@ const CookiePolicy = () => {
 						sx={{
 							fontSize: isMobileSizeSmall ? '1.25rem' : isMobileSize ? '1.5rem' : '2rem',
 							fontWeight: 700,
-							mb: '1rem',
+							mb: '0.5rem',
 							textAlign: 'center',
 							fontFamily: fontFamilyLandingPage,
 						}}>
 						{currentContent.title}
 					</Typography>
 
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage, textAlign: 'center' }}>
+						{currentContent.subtitle}
+					</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage, textAlign: 'center' }}>
+						{currentContent.business}
+					</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage, textAlign: 'center' }}>
+						{currentContent.address}
+					</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage, textAlign: 'center' }}>
+						{currentContent.registration}
+					</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '1rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage, textAlign: 'center' }}>
+						{currentContent.brand}
+					</Typography>
+
 					<Typography
 						variant='body2'
 						sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '2rem', lineHeight: 1.8, fontFamily: fontFamilyLandingPage }}>
-						{currentContent.lastUpdated} {new Date().toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' })}
+						{currentContent.lastUpdated} {formatLegalLastUpdated(language)}
 					</Typography>
 
 					<Divider sx={{ mb: '2rem' }} />

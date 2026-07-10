@@ -4,6 +4,14 @@ import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
+import {
+	COMPANY_ADDRESS,
+	COMPANY_BRAND,
+	COMPANY_NAME,
+	COMPANY_REGISTRATION_EN,
+	COMPANY_REGISTRATION_TR,
+	formatLegalLastUpdated,
+} from '../constants/legalConstants';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -30,10 +38,10 @@ const UserAgreement = () => {
 		tr: {
 			title: 'Kullanıcı Sözleşmesi',
 			subtitle: 'Aden Academy',
-			business: 'İşletme: NEXTEDU LTD',
-			address: '124-128 City Road, London EC1V 2NX, England',
-			registration: 'Registered in England & Wales | SIC: 85590',
-			brand: 'Marka: Aden Academy',
+			business: `İşletme: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_TR,
+			brand: `Marka: ${COMPANY_BRAND}`,
 			lastUpdated: 'Son Güncelleme:',
 			intro:
 				'Bu Kullanıcı Sözleşmesi, Aden Academy platformunu kullanırken sizin ile NEXTEDU LTD arasındaki hak ve yükümlülükleri düzenler. Platforma kayıt olarak, hesap oluşturarak, satın alma yaparak veya hizmetleri kullanmaya devam ederek bu sözleşmeyi kabul etmiş sayılırsınız.\n\nBu sözleşme; Birleşik Krallık (UK), Avrupa Birliği (AB) ve Türkiye kapsamındaki kullanıcılar için hazırlanmış olup UK GDPR, EU GDPR, KVKK (6698 Sayılı Kişisel Verilerin Korunması Kanunu) ve Birleşik Krallık tüketici mevzuatı ile uyumludur.',
@@ -81,7 +89,7 @@ const UserAgreement = () => {
 			section14Title: '14. İletişim',
 			section14Content: 'Bu sözleşme hakkında sorularınız için:',
 			contactName: 'Aden Academy (NEXTEDU LTD)',
-			contactAddress: '124-128 City Road, London EC1V 2NX, England',
+			contactAddress: COMPANY_ADDRESS,
 			contactPagePrefix: 'Ayrıca ',
 			contactLink: 'İletişim',
 			contactPageSuffix: ' sayfamızdan bizimle iletişime geçebilirsiniz.',
@@ -89,10 +97,10 @@ const UserAgreement = () => {
 		en: {
 			title: 'User Agreement',
 			subtitle: 'Aden Academy',
-			business: 'Business: NEXTEDU LTD',
-			address: '124-128 City Road, London EC1V 2NX, England',
-			registration: 'Registered in England & Wales | SIC: 85590',
-			brand: 'Brand: Aden Academy',
+			business: `Business: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_EN,
+			brand: `Brand: ${COMPANY_BRAND}`,
 			lastUpdated: 'Last Updated:',
 			intro:
 				'This User Agreement governs the rights and obligations between you and NEXTEDU LTD when you use the Aden Academy platform. By registering, creating an account, making a purchase, or continuing to use the services, you are deemed to have accepted this agreement.\n\nThis agreement has been prepared for users in the United Kingdom (UK), the European Union (EU), and Turkey, and is consistent with UK GDPR, EU GDPR, the Personal Data Protection Law (KVKK No. 6698), and UK consumer legislation.',
@@ -140,7 +148,7 @@ const UserAgreement = () => {
 			section14Title: '14. Contact',
 			section14Content: 'For questions about this agreement:',
 			contactName: 'Aden Academy (NEXTEDU LTD)',
-			contactAddress: '124-128 City Road, London EC1V 2NX, England',
+			contactAddress: COMPANY_ADDRESS,
 			contactPagePrefix: 'You may also contact us via our ',
 			contactLink: 'Contact',
 			contactPageSuffix: ' page.',
@@ -148,7 +156,6 @@ const UserAgreement = () => {
 	};
 
 	const currentContent = content[language];
-	const dateLocale = language === 'tr' ? 'tr-TR' : 'en-GB';
 
 	const bodySx = {
 		fontSize: isMobileSize ? '0.75rem' : '0.9rem',
@@ -216,8 +223,7 @@ const UserAgreement = () => {
 					</Typography>
 
 					<Typography variant='body2' sx={{ ...bodySx, mb: '2rem', whiteSpace: 'normal' }}>
-						{currentContent.lastUpdated}{' '}
-						{new Date().toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' })}
+						{currentContent.lastUpdated} {formatLegalLastUpdated(language)}
 					</Typography>
 
 					<Divider sx={{ mb: '2rem' }} />

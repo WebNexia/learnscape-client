@@ -4,6 +4,14 @@ import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
+import {
+	COMPANY_ADDRESS,
+	COMPANY_BRAND,
+	COMPANY_NAME,
+	COMPANY_REGISTRATION_EN,
+	COMPANY_REGISTRATION_TR,
+	formatLegalLastUpdated,
+} from '../constants/legalConstants';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -30,10 +38,10 @@ const PrivacyPolicy = () => {
 		tr: {
 			title: 'Gizlilik Politikası',
 			subtitle: 'Aden Academy',
-			business: 'İşletme: NEXTEDU LTD',
-			address: '124-128 City Road, London EC1V 2NX, England',
-			registration: 'Registered in England & Wales | SIC: 85590',
-			brand: 'Marka: Aden Academy',
+			business: `İşletme: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_TR,
+			brand: `Marka: ${COMPANY_BRAND}`,
 			lastUpdated: 'Son Güncelleme:',
 			section1Title: '1. Giriş',
 			section1Content:
@@ -204,6 +212,7 @@ const PrivacyPolicy = () => {
 				'Hesap aktif olduğu sürece',
 				'Hizmetin sunulması için gerekli süre boyunca',
 				'Yasal yükümlülükler kapsamında (örneğin 6–7 yıl)',
+				'Ödeme, fatura, muhasebe, vergi ve denetim kayıtları yasal saklama süreleri boyunca',
 				'Mesajlaşma ve bildirim verileri, hizmet gereksinimlerine göre sınırlı sürelerle (ör. 14–30 gün)',
 			],
 			section8Title: '8. Kullanıcı Hakları',
@@ -218,7 +227,14 @@ const PrivacyPolicy = () => {
 				'Rızayı geri çekme',
 			],
 			section8ComplaintTitle: 'Şikayet hakkı:',
-			complaintRights: ['UK kullanıcıları: ICO', 'AB kullanıcıları: ilgili veri koruma otoritesi'],
+			complaintRights: [
+				'UK kullanıcıları: Information Commissioner\'s Office (ICO)',
+				'AB kullanıcıları: ilgili veri koruma otoritesi',
+				'Türkiye kullanıcıları: Kişisel Verileri Koruma Kurumu (KVKK)',
+			],
+			section8ErasureTitle: 'Silme hakkının istisnaları:',
+			section8ErasureContent:
+				'Silme talebiniz, yürürlükteki mevzuat kapsamındaki yasal saklama yükümlülükleri ile sınırlı olabilir. Ödeme, fatura, muhasebe, vergi, komisyon ve dolandırıcılık önleme kayıtları ile uyuşmazlık/audit amaçlı kayıtlar uygun süre boyunca saklanabilir. Kayıt veya erişim kaldırma işlemlerinde eğitim ilerlemesi silinebilir; ancak yasal ve mali kayıtlar (ör. ödeme geçmişi) korunabilir.',
 			section8KvkkNote: 'Türkiye\'deki kullanıcılar için başvurular KVKK kapsamında 30 gün içinde yanıtlanır.',
 			section9Title: '9. Otomatik Karar Verme',
 			section9Content:
@@ -260,15 +276,15 @@ const PrivacyPolicy = () => {
 			section15Title: '15. İletişim',
 			section15Content: 'Kişisel verilerinizle ilgili talepleriniz için:',
 			contactName: 'Aden Academy (NEXTEDU LTD)',
-			contactAddress: '124-128 City Road, London EC1V 2NX',
+			contactAddress: COMPANY_ADDRESS,
 		},
 		en: {
 			title: 'Privacy Policy',
 			subtitle: 'Aden Academy',
-			business: 'Business: NEXTEDU LTD',
-			address: '124-128 City Road, London EC1V 2NX, England',
-			registration: 'Registered in England & Wales | SIC: 85590',
-			brand: 'Brand: Aden Academy',
+			business: `Business: ${COMPANY_NAME}`,
+			address: COMPANY_ADDRESS,
+			registration: COMPANY_REGISTRATION_EN,
+			brand: `Brand: ${COMPANY_BRAND}`,
 			lastUpdated: 'Last Updated:',
 			section1Title: '1. Introduction',
 			section1Content:
@@ -439,6 +455,7 @@ const PrivacyPolicy = () => {
 				'While the account remains active',
 				'For as long as necessary to provide the service',
 				'Within the scope of legal obligations (e.g. 6–7 years)',
+				'Payment, invoice, accounting, tax, and audit records for applicable legal retention periods',
 				'Messaging and notification data for limited periods as required by the service (e.g. 14–30 days)',
 			],
 			section8Title: '8. User Rights',
@@ -453,7 +470,14 @@ const PrivacyPolicy = () => {
 				'Withdraw consent',
 			],
 			section8ComplaintTitle: 'Right to lodge a complaint:',
-			complaintRights: ['UK users: ICO', 'EU users: the relevant data protection authority'],
+			complaintRights: [
+				'UK users: Information Commissioner\'s Office (ICO)',
+				'EU users: the relevant data protection authority',
+				'Turkey users: Personal Data Protection Authority (KVKK)',
+			],
+			section8ErasureTitle: 'Exceptions to the right of erasure:',
+			section8ErasureContent:
+				'Your erasure request may be limited by legal retention obligations under applicable law. Payment, invoice, accounting, tax, commission, and fraud-prevention records, as well as dispute and audit records, may be retained for appropriate periods. When an enrollment or access record is removed, learning progress may be deleted, but legal and financial records (such as payment history) may be retained.',
 			section8KvkkNote: 'Applications from users in Turkey are responded to within 30 days under KVKK.',
 			section9Title: '9. Automated Decision-Making',
 			section9Content:
@@ -495,12 +519,11 @@ const PrivacyPolicy = () => {
 			section15Title: '15. Contact',
 			section15Content: 'For requests regarding your personal data:',
 			contactName: 'Aden Academy (NEXTEDU LTD)',
-			contactAddress: '124-128 City Road, London EC1V 2NX',
+			contactAddress: COMPANY_ADDRESS,
 		},
 	};
 
 	const currentContent = content[language];
-	const dateLocale = language === 'tr' ? 'tr-TR' : 'en-GB';
 
 	const bodySx = {
 		fontSize: isMobileSize ? '0.75rem' : '0.9rem',
@@ -576,8 +599,7 @@ const PrivacyPolicy = () => {
 					</Typography>
 
 					<Typography variant='body2' sx={{ ...bodySx, mb: '2rem' }}>
-						{currentContent.lastUpdated}{' '}
-						{new Date().toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' })}
+						{currentContent.lastUpdated} {formatLegalLastUpdated(language)}
 					</Typography>
 
 					<Divider sx={{ mb: '2rem' }} />
@@ -662,6 +684,8 @@ const PrivacyPolicy = () => {
 							<Box key={index} component='li' sx={listItemSx}>{item}</Box>
 						))}
 					</Box>
+					<Typography variant='body2' sx={{ ...subHeadingSx, mt: '1rem' }}>{currentContent.section8ErasureTitle}</Typography>
+					<Typography variant='body2' sx={bodySx}>{currentContent.section8ErasureContent}</Typography>
 					<Typography variant='body2' sx={bodySx}>{currentContent.section8KvkkNote}</Typography>
 
 					<Typography variant='h6' sx={headingSx}>{currentContent.section9Title}</Typography>
