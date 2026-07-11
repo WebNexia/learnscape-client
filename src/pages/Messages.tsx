@@ -380,7 +380,7 @@ const Messages = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Messages' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)' }}>
+			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)', backgroundColor: LEARNER_SAAS.contentBg }}>
 				<ChatList
 					filteredChatList={filteredChatList}
 					activeChatId={activeChatId || ''}

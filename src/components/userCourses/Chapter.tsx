@@ -496,29 +496,24 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						</>
 					)}
 
-					<Tooltip
-						title={
-							chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0
-								? 'View Objectives'
-								: chapter.askForFeedback === true && isEnrolledStatus
-									? 'Give Feedback'
-									: ''
-						}
-						placement='top'
-						arrow>
-						<IconButton
-							sx={{
-								color: 'white',
-								padding: '0.3rem',
-								marginLeft: isEnrolledStatus && progressData.total > 0 ? '0.15rem' : 0,
-								backgroundColor: 'rgba(255,255,255,0.12)',
-								border: '1px solid rgba(255,255,255,0.22)',
-								'&:hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
-							}}
-							onClick={handleOpenChecklistDialog}>
-							<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
-						</IconButton>
-					</Tooltip>
+					{hasChecklistItems && (
+						<Tooltip title='View Objectives' placement='top' arrow>
+							<IconButton
+								sx={{
+									color: 'white',
+									padding: '0.3rem',
+									marginLeft: isEnrolledStatus && progressData.total > 0 ? '0.15rem' : 0,
+									backgroundColor: 'rgba(255,255,255,0.12)',
+									border: '1px solid rgba(255,255,255,0.22)',
+									'&:hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
+								}}
+								onClick={handleOpenChecklistDialog}>
+								<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+							</IconButton>
+						</Tooltip>
+					)}
+
+
 				</Box>
 			</Box>
 
@@ -529,11 +524,10 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
 						borderTop: '1px solid #e2e8f0',
 						position: 'relative',
-						pl: isMobileSize ? '0.65rem' : '1rem',
 						'&::before': {
 							content: '""',
 							position: 'absolute',
-							left: isMobileSize ? '1.35rem' : '1.85rem',
+							left: isMobileSize ? '0.7rem' : '0.85rem',
 							top: '0.5rem',
 							bottom: '0.5rem',
 							width: '2px',

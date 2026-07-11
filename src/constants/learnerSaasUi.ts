@@ -11,4 +11,9 @@ export const LEARNER_SAAS = {
 	cardRadius: 12,
 	pagePaddingMobile: '1.5rem',
 	pagePaddingDesktop: '2rem',
+	chatListPanelBg: '#EDF2F7',
+	chatListItemBg: '#F8FAFC',
+	chatListItemHoverBg: '#FFFFFF',
+	chatListItemActiveBg: '#FFFFFF',
+	chatListActiveAccent: '#01435A',
 } as const;

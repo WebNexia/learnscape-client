@@ -76,9 +76,9 @@ const ChatList = ({
 						display: 'flex',
 						flexDirection: 'column',
 						flex: 3,
+						backgroundColor: LEARNER_SAAS.chatListPanelBg,
 						borderRight: `1px solid ${LEARNER_SAAS.border}`,
-						padding: isMobileSize ? '0 0rem 0 0.5rem' : '0 0rem 0 1rem',
-						boxShadow: LEARNER_SAAS.cardShadow,
+						padding: isMobileSize ? '0 0.5rem 0 0.5rem' : '0 0.75rem 0 0.75rem',
 					}}>
 					<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
 						<Box sx={{ flex: 8 }}>
@@ -123,7 +123,16 @@ const ChatList = ({
 						)}
 					</Box>
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							gap: '0.35rem',
+							marginTop: '0.5rem',
+							paddingBottom: '0.5rem',
+							overflow: 'auto',
+							width: '100%',
+						}}>
 						{isLoadingChatList && filteredChatList.length === 0 ? (
 							<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
 								<Typography variant='body2' sx={{ color: 'text.secondary' }}>
@@ -142,22 +151,16 @@ const ChatList = ({
 										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 										sx={{
 											'display': 'flex',
-											'border': `1px solid ${LEARNER_SAAS.borderLight}`,
-											'borderRight': 'none',
-											'borderBottom': 'none',
-											'transition': 'background-color 0.2s ease, border-color 0.2s ease',
+											'borderRadius': '0.5rem',
+											'border': `1px solid ${isActiveChat(chat.chatId) ? 'rgba(1, 67, 90, 0.18)' : LEARNER_SAAS.border}`,
+											'transition': 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
 											'&:hover': {
-												backgroundColor: isActiveChat(chat.chatId) ? undefined : LEARNER_SAAS.contentBg,
+												backgroundColor: isActiveChat(chat.chatId) ? LEARNER_SAAS.chatListItemActiveBg : LEARNER_SAAS.chatListItemHoverBg,
+												borderColor: isActiveChat(chat.chatId) ? 'rgba(1, 67, 90, 0.22)' : LEARNER_SAAS.border,
 											},
-											'&:last-of-type': {
-												borderBottom: `1px solid ${LEARNER_SAAS.borderLight}`,
-												borderBottomLeftRadius: '0.5rem',
-											},
-											'&:first-of-type': {
-												borderTopLeftRadius: '0.5rem',
-											},
-											'backgroundColor': isActiveChat(chat.chatId) ? LEARNER_SAAS.cardBg : undefined,
-											'borderLeft': isActiveChat(chat.chatId) ? `3px solid ${theme.bgColor?.learnerSidebar}` : undefined,
+											'backgroundColor': isActiveChat(chat.chatId) ? LEARNER_SAAS.chatListItemActiveBg : LEARNER_SAAS.chatListItemBg,
+											'borderLeft': isActiveChat(chat.chatId) ? `3px solid ${LEARNER_SAAS.chatListActiveAccent}` : `1px solid ${LEARNER_SAAS.border}`,
+											'boxShadow': isActiveChat(chat.chatId) ? '0 2px 8px rgba(1, 67, 90, 0.08)' : 'none',
 										}}>
 										<Box
 											sx={{
