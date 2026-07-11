@@ -496,29 +496,24 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						</>
 					)}
 
-					<Tooltip
-						title={
-							chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0
-								? 'View Objectives'
-								: chapter.askForFeedback === true && isEnrolledStatus
-									? 'Give Feedback'
-									: ''
-						}
-						placement='top'
-						arrow>
-						<IconButton
-							sx={{
-								color: 'white',
-								padding: '0.3rem',
-								marginLeft: isEnrolledStatus && progressData.total > 0 ? '0.15rem' : 0,
-								backgroundColor: 'rgba(255,255,255,0.12)',
-								border: '1px solid rgba(255,255,255,0.22)',
-								'&:hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
-							}}
-							onClick={handleOpenChecklistDialog}>
-							<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
-						</IconButton>
-					</Tooltip>
+					{hasChecklistItems && (
+						<Tooltip title='View Objectives' placement='top' arrow>
+							<IconButton
+								sx={{
+									color: 'white',
+									padding: '0.3rem',
+									marginLeft: isEnrolledStatus && progressData.total > 0 ? '0.15rem' : 0,
+									backgroundColor: 'rgba(255,255,255,0.12)',
+									border: '1px solid rgba(255,255,255,0.22)',
+									'&:hover': { backgroundColor: 'rgba(255,255,255,0.22)' },
+								}}
+								onClick={handleOpenChecklistDialog}>
+								<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+							</IconButton>
+						</Tooltip>
+					)}
+
+
 				</Box>
 			</Box>
 
