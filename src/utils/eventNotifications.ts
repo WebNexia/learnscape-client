@@ -1,5 +1,6 @@
 import { writeBatch, serverTimestamp, doc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
+import { fetchOrganisationEventParticipants } from './fetchOrganisationEventParticipants';
 
 export async function sendEventCreatedNotifications({
 	user,
@@ -58,11 +59,8 @@ export async function sendEventCreatedNotifications({
 
 		// Send public event announcement if event is public
 		if (isPublic) {
-			// Get all users in the organization for public events
 			try {
-				const allUsersResponse = await fetch(`${baseUrl}/users?orgId=${orgId}`);
-				const allUsersData = await allUsersResponse.json();
-				const allUsers = allUsersData.data || [];
+				const allUsers = await fetchOrganisationEventParticipants(orgId);
 
 				for (const orgUser of allUsers) {
 					if (orgUser.firebaseUserId && orgUser.firebaseUserId !== user?.firebaseUserId && !usersAlreadyNotified.has(orgUser.firebaseUserId)) {
@@ -153,11 +151,8 @@ export async function sendEventUpdatedNotifications({
 
 		// Send public event announcement if event is now public (wasn't public before)
 		if (selectedEvent.isPublic && !wasPublic) {
-			// Get all users in the organization for public events
 			try {
-				const allUsersResponse = await fetch(`${baseUrl}/users?orgId=${orgId}`);
-				const allUsersData = await allUsersResponse.json();
-				const allUsers = allUsersData.data || [];
+				const allUsers = await fetchOrganisationEventParticipants(orgId);
 
 				for (const orgUser of allUsers) {
 					if (orgUser.firebaseUserId && orgUser.firebaseUserId !== user?.firebaseUserId && !usersAlreadyNotified.has(orgUser.firebaseUserId)) {

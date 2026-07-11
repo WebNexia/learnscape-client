@@ -31,6 +31,8 @@ interface InquiriesContextProviderProps {
 
 export const InquiriesContext = createContext<InquiriesContextTypes>({} as InquiriesContextTypes);
 
+export const INQUIRIES_LIST_STALE_MS = 2 * 60 * 1000;
+
 const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -58,10 +60,11 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 		entityKey: 'allInquiries',
 		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: INQUIRIES_LIST_STALE_MS,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true, // Disable auto gap-filling - useFilterSearch will handle gap-filling
+		refetchOnMount: false,
 	});
 
 	const enableInquiriesFetch = () => setIsEnabled(true);

@@ -15,7 +15,7 @@ import {
 	Alert,
 	DialogActions,
 } from '@mui/material';
-import { AttendeeInfo, Event } from '../../../interfaces/event';
+import { AttendeeInfo, Event, searchUserToAttendeeInfo } from '../../../interfaces/event';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
@@ -24,9 +24,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
 import { Cancel, InfoOutlined, ContentCopy } from '@mui/icons-material';
-import { User } from '../../../interfaces/user';
 import { useContext, useState, useRef, useEffect } from 'react';
-import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import CustomDialogActions from '../dialog/CustomDialogActions';
@@ -38,6 +36,7 @@ import { truncateText } from '../../../utils/utilText';
 
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { sendEventUpdatedNotifications } from '../../../utils/eventNotifications';
+import { fetchOrganisationEventParticipants } from '../../../utils/fetchOrganisationEventParticipants';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
@@ -86,7 +85,6 @@ const EditEventDialog = ({
 	setIsUpdatingEvent,
 }: EditEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { users } = useContext(UsersContext);
 	const { user } = useContext(UserAuthContext);
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
@@ -126,43 +124,16 @@ const EditEventDialog = ({
 
 	// Handlers for new search components
 	const handleUserSelect = (selectedUser: SearchUser) => {
-		// Convert SearchUser to User format for compatibility
-		const user: User = {
-			_id: selectedUser._id, // Use MongoDB ObjectId
-			firebaseUserId: selectedUser.firebaseUserId,
-			username: selectedUser.username,
-			email: selectedUser.email || '',
-			imageUrl: selectedUser.imageUrl,
-			role: selectedUser.role,
-			// Add other required fields with defaults
-			firstName: '',
-			lastName: '',
-			phone: '',
-			orgId: orgId,
-			isActive: true,
-			hasRegisteredCourse: false,
-			countryCode: '',
-			isEmailVerified: false,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			isSubscribed: false,
-			subscriptionType: null,
-			subscriptionExpiry: '',
-			subscriptionStatus: 'none',
-			subscriptionValidUntil: '',
-			accessLevel: 'limited',
-		};
+		const attendee = searchUserToAttendeeInfo(selectedUser);
 
 		// Check if user is already selected
-		const isAlreadySelected = selectedEvent?.attendees?.some((attendee) => attendee._id === user._id);
+		const isAlreadySelected = selectedEvent?.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
-					const newAttendees = [...prevData.attendees, user];
-
 					return {
 						...prevData,
-						attendees: newAttendees,
+						attendees: [...prevData.attendees, attendee],
 					};
 				}
 				return prevData;
@@ -172,44 +143,16 @@ const EditEventDialog = ({
 	};
 
 	const handleInstructorSelect = (selectedInstructor: SearchUser) => {
-		// Convert SearchUser to User format for compatibility
-		const instructor: User = {
-			_id: selectedInstructor._id, // Use MongoDB ObjectId
-			firebaseUserId: selectedInstructor.firebaseUserId,
-			username: selectedInstructor.username,
-			email: selectedInstructor.email || '',
-			imageUrl: selectedInstructor.imageUrl,
-			role: selectedInstructor.role,
-			// Add other required fields with defaults
-			firstName: selectedInstructor.firstName || '',
-			lastName: selectedInstructor.lastName || '',
-			phone: '',
-			orgId: orgId,
-			isActive: true,
-			hasRegisteredCourse: false,
-			countryCode: '',
-			isEmailVerified: false,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			// Add missing subscription properties
-			isSubscribed: false,
-			subscriptionType: null,
-			subscriptionExpiry: '',
-			subscriptionStatus: 'none',
-			subscriptionValidUntil: '',
-			accessLevel: 'limited',
-		};
+		const attendee = searchUserToAttendeeInfo(selectedInstructor);
 
 		// Check if instructor is already selected
-		const isAlreadySelected = selectedEvent?.attendees?.some((attendee) => attendee._id === instructor._id);
+		const isAlreadySelected = selectedEvent?.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
-					const newAttendees = [...prevData.attendees, instructor];
-
 					return {
 						...prevData,
-						attendees: newAttendees,
+						attendees: [...prevData.attendees, attendee],
 					};
 				}
 				return prevData;
@@ -342,11 +285,9 @@ const EditEventDialog = ({
 		return !hasErrors;
 	};
 
-	// Populate role information for existing attendees when dialog opens
-	// Also set isZoomMeeting flag if Zoom fields exist
+	// Set isZoomMeeting flag when Zoom fields exist on the loaded event
 	useEffect(() => {
 		if (editEventModalOpen && selectedEvent) {
-			// Check if Zoom fields exist to set isZoomMeeting flag
 			const hasZoomFields = !!(selectedEvent.zoomMeetingId || selectedEvent.zoomMeetingNumber);
 			if (hasZoomFields && !selectedEvent.isZoomMeeting) {
 				setSelectedEvent((prevData) => {
@@ -356,40 +297,8 @@ const EditEventDialog = ({
 					return prevData;
 				});
 			}
-
-			// Populate role information for attendees
-			if (selectedEvent.attendees && users) {
-				const attendeesWithoutRole = selectedEvent.attendees.filter((attendee) => !attendee.role);
-
-				if (attendeesWithoutRole.length > 0) {
-					// Find role information from users context
-					const attendeesToUpdate = attendeesWithoutRole.map((attendee) => {
-						const userFromContext = users.find((user) => user._id === attendee._id);
-						if (userFromContext && userFromContext.role) {
-							return { ...attendee, role: userFromContext.role };
-						}
-						return attendee;
-					});
-
-					// Update attendees with role information
-					const hasUpdates = attendeesToUpdate.some((attendee, index) => attendee.role !== attendeesWithoutRole[index].role);
-
-					if (hasUpdates) {
-						setSelectedEvent((prevData) => {
-							if (prevData) {
-								const updatedAttendees = prevData.attendees.map((a) => {
-									const updatedAttendee = attendeesToUpdate.find((ua) => ua._id === a._id);
-									return updatedAttendee || a;
-								});
-								return { ...prevData, attendees: updatedAttendees };
-							}
-							return prevData;
-						});
-					}
-				}
-			}
 		}
-	}, [editEventModalOpen, users]); // Removed selectedEvent?.attendees dependency to prevent infinite loops
+	}, [editEventModalOpen, selectedEvent?.zoomMeetingId, selectedEvent?.zoomMeetingNumber, selectedEvent?.isZoomMeeting]);
 
 	const editEvent = async () => {
 		setIsProcessing(true);
@@ -416,51 +325,32 @@ const EditEventDialog = ({
 		let allSubscribers: AttendeeInfo[] = [];
 		let courseParticipants: AttendeeInfo[] = [];
 
-		// Handle "All Instructors" selection - fetch from API to get ALL instructors
+		// Handle "All Instructors" selection
 		if (selectedEvent?.isAllInstructorsSelected) {
 			try {
-				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=instructor&limit=10000`);
-				const instructors = response.data.data || [];
-				allInstructors = instructors.map((instructor: any) => ({
-					_id: instructor._id,
-					username: instructor.username,
-					firebaseUserId: instructor.firebaseUserId,
-					role: instructor.role,
-				}));
+				allInstructors = await fetchOrganisationEventParticipants(orgId, { group: 'eventInstructors' });
 			} catch (error) {
 				console.error('Error fetching all instructors:', error);
 			}
 		}
 
-		// Handle "All Learners" selection - fetch from API to get ALL learners
+		// Handle "All Learners" selection
 		if (selectedEvent?.isAllLearnersSelected) {
 			try {
-				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=learner&limit=10000`);
-				const learners = response.data.data || [];
-				allLearners = learners.map((learner: any) => ({
-					_id: learner._id,
-					username: learner.username,
-					firebaseUserId: learner.firebaseUserId,
-					role: learner.role,
-				}));
+				allLearners = await fetchOrganisationEventParticipants(orgId, { role: 'learner' });
 			} catch (error) {
 				console.error('Error fetching all learners:', error);
 			}
 		}
 
-		// Handle "All Subscribers" selection - fetch from API to get ALL subscribers
+		// Handle "All Subscribers" selection
 		if (isSubscriptionsProductEnabled && selectedEvent?.isAllSubscribersSelected) {
 			try {
-				const response = await axios.get(
-					`${base_url}/users/organisation/${orgId}?role=learner&isSubscribed=true&subscriptionStatus=active&limit=10000`
-				);
-				const subscribers = response.data.data || [];
-				allSubscribers = subscribers.map((subscriber: any) => ({
-					_id: subscriber._id,
-					username: subscriber.username,
-					firebaseUserId: subscriber.firebaseUserId,
-					role: subscriber.role,
-				}));
+				allSubscribers = await fetchOrganisationEventParticipants(orgId, {
+					role: 'learner',
+					isSubscribed: true,
+					subscriptionStatus: 'active',
+				});
 			} catch (error) {
 				console.error('Error fetching all subscribers:', error);
 			}

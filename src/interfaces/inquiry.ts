@@ -8,6 +8,6 @@ export interface Inquiry {
 	message?: string;
 	createdAt: string;
 	updatedAt: string;
-	orgId: string;
+	orgId?: string;
 	category: string;
 }

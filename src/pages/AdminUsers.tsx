@@ -54,7 +54,7 @@ const AdminUsers = () => {
 
 	const { userId, user: loggedInUser } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, enableUsersFetch, setUsersPageNumber } =
+	const { users, loading, error, fetchMoreUsers, updateUser, removeUser, totalItems, loadedPages, setUsersPageNumber } =
 		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -85,6 +85,7 @@ const AdminUsers = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<User>({
 		getEndpoint: () => `${base_url}/users/organisation/${orgId}`,
 		limit: 200,
@@ -162,10 +163,6 @@ const AdminUsers = () => {
 	const [isDeletingLearningData, setIsDeletingLearningData] = useState<boolean>(false);
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
-
-	useEffect(() => {
-		enableUsersFetch();
-	}, []);
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
@@ -414,9 +411,11 @@ const AdminUsers = () => {
 		setIsDeletingUser(true);
 		try {
 			await axios.delete(`${base_url}/users/${singleUser._id}`);
+			removeUser(singleUser._id);
+			if (isSearchActive) {
+				removeFromSearchResults(singleUser._id);
+			}
 			closeDeleteUserModal(index);
-			// Refresh users list after deletion
-			enableUsersFetch();
 		} catch (error) {
 			console.error('Error deleting user:', error);
 		} finally {

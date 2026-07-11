@@ -306,14 +306,14 @@ const FeedbackFormSubmissions = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-				{ key: 'submitter', label: 'Submitter' },
-				{ key: 'submittedAt', label: 'Submitted' },
-				{ key: 'actions', label: 'Actions' },
+				{ key: 'submitter', label: 'Submitter', width: '42%', align: 'center' as const },
+				{ key: 'submittedAt', label: 'Submitted', width: '38%', align: 'center' as const },
+				{ key: 'actions', label: 'Actions', width: '20%', align: 'center' as const },
 			]
 			: [
-				{ key: 'submitter', label: 'Submitter' },
-				{ key: 'submittedAt', label: 'Submitted At' },
-				{ key: 'actions', label: 'Actions' },
+				{ key: 'submitter', label: 'Submitter', width: '50%', align: 'center' as const },
+				{ key: 'submittedAt', label: 'Submitted At', width: '32%', align: 'center' as const },
+				{ key: 'actions', label: 'Actions', width: '18%', align: 'center' as const },
 			];
 	};
 
@@ -491,7 +491,26 @@ const FeedbackFormSubmissions = () => {
 					) : (
 						<>
 							<Box sx={{ overflowX: 'auto' }}>
-								<Table size='small'>
+								<Table
+									size='small'
+									sx={{
+										tableLayout: 'fixed',
+										width: '100%',
+										'& .MuiTableCell-root': {
+											padding: isMobileSize ? '0.5rem 0.75rem' : '0.75rem 1rem',
+											verticalAlign: 'middle',
+											textAlign: 'center',
+										},
+										'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1), & .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+											width: isMobileSize ? '42%' : '50%',
+										},
+										'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2), & .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+											width: isMobileSize ? '38%' : '32%',
+										},
+										'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3), & .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+											width: isMobileSize ? '20%' : '18%',
+										},
+									}}>
 									<CustomTableHead<FeedbackFormSubmission>
 										columns={getColumns(isMobileSize)}
 										orderBy={orderBy as keyof FeedbackFormSubmission}
@@ -502,15 +521,25 @@ const FeedbackFormSubmissions = () => {
 										{paginatedSubmissions.map((submission: FeedbackFormSubmission, index: number) => {
 											return (
 												<TableRow key={submission._id} hover>
-													<CustomTableCell>
-														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-																{truncateText(getSubmitterInfo(submission), isMobileSize ? 20 : 40)}
-															</Typography>
-														</Box>
+													<CustomTableCell align='center'>
+														<Typography
+															variant='body2'
+															sx={{
+																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																overflow: 'hidden',
+																textOverflow: 'ellipsis',
+																whiteSpace: 'nowrap',
+																width: '100%',
+																textAlign: 'center',
+															}}>
+															{truncateText(getSubmitterInfo(submission), isMobileSize ? 20 : 40)}
+														</Typography>
 													</CustomTableCell>
-													<CustomTableCell value={submission.submittedAt ? dateTimeFormatter(submission.submittedAt) : 'N/A'} />
-													<TableCell sx={{ textAlign: 'center' }}>
+													<CustomTableCell
+														align='center'
+														value={submission.submittedAt ? dateTimeFormatter(submission.submittedAt) : 'N/A'}
+													/>
+													<TableCell align='center' sx={{ textAlign: 'center' }}>
 														<CustomActionBtn
 															title='View Details'
 															onClick={() => openSubmissionViewModal(index)}

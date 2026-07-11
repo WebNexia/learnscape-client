@@ -395,9 +395,7 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<EventsContextProvider>
-							<UsersContextProvider>
-								<Calendar />
-							</UsersContextProvider>
+							<Calendar />
 						</EventsContextProvider>
 					</AdminRouteGuard>
 				),
@@ -414,11 +412,9 @@ export const router = createBrowserRouter([
 				path: 'admin/community',
 				element: (
 					<AdminRouteGuard>
-						<UsersContextProvider>
-							<CommunityContextProvider>
-								<Community />
-							</CommunityContextProvider>
-						</UsersContextProvider>
+						<CommunityContextProvider>
+							<Community />
+						</CommunityContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -426,11 +422,9 @@ export const router = createBrowserRouter([
 				path: 'admin/community/topic/:topicId',
 				element: (
 					<AdminRouteGuard>
-						<UsersContextProvider>
-							<CommunityMessagesContextProvider>
-								<CommunityTopicPage />
-							</CommunityMessagesContextProvider>
-						</UsersContextProvider>
+						<CommunityMessagesContextProvider>
+							<CommunityTopicPage />
+						</CommunityMessagesContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -688,9 +682,7 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<EventsContextProvider>
-							<UsersContextProvider>
-								<Calendar />
-							</UsersContextProvider>
+							<Calendar />
 						</EventsContextProvider>
 					</InstructorRouteGuard>
 				),
@@ -707,11 +699,9 @@ export const router = createBrowserRouter([
 				path: 'instructor/community',
 				element: (
 					<InstructorRouteGuard>
-						<UsersContextProvider>
-							<CommunityContextProvider>
-								<Community />
-							</CommunityContextProvider>
-						</UsersContextProvider>
+						<CommunityContextProvider>
+							<Community />
+						</CommunityContextProvider>
 					</InstructorRouteGuard>
 				),
 			},
@@ -719,11 +709,9 @@ export const router = createBrowserRouter([
 				path: 'instructor/community/topic/:topicId',
 				element: (
 					<InstructorRouteGuard>
-						<UsersContextProvider>
-							<CommunityMessagesContextProvider>
-								<CommunityTopicPage />
-							</CommunityMessagesContextProvider>
-						</UsersContextProvider>
+						<CommunityMessagesContextProvider>
+							<CommunityTopicPage />
+						</CommunityMessagesContextProvider>
 					</InstructorRouteGuard>
 				),
 			},

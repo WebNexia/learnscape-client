@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -8,6 +9,7 @@ import { User } from '../interfaces/user';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
+import { shouldFetchStaffUsersList } from '../utils/staffUsersDataRoutes';
 
 interface UsersContextTypes {
 	users: User[];
@@ -34,13 +36,18 @@ interface UsersContextProviderProps {
 
 export const UsersContext = createContext<UsersContextTypes>({} as UsersContextTypes);
 
+export const USERS_LIST_STALE_MS = 2 * 60 * 1000;
+
 const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { pathname } = useLocation();
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+
+	const isStaffUsersRoute = hasAdminAccess && shouldFetchStaffUsersList(pathname);
 
 	const {
 		data: users,
@@ -61,12 +68,13 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}/users/organisation/${orgId}`,
 		entityKey: 'users',
-		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute && isStaffUsersRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: USERS_LIST_STALE_MS,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
-		disableAutoGapFill: true, // Disable auto gap-filling - useFilterSearch will handle gap-filling
+		disableAutoGapFill: true,
+		refetchOnMount: false,
 	});
 
 	const enableUsersFetch = () => setIsEnabled(true);
@@ -76,7 +84,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		<UsersContext.Provider
 			value={{
 				users,
-				loading: isLoading || (isEnabled && !users),
+				loading: isEnabled && isStaffUsersRoute && (isLoading || !users),
 				error: isError ? 'Failed to fetch users' : null,
 				fetchUsers,
 				fetchMoreUsers,

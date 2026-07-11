@@ -7,9 +7,10 @@ interface CustomTableCellProps {
 	children?: ReactNode;
 	value?: string | boolean | number;
 	cellSx?: SxProps;
+	align?: 'left' | 'center' | 'right';
 }
 
-const CustomTableCell = ({ children, value, cellSx }: CustomTableCellProps) => {
+const CustomTableCell = ({ children, value, cellSx, align = 'center' }: CustomTableCellProps) => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -18,19 +19,22 @@ const CustomTableCell = ({ children, value, cellSx }: CustomTableCellProps) => {
 	const decodedValue = typeof value === 'string' ? decode(value) : value;
 
 	return (
-		<TableCell sx={{ textAlign: 'center', padding: '0.75rem 0', overflow: 'hidden', ...cellSx }}>
-			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0, width: '100%' }}>
-				<Typography
-					variant='body2'
-					sx={{
-						fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.75rem' : '0.85rem',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap',
-						width: '100%',
-					}}>
-					{decodedValue}
-				</Typography>
+		<TableCell align={align} sx={{ textAlign: align, padding: '0.75rem 1rem', overflow: 'hidden', ...cellSx }}>
+			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', minWidth: 0, width: '100%' }}>
+				{value !== undefined && value !== null && value !== '' && (
+					<Typography
+						variant='body2'
+						sx={{
+							fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.75rem' : '0.85rem',
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							whiteSpace: 'nowrap',
+							width: '100%',
+							textAlign: align,
+						}}>
+						{decodedValue}
+					</Typography>
+				)}
 				{children}
 			</Box>
 		</TableCell>
