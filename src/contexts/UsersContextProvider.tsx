@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
@@ -18,16 +18,12 @@ interface UsersContextTypes {
 	fetchUsers: (page?: number) => Promise<User[]>;
 	fetchMoreUsers: (startPage: number, endPage: number) => Promise<void>;
 	sortUsersData: (property: keyof User, order: 'asc' | 'desc') => User[];
-	addNewUser: (newUser: User) => void;
-	activateUser: (id: string) => void;
 	removeUser: (id: string) => void;
 	updateUser: (user: User) => void;
 	usersPageNumber: number;
 	setUsersPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	totalItems: number;
 	loadedPages: number[];
-	enableUsersFetch: () => void;
-	disableUsersFetch: () => void;
 }
 
 interface UsersContextProviderProps {
@@ -45,7 +41,6 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	const isStaffUsersRoute = hasAdminAccess && shouldFetchStaffUsersList(pathname);
 
@@ -55,9 +50,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		isError,
 		fetchEntities: fetchUsers,
 		fetchMoreEntities: fetchMoreUsers,
-		addEntity: addNewUser,
 		updateEntity: updateUser,
-		toggleEntityActive: activateUser,
 		removeEntity: removeUser,
 		sortEntities: sortUsersData,
 		pageNumber: usersPageNumber,
@@ -68,7 +61,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}/users/organisation/${orgId}`,
 		entityKey: 'users',
-		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute && isStaffUsersRoute,
+		enabled: isAuthenticated && hasAdminAccess && !isLandingPageRoute && isStaffUsersRoute,
 		role: user?.role as Roles,
 		staleTime: USERS_LIST_STALE_MS,
 		cacheTime: 30 * 60 * 1000,
@@ -77,28 +70,21 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		refetchOnMount: false,
 	});
 
-	const enableUsersFetch = () => setIsEnabled(true);
-	const disableUsersFetch = () => setIsEnabled(false);
-
 	return (
 		<UsersContext.Provider
 			value={{
 				users,
-				loading: isEnabled && isStaffUsersRoute && (isLoading || !users),
+				loading: isStaffUsersRoute && (isLoading || !users),
 				error: isError ? 'Failed to fetch users' : null,
 				fetchUsers,
 				fetchMoreUsers,
 				sortUsersData,
-				addNewUser,
-				activateUser,
 				removeUser,
 				updateUser,
 				usersPageNumber,
 				setUsersPageNumber,
 				totalItems,
 				loadedPages,
-				enableUsersFetch,
-				disableUsersFetch,
 			}}>
 			<DataFetchErrorBoundary context='Users'>{children}</DataFetchErrorBoundary>
 		</UsersContext.Provider>

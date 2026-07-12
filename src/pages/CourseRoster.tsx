@@ -189,10 +189,12 @@ const CourseRoster = () => {
 			return;
 		}
 
-		// If not in context, fetch it
+		// If not in context, fetch slim staff metadata (title + groups for roster filters)
 		const fetchCourse = async () => {
 			try {
-				const endpoint = isInstructor ? `/courses/instructor/${courseId}` : `/courses/${courseId}`;
+				const endpoint = isInstructor
+					? `/courses/instructor/${courseId}/staff-info`
+					: `/courses/${courseId}/staff-info`;
 				const response = await axios.get(`${base_url}${endpoint}`);
 				const courseData = response.data.data;
 				setCourse(courseData);

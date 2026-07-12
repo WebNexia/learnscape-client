@@ -2,8 +2,6 @@ import { Box, DialogActions, DialogContent, TableCell } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { format } from 'date-fns';
-import * as XLSX from 'xlsx';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Typography, Table, TableBody, TableRow } from '@mui/material';
 import { useContext, useState, useEffect } from 'react';
@@ -120,6 +118,7 @@ const AdminInquiries = () => {
 	const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 	const [resourceDownloadLeadsOpen, setResourceDownloadLeadsOpen] = useState(false);
+	const [isDownloadingInquiries, setIsDownloadingInquiries] = useState(false);
 
 	useEffect(() => {
 		setInquiriesPageNumber(1);
@@ -171,47 +170,41 @@ const AdminInquiries = () => {
 	};
 
 	const handleDownload = async () => {
+		setIsDownloadingInquiries(true);
 		try {
-			let dataToExport: Inquiry[];
-
+			const params = new URLSearchParams();
 			if (isSearchActive) {
-				// If search is active, use the search results (already filtered)
-				dataToExport = displayInquiries || [];
-			} else {
-				// First, get the total count to know how many pages we need
-				const countResponse = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=1&limit=1`);
-				const totalItems = countResponse.data.totalItems;
-
-				// Calculate how many pages we need to fetch all data
-				const itemsPerPage = 1000; // Fetch 1000 per page
-				const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-				// Fetch all pages
-				let allInquiries: Inquiry[] = [];
-				for (let page = 1; page <= totalPages; page++) {
-					const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=${itemsPerPage}`);
-					allInquiries = [...allInquiries, ...response.data.data];
+				if (searchedValue?.trim()) {
+					params.append('search', searchedValue.trim());
 				}
-
-				dataToExport = allInquiries;
+				if (filterValue?.trim()) {
+					params.append('filter', filterValue.trim());
+				}
 			}
 
-			const excelData = dataToExport?.map((inquiry: Inquiry) => ({
-				'First Name': inquiry.firstName,
-				'Last Name': inquiry.lastName,
-				'Email': inquiry.email,
-				'Phone': inquiry.phone,
-				'Country': inquiry.countryCode,
-				'Message': inquiry.message || '',
-				'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
-			}));
+			const queryString = params.toString();
+			const response = await axios.get(`${base_url}/inquiries/export-excel/${orgId}${queryString ? `?${queryString}` : ''}`, {
+				responseType: 'blob',
+			});
 
-			const ws = XLSX.utils.json_to_sheet(excelData);
-			const wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
-			XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+			let filename = `Inquiries-${new Date().toISOString().split('T')[0]}.xlsx`;
+			const disposition = response.headers['content-disposition'];
+			if (disposition && disposition.indexOf('filename=') !== -1) {
+				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
+			}
+
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
+		} finally {
+			setIsDownloadingInquiries(false);
 		}
 	};
 
@@ -257,7 +250,7 @@ const AdminInquiries = () => {
 								label: isMobileSize ? 'Inquiries' : `Inquiries ${isSearchActive ? 'Filtered' : ''}`,
 								onClick: handleDownload,
 								startIcon: !isMobileSize ? <DownloadIcon /> : undefined,
-								disabled: displayInquiries && displayInquiries.length === 0,
+								disabled: isDownloadingInquiries || (displayInquiries && displayInquiries.length === 0),
 							},
 							{
 								label: isMobileSize ? 'Email' : 'Bulk Email',

@@ -166,6 +166,11 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		});
 		setTotalItems((prev) => Math.max(0, prev - 1));
 
+		// Invalidate dashboard cache when user is removed
+		if (entityKey === 'users') {
+			queryClient.invalidateQueries(['dashboardSummary']);
+		}
+
 		// Invalidate dashboard cache when course is removed
 		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {
 			queryClient.invalidateQueries(['dashboardSummary']);

@@ -22,7 +22,6 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import axios from '@utils/axiosInstance';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
-import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
@@ -45,7 +44,6 @@ const AdminCourses = () => {
 		totalItems,
 		loadedPages,
 		coursesPageNumber,
-		enableCoursesFetch,
 		setCoursesPageNumber,
 	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
@@ -162,10 +160,6 @@ const AdminCourses = () => {
 			setIsCreateCohortModalOpen(Array(paginatedCourses.length).fill(false));
 		}
 	}, [displayCourses, coursesPageNumber]);
-
-	useEffect(() => {
-		enableCoursesFetch();
-	}, []);
 
 	// Early returns AFTER all hooks
 	if (error) return <Typography color='error'>{error}</Typography>;
@@ -660,14 +654,8 @@ const AdminCourses = () => {
 														// 1. They are the instructor of the course
 														// 2. The course was not created by an admin
 														if (isInstructor) {
-															const isInstructorOfCourse = course?.instructor?.userId === user?._id;
-															const wasCreatedByAdmin =
-																course?.createdByRole === Roles.ADMIN ||
-																course?.createdByRole === Roles.OWNER ||
-																course?.createdByRole === Roles.SUPER_ADMIN;
-
-															// Can delete if they're the instructor AND course was not created by admin
-															return !(isInstructorOfCourse && !wasCreatedByAdmin);
+															const isCreator = String(course?.createdBy ?? '') === String(user?._id ?? '');
+															return !isCreator;
 														}
 
 														// Default: disable for other roles
@@ -711,7 +699,8 @@ const AdminCourses = () => {
 													course={course}
 												/>
 												<CoursesInfoModal
-													singleCourse={course}
+													courseId={course._id}
+													courseTitle={course.title}
 													isCourseInfoDialogOpen={isCourseInfoModalOpen[index]}
 													setIsCourseInfoDialogOpen={() =>
 														setIsCourseInfoModalOpen((prev) => {

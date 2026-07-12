@@ -27,6 +27,13 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { dateFormatter } from '../utils/dateFormatter';
 
+const isUserHiddenFromViewer = (userRole: string, viewerRole?: string): boolean => {
+	if (viewerRole === Roles.OWNER) return false;
+	if (viewerRole === Roles.SUPER_ADMIN) return userRole === Roles.OWNER;
+	if (viewerRole === Roles.ADMIN) return userRole === Roles.SUPER_ADMIN || userRole === Roles.OWNER;
+	return false;
+};
+
 // Responsive column configuration
 const getColumns = (isVerySmallScreen: boolean) => {
 	return isVerySmallScreen
@@ -72,7 +79,6 @@ const AdminUsers = () => {
 		numberOfPages: usersNumberOfPages,
 		currentPage: usersCurrentPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -99,26 +105,6 @@ const AdminUsers = () => {
 		defaultOrder: 'asc',
 	});
 
-	// Helper function to apply hierarchical visibility filter
-	const applyVisibilityFilter = (usersToFilter: User[]): User[] => {
-		return usersToFilter.filter((mappedUser) => {
-			// Owner can see all users (including super-admin and admin)
-			if (loggedInUser?.role === Roles.OWNER) {
-				return true;
-			}
-			// Super-admin can see everyone except owner
-			if (loggedInUser?.role === Roles.SUPER_ADMIN) {
-				return mappedUser.role !== Roles.OWNER;
-			}
-			// Admin can see everyone except super-admin and owner
-			if (loggedInUser?.role === Roles.ADMIN) {
-				return mappedUser.role !== Roles.SUPER_ADMIN && mappedUser.role !== Roles.OWNER;
-			}
-			// Default: show all (shouldn't happen as this is an admin page)
-			return true;
-		});
-	};
-
 	const sortedUsers =
 		[...(displayUsers || [])]?.sort((a, b) => {
 			const aValue = orderBy === 'fullName' ? `${a.firstName || ''} ${a.lastName || ''}`.trim() : ((a as any)[orderBy] ?? '');
@@ -126,13 +112,11 @@ const AdminUsers = () => {
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			} else {
-				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 		}) || [];
 
-	// Apply visibility filter to sorted users
-	const paginatedUsers = applyVisibilityFilter(sortedUsers);
+	const paginatedUsers = sortedUsers;
 
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
@@ -162,6 +146,7 @@ const AdminUsers = () => {
 	const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
 	const [isDeletingLearningData, setIsDeletingLearningData] = useState<boolean>(false);
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
+	const [isDownloadingUsers, setIsDownloadingUsers] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
@@ -191,60 +176,53 @@ const AdminUsers = () => {
 	};
 
 	const handleDownloadUsers = async () => {
+		setIsDownloadingUsers(true);
 		try {
-			let dataToExport: User[];
-
-			if (searchButtonClicked) {
-				// If search is active, use the search results and apply visibility filter
-				dataToExport = applyVisibilityFilter(displayUsers || []);
-			} else {
-				// First, get the total count to know how many pages we need
-				const countResponse = await axios.get(`${base_url}/users/organisation/${orgId}?page=1&limit=1`);
-				const totalItems = countResponse.data.totalItems;
-
-				// Calculate how many pages we need to fetch all data
-				const itemsPerPage = 1000; // Fetch 1000 per page
-				const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-				// Fetch all pages
-				let allUsers: User[] = [];
-				for (let page = 1; page <= totalPages; page++) {
-					const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${page}&limit=${itemsPerPage}`);
-					allUsers = [...allUsers, ...response.data.data];
+			const params = new URLSearchParams();
+			if (isSearchActive) {
+				if (searchedValue?.trim()) {
+					params.append('search', searchedValue.trim());
 				}
-
-				// Apply visibility filter to all fetched users
-				dataToExport = applyVisibilityFilter(allUsers);
+				if (filterValue?.trim()) {
+					params.append('filter', filterValue.trim());
+				}
 			}
 
-			// Create Excel data
-			const excelData = dataToExport?.map((user: User) => ({
-				'First Name': user.firstName,
-				'Last Name': user.lastName,
-				'Username': user.username,
-				'Email': user.email,
-				'Status': user.isActive ? 'Active' : 'Inactive',
-				'Role': user.role,
-				'Created At': new Date(user.createdAt).toLocaleDateString(),
-			}));
+			const queryString = params.toString();
+			const response = await axios.get(`${base_url}/users/export-excel/${orgId}${queryString ? `?${queryString}` : ''}`, {
+				responseType: 'blob',
+			});
 
-			// Create and download Excel file
-			const XLSX = await import('xlsx');
-			const ws = XLSX.utils.json_to_sheet(excelData);
-			const wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'Users');
-			XLSX.writeFile(wb, `${organisation?.orgName}_Users_${new Date().toISOString().split('T')[0]}.xlsx`);
+			let filename = `${organisation?.orgName}_Users_${new Date().toISOString().split('T')[0]}.xlsx`;
+			const disposition = response.headers['content-disposition'];
+			if (disposition && disposition.indexOf('filename=') !== -1) {
+				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
+			}
+
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
+		} finally {
+			setIsDownloadingUsers(false);
 		}
 	};
 
-	const handleUserStatus = async (): Promise<void> => {
+	const handleUserStatus = async (index: number): Promise<void> => {
+		if (!singleUser?._id) return;
+
 		try {
-			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
-				isActive: !singleUser?.isActive,
+			await axios.patch(`${base_url}/users/${singleUser._id}`, {
+				isActive: !singleUser.isActive,
 			});
-			updateUser({ ...singleUser!, isActive: !singleUser?.isActive });
+			updateUser({ ...singleUser, isActive: !singleUser.isActive });
+			closeStatusUpdateUserModal(index);
 		} catch (error) {
 			console.error('Toggle user status error:', error);
 		}
@@ -300,11 +278,22 @@ const AdminUsers = () => {
 	};
 
 	const handleUpdateUserRole = async (index: number) => {
+		if (!singleUser?._id || !singleUser.role) return;
+
 		try {
-			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
-				role: singleUser?.role,
+			await axios.patch(`${base_url}/users/${singleUser._id}`, {
+				role: singleUser.role,
 			});
-			updateUser(singleUser!);
+
+			if (isUserHiddenFromViewer(singleUser.role, loggedInUser?.role)) {
+				removeUser(singleUser._id);
+				if (isSearchActive) {
+					removeFromSearchResults(singleUser._id);
+				}
+			} else {
+				updateUser(singleUser);
+			}
+
 			closeUserEditModal(index);
 		} catch (error) {
 			console.error('Update user role error:', error);
@@ -463,10 +452,10 @@ const AdminUsers = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Users`,
+								label: isMobileSize ? 'Download' : `Download ${isSearchActive ? 'Filtered' : 'All'} Users`,
 								onClick: handleDownloadUsers,
 								startIcon: <DownloadIcon />,
-								disabled: paginatedUsers && paginatedUsers.length === 0,
+								disabled: (paginatedUsers && paginatedUsers.length === 0) || isDownloadingUsers,
 							},
 						]}
 						isSticky={true}
@@ -909,13 +898,11 @@ const AdminUsers = () => {
 																onCancel={() => closeStatusUpdateUserModal(index)}
 																deleteBtn={user?.isActive}
 																deleteBtnText='Deactivate'
-																onDelete={() => {
-																	handleUserStatus();
-																	closeStatusUpdateUserModal(index);
+																onDelete={async () => {
+																	await handleUserStatus(index);
 																}}
-																onSubmit={() => {
-																	handleUserStatus();
-																	closeStatusUpdateUserModal(index);
+																onSubmit={async () => {
+																	await handleUserStatus(index);
 																}}
 																submitBtnText='Activate'
 																actionSx={{ mb: '0.5rem' }}

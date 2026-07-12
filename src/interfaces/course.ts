@@ -31,16 +31,17 @@ export interface BaseCourse {
 	isCapacityFull?: boolean;
 	isRegistrationClosedByAdmin?: boolean;
 	activeEnrollmentCount?: number;
-	clonedFromId: string;
-	clonedFromTitle: string;
+	clonedFromId?: string;
+	clonedFromTitle?: string;
 	cohortOfCourseId?: string;
-	versionNote: string;
-	createdByName: string;
-	createdByImageUrl: string;
-	createdByRole: string;
-	updatedByName: string;
-	updatedByImageUrl: string;
-	updatedByRole: string;
+	versionNote?: string;
+	createdBy?: string;
+	createdByName?: string;
+	createdByImageUrl?: string;
+	createdByRole?: string;
+	updatedByName?: string;
+	updatedByImageUrl?: string;
+	updatedByRole?: string;
 	publishedAt: string | null;
 	instructor: Instructor;
 	courseManagement: CourseManagement;
@@ -68,7 +69,7 @@ export interface CourseGroup {
 	_id?: string;
 	name: string;
 	capacity?: number;
-	description: string;
+	description?: string;
 	enrolledCount?: number;
 	remainingSeats?: number | null;
 	isFull?: boolean;
@@ -110,9 +111,9 @@ export interface Instructor {
 
 export interface CourseManagement {
 	isExternal: boolean;
-	externalProvider: string;
-	externalUrl: string;
-	externalNotes: string;
+	externalProvider?: string;
+	externalUrl?: string;
+	externalNotes?: string;
 }
 
 export interface ArchivedCourse extends SingleCourse {
