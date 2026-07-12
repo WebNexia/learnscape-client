@@ -505,7 +505,8 @@ const CoursePaper = ({
 								cloneCourse={cloneCourse}
 							/>
 							<CoursesInfoModal
-								singleCourse={singleCourseBeforeSave}
+								courseId={singleCourseBeforeSave?._id}
+								courseTitle={singleCourseBeforeSave?.title}
 								isCourseInfoDialogOpen={isCourseInfoDialogOpen}
 								setIsCourseInfoDialogOpen={setIsCourseInfoDialogOpen}
 							/>

@@ -1,4 +1,5 @@
 import { useQueryClient } from 'react-query';
+import { DASHBOARD_QUERY_ROOT } from '../hooks/useDashboardSummary';
 
 /**
  * Simple dashboard sync utility
@@ -8,11 +9,8 @@ export const useDashboardSync = () => {
 	const queryClient = useQueryClient();
 
 	const refreshDashboard = () => {
-		// Invalidate and refetch dashboard data
-		queryClient.invalidateQueries(['dashboardSummary']);
-
-		// Also try to refetch immediately
-		queryClient.refetchQueries(['dashboardSummary']);
+		queryClient.invalidateQueries([DASHBOARD_QUERY_ROOT]);
+		queryClient.refetchQueries([DASHBOARD_QUERY_ROOT]);
 	};
 
 	const refreshQuizSubmissions = () => {

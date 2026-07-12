@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
@@ -26,8 +26,6 @@ interface CoursesContextTypes {
 	setCoursesPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	totalItems: number;
 	loadedPages: number[];
-	enableCoursesFetch: () => void;
-	disableCoursesFetch: () => void;
 	hasMore: boolean;
 	loadMore: () => Promise<void>;
 }
@@ -51,11 +49,12 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	setCoursesPageNumber: () => {},
 	totalItems: 0,
 	loadedPages: [],
-	enableCoursesFetch: () => {},
-	disableCoursesFetch: () => {},
 	hasMore: false,
 	loadMore: async () => {},
 });
+
+export const STAFF_COURSES_LIST_STALE_MS = 2 * 60 * 1000;
+export const LEARNER_COURSES_LIST_STALE_MS = 5 * 60 * 1000;
 
 const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -64,7 +63,6 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	// Role-based endpoint detection - separate routes for clarity
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
@@ -81,12 +79,9 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const isStaffCoursesRoute = isStaff && shouldFetchStaffCoursesList(pathname);
 
 	const fetchEnabled =
-		isEnabled &&
-		!!orgId &&
-		isAuthenticated &&
-		!isLandingPageRoute &&
-		(isStaffCoursesRoute || (isLearner && isLearnerCatalogRoute));
+		!!orgId && isAuthenticated && !isLandingPageRoute && (isStaffCoursesRoute || (isLearner && isLearnerCatalogRoute));
 	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
+	const isStaffCoursesList = isStaff && isStaffCoursesRoute;
 
 	const {
 		data: courses,
@@ -109,14 +104,12 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		entityKey: isInstructor ? 'instructorCourses' : 'allCourses',
 		enabled: fetchEnabled,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: isStaffCoursesList ? STAFF_COURSES_LIST_STALE_MS : LEARNER_COURSES_LIST_STALE_MS,
 		limit: 100,
 		cacheTime: 30 * 60 * 1000,
 		disableAutoGapFill: true,
+		refetchOnMount: isStaffCoursesList ? false : true,
 	});
-
-	const enableCoursesFetch = () => setIsEnabled(true);
-	const disableCoursesFetch = () => setIsEnabled(false);
 
 	// Calculate if there are more courses to load
 	const hasMore = courses && totalItems > courses.length;
@@ -148,8 +141,6 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 				setCoursesPageNumber,
 				totalItems,
 				loadedPages,
-				enableCoursesFetch,
-				disableCoursesFetch,
 				hasMore,
 				loadMore,
 			}}>

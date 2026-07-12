@@ -75,3 +75,12 @@ export interface AttendeeInfo {
 	username: string;
 	role?: string;
 }
+
+export function searchUserToAttendeeInfo(searchUser: { _id: string; firebaseUserId: string; username: string; role?: string }): AttendeeInfo {
+	return {
+		_id: searchUser._id,
+		firebaseUserId: searchUser.firebaseUserId,
+		username: searchUser.username,
+		role: searchUser.role,
+	};
+}

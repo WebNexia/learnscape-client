@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
 import { SingleCourse } from '../interfaces/course';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -14,7 +14,7 @@ import CoursesInfoDialog from '../components/layouts/CoursesInfoDialog';
 import { InfoOutlined } from '@mui/icons-material';
 
 const Courses = () => {
-	const { courses, loading, hasMore, loadMore, enableCoursesFetch } = useContext(CoursesContext);
+	const { courses, loading, hasMore, loadMore } = useContext(CoursesContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
 	// Get user course data from context for enrollment and progress tracking
@@ -24,10 +24,6 @@ const Courses = () => {
 
 	// Dialog state for course info
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
-
-	useEffect(() => {
-		enableCoursesFetch();
-	}, []);
 
 	// Filter options for the learner
 	const filterOptions = [

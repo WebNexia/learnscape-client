@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { UserAuthContext } from './UserAuthContextProvider';
+import { shouldFetchUploadCounts } from '../utils/uploadCountsDataRoutes';
 
 interface UploadInfo {
 	audioUploads: {
@@ -62,6 +64,7 @@ function formatQueryError(queryError: unknown): string {
 
 export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ children }) => {
 	const { userId } = useContext(UserAuthContext);
+	const { pathname } = useLocation();
 	const queryClient = useQueryClient();
 
 	const uploadInfoRef = useRef<UploadInfo | null>(null);
@@ -75,7 +78,7 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 			return response.data.uploadInfo as UploadInfo;
 		},
 		{
-			enabled: !!userId,
+			enabled: !!userId && shouldFetchUploadCounts(pathname),
 			staleTime: 30 * 1000,
 			cacheTime: 10 * 60 * 1000,
 			refetchOnWindowFocus: false,

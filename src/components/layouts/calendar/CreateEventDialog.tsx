@@ -19,13 +19,12 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/L
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { Cancel, InfoOutlined } from '@mui/icons-material';
 import CustomDialogActions from '../dialog/CustomDialogActions';
-import { AttendeeInfo, Event } from '../../../interfaces/event';
+import { AttendeeInfo, Event, searchUserToAttendeeInfo } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useContext, useState, useEffect, useRef } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
-import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
@@ -39,6 +38,7 @@ import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { truncateText } from '../../../utils/utilText';
 import { sendEventCreatedNotifications } from '../../../utils/eventNotifications';
+import { fetchOrganisationEventParticipants } from '../../../utils/fetchOrganisationEventParticipants';
 
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
@@ -104,84 +104,29 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 	// Handlers for new search components
 	const handleUserSelect = (selectedUser: SearchUser) => {
-		// Convert SearchUser to User format for compatibility
-		const user: User = {
-			_id: selectedUser._id, // Use MongoDB ObjectId
-			firebaseUserId: selectedUser.firebaseUserId,
-			username: selectedUser.username,
-			email: selectedUser.email || '',
-			imageUrl: selectedUser.imageUrl,
-			role: selectedUser.role,
-			// Add other required fields with defaults
-			firstName: selectedUser.firstName || '',
-			lastName: selectedUser.lastName || '',
-			phone: '',
-			orgId: orgId,
-			isActive: true,
-			hasRegisteredCourse: false,
-			countryCode: '',
-			isEmailVerified: false,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			// Add missing subscription properties
-			isSubscribed: false,
-			subscriptionType: null,
-			subscriptionExpiry: '',
-			subscriptionStatus: 'none',
-			subscriptionValidUntil: '',
-			accessLevel: 'limited',
-		};
+		const attendee = searchUserToAttendeeInfo(selectedUser);
 
 		// Check if user is already selected
-		const isAlreadySelected = newEvent.attendees?.some((attendee) => attendee._id === user._id);
+		const isAlreadySelected = newEvent.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected) {
 			setNewEvent((prevData) => ({
 				...prevData,
-				attendees: [...prevData.attendees, user],
+				attendees: [...prevData.attendees, attendee],
 			}));
 		}
 		setSearchLearnerValue('');
 	};
 
 	const handleInstructorSelect = (selectedInstructor: SearchUser) => {
-		// Convert SearchUser to User format for compatibility
-		const instructor: User = {
-			_id: selectedInstructor._id, // Use MongoDB ObjectId
-			firebaseUserId: selectedInstructor.firebaseUserId,
-			username: selectedInstructor.username,
-			email: selectedInstructor.email || '',
-			imageUrl: selectedInstructor.imageUrl,
-			role: selectedInstructor.role,
-			// Add other required fields with defaults
-			firstName: selectedInstructor.firstName || '',
-			lastName: selectedInstructor.lastName || '',
-			phone: '',
-			orgId: orgId,
-			isActive: true,
-			hasRegisteredCourse: false,
-			countryCode: '',
-			isEmailVerified: false,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			// Add missing subscription properties
-			isSubscribed: false,
-			subscriptionType: null,
-			subscriptionExpiry: '',
-			subscriptionStatus: 'none',
-			subscriptionValidUntil: '',
-			accessLevel: 'limited',
-		};
+		const attendee = searchUserToAttendeeInfo(selectedInstructor);
 
 		// Check if instructor is already selected
-		const isAlreadySelected = newEvent.attendees?.some((attendee) => attendee._id === instructor._id);
+		const isAlreadySelected = newEvent.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected) {
-			setNewEvent((prevData) => {
-				const newAttendees = [...prevData.attendees, instructor];
-				return {
-					...prevData,
-					attendees: newAttendees,
-				};
-			});
+			setNewEvent((prevData) => ({
+				...prevData,
+				attendees: [...prevData.attendees, attendee],
+			}));
 		}
 		setSearchInstructorValue('');
 	};
@@ -296,51 +241,32 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		let allSubscribers: AttendeeInfo[] = [];
 		let courseParticipants: AttendeeInfo[] = [];
 
-		// Handle "All Instructors" selection - fetch from API to get ALL instructors
+		// Handle "All Instructors" selection
 		if (newEvent.isAllInstructorsSelected) {
 			try {
-				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=instructor&limit=10000`);
-				const instructors = response.data.data || [];
-				allInstructors = instructors.map((instructor: any) => ({
-					_id: instructor._id,
-					username: instructor.username,
-					firebaseUserId: instructor.firebaseUserId,
-					role: instructor.role,
-				}));
+				allInstructors = await fetchOrganisationEventParticipants(orgId, { group: 'eventInstructors' });
 			} catch (error) {
 				console.error('Error fetching all instructors:', error);
 			}
 		}
 
-		// Handle "All Learners" selection - fetch from API to get ALL learners
+		// Handle "All Learners" selection
 		if (newEvent.isAllLearnersSelected) {
 			try {
-				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=learner&limit=10000`);
-				const learners = response.data.data || [];
-				allLearners = learners.map((learner: any) => ({
-					_id: learner._id,
-					username: learner.username,
-					firebaseUserId: learner.firebaseUserId,
-					role: learner.role,
-				}));
+				allLearners = await fetchOrganisationEventParticipants(orgId, { role: 'learner' });
 			} catch (error) {
 				console.error('Error fetching all learners:', error);
 			}
 		}
 
-		// Handle "All Subscribers" selection - fetch from API to get ALL subscribers
+		// Handle "All Subscribers" selection
 		if (isSubscriptionsProductEnabled && newEvent.isAllSubscribersSelected) {
 			try {
-				const response = await axios.get(
-					`${base_url}/users/organisation/${orgId}?role=learner&isSubscribed=true&subscriptionStatus=active&limit=10000`
-				);
-				const subscribers = response.data.data || [];
-				allSubscribers = subscribers.map((subscriber: any) => ({
-					_id: subscriber._id,
-					username: subscriber.username,
-					firebaseUserId: subscriber.firebaseUserId,
-					role: subscriber.role,
-				}));
+				allSubscribers = await fetchOrganisationEventParticipants(orgId, {
+					role: 'learner',
+					isSubscribed: true,
+					subscriptionStatus: 'active',
+				});
 			} catch (error) {
 				console.error('Error fetching all subscribers:', error);
 			}

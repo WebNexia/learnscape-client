@@ -7,6 +7,7 @@ interface Column {
 	label: string;
 	infoIcon?: React.ReactNode;
 	width?: string | number;
+	align?: 'left' | 'center' | 'right';
 }
 
 interface CustomTableHeadProps<T> {
@@ -27,17 +28,28 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns, selectAll, o
 		<TableHead>
 			<TableRow hover>
 				{columns?.map((column, index) => (
-					<TableCell key={index} sx={{ textAlign: 'center', padding: isMobileSizeSmall ? '0.05rem' : 'inherit', width: column.width || 'auto' }}>
+					<TableCell
+						key={index}
+						align={column.align || 'center'}
+						sx={{
+							textAlign: column.align || 'center',
+							padding: isMobileSizeSmall ? '0.05rem' : 'inherit',
+							width: column.width || 'auto',
+						}}>
 						{column.key === 'checkbox' ? (
 							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' size='small' />
+						) : column.key === 'actions' ? (
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.7rem' : isMobileSize ? '0.85rem' : '0.9rem' }}>
+								{column.label}
+							</Typography>
 						) : (
 							<TableSortLabel
 								active={orderBy === column.key}
 								direction={orderBy === column.key ? order : 'asc'}
-								onClick={() => {
-									if (column.key !== 'actions') {
-										handleSort(column.key as keyof T);
-									}
+								onClick={() => handleSort(column.key as keyof T)}
+								sx={{
+									width: column.align === 'left' || column.align === 'right' ? '100%' : undefined,
+									justifyContent: column.align === 'left' ? 'flex-start' : column.align === 'right' ? 'flex-end' : 'center',
 								}}>
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
 									<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.7rem' : isMobileSize ? '0.85rem' : '0.9rem' }}>

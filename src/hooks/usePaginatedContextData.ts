@@ -15,6 +15,7 @@ interface UsePaginatedEntityOptions<T extends { _id: string; updatedAt: string; 
 	limit?: number;
 	disableAutoGapFill?: boolean; // Disable automatic gap filling
 	refetchOnWindowFocus?: boolean; // Enable refetch on window focus (default: false)
+	refetchOnMount?: boolean;
 }
 
 export function usePaginatedEntity<T extends { _id: string; updatedAt: string; isActive?: boolean }>({
@@ -29,6 +30,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	limit = 200,
 	disableAutoGapFill = false,
 	refetchOnWindowFocus = false,
+	refetchOnMount = true,
 }: UsePaginatedEntityOptions<T>) {
 	const queryClient = useQueryClient();
 
@@ -82,8 +84,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		enabled: !!orgId && enabled,
 		staleTime,
 		cacheTime,
-		refetchOnWindowFocus, // Configurable - enables immediate updates for admins/instructors
-		refetchOnMount: true, // 👈 Enable refetch on mount to get fresh data when navigating back
+		refetchOnWindowFocus,
+		refetchOnMount,
 	});
 
 	// Progressive pagination fill - with debouncing to prevent multiple rapid calls
@@ -159,8 +161,15 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	};
 
 	const removeEntity = (id: string) => {
-		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => (old || [])?.filter((item) => item._id !== id) || []);
+		loadedPages?.forEach((page) => {
+			queryClient.setQueryData<T[]>([entityKey, orgId, page], (old = []) => (old || [])?.filter((item) => item._id !== id) || []);
+		});
 		setTotalItems((prev) => Math.max(0, prev - 1));
+
+		// Invalidate dashboard cache when user is removed
+		if (entityKey === 'users') {
+			queryClient.invalidateQueries(['dashboardSummary']);
+		}
 
 		// Invalidate dashboard cache when course is removed
 		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {

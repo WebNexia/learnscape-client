@@ -17,7 +17,7 @@ const InstructorDashboard = () => {
 	const navigate = useNavigate();
 
 	// Dashboard summary hook
-	const { dashboardData } = useDashboardSummary();
+	const { dashboardData, commonData } = useDashboardSummary();
 
 	const [totalUsers, setTotalUsers] = useState<number>(1);
 	const [chartData, setChartData] = useState<any>({
@@ -97,7 +97,7 @@ const InstructorDashboard = () => {
 
 					{/* Upcoming Events (instructor's events + public events) */}
 					<Grid item sm={3} xs={6} onClick={() => navigate(`/instructor/calendar`)}>
-						<UpcomingEvents dashboardEvents={dashboardData?.common.upcomingEvents} />
+						<UpcomingEvents dashboardEvents={commonData?.upcomingEvents} />
 					</Grid>
 
 					{/* Unread Messages */}
@@ -119,7 +119,7 @@ const InstructorDashboard = () => {
 						onClick={() => {
 							navigate(`/instructor/submissions`);
 						}}>
-						<DashboardQuizSubmissions quizNotification={dashboardData?.common.quizNotification} />
+						<DashboardQuizSubmissions quizNotification={commonData?.quizNotification} />
 					</Grid>
 
 					{/* Recent Topics (like everyone) */}
@@ -130,7 +130,7 @@ const InstructorDashboard = () => {
 						onClick={() => {
 							navigate(`/instructor/community`);
 						}}>
-						<DashboardCommunityTopics recentTopics={dashboardData?.common.recentTopics} />
+						<DashboardCommunityTopics recentTopics={commonData?.recentTopics} />
 					</Grid>
 				</Grid>
 			</Box>
