@@ -77,12 +77,15 @@ export const useChatActions = ({
 	// Create new 1-1 chat
 	const createNewChat = useCallback(
 		async (selectedUser: User): Promise<'success' | 'blocked'> => {
-			if (!user?.firebaseUserId) return 'blocked';
+			if (!user?.firebaseUserId || !selectedUser.firebaseUserId) return 'blocked';
 
-			if (globalBlockedUsers?.includes(selectedUser.firebaseUserId)) return 'blocked';
+			const currentUserId = user.firebaseUserId;
+			const otherUserId = selectedUser.firebaseUserId;
+
+			if (globalBlockedUsers?.includes(otherUserId)) return 'blocked';
 
 			// ✅ FIXED: Use sorted chatId strategy like original
-			const chatId = [user.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
+			const chatId = [currentUserId, otherUserId].sort().join('&');
 
 			const existingChat = chatList?.find((chat) => chat.chatId === chatId);
 			if (existingChat) {
@@ -96,7 +99,7 @@ export const useChatActions = ({
 
 			const batch = writeBatch(db);
 			const newChatData = {
-				participants: [user.firebaseUserId, selectedUser.firebaseUserId],
+				participants: [currentUserId, otherUserId],
 				removedParticipants: [],
 				isDeletedBy: [],
 				chatType: '1-1',
@@ -119,9 +122,9 @@ export const useChatActions = ({
 			const newChat: Chat = {
 				chatId,
 				participants: [
-					{ firebaseUserId: user.firebaseUserId, username: user.username, imageUrl: user.imageUrl, role: user.role },
+					{ firebaseUserId: currentUserId, username: user.username, imageUrl: user.imageUrl, role: user.role },
 					{
-						firebaseUserId: selectedUser.firebaseUserId,
+						firebaseUserId: otherUserId,
 						username: selectedUser.username,
 						imageUrl: selectedUser.imageUrl,
 						role: selectedUser.role,
@@ -162,8 +165,8 @@ export const useChatActions = ({
 				setMessages([
 					{
 						id: 'temp',
-						senderId: user.firebaseUserId,
-						receiverId: selectedUser.firebaseUserId,
+						senderId: currentUserId,
+						receiverId: otherUserId,
 						text: 'Chat started',
 						timestamp: new Date(),
 						isRead: true,
@@ -185,7 +188,10 @@ export const useChatActions = ({
 		async (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[]) => {
 			if (!user?.firebaseUserId || !chatId) return;
 
-			const allParticipants = [user, ...selectedUsers];
+			const currentUserId = user.firebaseUserId;
+			const allParticipants = [user, ...selectedUsers].filter(
+				(p): p is User & { firebaseUserId: string } => Boolean(p.firebaseUserId)
+			);
 			const participantIds = allParticipants.map((p) => p.firebaseUserId);
 			const trimmedGroupImageUrl = groupImageUrl.trim() || '';
 			const chatRef = doc(db, 'chats', chatId);
@@ -199,7 +205,7 @@ export const useChatActions = ({
 					chatType: 'group',
 					groupName: groupName.trim(),
 					groupImageUrl: trimmedGroupImageUrl,
-					createdBy: user.firebaseUserId,
+					createdBy: currentUserId,
 					lastMessage: {
 						text: 'Group chat created',
 						timestamp: new Date(),
@@ -231,7 +237,7 @@ export const useChatActions = ({
 					groupName: groupName.trim(),
 					groupImageUrl: trimmedGroupImageUrl,
 					chatType: 'group',
-					createdBy: user.firebaseUserId,
+					createdBy: currentUserId,
 					lastMessage: {
 						text: 'Group chat created',
 						timestamp: new Date(),
@@ -272,8 +278,9 @@ export const useChatActions = ({
 
 				const currentParticipants = activeChat.participants?.filter((p) => !removedMembers.includes(p.firebaseUserId))?.map((p) => p.firebaseUserId);
 
-				const newParticipants = selectedUsers.map((u) => u.firebaseUserId);
-				const allParticipants = [...new Set([...currentParticipants, ...newParticipants])];
+				const usersToAdd = selectedUsers.filter((u): u is User & { firebaseUserId: string } => Boolean(u.firebaseUserId));
+				const newParticipants = usersToAdd.map((u) => u.firebaseUserId);
+				const allParticipants = [...new Set([...(currentParticipants || []), ...newParticipants])];
 
 				const updatedRemovedParticipants = activeChat.removedParticipants?.filter((id) => !newParticipants.includes(id)) || [];
 
@@ -286,7 +293,7 @@ export const useChatActions = ({
 				});
 
 				// ✅ Add system messages for NEW members — but still in the same batch (1 write total!)
-				selectedUsers.forEach((newUser) => {
+				usersToAdd.forEach((newUser) => {
 					const messageRef = doc(collection(db, 'chats', chatId, 'messages'));
 					batch.set(messageRef, {
 						id: newUser.firebaseUserId + '_joined',
@@ -312,7 +319,7 @@ export const useChatActions = ({
 				// ✅ Local UI update — same logic as before
 				const finalParticipants = [
 					...activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)),
-					...selectedUsers.map((u) => ({
+					...usersToAdd.map((u) => ({
 						firebaseUserId: u.firebaseUserId,
 						username: u.username,
 						imageUrl: u.imageUrl,

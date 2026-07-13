@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useContext, useEffect, useState } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 
 interface CoursesInfoModalProps {
 	courseId?: string;
@@ -18,7 +18,6 @@ interface CoursesInfoModalProps {
 
 const CoursesInfoModal = ({ courseId, courseTitle, isCourseInfoDialogOpen, setIsCourseInfoDialogOpen }: CoursesInfoModalProps) => {
 	const navigate = useNavigate();
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { isInstructor } = useAuth();
 
@@ -43,8 +42,8 @@ const CoursesInfoModal = ({ courseId, courseTitle, isCourseInfoDialogOpen, setIs
 			setFetchError(null);
 			try {
 				const endpoint = isInstructor
-					? `${base_url}/courses/instructor/${courseId}/staff-info`
-					: `${base_url}/courses/${courseId}/staff-info`;
+					? `/courses/instructor/${courseId}/staff-info`
+					: `/courses/${courseId}/staff-info`;
 				const response = await axios.get(endpoint);
 				if (!cancelled) {
 					setCourseInfo(response.data.data);
@@ -66,7 +65,7 @@ const CoursesInfoModal = ({ courseId, courseTitle, isCourseInfoDialogOpen, setIs
 		return () => {
 			cancelled = true;
 		};
-	}, [isCourseInfoDialogOpen, courseId, isInstructor, base_url]);
+	}, [isCourseInfoDialogOpen, courseId, isInstructor]);
 
 	const singleCourse = courseInfo;
 
