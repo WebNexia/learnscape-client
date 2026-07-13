@@ -178,7 +178,10 @@ const GroupChatModal = ({
 									</Typography>
 									<IconButton
 										size='small'
-										onClick={() => onRemoveGroupUser(selectedUser.firebaseUserId)}
+										onClick={() => {
+											if (!selectedUser.firebaseUserId) return;
+											onRemoveGroupUser(selectedUser.firebaseUserId);
+										}}
 										sx={{
 											'color': '#fff',
 											'padding': '0.25rem',
@@ -212,7 +215,7 @@ const GroupChatModal = ({
 							width: '100%',
 						}}
 						fromGroupChatSettings={true}
-						excludeUserIds={selectedGroupUsers?.map((user) => user.firebaseUserId) || []}
+						excludeUserIds={selectedGroupUsers?.map((user) => user.firebaseUserId).filter((id): id is string => Boolean(id)) || []}
 					/>
 				</Box>
 			</Box>

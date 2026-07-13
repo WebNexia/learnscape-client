@@ -302,7 +302,10 @@ const GroupChatEditModal = ({
 									</Typography>
 									<IconButton
 										size='small'
-										onClick={() => onRemoveGroupUser(selectedUser.firebaseUserId)}
+										onClick={() => {
+											if (!selectedUser.firebaseUserId) return;
+											onRemoveGroupUser(selectedUser.firebaseUserId);
+										}}
 										sx={{
 											'color': '#fff',
 											'padding': '0.25rem',
@@ -340,7 +343,7 @@ const GroupChatEditModal = ({
 							// Exclude current members (not removed)
 							...(activeChat.participants?.filter((p) => !removedMembers?.includes(p.firebaseUserId))?.map((p) => p.firebaseUserId) || []),
 							// Exclude already selected new members
-							...(selectedGroupUsers?.map((user) => user.firebaseUserId) || []),
+							...(selectedGroupUsers?.map((user) => user.firebaseUserId).filter((id): id is string => Boolean(id)) || []),
 						]}
 					/>
 				</Box>
