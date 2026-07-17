@@ -64,6 +64,11 @@ interface QuizQuestionProps {
 	/** Any quiz question has a finished audio recording that was not uploaded yet */
 	hasPendingAudioRecording?: boolean;
 	onPendingAudioRecordingChange?: (questionId: string, hasPending: boolean) => void;
+	/** Staff learner-view: unlocked navigation, no quiz submission / media upload persistence */
+	staffPreviewMode?: boolean;
+	staffPreviewNextLessonId?: string;
+	staffPreviewCoursePath?: string;
+	onStaffPreviewGoToNextLesson?: () => void;
 }
 
 const QuizQuestion = ({
@@ -83,10 +88,15 @@ const QuizQuestion = ({
 	chapterId,
 	hasPendingAudioRecording = false,
 	onPendingAudioRecordingChange,
+	staffPreviewMode = false,
+	staffPreviewNextLessonId,
+	staffPreviewCoursePath,
+	onStaffPreviewGoToNextLesson,
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
+	const effectiveNextLessonId = staffPreviewMode ? staffPreviewNextLessonId ?? null : nextLessonId;
 
 	const { lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -162,8 +172,8 @@ const QuizQuestion = ({
 	});
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
-	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
-	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
+	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null;
+	const isCompletingLesson: boolean = isLastQuestion && effectiveNextLessonId !== null;
 
 	const navigateToCourseHome = () => {
 		if (nextLessonId) {
@@ -283,6 +293,11 @@ const QuizQuestion = ({
 	};
 
 	const handleQuizSubmission = async () => {
+		if (staffPreviewMode) {
+			onStaffPreviewGoToNextLesson?.();
+			return;
+		}
+
 		setUserQuizAnswersUploading(true);
 
 		// Upload user answers
@@ -365,6 +380,23 @@ const QuizQuestion = ({
 	};
 
 	const uploadAudio = async (blob: Blob) => {
+		if (staffPreviewMode) {
+			// Local-only preview: mark as uploaded without Firebase write
+			const localUrl = URL.createObjectURL(blob);
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					return prevData.map((answer) =>
+						answer.questionId === question._id ? { ...answer, audioRecordUrl: localUrl } : answer
+					);
+				}
+				return prevData;
+			});
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+			onPendingAudioRecordingChange?.(question._id, false);
+			return;
+		}
+
 		setIsAudioUploading(true);
 		try {
 			const audioRef = ref(storage, `audio-recordings/${user?.username}-${Date.now()}.webm`);
@@ -395,6 +427,21 @@ const QuizQuestion = ({
 	};
 
 	const uploadVideo = async (blob: Blob) => {
+		if (staffPreviewMode) {
+			const localUrl = URL.createObjectURL(blob);
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					return prevData.map((answer) =>
+						answer.questionId === question._id ? { ...answer, videoRecordUrl: localUrl } : answer
+					);
+				}
+				return prevData;
+			});
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+			return;
+		}
+
 		setIsVideoUploading(true);
 		try {
 			const videoRef = ref(storage, `video-recordings/${user?.username}-${Date.now()}.webm`);
@@ -1017,12 +1064,34 @@ const QuizQuestion = ({
 				</Box>
 				<Tooltip
 					title={
-						isCompletingCourse ? 'Complete Course' : isLessonCompleted && isLastQuestion ? 'Next Lesson' : isCompletingLesson ? 'Submit Quiz' : ''
+						staffPreviewMode
+							? isLastQuestion
+								? effectiveNextLessonId
+									? 'Next Lesson'
+									: 'Back to Course'
+								: ''
+							: isCompletingCourse
+								? 'Complete Course'
+								: isLessonCompleted && isLastQuestion
+									? 'Next Lesson'
+									: isCompletingLesson
+										? 'Submit Quiz'
+										: ''
 					}
 					placement='top'
 					arrow>
 					<IconButton
 						onClick={async () => {
+							if (staffPreviewMode) {
+								if (isLastQuestion) {
+									onStaffPreviewGoToNextLesson?.();
+								} else if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+									setDisplayedQuestionNumber((prev) => prev + 1);
+									setSelectedQuestion(displayedQuestionNumber + 1);
+								}
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								return;
+							}
 							if (isLastQuestion && !isLessonCompleted) {
 								if (hasPendingAudioRecording) {
 									setIsPendingAudioWarningOpen(true);
@@ -1061,7 +1130,13 @@ const QuizQuestion = ({
 								backgroundColor: 'rgba(0,0,0,0.03)',
 							},
 						}}>
-						{isCompletingCourse ? (
+						{staffPreviewMode && isLastQuestion ? (
+							effectiveNextLessonId ? (
+								<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
+							) : (
+								<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
+							)
+						) : isCompletingCourse ? (
 							<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
 						) : isLessonCompleted && isLastQuestion ? (
 							<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
@@ -1072,6 +1147,8 @@ const QuizQuestion = ({
 						)}
 					</IconButton>
 				</Tooltip>
+				{!staffPreviewMode && (
+				<>
 				<CustomDialog
 					openModal={isSubmitQuizModalOpen}
 					closeModal={() => {
@@ -1170,6 +1247,8 @@ const QuizQuestion = ({
 						</CustomSubmitButton>
 					</Box>
 				</CustomDialog>
+				</>
+				)}
 			</Box>
 		</Box>
 	);

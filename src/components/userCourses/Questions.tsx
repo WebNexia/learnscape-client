@@ -30,6 +30,11 @@ interface QuestionsProps {
 	chapterName?: string;
 	/** Chapter context for quiz submission when lesson appears in multiple chapters */
 	chapterId?: string;
+	/** Staff learner-view: unlocked navigation, no persistence */
+	staffPreviewMode?: boolean;
+	staffPreviewNextLessonId?: string;
+	staffPreviewCoursePath?: string;
+	onStaffPreviewGoToNextLesson?: () => void;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -49,35 +54,39 @@ const Questions: React.FC<QuestionsProps> = ({
 	lessonText,
 	chapterName,
 	chapterId,
+	staffPreviewMode = false,
+	staffPreviewNextLessonId,
+	staffPreviewCoursePath,
+	onStaffPreviewGoToNextLesson,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted, updateLastQuestion } = useUserCourseLessonData();
 	const filteredQuestions = questions?.filter((question) => question !== null && question !== undefined) ?? [];
 	const numberOfQuestions = filteredQuestions.length;
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(() => {
-		if (practiceAgainMode || isLessonCompleted) return 1;
+		if (staffPreviewMode || practiceAgainMode || isLessonCompleted) return 1;
 		return getLastQuestion();
 	});
-	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
+	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(staffPreviewMode);
 	const { lessonId } = useParams();
 
 	// Review Questions / Practice Again: always start at question 1 when entering a new session
 	useEffect(() => {
 		if (questionsSessionKey > 0) {
 			setDisplayedQuestionNumber(1);
-			setShowQuestionSelector(false);
+			setShowQuestionSelector(staffPreviewMode);
 		}
-	}, [questionsSessionKey]);
+	}, [questionsSessionKey, staffPreviewMode]);
 
 	useEffect(() => {
-		if (practiceAgainMode) {
+		if (practiceAgainMode || staffPreviewMode) {
 			setDisplayedQuestionNumber(1);
-			setShowQuestionSelector(false);
+			setShowQuestionSelector(staffPreviewMode);
 		}
-	}, [practiceAgainMode]);
+	}, [practiceAgainMode, staffPreviewMode]);
 
 	// When lesson changes or question list changes, sync displayed index (e.g. after questions were deleted)
 	useEffect(() => {
-		if (practiceAgainMode || questionsSessionKey > 0) return;
+		if (staffPreviewMode || practiceAgainMode || questionsSessionKey > 0) return;
 		if (isLessonCompleted) {
 			setDisplayedQuestionNumber(1);
 		} else {
@@ -88,16 +97,16 @@ const Questions: React.FC<QuestionsProps> = ({
 				updateLastQuestion(clamped);
 			}
 		}
-	}, [lessonId, numberOfQuestions, practiceAgainMode, questionsSessionKey]);
+	}, [lessonId, numberOfQuestions, practiceAgainMode, questionsSessionKey, staffPreviewMode]);
 
 	// Keep displayed index in bounds when question list shrinks (e.g. admin deleted questions)
 	useEffect(() => {
 		if (numberOfQuestions === 0) return;
 		if (displayedQuestionNumber > numberOfQuestions) {
 			setDisplayedQuestionNumber(numberOfQuestions);
-			updateLastQuestion(numberOfQuestions);
+			if (!staffPreviewMode) updateLastQuestion(numberOfQuestions);
 		}
-	}, [numberOfQuestions, displayedQuestionNumber, updateLastQuestion]);
+	}, [numberOfQuestions, displayedQuestionNumber, updateLastQuestion, staffPreviewMode]);
 
 	useEffect(() => {
 		if (onQuestionChange) {
@@ -192,6 +201,10 @@ const Questions: React.FC<QuestionsProps> = ({
 							enableWordAssist={enableWordAssist}
 							lessonText={lessonText}
 							chapterName={chapterName}
+							staffPreviewMode={staffPreviewMode}
+							staffPreviewNextLessonId={staffPreviewNextLessonId}
+							staffPreviewCoursePath={staffPreviewCoursePath}
+							onStaffPreviewGoToNextLesson={onStaffPreviewGoToNextLesson}
 						/>
 					) : isQuiz ? (
 						<QuizQuestion
@@ -202,7 +215,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							displayedQuestionNumber={displayedQuestionNumber}
 							setDisplayedQuestionNumber={setDisplayedQuestionNumber}
 							lessonType={lessonType}
-							isLessonCompleted={isLessonCompleted}
+							isLessonCompleted={staffPreviewMode ? false : isLessonCompleted}
 							setIsLessonCompleted={setIsLessonCompleted}
 							userQuizAnswers={userQuizAnswers}
 							setUserQuizAnswers={setUserQuizAnswers}
@@ -212,6 +225,10 @@ const Questions: React.FC<QuestionsProps> = ({
 							enableWordAssist={enableWordAssist}
 							hasPendingAudioRecording={hasPendingAudioRecording}
 							onPendingAudioRecordingChange={setPendingAudioRecording}
+							staffPreviewMode={staffPreviewMode}
+							staffPreviewNextLessonId={staffPreviewNextLessonId}
+							staffPreviewCoursePath={staffPreviewCoursePath}
+							onStaffPreviewGoToNextLesson={onStaffPreviewGoToNextLesson}
 						/>
 					) : null;
 				})}

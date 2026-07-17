@@ -94,6 +94,11 @@ interface PracticeQuestionProps {
 	lessonText?: string;
 	/** Chapter name for open-ended AI context */
 	chapterName?: string;
+	/** Staff learner-view: unlocked navigation, no answer/progress persistence */
+	staffPreviewMode?: boolean;
+	staffPreviewNextLessonId?: string;
+	staffPreviewCoursePath?: string;
+	onStaffPreviewGoToNextLesson?: () => void;
 }
 
 const PracticeQuestion = ({
@@ -120,11 +125,18 @@ const PracticeQuestion = ({
 	enableWordAssist = false,
 	lessonText,
 	chapterName,
+	staffPreviewMode = false,
+	staffPreviewNextLessonId,
+	staffPreviewCoursePath,
+	onStaffPreviewGoToNextLesson,
 }: PracticeQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 	const { aiResponse, handleInitialSubmit, isLoadingAiResponse } = useAiResponse();
+	const effectivePracticeAgainMode = staffPreviewMode || practiceAgainMode;
+	const effectiveIsLessonCompleted = staffPreviewMode ? true : isLessonCompleted;
+	const effectiveNextLessonId = staffPreviewMode ? staffPreviewNextLessonId ?? null : nextLessonId;
 
 	const {
 		isSmallScreen,
@@ -167,6 +179,9 @@ const PracticeQuestion = ({
 	const [userAnswer, setUserAnswer] = useState<string>(''); //user answer for current question
 
 	const [value, setValue] = useState<string>(() => {
+		if (staffPreviewMode) {
+			return isOpenEndedQuestion ? '' : userAnswer;
+		}
 		if ((isLessonCompleted && question.correctAnswer && !practiceAgainMode) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
 			return question.correctAnswer;
 		} else if (isOpenEndedQuestion) {
@@ -200,7 +215,7 @@ const PracticeQuestion = ({
 	const [hasRequestedAiFeedback, setHasRequestedAiFeedback] = useState<boolean>(false);
 	const [isAiFeedbackLoading, setIsAiFeedbackLoading] = useState<boolean>(false);
 	// Open-ended flow: true after "Edit Answer" (user can edit/save again), false after Save (feedback phase)
-	const [unlockedForNextRound, setUnlockedForNextRound] = useState<boolean>(false);
+	const [unlockedForNextRound, setUnlockedForNextRound] = useState<boolean>(staffPreviewMode);
 	const [aiFeedbackError, setAiFeedbackError] = useState<string>('');
 	// In each round, AI is requested only once; further clicks just show saved feedback. Reset on Refresh or question change.
 	const [hasRequestedAiThisRound, setHasRequestedAiThisRound] = useState<boolean>(false);
@@ -209,8 +224,8 @@ const PracticeQuestion = ({
 	const prevQuestionKeyRef = useRef<string>('');
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
-	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null && isLessonCompleted;
-	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null && isLessonCompleted;
+	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null && effectiveIsLessonCompleted;
+	const isCompletingLesson: boolean = isLastQuestion && effectiveNextLessonId !== null && effectiveIsLessonCompleted;
 
 	const [questionPrompt, setQuestionPrompt] = useState<QuestionPrompt>({
 		question: stripHtml(question.question),
@@ -231,8 +246,8 @@ const PracticeQuestion = ({
 	const savedLastAiFeedback = existingUserAnswerForAi?.lastAiFeedback ?? '';
 	const hasOpenEndedUserQuestionId = Boolean(existingUserAnswerForAi?.userQuestionId);
 	// First-time solving: input enabled when no save yet, or after "Edit Answer" (unlimited edits after AI limit)
-	const isOpenEndedFirstTime = isOpenEndedQuestion && !isLessonCompleted;
-	const isOpenEndedPracticeAgain = isOpenEndedQuestion && practiceAgainMode && isLessonCompleted;
+	const isOpenEndedFirstTime = isOpenEndedQuestion && !effectiveIsLessonCompleted && !staffPreviewMode;
+	const isOpenEndedPracticeAgain = isOpenEndedQuestion && (effectivePracticeAgainMode && effectiveIsLessonCompleted);
 	const openEndedInputEnabled =
 		(isOpenEndedFirstTime &&
 			((aiFeedbackCount === 0 && !hasOpenEndedUserQuestionId) || unlockedForNextRound)) ||
@@ -442,6 +457,39 @@ const PracticeQuestion = ({
 	]);
 
 	const createUserQuestion = async (answerOverride?: string) => {
+		if (staffPreviewMode) {
+			const answerToPersist = (answerOverride ?? userAnswer ?? '').trim();
+			setUserAnswers((prevData) => {
+				const currentData = prevData || [];
+				const hasExistingQuestion = currentData.some((data) => String(data.questionId) === String(question._id));
+				if (hasExistingQuestion) {
+					return currentData.map((data) =>
+						String(data.questionId) === String(question._id) ? { ...data, userAnswer: answerToPersist } : data
+					);
+				}
+				return [
+					...currentData,
+					{
+						userQuestionId: `preview-${question._id}`,
+						questionId: question._id,
+						userAnswer: answerToPersist,
+						audioRecordUrl: '',
+						videoRecordUrl: '',
+						teacherFeedback: '',
+						teacherAudioFeedbackUrl: '',
+						userMatchingPairAnswers: [],
+						userBlankValuePairAnswers: [],
+					},
+				];
+			});
+			setIsOpenEndedAnswerSubmitted(true);
+			setValue(answerToPersist);
+			playSubmitSound();
+			setUnlockedForNextRound(false);
+			if (effectivePracticeAgainMode) setPracticeAgainSavedForAi(true);
+			return;
+		}
+
 		const answerToPersist = (answerOverride ?? userAnswer ?? '').trim();
 		const existingUserAnswer = userAnswers?.find((data) => String(data.questionId) === String(question._id));
 
@@ -530,7 +578,7 @@ const PracticeQuestion = ({
 					}
 				}
 
-				if (!practiceAgainMode) {
+				if (!practiceAgainMode && !staffPreviewMode) {
 					if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
 						updateLastQuestion(displayedQuestionNumber + 1);
 					}
@@ -541,6 +589,9 @@ const PracticeQuestion = ({
 						setShowQuestionSelector(true);
 					}
 				}
+				if (staffPreviewMode) {
+					setShowQuestionSelector(true);
+				}
 			} catch (error) {
 				console.log(error);
 			}
@@ -548,7 +599,7 @@ const PracticeQuestion = ({
 			setIsOpenEndedAnswerSubmitted(true);
 			if (isOpenEndedQuestion) {
 				setUnlockedForNextRound(false);
-				if (practiceAgainMode) setPracticeAgainSavedForAi(true);
+				if (practiceAgainMode || staffPreviewMode) setPracticeAgainSavedForAi(true);
 			}
 		}
 	};
@@ -697,7 +748,7 @@ const PracticeQuestion = ({
 									setCorrectAnswer={setValue}
 									fromLearner={true}
 									question={question}
-									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
+									isLessonCompleted={!staffPreviewMode && isLessonCompleted && !practiceAgainMode}
 									displayedQuestionNumber={displayedQuestionNumber}
 									setHelperText={setHelperText}
 									setIsLessonUpdating={setIsLessonUpdating}
@@ -715,13 +766,13 @@ const PracticeQuestion = ({
 								<MatchingPreview
 									initialPairs={question.matchingPairs}
 									setAllPairsMatchedMatching={setAllPairsMatchedMatching}
-									fromPracticeQuestionUser={true}
+									fromPracticeQuestionUser={!staffPreviewMode}
 									displayedQuestionNumber={displayedQuestionNumber}
 									numberOfQuestions={numberOfQuestions}
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
-									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
+									isLessonCompleted={!staffPreviewMode && isLessonCompleted && !practiceAgainMode}
 									onCorrectMatch={playSuccessSound}
 									onWrongMatch={playErrorSound}
 								/>
@@ -749,10 +800,10 @@ const PracticeQuestion = ({
 									textWithBlanks={question.question}
 									blankValuePairs={question.blankValuePairs}
 									setAllPairsMatchedFITBDragDrop={setAllPairsMatchedFITBDragDrop}
-									fromPracticeQuestionUser={true}
+									fromPracticeQuestionUser={!staffPreviewMode}
 									displayedQuestionNumber={displayedQuestionNumber}
 									numberOfQuestions={numberOfQuestions}
-									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
+									isLessonCompleted={!staffPreviewMode && isLessonCompleted && !practiceAgainMode}
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
@@ -786,10 +837,10 @@ const PracticeQuestion = ({
 									textWithBlanks={question.question}
 									blankValuePairs={question.blankValuePairs}
 									setAllPairsMatchedFITBTyping={setAllPairsMatchedFITBTyping}
-									fromPracticeQuestionUser={true}
+									fromPracticeQuestionUser={!staffPreviewMode}
 									displayedQuestionNumber={displayedQuestionNumber}
 									numberOfQuestions={numberOfQuestions}
-									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
+									isLessonCompleted={!staffPreviewMode && isLessonCompleted && !practiceAgainMode}
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
@@ -1172,7 +1223,7 @@ const PracticeQuestion = ({
 				<Box sx={{ mt: isMobileSize ? '6.5rem' : '9rem' }}>
 					<FlipCardPreview
 						question={question}
-						fromPracticeQuestionUser={true}
+						fromPracticeQuestionUser={!staffPreviewMode}
 						setIsCardFlipped={setIsCardFlipped}
 						displayedQuestionNumber={displayedQuestionNumber}
 						numberOfQuestions={numberOfQuestions}
@@ -1241,11 +1292,11 @@ const PracticeQuestion = ({
 						window.scrollTo({ top: 0, behavior: 'smooth' });
 						setIsOpenEndedAnswerSubmitted(false);
 					}}
-					disabled={isLessonCompleted ? false : displayedQuestionNumber - 1 === 0}>
+					disabled={displayedQuestionNumber - 1 === 0}>
 					<KeyboardArrowLeft fontSize={isMobileSize ? 'medium' : 'large'} />
 				</IconButton>
 
-				{!showQuestionSelector && (
+				{!showQuestionSelector && !staffPreviewMode && (
 					<Typography
 						variant={isMobileSize ? 'body2' : 'body1'}
 						sx={{
@@ -1263,7 +1314,7 @@ const PracticeQuestion = ({
 					</Typography>
 				)}
 
-				{showQuestionSelector && (
+				{(showQuestionSelector || staffPreviewMode) && (
 					<Box
 						sx={{
 							display: 'flex',
@@ -1316,7 +1367,7 @@ const PracticeQuestion = ({
 					</Box>
 				)}
 
-				{displayedQuestionNumber !== numberOfQuestions || !isLessonCompleted ? (
+				{displayedQuestionNumber !== numberOfQuestions || !effectiveIsLessonCompleted ? (
 					<IconButton
 						onClick={() => {
 							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
@@ -1350,37 +1401,47 @@ const PracticeQuestion = ({
 							},
 						}}
 						disabled={
-							isLessonCompleted
-								? false
-								: isOpenEndedQuestion && hasOpenEndedUserQuestionId
+							staffPreviewMode
+								? displayedQuestionNumber + 1 > numberOfQuestions
+								: isLessonCompleted
 									? false
-									: displayedQuestionNumber < getLastQuestion()
+									: isOpenEndedQuestion && hasOpenEndedUserQuestionId
 										? false
-										: isTranslate
-											? checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
-											: (!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-											!isCardFlipped &&
-											!allPairsMatchedFITBDragDrop &&
-											!allPairsMatchedFITBTyping &&
-											!allPairsMatchedMatching
+										: displayedQuestionNumber < getLastQuestion()
+											? false
+											: isTranslate
+												? checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
+												: (!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+												!isCardFlipped &&
+												!allPairsMatchedFITBDragDrop &&
+												!allPairsMatchedFITBTyping &&
+												!allPairsMatchedMatching
 						}>
 						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
 				) : (
 					<Tooltip
 						title={
-							isCompletingCourse
-								? 'Complete Course'
-								: isLessonCompleted && isLastQuestion
+							staffPreviewMode
+								? effectiveNextLessonId
 									? 'Next Lesson'
-									: isCompletingLesson
-										? 'Complete Lesson'
-										: 'Next Lesson'
+									: 'Back to Course'
+								: isCompletingCourse
+									? 'Complete Course'
+									: isLessonCompleted && isLastQuestion
+										? 'Next Lesson'
+										: isCompletingLesson
+											? 'Complete Lesson'
+											: 'Next Lesson'
 						}
 						placement='top'
 						arrow>
 						<IconButton
 							onClick={() => {
+								if (staffPreviewMode) {
+									onStaffPreviewGoToNextLesson?.();
+									return;
+								}
 								if (isLessonCompleted) {
 									setIsLessonCourseCompletedModalOpen(true);
 								}
@@ -1456,7 +1517,8 @@ const PracticeQuestion = ({
 					width: 'fit-content',
 					zIndex: 9,
 				}}>
-				{displayedQuestionNumber === questionNumber &&
+				{!staffPreviewMode &&
+					displayedQuestionNumber === questionNumber &&
 					!isFlipCard &&
 					!isMatching &&
 					!isFITBDragDrop &&

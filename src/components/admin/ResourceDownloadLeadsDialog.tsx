@@ -1,7 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import {
 	Box,
-	Button,
 	CircularProgress,
 	Dialog,
 	DialogActions,
@@ -23,12 +22,15 @@ import {
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import axios from '@utils/axiosInstance';
 import { dateTimeFormatter } from '@utils/dateFormatter';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { Roles } from '../../interfaces/enums';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 export type ResourceDownloadLeadRow = {
 	_id: string;
@@ -64,6 +66,9 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const [deletingAll, setDeletingAll] = useState(false);
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const fetchPage = useCallback(async () => {
 		if (!orgId || !open) return;
 		setLoading(true);
@@ -96,14 +101,15 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 	}, [orgId, open, page, limit]);
 
 	useEffect(() => {
-		if (open && orgId) {
-			setPage(1);
-		}
-	}, [open, orgId, limit]);
-
-	useEffect(() => {
 		fetchPage();
 	}, [fetchPage]);
+
+	// Reset to page 1 together with the limit change so a single (batched) state
+	// update triggers exactly one refetch instead of old-page + new-page requests.
+	const handleLimitChange = (value: number) => {
+		setLimit(value);
+		setPage(1);
+	};
 
 	const handleExportCsv = async () => {
 		if (!orgId) return;
@@ -179,15 +185,16 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 						Emails from free landing-page resource downloads (Download). Total records: <strong>{total}</strong>, unique emails:{' '}
 						<strong>{totalUniqueEmails}</strong>
 					</Typography>
-					<FormControl size='small' sx={{ minWidth: 160 }} disabled={loading || busy}>
-						<InputLabel id='resource-leads-page-size'>Rows per page</InputLabel>
+					<FormControl size='small' sx={{ minWidth: 160, }} disabled={loading || busy}>
+						<InputLabel id='resource-leads-page-size' >Rows per page</InputLabel>
 						<Select
 							labelId='resource-leads-page-size'
 							label='Rows per page'
 							value={limit}
-							onChange={(e) => setLimit(Number(e.target.value))}>
+							onChange={(e) => handleLimitChange(Number(e.target.value))}
+							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 							{PAGE_SIZE_OPTIONS.map((n) => (
-								<MenuItem key={n} value={n}>
+								<MenuItem key={n} value={n} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									{n} per page
 								</MenuItem>
 							))}
@@ -265,26 +272,21 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 				)}
 			</DialogContent>
 			<DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
-				<Button onClick={onClose} variant='outlined' disabled={busy}>
+				<CustomCancelButton type='button' onClick={onClose} disabled={busy}>
 					Close
-				</Button>
+				</CustomCancelButton>
 				{canHardDelete && (
-					<Button
-						variant='outlined'
-						color='error'
-						startIcon={deletingAll ? <CircularProgress size={18} color='inherit' /> : <DeleteSweepIcon />}
-						disabled={!orgId || total === 0 || busy || exporting}
-						onClick={() => setConfirmDeleteAll(true)}>
-						Delete all
-					</Button>
+					<CustomDeleteButton type='button' disabled={!orgId || total === 0 || busy || exporting} onClick={() => setConfirmDeleteAll(true)}>
+						{deletingAll ? 'Deleting...' : 'Delete All'}
+					</CustomDeleteButton>
 				)}
-				<Button
-					variant='contained'
-					startIcon={exporting ? <CircularProgress size={18} color='inherit' /> : <DownloadIcon />}
+				<CustomSubmitButton
+					type='button'
+					startIcon={exporting ? <CircularProgress size={16} color='inherit' /> : <DownloadIcon />}
 					disabled={!orgId || exporting || busy || total === 0}
 					onClick={handleExportCsv}>
 					Download CSV
-				</Button>
+				</CustomSubmitButton>
 			</DialogActions>
 
 			<Dialog open={Boolean(confirmLeadId)} onClose={() => !busy && setConfirmLeadId(null)} maxWidth='xs' fullWidth>
@@ -295,17 +297,12 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>
-					<Button onClick={() => setConfirmLeadId(null)} disabled={busy} variant='outlined'>
+					<CustomCancelButton type='button' onClick={() => setConfirmLeadId(null)} disabled={busy}>
 						Cancel
-					</Button>
-					<Button
-						onClick={handleConfirmDelete}
-						color='error'
-						variant='contained'
-						disabled={busy}
-						startIcon={deletingId ? <CircularProgress size={18} color='inherit' /> : undefined}>
-						Delete permanently
-					</Button>
+					</CustomCancelButton>
+					<CustomDeleteButton type='button' onClick={handleConfirmDelete} disabled={busy}>
+						{deletingId ? 'Deleting...' : 'Delete Permanently'}
+					</CustomDeleteButton>
 				</DialogActions>
 			</Dialog>
 
@@ -318,17 +315,12 @@ const ResourceDownloadLeadsDialog = ({ open, onClose, orgId }: Props) => {
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>
-					<Button onClick={() => setConfirmDeleteAll(false)} disabled={deletingAll} variant='outlined'>
+					<CustomCancelButton type='button' onClick={() => setConfirmDeleteAll(false)} disabled={deletingAll}>
 						Cancel
-					</Button>
-					<Button
-						onClick={handleConfirmDeleteAll}
-						color='error'
-						variant='contained'
-						disabled={deletingAll}
-						startIcon={deletingAll ? <CircularProgress size={18} color='inherit' /> : undefined}>
-						Delete all
-					</Button>
+					</CustomCancelButton>
+					<CustomDeleteButton type='button' onClick={handleConfirmDeleteAll} disabled={deletingAll}>
+						{deletingAll ? 'Deleting...' : 'Delete All'}
+					</CustomDeleteButton>
 				</DialogActions>
 			</Dialog>
 		</>

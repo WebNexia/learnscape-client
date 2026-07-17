@@ -62,6 +62,8 @@ const LessonPage = React.lazy(() => import('./pages/LessonPage'));
 const AdminCourseEditPage = React.lazy(() => import('./pages/AdminCourseEditPage'));
 const AdminCourseAnalytics = React.lazy(() => import('./pages/AdminCourseAnalytics'));
 const AdminCourses = React.lazy(() => import('./pages/AdminCourses'));
+const StaffCoursePreviewPage = React.lazy(() => import('./pages/StaffCoursePreviewPage'));
+const StaffLessonPreviewPage = React.lazy(() => import('./pages/StaffLessonPreviewPage'));
 const CourseRoster = React.lazy(() => import('./pages/CourseRoster'));
 const AdminLessons = React.lazy(() => import('./pages/AdminLessons'));
 const AdminLessonEditPage = React.lazy(() => import('./pages/AdminLessonEditPage'));
@@ -207,6 +209,22 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<AdminCourses />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-preview/course/:courseId',
+				element: (
+					<AdminRouteGuard>
+						<StaffCoursePreviewPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-preview/course/:courseId/lesson/:lessonId',
+				element: (
+					<AdminRouteGuard>
+						<StaffLessonPreviewPage />
 					</AdminRouteGuard>
 				),
 			},
@@ -544,6 +562,22 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<AdminCourses />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course-preview/course/:courseId',
+				element: (
+					<InstructorRouteGuard>
+						<StaffCoursePreviewPage />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course-preview/course/:courseId/lesson/:lessonId',
+				element: (
+					<InstructorRouteGuard>
+						<StaffLessonPreviewPage />
 					</InstructorRouteGuard>
 				),
 			},

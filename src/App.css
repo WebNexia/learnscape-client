@@ -48,6 +48,27 @@ a {
 	font-family: 'Varela Round', sans-serif !important;
 }
 
+/*
+ * Varela Round is single-weight (400 only). Bold/italic need a face that ships those
+ * styles — otherwise TinyMCE <strong>/<b>/<em>/<i> look identical to normal text.
+ * Poppins is already loaded with 400–800 and matches the rest of the product UI.
+ */
+.learner-rich-text strong,
+.learner-rich-text b,
+.learner-rich-text strong *,
+.learner-rich-text b * {
+	font-family: 'Poppins', 'Varela Round', sans-serif !important;
+	font-weight: 700 !important;
+}
+
+.learner-rich-text em,
+.learner-rich-text i,
+.learner-rich-text em *,
+.learner-rich-text i * {
+	font-family: 'Poppins', 'Varela Round', sans-serif !important;
+	font-style: italic !important;
+}
+
 .highlighted-message {
 	background-color: lightblue; /* Highlight color */
 	transition: background-color 0.5s ease; /* Smooth transition */

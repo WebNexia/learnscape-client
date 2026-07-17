@@ -10,6 +10,7 @@ import theme from '../../themes';
 import {
 	LEARNER_RICH_TEXT_CLASS,
 	LEARNER_TEXT_FONT_FAMILY,
+	LEARNER_EMPHASIS_FONT_FAMILY,
 	prepareLearnerRichTextHtml,
 } from '../../utils/learnerTypography';
 
@@ -93,6 +94,14 @@ const QuestionText = ({ question, questionNumber, isMatching, enableWordAssist =
 									textAlignLast: 'left !important',
 									wordSpacing: 'normal !important',
 									letterSpacing: 'normal !important',
+								},
+								'& strong, & b, & strong *, & b *': {
+									fontFamily: `${LEARNER_EMPHASIS_FONT_FAMILY} !important`,
+									fontWeight: '700 !important',
+								},
+								'& em, & i, & em *, & i *': {
+									fontFamily: `${LEARNER_EMPHASIS_FONT_FAMILY} !important`,
+									fontStyle: 'italic !important',
 								},
 								'& img': {
 									maxWidth: '100%',

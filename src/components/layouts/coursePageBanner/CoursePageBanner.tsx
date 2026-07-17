@@ -57,6 +57,8 @@ interface CoursePageBannerProps {
 	// Optional: used on learner course page for analytics navigation
 	userCourseId?: string;
 	isCourseCompleted?: boolean;
+	/** Staff learner-view: overrides mobile back navigation target (defaults to /courses) */
+	backToCoursesPath?: string;
 }
 
 const CoursePageBanner = ({
@@ -67,6 +69,7 @@ const CoursePageBanner = ({
 	documentsRef,
 	fromHomePage,
 	userCourseId,
+	backToCoursesPath,
 }: CoursePageBannerProps) => {
 	const firstLessonId: string = course && course?.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
@@ -345,7 +348,7 @@ const CoursePageBanner = ({
 									'fontSize': isSmallScreen ? '0.75rem' : null,
 								}}
 								onClick={() => {
-									navigate(`/courses`);
+									navigate(backToCoursesPath || `/courses`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
 								Back to courses
