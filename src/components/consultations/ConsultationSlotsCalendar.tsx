@@ -173,7 +173,6 @@ const ConsultationSlotsCalendar = ({ slots, onSlotClick }: ConsultationSlotsCale
 				endAccessor='end'
 				style={{
 					height: isMobileSizeSmall ? '50vh' : isMobileSize ? '60vh' : '70vh',
-					fontFamily: 'Poppins',
 					fontSize: isMobileSizeSmall ? '0.7rem' : '0.8rem',
 					backgroundColor: '#fff',
 					padding: '0.5rem',

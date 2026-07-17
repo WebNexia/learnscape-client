@@ -87,7 +87,7 @@ const InstructionalLessonsDialog = ({
 										textTransform: 'none',
 										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 										px: '0.75rem',
-										fontFamily: 'Poppins',
+										fontFamily: 'Varela Round',
 									}}>
 									{instructionalLesson.title}
 								</Button>

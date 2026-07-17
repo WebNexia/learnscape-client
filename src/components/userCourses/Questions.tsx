@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
@@ -105,6 +105,13 @@ const Questions: React.FC<QuestionsProps> = ({
 		}
 	}, [displayedQuestionNumber, onQuestionChange]);
 
+	// Quiz audio questions: recordings finished but not yet uploaded, per question (for submit warning)
+	const [pendingAudioRecordings, setPendingAudioRecordings] = useState<Record<string, boolean>>({});
+	const hasPendingAudioRecording = Object.values(pendingAudioRecordings).some(Boolean);
+	const setPendingAudioRecording = useCallback((questionId: string, hasPending: boolean) => {
+		setPendingAudioRecordings((prev) => (prev[questionId] === hasPending ? prev : { ...prev, [questionId]: hasPending }));
+	}, []);
+
 	// State for each question's AI response drawer and icon toggle
 	const [aiDrawerOpen, setAiDrawerOpen] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
 	const [isAiActive, setIsAiActive] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
@@ -203,6 +210,8 @@ const Questions: React.FC<QuestionsProps> = ({
 							lessonName={lessonName}
 							chapterId={chapterId}
 							enableWordAssist={enableWordAssist}
+							hasPendingAudioRecording={hasPendingAudioRecording}
+							onPendingAudioRecordingChange={setPendingAudioRecording}
 						/>
 					) : null;
 				})}

@@ -202,7 +202,7 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 									Meeting link
 								</Typography>
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-									<Link href={appointment.zoomJoinUrl} target='_blank' rel='noopener noreferrer' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins' }}>
+									<Link href={appointment.zoomJoinUrl} target='_blank' rel='noopener noreferrer' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', }}>
 										Join meeting
 									</Link>
 									<Button size='small' startIcon={<ContentCopy fontSize='small' />} onClick={handleCopyZoomLink}>

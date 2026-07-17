@@ -61,6 +61,9 @@ interface QuizQuestionProps {
 	setIsQuizInProgress: React.Dispatch<React.SetStateAction<boolean>>;
 	enableWordAssist?: boolean;
 	chapterId?: string;
+	/** Any quiz question has a finished audio recording that was not uploaded yet */
+	hasPendingAudioRecording?: boolean;
+	onPendingAudioRecordingChange?: (questionId: string, hasPending: boolean) => void;
 }
 
 const QuizQuestion = ({
@@ -78,6 +81,8 @@ const QuizQuestion = ({
 	setIsQuizInProgress,
 	enableWordAssist = false,
 	chapterId,
+	hasPendingAudioRecording = false,
+	onPendingAudioRecordingChange,
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
@@ -111,6 +116,7 @@ const QuizQuestion = ({
 
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
+	const [isPendingAudioWarningOpen, setIsPendingAudioWarningOpen] = useState<boolean>(false);
 	const [isMsgModalAfterSubmitOpen, setIsMsgModalAfterSubmitOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
 	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(() => {
@@ -380,6 +386,7 @@ const QuizQuestion = ({
 
 			setIsAudioVideoUploaded(true);
 			setRecordOption('');
+			onPendingAudioRecordingChange?.(question._id, false);
 		} catch (error) {
 			console.log(error);
 		} finally {
@@ -497,7 +504,12 @@ const QuizQuestion = ({
 								{recordOption === 'video' ? (
 									<VideoRecorder uploadVideo={uploadVideo} isVideoUploading={isVideoUploading} />
 								) : recordOption === 'audio' ? (
-									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={300000} />
+									<AudioRecorder
+										uploadAudio={uploadAudio}
+										isAudioUploading={isAudioUploading}
+										maxRecordTime={300000}
+										onPendingRecordingChange={(hasPending) => onPendingAudioRecordingChange?.(question._id, hasPending)}
+									/>
 								) : null}
 							</Box>
 
@@ -864,7 +876,6 @@ const QuizQuestion = ({
 										sx={{
 											fontSize: isMobileSize ? '0.8rem' : '0.9rem',
 											lineHeight: 1.7,
-											fontFamily: 'Poppins, sans-serif',
 											color: theme.textColor?.primary?.main,
 										}}>
 										{teacherQuestionFeedback}
@@ -1013,7 +1024,11 @@ const QuizQuestion = ({
 					<IconButton
 						onClick={async () => {
 							if (isLastQuestion && !isLessonCompleted) {
-								setIsSubmitQuizModalOpen(true);
+								if (hasPendingAudioRecording) {
+									setIsPendingAudioWarningOpen(true);
+								} else {
+									setIsSubmitQuizModalOpen(true);
+								}
 							} else if (isLastQuestion && isLessonCompleted) {
 								await handleNextLesson();
 								navigateToCourseHome();
@@ -1066,7 +1081,7 @@ const QuizQuestion = ({
 					title='Quiz Submission'
 					disableDismiss={userQuizAnswersUploading}>
 					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, }}>
 							Are you sure you want to submit the quiz? You will not have another chance.
 						</Typography>
 					</DialogContent>
@@ -1085,6 +1100,36 @@ const QuizQuestion = ({
 				</CustomDialog>
 
 				<CustomDialog
+					openModal={isPendingAudioWarningOpen}
+					closeModal={() => {
+						if (!userQuizAnswersUploading) setIsPendingAudioWarningOpen(false);
+					}}
+					maxWidth='xs'
+					title='Audio Not Uploaded'
+					disableDismiss={userQuizAnswersUploading}>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
+							You have an audio recording that has not been uploaded. If you submit the quiz now, your recording will not be included.
+						</Typography>
+					</DialogContent>
+					{userQuizAnswersUploading ? (
+						<DialogActions sx={{ marginBottom: '1.5rem' }}>
+							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
+						</DialogActions>
+					) : (
+						<CustomDialogActions
+							onCancel={() => setIsPendingAudioWarningOpen(false)}
+							onSubmit={async () => {
+								await handleQuizSubmission();
+								setIsPendingAudioWarningOpen(false);
+							}}
+							submitBtnText='Submit Anyway'
+							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+						/>
+					)}
+				</CustomDialog>
+
+				<CustomDialog
 					openModal={isMsgModalAfterSubmitOpen}
 					closeModal={() => {
 						setIsMsgModalAfterSubmitOpen(false);
@@ -1095,7 +1140,7 @@ const QuizQuestion = ({
 						<Box>
 							<Typography
 								variant='body1'
-								sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', fontFamily: 'Poppins, sans-serif' }}>
+								sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', }}>
 								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
 								revisiting the quiz:
 							</Typography>
@@ -1106,7 +1151,7 @@ const QuizQuestion = ({
 								<Typography
 									key={index}
 									variant='body2'
-									sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
+									sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', }}>
 									- {type}
 								</Typography>
 							))}

@@ -39,8 +39,7 @@ const DocumentsListEditBox = ({
 				documentsSource?.length > 0 &&
 				documentsSource
 					?.filter(
-						(document: Document) =>
-							document !== null && document?.createdByName !== ' ' && document?.name && document?.name.trim() !== '' && document?._id
+						(document: Document) => document !== null && document?.name && document?.name.trim() !== '' && document?._id
 					)
 					?.map((document, index) => (
 						<Box

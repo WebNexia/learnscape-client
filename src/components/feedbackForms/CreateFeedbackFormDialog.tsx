@@ -10,6 +10,7 @@ import {
 	Select,
 	FormControl,
 	Chip,
+	CircularProgress,
 } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -28,6 +29,7 @@ import theme from '../../themes';
 import EventCourseSearchSelect from '../EventCourseSearchSelect';
 import { SearchCourse } from '../../interfaces/search';
 import { generateUniqueId } from '../../utils/uniqueIdGenerator';
+import { feedbackFormsService } from '../../services/feedbackFormsService';
 
 interface CreateFeedbackFormDialogProps {
 	isOpen: boolean;
@@ -86,6 +88,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 	};
 
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+	const [isLoadingEditForm, setIsLoadingEditForm] = useState<boolean>(false);
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
 	// Field management
@@ -104,47 +107,42 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 		}
 	}, [isOpen, formToEdit, fetchTemplates]);
 
-	// Initialize form data when editing
-	useEffect(() => {
-		if (formToEdit) {
-			setTitle(formToEdit.title || '');
-			setDescription(formToEdit.description || '');
-			setFields(formToEdit.fields || []);
-			setSubmissionDeadline(isoToDateTimeLocal(formToEdit.submissionDeadline));
-			setShowResultsToSubmitters(formToEdit.showResultsToSubmitters ?? false);
-			setUseForConsultation(formToEdit.useForConsultation ?? false);
-			setPostSubmitEmail({
-				...defaultPostSubmitEmail(),
-				...(formToEdit.postSubmitEmail || {}),
-			});
-			if (formToEdit.useForConsultation) {
-				setAllowAnonymous(true);
-				setAllowMultipleSubmissions(true);
-			} else {
-				setAllowAnonymous(formToEdit.allowAnonymous ?? true);
-				setAllowMultipleSubmissions(formToEdit.allowMultipleSubmissions ?? false);
-			}
-			// If editing and form has courseId, set selectedCourse (but it won't be shown if courseId prop is provided)
-			// Handle both populated object and string ID
-			if (formToEdit.courseId) {
-				if (typeof formToEdit.courseId === 'object' && formToEdit.courseId !== null) {
-					// Populated object
-					setSelectedCourse({ _id: (formToEdit.courseId as any)?._id, title: (formToEdit.courseId as any)?.title || '', description: '' });
-				} else if (typeof formToEdit.courseId === 'string') {
-					// String ID - we can't show the title, but we'll keep it for submission
-					// In this case, selectedCourse will be null and courseId prop should be used
-					setSelectedCourse(null);
-				} else {
-					setSelectedCourse(null);
-				}
+	const applyFormToState = (source: FeedbackForm) => {
+		setTitle(source.title || '');
+		setDescription(source.description || '');
+		setFields(source.fields || []);
+		setSubmissionDeadline(isoToDateTimeLocal(source.submissionDeadline));
+		setShowResultsToSubmitters(source.showResultsToSubmitters ?? false);
+		setUseForConsultation(source.useForConsultation ?? false);
+		setPostSubmitEmail({
+			...defaultPostSubmitEmail(),
+			...(source.postSubmitEmail || {}),
+		});
+		if (source.useForConsultation) {
+			setAllowAnonymous(true);
+			setAllowMultipleSubmissions(true);
+		} else {
+			setAllowAnonymous(source.allowAnonymous ?? true);
+			setAllowMultipleSubmissions(source.allowMultipleSubmissions ?? false);
+		}
+		if (source.courseId) {
+			if (typeof source.courseId === 'object' && source.courseId !== null) {
+				setSelectedCourse({ _id: (source.courseId as any)?._id, title: (source.courseId as any)?.title || '', description: '' });
 			} else {
 				setSelectedCourse(null);
 			}
-			// Reset template selection when editing
-			setSelectedTemplateId('');
-			setSelectedTemplate(null);
 		} else {
-			// Reset for create mode
+			setSelectedCourse(null);
+		}
+		setSelectedTemplateId('');
+		setSelectedTemplate(null);
+	};
+
+	// Initialize form data when editing (list payload is slim — load full form by id)
+	useEffect(() => {
+		let cancelled = false;
+
+		const resetCreateMode = () => {
 			setTitle('');
 			setDescription('');
 			setFields([]);
@@ -158,11 +156,51 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setSearchCourseValue('');
 			setSelectedTemplateId('');
 			setSelectedTemplate(null);
-		}
-		setErrorMessage('');
-		if (courseSearchRef.current) {
-			courseSearchRef.current.reset();
-		}
+			setIsLoadingEditForm(false);
+		};
+
+		const init = async () => {
+			if (!isOpen) return;
+
+			setErrorMessage('');
+			if (courseSearchRef.current) {
+				courseSearchRef.current.reset();
+			}
+
+			if (!formToEdit) {
+				resetCreateMode();
+				return;
+			}
+
+			const hasFullPayload = Array.isArray(formToEdit.fields) && formToEdit.postSubmitEmail !== undefined;
+			if (hasFullPayload) {
+				applyFormToState(formToEdit);
+				setIsLoadingEditForm(false);
+				return;
+			}
+
+			setIsLoadingEditForm(true);
+			try {
+				const fullForm = await feedbackFormsService.getFeedbackFormById(formToEdit._id);
+				if (!cancelled) {
+					applyFormToState(fullForm);
+				}
+			} catch {
+				if (!cancelled) {
+					setErrorMessage('Failed to load form details');
+					applyFormToState(formToEdit);
+				}
+			} finally {
+				if (!cancelled) {
+					setIsLoadingEditForm(false);
+				}
+			}
+		};
+
+		init();
+		return () => {
+			cancelled = true;
+		};
 	}, [formToEdit, isOpen]);
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -332,6 +370,11 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 
 	return (
 		<CustomDialog openModal={isOpen} closeModal={onClose} title={formToEdit ? 'Edit Feedback Form' : 'Create Feedback Form'} maxWidth='sm'>
+			{isLoadingEditForm ? (
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '12rem', p: 3 }}>
+					<CircularProgress size={32} />
+				</Box>
+			) : (
 			<form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
 				{/* Template Selection (only shown when creating, not editing) */}
 				{!formToEdit && (
@@ -757,11 +800,12 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 					onCancel={onClose}
 					submitBtnText={formToEdit ? 'Update' : 'Create'}
 					submitBtnType='submit'
-					disableBtn={isSubmitting}
+					disableBtn={isSubmitting || isLoadingEditForm}
 					isSubmitting={isSubmitting}
 					actionSx={{ mb: '0.5rem' }}
 				/>
 			</form>
+			)}
 
 			{/* Field Editor Dialog */}
 			<FieldEditorDialog

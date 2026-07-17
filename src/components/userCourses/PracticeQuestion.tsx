@@ -846,7 +846,6 @@ const PracticeQuestion = ({
 												sx={{
 													fontSize: isMobileSize ? '0.85rem' : '0.95rem',
 													color: theme.textColor?.secondary?.main,
-													fontFamily: 'Poppins, sans-serif',
 												}}>
 												Original Text:
 											</Typography>
@@ -861,7 +860,6 @@ const PracticeQuestion = ({
 													display: 'flex',
 													alignItems: 'center',
 													color: theme.textColor?.common?.main,
-													fontFamily: 'Poppins, sans-serif',
 												}}>
 												{pair.originalText}
 											</Typography>
@@ -895,7 +893,6 @@ const PracticeQuestion = ({
 															fontSize: isMobileSize ? '0.85rem' : '0.95rem',
 															mb: '-0.5rem',
 															mt: isLessonCompleted ? '0.5rem' : '0rem',
-															fontFamily: 'Poppins, sans-serif',
 														}}>
 														Translation:
 													</Typography>
@@ -911,7 +908,6 @@ const PracticeQuestion = ({
 															sx={{
 																fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 																color: theme.textColor?.common?.main,
-																fontFamily: 'Poppins, sans-serif',
 															}}>
 															{pair.translation}
 														</Typography>
@@ -1046,12 +1042,12 @@ const PracticeQuestion = ({
 													'&:hover': effectiveIsLessonCompleted
 														? {}
 														: {
-														transform: 'translateY(-2px)',
-														boxShadow: isSelected ? '0 6px 16px rgba(102, 126, 234, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.12)',
-														borderColor: isSelected ? theme.palette.primary.main : 'rgba(102, 126, 234, 0.4)',
-														background: isSelected
-															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
-															: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+															transform: 'translateY(-2px)',
+															boxShadow: isSelected ? '0 6px 16px rgba(102, 126, 234, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.12)',
+															borderColor: isSelected ? theme.palette.primary.main : 'rgba(102, 126, 234, 0.4)',
+															background: isSelected
+																? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
+																: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
 														},
 													'&::before': {
 														content: '""',
@@ -1427,7 +1423,7 @@ const PracticeQuestion = ({
 					maxWidth='xs'
 					title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
 					<DialogContent sx={{ mb: '-0.5rem' }}>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 							{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
 						</Typography>
 					</DialogContent>
@@ -1610,7 +1606,7 @@ const PracticeQuestion = ({
 							<Box sx={{ minHeight: '100%' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 									<Box>
-										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem', fontFamily: 'Poppins, sans-serif' }}>
+										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 											AI Assist
 										</Typography>
 									</Box>
@@ -1631,7 +1627,6 @@ const PracticeQuestion = ({
 											mt: '0.5rem',
 											lineHeight: 1.9,
 											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-											fontFamily: 'Poppins, sans-serif',
 											whiteSpace: 'pre-wrap',
 										}}>
 										{savedLastAiFeedback || aiResponse}
@@ -1639,7 +1634,7 @@ const PracticeQuestion = ({
 								) : (
 									<Typography
 										variant='body2'
-										sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
+										sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										{aiFeedbackError || 'Henüz AI geri bildirimi yok.'}
 									</Typography>
 								)}

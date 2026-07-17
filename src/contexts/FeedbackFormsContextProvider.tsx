@@ -94,14 +94,17 @@ export const FeedbackFormsContext = createContext<FeedbackFormsContextTypes>({
 
 const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, hasAdminAccess } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isInstructor } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const queryClient = useQueryClient();
 	const [currentCourseId, setCurrentCourseId] = useState<string | undefined>();
 	const [isFormsEnabled, setIsFormsEnabled] = useState<boolean>(true);
+	const [isTemplatesEnabled, setIsTemplatesEnabled] = useState<boolean>(false);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const canFetchStaffForms = hasAdminAccess || isInstructor;
 
 	// Build base URL for forms - support both all forms and course-specific forms
 	// Include orgId in baseUrl, courseId will be added if present
@@ -130,7 +133,7 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		orgId,
 		baseUrl: formsBaseUrl,
 		entityKey: currentCourseId ? `feedbackForms-${currentCourseId}` : 'feedbackForms',
-		enabled: isFormsEnabled && !!orgId && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
+		enabled: isFormsEnabled && !!orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
@@ -143,16 +146,16 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 
 	// Refetch when currentCourseId changes (entityKey changes will trigger new query)
 	useEffect(() => {
-		if (isFormsEnabled && orgId && isAuthenticated && hasAdminAccess && !isLandingPageRoute) {
+		if (isFormsEnabled && orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute) {
 			// The query will automatically refetch when entityKey changes (which includes currentCourseId)
 			// But we need to ensure the first page is fetched
 			if (formsPageNumber === 1 && forms.length === 0) {
 				fetchFormsEntities(1);
 			}
 		}
-	}, [currentCourseId, orgId, isFormsEnabled, isAuthenticated, hasAdminAccess, isLandingPageRoute]);
+	}, [currentCourseId, orgId, isFormsEnabled, isAuthenticated, canFetchStaffForms, isLandingPageRoute]);
 
-	// Templates Query
+	// Templates — lazy: enabled only after fetchTemplates() (create dialog / templates page)
 	const {
 		data: templates = [],
 		isLoading: templatesLoading,
@@ -161,11 +164,11 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 	} = useQuery({
 		queryKey: ['feedbackFormTemplates', orgId],
 		queryFn: () => feedbackFormsService.getAllTemplates(),
-		enabled: !!orgId && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 0 for admins/instructors (always fresh), 5 min for users
-		cacheTime: 30 * 60 * 1000, // 30 minutes
-		refetchOnWindowFocus: false, // Follow common practice - rely on staleTime and query invalidation
-		refetchOnMount: false, // Follow common practice - rely on staleTime and query invalidation
+		enabled: isTemplatesEnabled && !!orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute,
+		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		cacheTime: 30 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
 	});
 
 	// Create Form Mutation
@@ -278,6 +281,7 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 
 	const fetchTemplates = async (category?: string) => {
 		// For now, we fetch all templates. Category filtering can be added later if needed.
+		setIsTemplatesEnabled(true);
 		await refetchTemplates();
 	};
 

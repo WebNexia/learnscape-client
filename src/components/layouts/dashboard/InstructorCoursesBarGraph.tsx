@@ -43,7 +43,7 @@ const InstructorCoursesBarGraph = ({ barChartData, totalCourses }: InstructorCou
 									display: true,
 									labels: {
 										font: {
-											family: 'Poppins',
+											family: 'Varela Round',
 											size: 12,
 										},
 									},

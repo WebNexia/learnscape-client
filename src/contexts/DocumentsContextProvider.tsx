@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useContext, useState, useCallback } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -29,18 +29,20 @@ interface DocumentsContextTypes {
 
 interface DocumentsContextProviderProps {
 	children: ReactNode;
+	/** When false, list is not fetched until enableDocumentsFetch(). Default true. */
+	fetchOnMount?: boolean;
 }
 
 export const DocumentsContext = createContext<DocumentsContextTypes>({} as DocumentsContextTypes);
 
-const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) => {
+const DocumentsContextProvider = ({ children, fetchOnMount = true }: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+	const [isEnabled, setIsEnabled] = useState<boolean>(fetchOnMount);
 
 	// Role-aware endpoint and entity key
 	const baseUrl = isInstructor ? `${base_url}/documents/organisation/${orgId}/instructor` : `${base_url}/documents/organisation/${orgId}`;
@@ -72,8 +74,8 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 		disableAutoGapFill: true,
 	});
 
-	const enableDocumentsFetch = () => setIsEnabled(true);
-	const disableDocumentsFetch = () => setIsEnabled(false);
+	const enableDocumentsFetch = useCallback(() => setIsEnabled(true), []);
+	const disableDocumentsFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<DocumentsContext.Provider

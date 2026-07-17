@@ -214,8 +214,8 @@ export const router = createBrowserRouter([
 				path: 'admin/course-edit/course/:courseId',
 				element: (
 					<AdminRouteGuard>
-						<LessonsContextProvider>
-							<DocumentsContextProvider>
+						<LessonsContextProvider fetchOnMount={false}>
+							<DocumentsContextProvider fetchOnMount={false}>
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>
@@ -551,8 +551,8 @@ export const router = createBrowserRouter([
 				path: 'instructor/course-edit/course/:courseId',
 				element: (
 					<InstructorRouteGuard>
-						<LessonsContextProvider>
-							<DocumentsContextProvider>
+						<LessonsContextProvider fetchOnMount={false}>
+							<DocumentsContextProvider fetchOnMount={false}>
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>

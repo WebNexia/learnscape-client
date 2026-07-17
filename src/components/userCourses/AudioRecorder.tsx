@@ -22,6 +22,8 @@ interface AudioRecorderProps {
 	audioUploadAttempts?: number;
 	maxSessionAttempts?: number;
 	onAudioUploadAttempt?: () => void;
+	/** Notifies parent when there is a finished recording that has not been uploaded yet */
+	onPendingRecordingChange?: (hasPending: boolean) => void;
 }
 
 const AudioRecorder = ({
@@ -36,6 +38,7 @@ const AudioRecorder = ({
 	audioUploadAttempts = 0,
 	maxSessionAttempts = 5,
 	onAudioUploadAttempt,
+	onPendingRecordingChange,
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
@@ -161,6 +164,17 @@ const AudioRecorder = ({
 		};
 	}, [stream]);
 
+	// Report whether a finished recording is waiting to be uploaded; clear on unmount (e.g. after upload)
+	useEffect(() => {
+		onPendingRecordingChange?.(Boolean(audio && !isAudioTooLarge));
+	}, [audio, isAudioTooLarge]);
+
+	useEffect(() => {
+		return () => {
+			onPendingRecordingChange?.(false);
+		};
+	}, []);
+
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem', width: '100%' }}>
 			<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
@@ -246,7 +260,7 @@ const AudioRecorder = ({
 
 			{audio && !isRecording && !isAudioTooLarge && (
 				<CustomSubmitButton
-					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+					sx={{ marginTop: '2rem', marginBottom: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'
 					size='small'
 					onClick={() => {

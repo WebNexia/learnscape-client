@@ -42,7 +42,6 @@ const AdminLearnersLineGraph = ({ chartData, totalUsers, totalNumberOfEnrolledLe
 									display: true,
 									labels: {
 										font: {
-											family: 'Poppins',
 											size: 12,
 										},
 									},

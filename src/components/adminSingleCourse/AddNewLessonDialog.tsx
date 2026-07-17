@@ -40,7 +40,7 @@ const AddNewLessonDialog = ({
 }: AddNewLessonDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { sortLessonsData, lessons, fetchMoreLessons, loadedPages } = useContext(LessonsContext);
+	const { sortLessonsData, lessons, fetchMoreLessons, loadedPages, enableLessonsFetch } = useContext(LessonsContext);
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -63,6 +63,13 @@ const AddNewLessonDialog = ({
 	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	// Fetch org lessons list only when picker opens (course-edit mounts with fetchOnMount=false)
+	useEffect(() => {
+		if (addNewLessonModalOpen) {
+			enableLessonsFetch();
+		}
+	}, [addNewLessonModalOpen, enableLessonsFetch]);
 
 	// Use search results if active, otherwise use context data (filtered to exclude already added lessons)
 	const filteredLessons = isSearchActive ? searchResults : lessons?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];

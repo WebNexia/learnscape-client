@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useContext, useState, useCallback } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -31,17 +31,19 @@ interface LessonsContextTypes {
 
 interface LessonsContextProviderProps {
 	children: ReactNode;
+	/** When false, list is not fetched until enableLessonsFetch() (e.g. course-edit: open Add Lesson). Default true. */
+	fetchOnMount?: boolean;
 }
 
 export const LessonsContext = createContext<LessonsContextTypes>({} as LessonsContextTypes);
 
-const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
+const LessonsContextProvider = ({ children, fetchOnMount = true }: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+	const [isEnabled, setIsEnabled] = useState<boolean>(fetchOnMount);
 
 	// Role-based endpoint detection - separate routes for clarity
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
@@ -76,9 +78,8 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 
 	const lessonTypes: string[] = ['Instructional Lesson', 'Practice Lesson', 'Quiz'];
 
-	// 👈 Functions to control fetching
-	const enableLessonsFetch = () => setIsEnabled(true);
-	const disableLessonsFetch = () => setIsEnabled(false);
+	const enableLessonsFetch = useCallback(() => setIsEnabled(true), []);
+	const disableLessonsFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<LessonsContext.Provider
