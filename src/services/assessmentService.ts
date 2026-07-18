@@ -40,6 +40,11 @@ export interface CourseStudentAnalyticsItem {
 
 export interface CourseStudentsAnalytics {
 	courseId: string;
+	title?: string;
+	instructor?: {
+		name: string | null;
+		imageUrl: string | null;
+	};
 	totalPossibleScore: number;
 	completedStudentsCount: number;
 	students: CourseStudentAnalyticsItem[];

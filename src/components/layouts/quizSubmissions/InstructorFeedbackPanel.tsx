@@ -34,7 +34,7 @@ const InstructorFeedbackPanel = ({ title, children, sx, titleFontSize }: Instruc
 					fontWeight: 600,
 					color: theme.textColor?.primary?.main ?? '#01435A',
 					fontSize: titleFontSize ?? { xs: '0.9rem', sm: '1rem' },
-					fontFamily: 'Poppins, sans-serif',
+					fontFamily: 'Varela Round',
 					lineHeight: 1.3,
 				}}>
 				{title}

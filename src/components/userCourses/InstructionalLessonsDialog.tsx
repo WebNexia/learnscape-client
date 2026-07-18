@@ -6,7 +6,12 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 import { Lesson } from '../../interfaces/lessons';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
-import { LEARNER_RICH_TEXT_CLASS, LEARNER_TEXT_FONT_FAMILY, prepareLearnerRichTextHtml } from '../../utils/learnerTypography';
+import {
+	LEARNER_RICH_TEXT_CLASS,
+	LEARNER_TEXT_FONT_FAMILY,
+	LEARNER_EMPHASIS_FONT_FAMILY,
+	prepareLearnerRichTextHtml,
+} from '../../utils/learnerTypography';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
 import { useWordAssist, wrapWordsForHover } from '../../hooks/useWordAssist';
@@ -87,7 +92,7 @@ const InstructionalLessonsDialog = ({
 										textTransform: 'none',
 										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 										px: '0.75rem',
-										fontFamily: 'Poppins',
+										fontFamily: 'Varela Round',
 									}}>
 									{instructionalLesson.title}
 								</Button>
@@ -168,6 +173,14 @@ const InstructionalLessonsDialog = ({
 															textAlignLast: 'left !important',
 															wordSpacing: 'normal !important',
 															letterSpacing: 'normal !important',
+														},
+														'& strong, & b, & strong *, & b *': {
+															fontFamily: `${LEARNER_EMPHASIS_FONT_FAMILY} !important`,
+															fontWeight: '700 !important',
+														},
+														'& em, & i, & em *, & i *': {
+															fontFamily: `${LEARNER_EMPHASIS_FONT_FAMILY} !important`,
+															fontStyle: 'italic !important',
 														},
 													}}>
 													<Typography

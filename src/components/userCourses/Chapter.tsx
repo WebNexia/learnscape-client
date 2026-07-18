@@ -27,6 +27,8 @@ interface ChapterProps {
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
 	isAlternateHeaderTone?: boolean;
+	staffPreviewMode?: boolean;
+	staffPreviewBasePath?: string;
 }
 
 export interface ChapterRef {
@@ -35,7 +37,8 @@ export interface ChapterRef {
 	scrollIntoView: () => void;
 }
 
-const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
+const Chapter = forwardRef<ChapterRef, ChapterProps>(
+	({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId, staffPreviewMode = false, staffPreviewBasePath }, ref) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
@@ -64,13 +67,14 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	const rootRef = useRef<HTMLDivElement | null>(null);
 
 	// Fetch user lessons for current course using the new hook
-	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '', { enabled: !staffPreviewMode });
 	const parsedUserLessonData = userLessonsData || [];
 
 	// Calculate progress for this chapter
 	const progressData = useMemo(() => {
-		if (!isEnrolledStatus || !chapter?.lessons) {
-			return { completed: 0, total: 0, percentage: 0 };
+		if (staffPreviewMode || !isEnrolledStatus || !chapter?.lessons) {
+			const total = chapter?.lessons?.filter((lesson) => lesson !== null).length || 0;
+			return { completed: 0, total, percentage: 0 };
 		}
 
 		const validLessons = chapter.lessons.filter((lesson) => lesson !== null);
@@ -138,6 +142,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		const fromLessonPage = document.referrer.includes('/lesson/') || sessionStorage.getItem(`lesson-completed-${chapterId}`) === 'true';
 
 		const shouldAutoOpen =
+			!staffPreviewMode &&
 			isChapterCompleted &&
 			(hasChecklistItems || chapter.askForFeedback === true) &&
 			(!hasChecklistItems || !isChecklistCompleted) &&
@@ -166,7 +171,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			sessionStorage.removeItem(autoOpenKey);
 			hasAutoOpened.current = false;
 		}
-	}, [isChapterCompleted, hasChecklistItems, isChecklistCompleted, isEnrolledStatus, chapterId, autoOpenKey, chapter.askForFeedback]);
+	}, [staffPreviewMode, isChapterCompleted, hasChecklistItems, isChecklistCompleted, isEnrolledStatus, chapterId, autoOpenKey, chapter.askForFeedback]);
 
 	// Fallback auto-expand: if sessionStorage targets a lesson in this chapter, expand directly.
 	// This makes chapter expansion resilient to ref timing/order issues in the parent.
@@ -275,7 +280,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		const canSubmitFeedback = chapter.askForFeedback === true;
 		const canSubmit = canSubmitChecklist || canSubmitFeedback;
 
-		if (!userCourseId || !chapterId || !isChapterCompleted || !canSubmit || isSubmittingChecklist) {
+		if (staffPreviewMode || !userCourseId || !chapterId || !isChapterCompleted || !canSubmit || isSubmittingChecklist) {
 			return;
 		}
 
@@ -315,6 +320,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			setIsSubmittingChecklist(false);
 		}
 	}, [
+		staffPreviewMode,
 		userCourseId,
 		chapterId,
 		isChapterCompleted,
@@ -328,6 +334,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		courseId,
 		course?.orgId,
 		feedback,
+		user?._id,
 	]);
 
 	// Expose functions to parent component (slow smooth scroll for scrollIntoView)
@@ -496,7 +503,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						</>
 					)}
 
-					{hasChecklistItems && (
+					{hasChecklistItems && !staffPreviewMode && (
 						<Tooltip title='View Objectives' placement='top' arrow>
 							<IconButton
 								sx={{
@@ -557,9 +564,11 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 								lessonOrder={lessonOrder}
 								chapterId={chapterId}
 								isLastLessonOfChapter={isLastLessonOfChapter}
-								currentChapterHasChecklist={hasChecklistItems}
+								currentChapterHasChecklist={!staffPreviewMode && hasChecklistItems}
 								currentChapterChecklistCompleted={isChecklistCompleted}
 								isLastInChapter={index === validLessons.length - 1}
+								staffPreviewMode={staffPreviewMode}
+								staffPreviewBasePath={staffPreviewBasePath}
 							/>
 						);
 					})}
@@ -567,7 +576,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			</Collapse>
 
 			{/* Checklist Dialog */}
-			{(hasChecklistItems || chapter.askForFeedback) && (
+			{!staffPreviewMode && (hasChecklistItems || chapter.askForFeedback) && (
 				<CustomDialog
 					openModal={checklistDialogOpen}
 					closeModal={handleCloseChecklistDialog}

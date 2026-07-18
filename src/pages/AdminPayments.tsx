@@ -78,7 +78,7 @@ const AdminPayments = () => {
 							sx={{
 								'&.Mui-selected': { color: theme.bgColor?.adminHeader },
 								'textTransform': 'capitalize',
-								'fontFamily': 'Poppins',
+								'fontFamily': 'Varela Round',
 								'fontSize': isMobileSize ? '0.75rem' : undefined,
 								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}
@@ -90,7 +90,7 @@ const AdminPayments = () => {
 								sx={{
 									'&.Mui-selected': { color: theme.bgColor?.adminHeader },
 									'textTransform': 'capitalize',
-									'fontFamily': 'Poppins',
+									'fontFamily': 'Varela Round',
 									'fontSize': isMobileSize ? '0.75rem' : undefined,
 									'&.MuiTab-root': { textTransform: 'capitalize' },
 								}}
@@ -102,7 +102,7 @@ const AdminPayments = () => {
 							sx={{
 								'&.Mui-selected': { color: theme.bgColor?.adminHeader },
 								'textTransform': 'capitalize',
-								'fontFamily': 'Poppins',
+								'fontFamily': 'Varela Round',
 								'fontSize': isMobileSize ? '0.75rem' : undefined,
 								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}

@@ -37,6 +37,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
 import LessonIconTile from '../lesson/LessonIconTile';
+import { getVideoThumbnailUrl } from '../../utils/videoUrlUtils';
+import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -47,6 +49,7 @@ interface CourseDetailsNonEditBoxProps {
 const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: CourseDetailsNonEditBoxProps) => {
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(false);
+	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [checklistViewDialogOpen, setChecklistViewDialogOpen] = useState<Record<string, boolean>>({});
 	// Support both old format (Set<number>) and new format (Map<number, Set<number>>)
 	const [checkedItems, setCheckedItems] = useState<Record<string, Set<number> | Map<number, Set<number>>>>({});
@@ -141,12 +144,167 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				sx={{
 					display: 'flex',
 					flexDirection: isMobileSize ? 'column' : 'row',
-					justifyContent: 'space-between',
+					justifyContent: 'flex-start',
 					alignItems: 'flex-start',
 					width: '100%',
 					gap: isMobileSize ? '1rem' : '2rem',
 				}}>
-				<Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-start',
+						alignSelf: 'flex-start',
+						mt: '1rem',
+						padding: '0 0 2rem 0rem',
+						flex: isMobileSize ? '1 1 auto' : '0 0 auto',
+						width: 'fit-content',
+						maxWidth: isMobileSize ? '100%' : '18rem',
+					}}>
+					<Box sx={{ textAlign: 'left', width: 'fit-content' }}>
+						<img
+							src={singleCourse?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Cover+Image'}
+							alt='course_img'
+							height='115rem'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: cardShadow,
+								display: 'block',
+							}}
+						/>
+						<Box>
+							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+								Cover Image
+							</Typography>
+						</Box>
+					</Box>
+
+					{(Boolean(singleCourse?.introVideoUrl?.trim()) ||
+						Boolean(singleCourse?.landingPageSections && singleCourse.landingPageSections.length > 0)) && (
+							<Box
+								sx={{
+									mt: '1rem',
+									display: 'flex',
+									flexDirection: 'row',
+									alignItems: 'flex-start',
+									justifyContent: 'flex-start',
+									gap: '0.85rem',
+									width: 'fit-content',
+								}}>
+								{singleCourse?.introVideoUrl?.trim() ? (
+									<Box sx={{ textAlign: 'left' }}>
+										<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.35rem' }}>
+											Landing Page Intro Video
+										</Typography>
+										{(() => {
+											const introUrl = singleCourse.introVideoUrl!.trim();
+											const thumbnailUrl = getVideoThumbnailUrl(introUrl);
+											return (
+												<Box
+													role='button'
+													tabIndex={0}
+													aria-label='Play landing intro video'
+													onClick={() => setIsIntroVideoModalOpen(true)}
+													onKeyDown={(e) => {
+														if (e.key === 'Enter' || e.key === ' ') {
+															e.preventDefault();
+															setIsIntroVideoModalOpen(true);
+														}
+													}}
+													sx={{
+														display: 'inline-block',
+														position: 'relative',
+														borderRadius: '0.25rem',
+														overflow: 'hidden',
+														boxShadow: cardShadow,
+														lineHeight: 0,
+														cursor: 'pointer',
+														verticalAlign: 'top',
+													}}>
+													<img
+														src={thumbnailUrl || 'https://placehold.co/320x180/e2e8f0/64748b?text=Intro+Video'}
+														alt='Landing intro video thumbnail'
+														width={168}
+														height={94}
+														style={{
+															width: '10.5rem',
+															height: '5.9rem',
+															objectFit: 'cover',
+															display: 'block',
+															backgroundColor: '#e2e8f0',
+														}}
+													/>
+													<Box
+														sx={{
+															position: 'absolute',
+															inset: 0,
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															backgroundColor: 'rgba(0,0,0,0.3)',
+														}}>
+														<PlayCircleOutline sx={{ color: '#fff', fontSize: '2rem' }} />
+													</Box>
+												</Box>
+											);
+										})()}
+									</Box>
+								) : null}
+
+								{singleCourse?.landingPageSections && singleCourse.landingPageSections.length > 0 ? (
+									<Box sx={{ textAlign: 'left', pt: singleCourse?.introVideoUrl?.trim() ? '1.35rem' : 0 }}>
+										<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.35rem', whiteSpace: 'nowrap' }}>
+											Landing page detail sections
+										</Typography>
+										<Typography variant='body2' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+											{singleCourse.landingPageSections.length} section(s)
+										</Typography>
+									</Box>
+								) : null}
+							</Box>
+						)}
+
+					{singleCourse?.introVideoUrl?.trim() ? (
+						<CustomDialog
+							openModal={isIntroVideoModalOpen}
+							closeModal={() => setIsIntroVideoModalOpen(false)}
+							title='Landing intro video'
+							maxWidth='md'>
+							<DialogContent sx={{ p: isMobileSize ? 1.5 : 2, pt: 1 }}>
+								<Box
+									sx={{
+										position: 'relative',
+										width: '100%',
+										pt: '56.25%',
+										borderRadius: 1,
+										overflow: 'hidden',
+										bgcolor: '#000',
+									}}>
+									<Box sx={{ position: 'absolute', inset: 0 }}>
+										{isIntroVideoModalOpen ? (
+											<UniversalVideoPlayer
+												url={singleCourse.introVideoUrl.trim()}
+												width='100%'
+												height='100%'
+												controls
+												autoplay
+											/>
+										) : null}
+									</Box>
+								</Box>
+							</DialogContent>
+							<DialogActions>
+								<CustomCancelButton
+									onClick={() => setIsIntroVideoModalOpen(false)}
+									sx={{ margin: '0 1rem 0.75rem 0' }}>
+									Close
+								</CustomCancelButton>
+							</DialogActions>
+						</CustomDialog>
+					) : null}
+				</Box>
+
+				<Box sx={{ display: 'flex', gap: 2, flex: 1, minWidth: 0, width: isMobileSize ? '100%' : 'auto' }}>
 					<Box
 						sx={{
 							mt: '1rem',
@@ -219,52 +377,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							{truncateText(singleCourse?.description || '', isMobileSize ? 85 : 200)}
 						</Typography>
 					</Box>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'flex-end',
-						mt: '1rem',
-						padding: '0 0 2rem 0rem',
-						flex: 1,
-					}}>
-					<Box sx={{ textAlign: 'center' }}>
-						<img
-							src={singleCourse?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Cover+Image'}
-							alt='course_img'
-							height='115rem'
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: cardShadow,
-							}}
-						/>
-						<Box>
-							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Cover Image
-							</Typography>
-						</Box>
-					</Box>
-					{singleCourse?.introVideoUrl?.trim() ? (
-						<Box sx={{ mt: '1rem', textAlign: 'right', maxWidth: '100%' }}>
-							<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.25rem' }}>
-								Landing intro video
-							</Typography>
-							<Link href={singleCourse.introVideoUrl.trim()} target='_blank' rel='noopener noreferrer' sx={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>
-								{singleCourse.introVideoUrl.trim()}
-							</Link>
-						</Box>
-					) : null}
-					{singleCourse?.landingPageSections && singleCourse.landingPageSections.length > 0 ? (
-						<Box sx={{ mt: '1rem', textAlign: 'right', maxWidth: '100%' }}>
-							<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.25rem' }}>
-								Landing page detail sections
-							</Typography>
-							<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
-								{singleCourse.landingPageSections.length} section(s)
-							</Typography>
-						</Box>
-					) : null}
 				</Box>
 			</Box>
 
@@ -343,331 +455,331 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			</Box>
 
 			<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-						<Box sx={{ display: 'flex', alignItems: 'center' }}>
-							<Typography variant='h5'>CHAPTERS</Typography>
-							{totalPossibleScoreForCourse > 0 && (
-								<Typography
-									variant='body2'
-									sx={{
-										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-										color: theme.textColor?.secondary?.main || 'text.secondary',
-										ml: isMobileSize ? '0.25rem' : '0.5rem',
-									}}>
-									(Total score: {totalPossibleScoreForCourse} pts)
-								</Typography>
-							)}
-						</Box>
-
-						<CustomSubmitButton
-								type='button'
-								onClick={() => {
-									if (courseId) {
-										const routePrefix = isInstructor ? '/instructor' : '/admin';
-										navigate(`${routePrefix}/course/${courseId}/forms`);
-									}
-								}}
-								sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
-								Public Forms
-							</CustomSubmitButton>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center' }}>
+						<Typography variant='h5'>CHAPTERS</Typography>
+						{totalPossibleScoreForCourse > 0 && (
+							<Typography
+								variant='body2'
+								sx={{
+									fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+									color: theme.textColor?.secondary?.main || 'text.secondary',
+									ml: isMobileSize ? '0.25rem' : '0.5rem',
+								}}>
+								(Total score: {totalPossibleScoreForCourse} pts)
+							</Typography>
+						)}
 					</Box>
-					{singleCourse?.chapterIds?.length === 0 ? (
-						<NoContentBoxAdmin content='No chapter for this course' />
-					) : (
-						<>
-							{singleCourse &&
-								singleCourse?.chapters &&
-								chapters?.map((chapter) => {
-									const chapterStats = getChapterStats[chapter.chapterId];
-									const isExpanded = isChapterExpanded(chapter.chapterId);
 
-									return (
+					<CustomSubmitButton
+						type='button'
+						onClick={() => {
+							if (courseId) {
+								const routePrefix = isInstructor ? '/instructor' : '/admin';
+								navigate(`${routePrefix}/course/${courseId}/forms`);
+							}
+						}}
+						sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
+						Public Forms
+					</CustomSubmitButton>
+				</Box>
+				{singleCourse?.chapterIds?.length === 0 ? (
+					<NoContentBoxAdmin content='No chapter for this course' />
+				) : (
+					<>
+						{singleCourse &&
+							singleCourse?.chapters &&
+							chapters?.map((chapter) => {
+								const chapterStats = getChapterStats[chapter.chapterId];
+								const isExpanded = isChapterExpanded(chapter.chapterId);
+
+								return (
+									<Box
+										key={chapter.chapterId}
+										sx={{
+											marginBottom: isMobileSize ? '1rem' : '1rem',
+											overflow: 'hidden',
+											transition: 'box-shadow 0.3s ease',
+										}}>
+										{/* Chapter Header */}
 										<Box
-											key={chapter.chapterId}
 											sx={{
-												marginBottom: isMobileSize ? '1rem' : '1rem',
-												overflow: 'hidden',
-												transition: 'box-shadow 0.3s ease',
-											}}>
-											{/* Chapter Header */}
-											<Box
-												sx={{
-													'backgroundColor': isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
-													'padding': isMobileSize ? '0.75rem 1rem' : '0.75rem 1rem 0.75rem 0.5rem',
-													'display': 'flex',
-													'alignItems': 'center',
-													'justifyContent': 'space-between',
-													'transition': 'background-color 0.2s ease',
-													'borderRadius': '0.35rem',
-													'&:hover': {
-														backgroundColor: isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
-													},
-												}}
-												role='button'
-												tabIndex={0}
-												aria-expanded={isExpanded}
-												aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
-												<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-													<IconButton
-														onClick={(e) => {
-															e.stopPropagation();
-															toggleChapter(chapter.chapterId);
-														}}
-														sx={{
-															color: 'white',
-															marginRight: isMobileSize ? '0.5rem' : '1rem',
-															padding: '0rem',
-															transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-															transition: 'transform 0.3s ease',
-															border: 'solid 0.5px white',
-														}}
-														aria-hidden='true'>
-														<ExpandMore fontSize='small' />
-													</IconButton>
-													<Typography
-														variant='h6'
-														sx={{
-															fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-															color: 'white',
-															flex: 1,
-															textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-														}}>
-														{chapter.title}
-													</Typography>
-												</Box>
-
-												{/* Chapter Statistics */}
-												<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-													{chapterStats && (
-														<>
-															<Chip
-																icon={<PlayCircleOutline />}
-																label={`${chapterStats.published}/${chapterStats.total}`}
-																size='small'
-																sx={{
-																	'backgroundColor': 'rgba(255, 255, 255, 0.25)',
-																	'color': 'white',
-																	'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-																	'fontWeight': 600,
-																	'height': isMobileSize ? '1.5rem' : '1.8rem',
-																	'textShadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
-																	'& .MuiChip-icon': {
-																		color: 'white',
-																		fontSize: isMobileSize ? '0.8rem' : '1rem',
-																	},
-																}}
-															/>
-															{chapterStats.unpublished > 0 && (
-																<Chip
-																	label={`${chapterStats.unpublished} Draft`}
-																	size='small'
-																	sx={{
-																		backgroundColor: 'rgba(255, 193, 7, 0.4)',
-																		color: 'white',
-																		fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-																		fontWeight: 600,
-																		height: isMobileSize ? '1.3rem' : '1.6rem',
-																		textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
-																	}}
-																/>
-															)}
-
-															<Tooltip title='View Check-out Questions' placement='top' arrow>
-																<IconButton
-																	sx={{
-																		'color': 'white',
-																		'padding': '0.25rem',
-																		'marginLeft': '0.5rem',
-																		'&:hover': {
-																			border: 'solid 0.5px white',
-																		},
-																	}}
-																	onClick={(e) => {
-																		e.stopPropagation();
-																		setChecklistViewDialogOpen((prev) => ({ ...prev, [chapter.chapterId]: true }));
-																		// Initialize checked items for this chapter
-																		if (!checkedItems[chapter.chapterId]) {
-																			setCheckedItems((prev) => ({ ...prev, [chapter.chapterId]: new Set<number>() }));
-																		}
-																	}}>
-																	<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
-																</IconButton>
-															</Tooltip>
-														</>
-													)}
-												</Box>
+												'backgroundColor': isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
+												'padding': isMobileSize ? '0.75rem 1rem' : '0.75rem 1rem 0.75rem 0.5rem',
+												'display': 'flex',
+												'alignItems': 'center',
+												'justifyContent': 'space-between',
+												'transition': 'background-color 0.2s ease',
+												'borderRadius': '0.35rem',
+												'&:hover': {
+													backgroundColor: isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
+												},
+											}}
+											role='button'
+											tabIndex={0}
+											aria-expanded={isExpanded}
+											aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
+											<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+												<IconButton
+													onClick={(e) => {
+														e.stopPropagation();
+														toggleChapter(chapter.chapterId);
+													}}
+													sx={{
+														color: 'white',
+														marginRight: isMobileSize ? '0.5rem' : '1rem',
+														padding: '0rem',
+														transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+														transition: 'transform 0.3s ease',
+														border: 'solid 0.5px white',
+													}}
+													aria-hidden='true'>
+													<ExpandMore fontSize='small' />
+												</IconButton>
+												<Typography
+													variant='h6'
+													sx={{
+														fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+														color: 'white',
+														flex: 1,
+														textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+													}}>
+													{chapter.title}
+												</Typography>
 											</Box>
 
-											{/* Collapsible Lessons */}
-											<Collapse in={isExpanded} timeout='auto' unmountOnExit>
-												<Box sx={{ backgroundColor: 'transparent', padding: '0.5rem' }}>
-													{chapter &&
-														chapter?.lessons &&
-														chapter?.lessons?.length !== 0 &&
-														chapter?.lessons
-															?.filter((lesson) => lesson !== null)
-															?.map((lesson) => {
-																return (
+											{/* Chapter Statistics */}
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+												{chapterStats && (
+													<>
+														<Chip
+															icon={<PlayCircleOutline />}
+															label={`${chapterStats.published}/${chapterStats.total}`}
+															size='small'
+															sx={{
+																'backgroundColor': 'rgba(255, 255, 255, 0.25)',
+																'color': 'white',
+																'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+																'fontWeight': 600,
+																'height': isMobileSize ? '1.5rem' : '1.8rem',
+																'textShadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
+																'& .MuiChip-icon': {
+																	color: 'white',
+																	fontSize: isMobileSize ? '0.8rem' : '1rem',
+																},
+															}}
+														/>
+														{chapterStats.unpublished > 0 && (
+															<Chip
+																label={`${chapterStats.unpublished} Draft`}
+																size='small'
+																sx={{
+																	backgroundColor: 'rgba(255, 193, 7, 0.4)',
+																	color: 'white',
+																	fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+																	fontWeight: 600,
+																	height: isMobileSize ? '1.3rem' : '1.6rem',
+																	textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+																}}
+															/>
+														)}
+
+														<Tooltip title='View Check-out Questions' placement='top' arrow>
+															<IconButton
+																sx={{
+																	'color': 'white',
+																	'padding': '0.25rem',
+																	'marginLeft': '0.5rem',
+																	'&:hover': {
+																		border: 'solid 0.5px white',
+																	},
+																}}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	setChecklistViewDialogOpen((prev) => ({ ...prev, [chapter.chapterId]: true }));
+																	// Initialize checked items for this chapter
+																	if (!checkedItems[chapter.chapterId]) {
+																		setCheckedItems((prev) => ({ ...prev, [chapter.chapterId]: new Set<number>() }));
+																	}
+																}}>
+																<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+															</IconButton>
+														</Tooltip>
+													</>
+												)}
+											</Box>
+										</Box>
+
+										{/* Collapsible Lessons */}
+										<Collapse in={isExpanded} timeout='auto' unmountOnExit>
+											<Box sx={{ backgroundColor: 'transparent', padding: '0.5rem' }}>
+												{chapter &&
+													chapter?.lessons &&
+													chapter?.lessons?.length !== 0 &&
+													chapter?.lessons
+														?.filter((lesson) => lesson !== null)
+														?.map((lesson) => {
+															return (
+																<Box
+																	key={lesson._id}
+																	sx={{
+																		'display': 'flex',
+																		'alignItems': 'center',
+																		'height': '3rem',
+																		'width': '100%',
+																		'backgroundColor': '#ffffff',
+																		'border': '1px solid #e2e8f0',
+																		'margin': '0.5rem 0',
+																		'borderRadius': '0.5rem',
+																		'boxShadow': '0 1px 2px rgba(0, 0, 0, 0.05)',
+																		'transition': 'box-shadow 0.2s ease',
+																		'&:hover': {
+																			boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+																			borderColor: '#cbd5e1',
+																		},
+																	}}>
 																	<Box
-																		key={lesson._id}
 																		sx={{
-																			'display': 'flex',
-																			'alignItems': 'center',
-																			'height': '3rem',
-																			'width': '100%',
-																			'backgroundColor': '#ffffff',
-																			'border': '1px solid #e2e8f0',
-																			'margin': '0.5rem 0',
-																			'borderRadius': '0.5rem',
-																			'boxShadow': '0 1px 2px rgba(0, 0, 0, 0.05)',
-																			'transition': 'box-shadow 0.2s ease',
-																			'&:hover': {
-																				boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-																				borderColor: '#cbd5e1',
-																			},
+																			display: 'flex',
+																			justifyContent: 'space-between',
+																			alignItems: 'center',
+																			width: '100%',
+																			margin: isMobileSize ? '0 0.25rem 0 0.5rem' : '0 0.75rem',
+																			gap: isMobileSize ? 2 : 0,
 																		}}>
 																		<Box
 																			sx={{
+																				flex: 4,
 																				display: 'flex',
-																				justifyContent: 'space-between',
 																				alignItems: 'center',
-																				width: '100%',
-																				margin: isMobileSize ? '0 0.25rem 0 0.5rem' : '0 0.75rem',
-																				gap: isMobileSize ? 2 : 0,
+																				gap: isMobileSize ? '0.35rem' : '0.65rem',
+																				minWidth: 0,
 																			}}>
-																			<Box
+																			<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
+																			<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+																				{lesson?.title}
+																			</Typography>
+																		</Box>
+																		<Box sx={{ flex: 1 }}>
+																			<Chip
+																				label={lesson?.isActive ? 'Published' : 'Draft'}
+																				size='small'
 																				sx={{
-																					flex: 4,
-																					display: 'flex',
-																					alignItems: 'center',
-																					gap: isMobileSize ? '0.35rem' : '0.65rem',
-																					minWidth: 0,
-																				}}>
-																				<LessonIconTile lessonIconKey={lesson.lessonIconKey} size={isMobileSize ? 'small' : 'medium'} />
-																				<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																					{lesson?.title}
-																				</Typography>
-																			</Box>
-																			<Box sx={{ flex: 1 }}>
-																				<Chip
-																					label={lesson?.isActive ? 'Published' : 'Draft'}
-																					size='small'
-																					sx={{
-																						backgroundColor: lesson?.isActive ? theme.palette.success.light : theme.palette.warning.light,
-																						color: lesson?.isActive ? theme.palette.success.contrastText : theme.palette.warning.contrastText,
-																						fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-																						height: isMobileSize ? '1.2rem' : '1.5rem',
-																					}}
-																				/>
-																			</Box>
-																			<Box
-																				sx={{
-																					display: 'flex',
-																					justifyContent: 'flex-end',
-																					alignItems: 'center',
-																					flex: 4,
-																				}}>
-																				{(() => {
-																					const isGradedQuiz = lesson?.isGraded && lesson?.type === LessonType.QUIZ;
-																					const totalPossibleScore = isGradedQuiz ? calculateQuizTotalScoreFromScores(lesson) : 0;
+																					backgroundColor: lesson?.isActive ? theme.palette.success.light : theme.palette.warning.light,
+																					color: lesson?.isActive ? theme.palette.success.contrastText : theme.palette.warning.contrastText,
+																					fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+																					height: isMobileSize ? '1.2rem' : '1.5rem',
+																				}}
+																			/>
+																		</Box>
+																		<Box
+																			sx={{
+																				display: 'flex',
+																				justifyContent: 'flex-end',
+																				alignItems: 'center',
+																				flex: 4,
+																			}}>
+																			{(() => {
+																				const isGradedQuiz = lesson?.isGraded && lesson?.type === LessonType.QUIZ;
+																				const totalPossibleScore = isGradedQuiz ? calculateQuizTotalScoreFromScores(lesson) : 0;
 
-																					const typeLabel = !isMobileSize
-																						? lesson?.type
-																						: lesson?.type === LessonType.INSTRUCTIONAL_LESSON
-																							? 'Instructional'
-																							: lesson?.type === LessonType.PRACTICE_LESSON
-																								? 'Practice'
-																								: 'Quiz';
+																				const typeLabel = !isMobileSize
+																					? lesson?.type
+																					: lesson?.type === LessonType.INSTRUCTIONAL_LESSON
+																						? 'Instructional'
+																						: lesson?.type === LessonType.PRACTICE_LESSON
+																							? 'Practice'
+																							: 'Quiz';
 
-																					return (
-																						<Box sx={{ mr: '0.5rem', display: 'flex', alignItems: 'center', gap: 0.75 }}>
-																							{isGradedQuiz && totalPossibleScore > 0 && (
-																								<Typography
-																									variant='caption'
-																									sx={{
-																										fontSize: isMobileSize ? '0.6rem' : '0.75rem',
-																										color: theme.textColor?.secondary?.main || 'text.secondary',
-																									}}>
-																									({totalPossibleScore} pts)
-																								</Typography>
-																							)}
-																							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																								{typeLabel}
+																				return (
+																					<Box sx={{ mr: '0.5rem', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+																						{isGradedQuiz && totalPossibleScore > 0 && (
+																							<Typography
+																								variant='caption'
+																								sx={{
+																									fontSize: isMobileSize ? '0.6rem' : '0.75rem',
+																									color: theme.textColor?.secondary?.main || 'text.secondary',
+																								}}>
+																								({totalPossibleScore} pts)
 																							</Typography>
-																						</Box>
-																					);
-																				})()}
-																				<Box>
-																					<Tooltip title='Edit Lesson' placement='top' arrow>
-																						<IconButton
-																							sx={{
-																								':hover': {
-																									backgroundColor: 'transparent',
-																								},
-																							}}
-																							onClick={() => {
-																								if (isInstructor) {
-																									window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');
-																								} else {
-																									window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
-																								}
-																								window.scrollTo({ top: 0, behavior: 'smooth' });
-																							}}>
-																							<EditTwoTone fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, ml: '-0.5rem' }} />
-																						</IconButton>
-																					</Tooltip>
-																				</Box>
+																						)}
+																						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+																							{typeLabel}
+																						</Typography>
+																					</Box>
+																				);
+																			})()}
+																			<Box>
+																				<Tooltip title='Edit Lesson' placement='top' arrow>
+																					<IconButton
+																						sx={{
+																							':hover': {
+																								backgroundColor: 'transparent',
+																							},
+																						}}
+																						onClick={() => {
+																							if (isInstructor) {
+																								window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');
+																							} else {
+																								window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
+																							}
+																							window.scrollTo({ top: 0, behavior: 'smooth' });
+																						}}>
+																						<EditTwoTone fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, ml: '-0.5rem' }} />
+																					</IconButton>
+																				</Tooltip>
 																			</Box>
 																		</Box>
 																	</Box>
-																);
-															})}
-												</Box>
-											</Collapse>
-										</Box>
-									);
-								})}
-						</>
-					)}
-				</Box>
+																</Box>
+															);
+														})}
+											</Box>
+										</Collapse>
+									</Box>
+								);
+							})}
+					</>
+				)}
+			</Box>
 
 			<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'flex-start',
-						width: '100%',
-						mb: '2.5rem',
-						mt: '2rem',
-						padding: isMobileSize ? '1rem' : '1.25rem',
-						...cardSx,
-					}}>
-					<Box sx={{ mb: '1rem' }}>
-						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
-							Course Materials
-						</Typography>
-					</Box>
-					{singleCourse?.documents?.filter((doc) => doc !== null)?.length !== 0 ? (
-						<Box>
-							{singleCourse?.documents
-								?.filter((doc) => doc !== null)
-								?.map((doc) => (
-									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-										<Link
-											href={doc?.documentUrl}
-											target='_blank'
-											rel='noopener noreferrer'
-											variant='body2'
-											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											{decodeHtmlEntities(doc?.name || '')}
-										</Link>
-									</Box>
-								))}
-						</Box>
-					) : (
-						<NoContentBoxAdmin content='No material for this course' />
-					)}
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'flex-start',
+					width: '100%',
+					mb: '2.5rem',
+					mt: '2rem',
+					padding: isMobileSize ? '1rem' : '1.25rem',
+					...cardSx,
+				}}>
+				<Box sx={{ mb: '1rem' }}>
+					<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
+						Course Materials
+					</Typography>
 				</Box>
+				{singleCourse?.documents?.filter((doc) => doc !== null)?.length !== 0 ? (
+					<Box>
+						{singleCourse?.documents
+							?.filter((doc) => doc !== null)
+							?.map((doc) => (
+								<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+									<Link
+										href={doc?.documentUrl}
+										target='_blank'
+										rel='noopener noreferrer'
+										variant='body2'
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										{decodeHtmlEntities(doc?.name || '')}
+									</Link>
+								</Box>
+							))}
+					</Box>
+				) : (
+					<NoContentBoxAdmin content='No material for this course' />
+				)}
+			</Box>
 
 			<Box
 				sx={{
@@ -676,35 +788,35 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					justifyContent: 'flex-start',
 					width: '100%',
 					mb: '4rem',
-						padding: isMobileSize ? '1rem' : '1.25rem',
-						...cardSx,
-					}}>
-					<Box sx={{ mb: '1rem' }}>
-						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
-							Course Videos
-						</Typography>
-					</Box>
-					{singleCourse?.videoURLs?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')?.length !== 0 ? (
-						<Box>
-							{singleCourse?.videoURLs
-								?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
-								?.map((videoURL, index) => (
-									<Box sx={{ mb: '0.5rem' }} key={index}>
-										<Link
-											href={videoURL.url}
-											target='_blank'
-											rel='noopener noreferrer'
-											variant='body2'
-											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											{videoURL.title}
-										</Link>
-									</Box>
-								))}
-						</Box>
-					) : (
-						<NoContentBoxAdmin content='No video for this course' />
-					)}
+					padding: isMobileSize ? '1rem' : '1.25rem',
+					...cardSx,
+				}}>
+				<Box sx={{ mb: '1rem' }}>
+					<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
+						Course Videos
+					</Typography>
 				</Box>
+				{singleCourse?.videoURLs?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')?.length !== 0 ? (
+					<Box>
+						{singleCourse?.videoURLs
+							?.filter((videoURL) => videoURL && videoURL.url && videoURL.url.trim() !== '' && videoURL.title && videoURL.title.trim() !== '')
+							?.map((videoURL, index) => (
+								<Box sx={{ mb: '0.5rem' }} key={index}>
+									<Link
+										href={videoURL.url}
+										target='_blank'
+										rel='noopener noreferrer'
+										variant='body2'
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										{videoURL.title}
+									</Link>
+								</Box>
+							))}
+					</Box>
+				) : (
+					<NoContentBoxAdmin content='No video for this course' />
+				)}
+			</Box>
 
 			{/* Description Modal */}
 			<CustomDialog openModal={isDescriptionModalOpen} closeModal={() => setIsDescriptionModalOpen(false)} title='Course Description' maxWidth='sm'>

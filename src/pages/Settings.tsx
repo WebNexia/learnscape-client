@@ -781,7 +781,7 @@ const Settings = () => {
 								/>
 							}
 							label={
-								<Typography component='span' sx={{ fontFamily: 'Poppins', fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: theme.textColor?.secondary?.main }}>
+								<Typography component='span' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: theme.textColor?.secondary?.main }}>
 									I want to receive marketing emails.
 								</Typography>
 							}

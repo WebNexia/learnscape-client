@@ -43,7 +43,6 @@ const AdminCoursesBarGraph = ({ barChartData, totalCourses }: AdminCoursesBarGra
 									display: true,
 									labels: {
 										font: {
-											family: 'Poppins',
 											size: 12,
 										},
 									},

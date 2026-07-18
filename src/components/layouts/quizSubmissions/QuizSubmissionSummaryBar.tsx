@@ -117,7 +117,7 @@ const QuizSubmissionSummaryBar = ({ quizName, chapterName, courseName, isChecked
 									height: compact ? '1.35rem' : '1.5rem',
 									fontWeight: 600,
 									fontSize: compact ? '0.68rem' : '0.75rem',
-									fontFamily: 'Poppins, sans-serif',
+									fontFamily: 'Varela Round',
 									backgroundColor: item.checked ? 'rgba(30, 194, 139, 0.18)' : 'rgba(77, 123, 139, 0.14)',
 									color: item.checked ? accent : labelColor,
 									border: `1px solid ${item.checked ? 'rgba(30, 194, 139, 0.35)' : 'rgba(77, 123, 139, 0.25)'}`,

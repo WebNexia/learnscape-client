@@ -1,5 +1,6 @@
 import { useQuery, UseQueryResult } from 'react-query';
 import axios from '@utils/axiosInstance';
+import { decode } from 'html-entities';
 import { useAuth } from './useAuth';
 
 export interface SubmissionFeedbackUserQuestion {
@@ -20,6 +21,7 @@ export interface SubmissionFeedbackUserQuestion {
 
 export interface SubmissionFeedbackData {
 	response: SubmissionFeedbackUserQuestion[];
+	student?: { username?: string; firebaseUserId?: string } | null;
 	lessonName: string;
 	courseName: string;
 	chapterName: string;
@@ -47,8 +49,16 @@ export async function fetchSubmissionFeedback(
 	});
 	const data = res.data;
 
+	// Server escapes text on save (validator.escape); decode so ' & < > show as typed
+	const response: SubmissionFeedbackUserQuestion[] = (data?.response || []).map((item: SubmissionFeedbackUserQuestion) => ({
+		...item,
+		userAnswer: item.userAnswer != null ? decode(item.userAnswer) : item.userAnswer,
+		teacherFeedback: item.teacherFeedback != null ? decode(item.teacherFeedback) : item.teacherFeedback,
+	}));
+
 	return {
-		response: data?.response || [],
+		response,
+		student: data?.student ?? response[0]?.userId ?? null,
 		lessonName: data?.lessonName ?? '',
 		courseName: data?.courseName ?? '',
 		chapterName: data?.chapterName ?? '',

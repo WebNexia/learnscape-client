@@ -9,6 +9,7 @@ import { useUserCourseRank } from '../hooks/useUserCourseRank';
 import { useCourseLeaderboard } from '../hooks/useCourseLeaderboard';
 import { useCourseCertificate } from '../hooks/useCourseCertificate';
 import { useCourseCompletion } from '../hooks/useCourseCompletion';
+import { COURSE_CERTIFICATE_DOWNLOAD_ENABLED } from '../constants/courseCertificate';
 import theme from '../themes';
 import { KeyboardBackspaceOutlined, Download, CheckCircle } from '@mui/icons-material';
 import { useContext } from 'react';
@@ -29,7 +30,9 @@ const CourseAnalytics = () => {
 	const { data: rankAnalytics, isLoading: isRankLoading, error: rankError } = useUserCourseRank(courseId);
 	const { data: leaderboardData, isLoading: isLeaderboardLoading, error: leaderboardError } = useCourseLeaderboard(courseId);
 	const { isCompleted } = useCourseCompletion(courseId, userCourseId);
-	const { downloadCertificate, isDownloading, error: certificateError } = useCourseCertificate(courseId);
+	const { downloadCertificate, isDownloading, error: certificateError } = useCourseCertificate(
+		COURSE_CERTIFICATE_DOWNLOAD_ENABLED ? courseId : undefined
+	);
 
 	const pre = data?.pre || null;
 	const post = data?.post || null;
@@ -208,24 +211,28 @@ const CourseAnalytics = () => {
 								<Typography variant='body1' sx={{ color: theme.textColor?.secondary?.main || 'text.secondary', textAlign: 'center' }}>
 									Congratulations! You have successfully completed this course.
 								</Typography>
-								<CustomSubmitButton
-									startIcon={isDownloading ? <CircularProgress size={20} color='inherit' /> : <Download />}
-									onClick={downloadCertificate}
-									disabled={isDownloading}
-									sx={{
-										textTransform: 'capitalize',
-										mt: 1,
-										px: 4,
-										py: 2,
-										fontSize: isMobileSize ? '0.9rem' : '1rem',
-									}}>
-									{isDownloading ? 'Generating Certificate...' : isMobileSize ? 'Certificate' : 'Download Certificate'}
-								</CustomSubmitButton>
-								{certificateError && (
-									<Alert severity='error' sx={{ mt: 1, width: '100%', maxWidth: 500 }}>
-										{certificateError}
-									</Alert>
-								)}
+								{COURSE_CERTIFICATE_DOWNLOAD_ENABLED ? (
+									<>
+										<CustomSubmitButton
+											startIcon={isDownloading ? <CircularProgress size={20} color='inherit' /> : <Download />}
+											onClick={downloadCertificate}
+											disabled={isDownloading}
+											sx={{
+												textTransform: 'capitalize',
+												mt: 1,
+												px: 4,
+												py: 2,
+												fontSize: isMobileSize ? '0.9rem' : '1rem',
+											}}>
+											{isDownloading ? 'Generating Certificate...' : isMobileSize ? 'Certificate' : 'Download Certificate'}
+										</CustomSubmitButton>
+										{certificateError && (
+											<Alert severity='error' sx={{ mt: 1, width: '100%', maxWidth: 500 }}>
+												{certificateError}
+											</Alert>
+										)}
+									</>
+								) : null}
 							</Box>
 						</Paper>
 					)}

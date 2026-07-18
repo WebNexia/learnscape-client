@@ -303,104 +303,45 @@ const AdminCheckoutsFeedback = () => {
 
 	const handleDownloadFeedbacks = async () => {
 		try {
-			let dataToExport: Feedback[];
-
-			if (searchButtonClicked) {
-				// If search is active, fetch ALL matching results (not just what's displayed)
-				const endpoint = buildEndpoint();
-				const separator = endpoint.includes('?') ? '&' : '?';
-
-				// Build search parameters
-				const params = new URLSearchParams();
-				params.append('limit', '1000'); // Fetch 1000 per page
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy.toString());
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// First, get the total count to know how many pages we need
-				const countResponse = await axios.get(`${endpoint}${separator}${params.toString()}`);
-				const totalItems = countResponse.data.totalItems;
-
-				// Calculate how many pages we need to fetch all matching data
-				const itemsPerPage = 1000;
-				const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-				// Fetch all pages of search results
-				let allFeedbacks: Feedback[] = [];
-				for (let page = 1; page <= totalPages; page++) {
-					const pageParams = new URLSearchParams(params);
-					pageParams.set('page', page.toString());
-					const response = await axios.get(`${endpoint}${separator}${pageParams.toString()}`);
-					allFeedbacks = [...allFeedbacks, ...response.data.data];
-				}
-
-				dataToExport = allFeedbacks;
-			} else {
-				// First, get the total count to know how many pages we need
-				const endpoint = buildEndpoint();
-				const separator = endpoint.includes('?') ? '&' : '?';
-				const countResponse = await axios.get(`${endpoint}${separator}page=1&limit=1`);
-				const totalItems = countResponse.data.totalItems;
-
-				// Calculate how many pages we need to fetch all data
-				const itemsPerPage = 1000; // Fetch 1000 per page
-				const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-				// Fetch all pages
-				let allFeedbacks: Feedback[] = [];
-				for (let page = 1; page <= totalPages; page++) {
-					const response = await axios.get(`${endpoint}${separator}page=${page}&limit=${itemsPerPage}`);
-					allFeedbacks = [...allFeedbacks, ...response.data.data];
-				}
-
-				dataToExport = allFeedbacks;
+			// Server-side Excel export (same pattern as Roster/Analytics)
+			const params = new URLSearchParams();
+			if (searchButtonClicked && searchedValue.trim()) {
+				params.append('search', searchedValue.trim());
 			}
 
-			// Get course title from first feedback if available
-			const courseTitle = dataToExport && dataToExport.length > 0 ? getCourseTitle(dataToExport[0]) : '';
-			const courseTitleForFilename = courseTitle && courseTitle !== 'N/A' ? courseTitle.replace(/[^a-zA-Z0-9]/g, '_') : '';
+			let exportEndpoint: string;
+			if (isInstructor && courseId) {
+				exportEndpoint = `${base_url}/feedback/instructor/course/${courseId}/export-excel`;
+			} else {
+				exportEndpoint = `${base_url}/feedback/organisation/${orgId}/export-excel`;
+				if (courseId) params.append('courseId', courseId);
+			}
 
-			// Helper function to get user full name
-			const getUserFullName = (feedback: Feedback): string => {
-				if (typeof feedback.userId === 'object' && feedback.userId) {
-					const firstName = feedback.userId.firstName || '';
-					const lastName = feedback.userId.lastName || '';
-					return `${firstName} ${lastName}`.trim() || 'N/A';
-				}
-				return 'N/A';
-			};
+			const queryString = params.toString();
+			const response = await axios.get(`${exportEndpoint}${queryString ? `?${queryString}` : ''}`, {
+				responseType: 'blob',
+			});
 
-			// Create Excel data
-			const excelData = dataToExport?.map((feedback: Feedback) => ({
-				'Chapter': getChapterTitle(feedback),
-				'Full Name': getUserFullName(feedback),
-				'Username': getUsername(feedback),
-				'Email': getUserEmail(feedback),
-				'Feedback': feedback.feedback || '',
-				'Submitted On': new Date(feedback.createdAt).toLocaleDateString(),
-			}));
-
-			// Create and download Excel file
-			const XLSX = await import('xlsx');
-			const ws = XLSX.utils.json_to_sheet(excelData);
-			const wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'Feedbacks');
+			const blob = new Blob([response.data], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			});
 
 			// Build filename with course title if available
+			const courseTitle = paginatedFeedbacks && paginatedFeedbacks.length > 0 ? getCourseTitle(paginatedFeedbacks[0]) : '';
+			const courseTitleForFilename = courseTitle && courseTitle !== 'N/A' ? courseTitle.replace(/[^a-zA-Z0-9]/g, '_') : '';
+			const dateSuffix = new Date().toISOString().split('T')[0];
 			const filename = courseTitleForFilename
-				? `${organisation?.orgName || 'Feedbacks'}_${courseTitleForFilename}_Feedbacks_${new Date().toISOString().split('T')[0]}.xlsx`
-				: `${organisation?.orgName || 'Feedbacks'}_Feedbacks_${new Date().toISOString().split('T')[0]}.xlsx`;
+				? `${organisation?.orgName || 'Feedbacks'}_${courseTitleForFilename}_Feedbacks_${dateSuffix}.xlsx`
+				: `${organisation?.orgName || 'Feedbacks'}_Feedbacks_${dateSuffix}.xlsx`;
 
-			XLSX.writeFile(wb, filename);
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
 		}

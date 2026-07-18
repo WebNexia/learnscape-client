@@ -6,7 +6,7 @@ import { truncateText } from '../../../utils/utilText';
 import { getQuestionResult } from '../../../utils/getQuestionResult';
 import { QuestionType } from '../../../interfaces/enums';
 import theme from '../../../themes';
-import { useContext } from 'react';
+import { memo, useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface QuestionResponseCardProps {
@@ -21,6 +21,10 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const questionType = fetchQuestionTypeName(response.questionId);
+	const isManuallyGradedType = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+	const questionResult = isManuallyGradedType ? undefined : getQuestionResult(response, () => questionType);
+
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 			<Box
@@ -66,7 +70,7 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 								textAlign: 'right',
 								fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 							}}>
-							{fetchQuestionTypeName(response.questionId)}
+							{questionType}
 						</Typography>
 					)}
 					{response.pointsEarned !== undefined &&
@@ -81,12 +85,7 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 									color: theme.palette.text.secondary,
 									fontWeight: 600,
 								}}>
-								{(() => {
-									const questionType = fetchQuestionTypeName(response.questionId);
-									const isOpenEndedOrAudioVideo = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
-									const displayEarned = isOpenEndedOrAudioVideo && response.pointsEarned === 0 ? '-' : response.pointsEarned;
-									return `${displayEarned}/${response.pointsPossible} pts`;
-								})()}
+								{`${isManuallyGradedType && response.pointsEarned === 0 ? '-' : response.pointsEarned}/${response.pointsPossible} pts`}
 							</Typography>
 						)}
 				</Box>
@@ -100,10 +99,9 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 					display: 'flex',
 					alignItems: 'center',
 				}}>
-				{fetchQuestionTypeName(response.questionId) !== QuestionType.AUDIO_VIDEO &&
-				fetchQuestionTypeName(response.questionId) !== QuestionType.OPEN_ENDED ? (
+				{!isManuallyGradedType ? (
 					<>
-						{getQuestionResult(response, fetchQuestionTypeName) ? (
+						{questionResult ? (
 							<CheckCircle sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
 						) : (
 							<Cancel sx={{ color: '#ef5350', fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
@@ -117,4 +115,4 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 	);
 };
 
-export default QuestionResponseCard;
+export default memo(QuestionResponseCard);

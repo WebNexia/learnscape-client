@@ -1,7 +1,7 @@
 import { Alert, Box, CircularProgress, IconButton, Snackbar, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import {
 	submissionFeedbackQueryKey,
@@ -35,13 +35,14 @@ import QuestionMedia from '../components/userCourses/QuestionMedia';
 import { CustomAudioPlayer } from '../components/audio';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
-import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
+import { useDashboardSync } from '../utils/dashboardSync';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
 	feedback: string;
 	isUpdated: boolean;
 	teacherAudioFeedbackUrl: string;
+	originalTeacherAudioFeedbackUrl: string;
 	isFeedbackGiven: boolean;
 }
 
@@ -67,11 +68,6 @@ const AdminQuizSubmissionCheck = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [username, setUsername] = useState<string>('');
-	const [quizName, setQuizName] = useState<string>('');
-	const [courseName, setCourseName] = useState<string>('');
-	const [chapterName, setChapterName] = useState<string>('');
-	const [studentFirebaseId, setStudentFirebaseId] = useState<string>('');
 	const [userResponseData, setUserResponseData] = useState<any>([]);
 	const [userResponseToFeedback, setUserResponseToFeedback] = useState<any>(null);
 	const [currentResponseIndex, setCurrentResponseIndex] = useState<number>(0);
@@ -84,8 +80,27 @@ const AdminQuizSubmissionCheck = () => {
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 	const [manualScore, setManualScore] = useState<number | undefined>(undefined);
 	const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
-	const [totalPossible, setTotalPossible] = useState<number>(0);
 	const initializedForRef = useRef<string | null>(null);
+
+	const username = feedbackData?.student?.username || '';
+	const studentFirebaseId = feedbackData?.student?.firebaseUserId || '';
+	const quizName = feedbackData?.lessonName || '';
+	const courseName = feedbackData?.courseName || '';
+	const chapterName = feedbackData?.chapterName || '';
+	const totalPossible = feedbackData?.totalPossible || 0;
+	const totalEarned = useMemo(
+		() => userResponseData.reduce((sum: number, response: any) => sum + (response.pointsEarned ?? 0), 0),
+		[userResponseData]
+	);
+	const scorePercentage = calculateScorePercentage(totalEarned, totalPossible);
+	const selectedQuestionType = useMemo(
+		() => fetchQuestionTypeName(userResponseToFeedback?.questionId),
+		[fetchQuestionTypeName, userResponseToFeedback?.questionId]
+	);
+	const selectedQuestionFeedback = useMemo(
+		() => userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id),
+		[userQuestionsFeedbacks, userResponseToFeedback?._id]
+	);
 
 	useEffect(() => {
 		if (!feedbackData || !userLessonId) return;
@@ -96,30 +111,35 @@ const AdminQuizSubmissionCheck = () => {
 
 		const userCourseQuizData = feedbackData.response;
 		setUserResponseData(userCourseQuizData);
-		setQuizName(feedbackData.lessonName);
-		setCourseName(feedbackData.courseName);
-		setChapterName(feedbackData.chapterName);
 		setQuizFeedback(feedbackData.teacherFeedback);
-		setTotalPossible(feedbackData.totalPossible);
 
 		const first = userCourseQuizData[0];
 		if (first) {
-			setUsername(first.userId?.username || '');
-			setStudentFirebaseId(first.userId?.firebaseUserId || '');
 			setUserResponseToFeedback(first);
 			setManualScore(first.pointsEarned);
 		}
 
 		setUserQuestionsFeedbacks(
-			userCourseQuizData.map((data) => ({
-				userQuestionId: data._id,
-				feedback: data.teacherFeedback || '',
-				isUpdated: false,
-				teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl || '',
-				isFeedbackGiven: !!data.teacherFeedback,
-			}))
+			userCourseQuizData.map((data) => {
+				const teacherAudioFeedbackUrl = data.teacherAudioFeedbackUrl || '';
+				return {
+					userQuestionId: data._id,
+					feedback: data.teacherFeedback || '',
+					isUpdated: false,
+					teacherAudioFeedbackUrl,
+					originalTeacherAudioFeedbackUrl: teacherAudioFeedbackUrl,
+					isFeedbackGiven: Boolean(data.teacherFeedback || teacherAudioFeedbackUrl),
+				};
+			})
 		);
 	}, [feedbackData, userLessonId, submissionId]);
+
+	const openResponseFeedback = useCallback((response: any, index: number) => {
+		setOpenQuestionFeedbackModal(true);
+		setUserResponseToFeedback(response);
+		setCurrentResponseIndex(index);
+		setManualScore(response?.pointsEarned);
+	}, []);
 
 	const handlePreviousResponse = () => {
 		if (currentResponseIndex > 0) {
@@ -151,7 +171,6 @@ const AdminQuizSubmissionCheck = () => {
 			) || [];
 
 		setUserQuestionsFeedbacks(updatedFeedbacks);
-		setIsQuizFeedbackUpdated(true);
 
 		setUserResponseData(
 			(prevResponses: any) =>
@@ -213,35 +232,43 @@ const AdminQuizSubmissionCheck = () => {
 		try {
 			setFeedbackSubmitting(true);
 
-			if (quizFeedback && isQuizFeedbackUpdated) {
+			if (isQuizFeedbackUpdated) {
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
 					teacherFeedback: quizFeedback.trim(),
-					isFeedbackGiven: true,
+					isFeedbackGiven: Boolean(quizFeedback.trim()),
 				});
 			}
 
+			const updatedQuestionFeedbacks = userQuestionsFeedbacks.filter((feedback) => feedback.isUpdated);
 			await Promise.all(
-				userQuestionsFeedbacks?.map((feedback) => {
-					if (feedback.feedback && feedback.isUpdated) {
-						return axios
-							.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
-								teacherFeedback: feedback.feedback.trim(),
-								teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl.trim(),
-							})
-							.then(() => {
-								setUserQuestionsFeedbacks(
-									(prevFeedbacks) =>
-										prevFeedbacks?.map((prevFeedback) =>
-											prevFeedback.userQuestionId === feedback.userQuestionId
-												? { ...prevFeedback, isFeedbackGiven: true, isUpdated: false }
-												: prevFeedback
-										) || []
-								);
-							});
+				updatedQuestionFeedbacks.map((feedback) => {
+					const nextFeedback = feedback.feedback.trim();
+					const nextAudioUrl = feedback.teacherAudioFeedbackUrl.trim();
+					const payload: { teacherFeedback: string; teacherAudioFeedbackUrl?: string } = {
+						teacherFeedback: nextFeedback,
+					};
+					// Only send audio when it changed — BE validates every supplied URL remotely.
+					if (nextAudioUrl !== (feedback.originalTeacherAudioFeedbackUrl || '').trim()) {
+						payload.teacherAudioFeedbackUrl = nextAudioUrl;
 					}
-					return Promise.resolve();
-				}) || []
+					return axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, payload);
+				})
 			);
+			if (updatedQuestionFeedbacks.length > 0) {
+				const updatedIds = new Set(updatedQuestionFeedbacks.map((feedback) => feedback.userQuestionId));
+				setUserQuestionsFeedbacks((prevFeedbacks) =>
+					prevFeedbacks.map((feedback) =>
+						updatedIds.has(feedback.userQuestionId)
+							? {
+									...feedback,
+									originalTeacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
+									isFeedbackGiven: Boolean(feedback.feedback.trim() || feedback.teacherAudioFeedbackUrl.trim()),
+									isUpdated: false,
+								}
+							: feedback
+					)
+				);
+			}
 
 			if (!feedbackData?.isChecked) {
 				const updateEndpoint =
@@ -251,16 +278,31 @@ const AdminQuizSubmissionCheck = () => {
 					isChecked: true,
 				});
 
-				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
+				refreshDashboard();
+				refreshQuizSubmissions();
 			}
 
 			const feedbackKey = submissionFeedbackQueryKey(userLessonId, submissionId);
 			const previousFeedback = queryClient.getQueryData<SubmissionFeedbackData>(feedbackKey);
 			if (previousFeedback) {
-				queryClient.setQueryData(feedbackKey, { ...previousFeedback, isChecked: true });
+				const feedbackByQuestionId = new Map(
+					userQuestionsFeedbacks.map((feedback) => [feedback.userQuestionId, feedback])
+				);
+				queryClient.setQueryData(feedbackKey, {
+					...previousFeedback,
+					isChecked: true,
+					teacherFeedback: quizFeedback,
+					isFeedbackGiven: Boolean(quizFeedback.trim()),
+					response: userResponseData.map((response: any) => {
+						const localFeedback = feedbackByQuestionId.get(response._id);
+						return {
+							...response,
+							teacherFeedback: localFeedback?.feedback ?? response.teacherFeedback,
+							teacherAudioFeedbackUrl: localFeedback?.teacherAudioFeedbackUrl ?? response.teacherAudioFeedbackUrl,
+						};
+					}),
+				});
 			}
-			await queryClient.refetchQueries(feedbackKey);
-			initializedForRef.current = null;
 
 			// Send notification AFTER submission is fully finalized (non-blocking)
 			const notificationData = {
@@ -353,43 +395,35 @@ const AdminQuizSubmissionCheck = () => {
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Questions
 						</Typography>
-						{totalPossible > 0 &&
-							(() => {
-								const totalEarned =
-									userResponseData?.reduce((sum: number, response: any) => {
-										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
-									}, 0) || 0;
-								const percentage = calculateScorePercentage(totalEarned, totalPossible);
-								return (
-									<Box
+						{totalPossible > 0 && (
+							<Box
+								sx={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									backgroundColor: theme.palette.primary.main,
+									color: 'white',
+									padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
+									borderRadius: '1.5rem',
+									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+									fontWeight: 600,
+									fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+									boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+									whiteSpace: 'nowrap',
+								}}>
+								{totalEarned}/{totalPossible} pts
+								{scorePercentage !== null && (
+									<Typography
+										component='span'
 										sx={{
-											display: 'inline-flex',
-											alignItems: 'center',
-											backgroundColor: theme.palette.primary.main,
-											color: 'white',
-											padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
-											borderRadius: '1.5rem',
-											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
-											fontWeight: 600,
-											fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
-											boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
-											whiteSpace: 'nowrap',
+											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											color: '#ffff',
+											ml: '0.25rem',
 										}}>
-										{totalEarned}/{totalPossible} pts
-										{percentage !== null && (
-											<Typography
-												component='span'
-												sx={{
-													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-													color: '#ffff',
-													ml: '0.25rem',
-												}}>
-												- ({percentage}%)
-											</Typography>
-										)}
-									</Box>
-								);
-							})()}
+										- ({scorePercentage}%)
+									</Typography>
+								)}
+							</Box>
+						)}
 					</Box>
 					<CustomInfoMessageAlignedRight
 						message={isVerySmallScreen ? 'Click questions to give feedback' : 'Click the questions to give/edit feedback for each question'}
@@ -402,13 +436,8 @@ const AdminQuizSubmissionCheck = () => {
 						response={response}
 						index={index}
 						fromAdminSubmissions={true}
-						fetchQuestionTypeName={(q) => fetchQuestionTypeName(q)}
-						onCardClick={(response, index) => {
-							setOpenQuestionFeedbackModal(true);
-							setUserResponseToFeedback(response);
-							setCurrentResponseIndex(index);
-							setManualScore(response?.pointsEarned);
-						}}
+						fetchQuestionTypeName={fetchQuestionTypeName}
+						onCardClick={openResponseFeedback}
 					/>
 				))}
 			</Box>
@@ -453,19 +482,17 @@ const AdminQuizSubmissionCheck = () => {
 						}}>
 						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 					</IconButton>
-				</>
-			)}
 
 			<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-						{getFeedbackModalQuestionTitle(fetchQuestionTypeName?.(userResponseToFeedback?.questionId) || '')}
+						{getFeedbackModalQuestionTitle(selectedQuestionType)}
 					</Typography>
 
 					<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />
 
-					{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
-						fetchQuestionTypeName?.(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
+					{selectedQuestionType !== QuestionType.FITB_TYPING &&
+						selectedQuestionType !== QuestionType.FITB_DRAG_DROP && (
 							<Typography
 								variant='body2'
 								component='div'
@@ -485,7 +512,7 @@ const AdminQuizSubmissionCheck = () => {
 						)}
 				</Box>
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
+				{selectedQuestionType === QuestionType.MULTIPLE_CHOICE && (
 					<Box sx={{ width: '90%', margin: '0 auto' }}>
 						{userResponseToFeedback?.questionId?.options?.map((option: string, index: number) => (
 							<Typography
@@ -523,7 +550,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.OPEN_ENDED && (
+				{selectedQuestionType === QuestionType.OPEN_ENDED && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 							Student's Answer
@@ -532,7 +559,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.TRUE_FALSE && (
+				{selectedQuestionType === QuestionType.TRUE_FALSE && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Box sx={{ marginBottom: '2rem' }}>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
@@ -549,7 +576,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.MATCHING && (
+				{selectedQuestionType === QuestionType.MATCHING && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<MatchingPreview
 							initialPairs={userResponseToFeedback?.questionId.matchingPairs}
@@ -561,7 +588,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
+				{selectedQuestionType === QuestionType.FITB_DRAG_DROP && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<FillInTheBlanksDragDrop
 							textWithBlanks={userResponseToFeedback?.questionId.question}
@@ -574,7 +601,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.FITB_TYPING && (
+				{selectedQuestionType === QuestionType.FITB_TYPING && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<FillInTheBlanksTyping
 							textWithBlanks={userResponseToFeedback?.questionId.question}
@@ -587,7 +614,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
+				{selectedQuestionType === QuestionType.AUDIO_VIDEO && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Student's Recording
@@ -624,16 +651,13 @@ const AdminQuizSubmissionCheck = () => {
 								Audio Feedback for Question
 							</Typography>
 							<Box sx={{ width: '100%', marginTop: '1rem' }}>
-								{!userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
+								{!selectedQuestionFeedback?.teacherAudioFeedbackUrl ? (
 									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} maxRecordTime={300000} />
 								) : (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
 										<Box sx={{ flex: 9, mt: '0.5rem' }}>
 											<CustomAudioPlayer
-												audioUrl={
-													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)
-														?.teacherAudioFeedbackUrl || ''
-												}
+												audioUrl={selectedQuestionFeedback?.teacherAudioFeedbackUrl || ''}
 												title='Teacher Audio Feedback'
 											/>
 										</Box>
@@ -663,8 +687,8 @@ const AdminQuizSubmissionCheck = () => {
 				{userResponseToFeedback?.pointsPossible !== undefined &&
 					userResponseToFeedback?.pointsPossible !== null &&
 					(() => {
-						const questionType = fetchQuestionTypeName(userResponseToFeedback?.questionId);
-						const canUpdateScore = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+						const canUpdateScore =
+							selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
 						return canUpdateScore ? (
 							<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
 								<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
@@ -705,7 +729,8 @@ const AdminQuizSubmissionCheck = () => {
 										/ {userResponseToFeedback?.pointsPossible} pts
 									</Typography>
 									{(() => {
-										const isOpenEndedOrAudioVideo = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+										const isOpenEndedOrAudioVideo =
+											selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
 										// For open-ended and audio/video, always show "Manually Graded" since they cannot be auto-graded
 										if (isOpenEndedOrAudioVideo) {
 											return (
@@ -770,7 +795,7 @@ const AdminQuizSubmissionCheck = () => {
 					<CustomTextField
 						multiline
 						resizable
-						value={userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback || ''}
+						value={selectedQuestionFeedback?.feedback || ''}
 						onChange={handleFeedbackChange}
 						placeholder='Enter feedback for the question (max 1000 characters)'
 						InputProps={{
@@ -780,7 +805,7 @@ const AdminQuizSubmissionCheck = () => {
 						}}
 					/>
 					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-						{userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback.length}/1000 Characters
+						{selectedQuestionFeedback?.feedback.length || 0}/1000 Characters
 					</Typography>
 				</Box>
 
@@ -794,6 +819,8 @@ const AdminQuizSubmissionCheck = () => {
 					onDelete={resetFeedback}
 				/>
 			</CustomDialog>
+				</>
+			)}
 
 			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
 				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>

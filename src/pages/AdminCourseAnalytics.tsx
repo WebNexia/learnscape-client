@@ -22,11 +22,9 @@ import theme from '../themes';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useAuth } from '../hooks/useAuth';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { useQuery } from 'react-query';
 import axiosInstance from '../utils/axiosInstance';
-import { SingleCourse } from '../interfaces/course';
 
 const AdminCourseAnalytics = () => {
 	const { courseId } = useParams<{ courseId: string }>();
@@ -35,46 +33,37 @@ const AdminCourseAnalytics = () => {
 	const { data, isLoading, error } = useCourseStudentsAnalytics(courseId);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const [isDownloading, setIsDownloading] = useState(false);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { data: courseDetails } = useQuery<SingleCourse | null, Error>(
-		['adminCourseDetailsForAnalytics', courseId],
-		async () => {
-			if (!courseId) return null;
-			const response = await axiosInstance.get(`${base_url}/courses/${courseId}`);
-			return response.data?.data as SingleCourse;
-		},
-		{
-			enabled: !!courseId,
-		}
-	);
-
 	const handleDownloadEnrolledStudents = async () => {
-		if (!data || !data.students || data.students.length === 0) return;
+		if (!courseId || !data?.students?.length) return;
 
 		try {
-			const excelData = data.students.map((student) => ({
-				'Rank': student.rank,
-				'Name': student.name,
-				'Email': student.email || '',
-				'Phone': student.phone || '',
-				'Country': student.countryCode || '',
-				'Total Score': student.totalEarnedScore,
-				'Percent': student.percent ?? '',
-			}));
+			setIsDownloading(true);
+			const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/export-excel`, {
+				responseType: 'blob',
+			});
 
-			const XLSX = await import('xlsx');
-			const ws = XLSX.utils.json_to_sheet(excelData);
-			const wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'Enrolled Students');
-
-			const courseTitleSlug = courseDetails?.title ? courseDetails.title.replace(/[^a-z0-9]+/gi, '_') : 'Course';
+			const blob = new Blob([response.data], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			const titleSlug = (data.title || 'Course').replace(/[^a-z0-9]+/gi, '_') || 'Course';
 			const today = new Date().toISOString().split('T')[0];
-			XLSX.writeFile(wb, `${courseTitleSlug}_Enrolled_Students_${today}.xlsx`);
+			link.href = url;
+			link.setAttribute('download', `${titleSlug}_Enrolled_Students_${today}.xlsx`);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (err) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to download enrolled students list:', err);
+		} finally {
+			setIsDownloading(false);
 		}
 	};
 
@@ -168,9 +157,9 @@ const AdminCourseAnalytics = () => {
 											<IconButton
 												size='small'
 												onClick={handleDownloadEnrolledStudents}
-												disabled={!data || !data.students || data.students.length === 0}
+												disabled={isDownloading || !data.students?.length}
 												aria-label='Download enrolled learners list'>
-												<DownloadIcon fontSize='small' />
+												{isDownloading ? <CircularProgress size={16} /> : <DownloadIcon fontSize='small' />}
 											</IconButton>
 										</Tooltip>
 									</Box>
@@ -235,7 +224,7 @@ const AdminCourseAnalytics = () => {
 
 									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 										<Avatar
-											src={courseDetails?.instructor?.imageUrl}
+											src={data.instructor?.imageUrl || undefined}
 											sx={{
 												width: 40,
 												height: 40,
@@ -243,7 +232,7 @@ const AdminCourseAnalytics = () => {
 											}}
 										/>
 										<Typography variant='body2' sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.8rem' : '0.85rem' }}>
-											{courseDetails?.instructor?.name || 'Not assigned'}
+											{data.instructor?.name || 'Not assigned'}
 										</Typography>
 									</Box>
 								</Paper>

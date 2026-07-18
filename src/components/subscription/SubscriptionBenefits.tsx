@@ -29,7 +29,7 @@ const SubscriptionBenefits: React.FC<SubscriptionBenefitsProps> = ({ subscriptio
 			icon: <School sx={{ color: theme.textColor?.greenPrimary?.main || '#4CAF50' }} />,
 			title: 'Free Course Access',
 			description: 'Unlimited access to all free courses on the platform',
-			features: ['Access to all free courses', 'Progress tracking', 'Certificates of completion', 'Downloadable resources'],
+			features: ['Access to all free courses', 'Progress tracking', 'Downloadable resources'],
 		},
 		{
 			icon: <TrendingUp sx={{ color: theme.textColor?.greenPrimary?.main || '#4CAF50' }} />,

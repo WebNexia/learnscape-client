@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import axios from '@utils/axiosInstance';
+import { decode } from 'html-entities';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers, UserQuestion } from '../interfaces/userQuestion';
 
 export interface UserQuestionData {
@@ -47,10 +48,11 @@ export const useFetchUserQuestion = () => {
 					return {
 						userQuestionId: data._id,
 						questionId: questionIdStr,
-						userAnswer: data.userAnswer,
+						// Server escapes text on save (validator.escape); decode so ' & < > show as typed
+						userAnswer: decode(data.userAnswer ?? ''),
 						audioRecordUrl: data.audioRecordUrl,
 						videoRecordUrl: data.videoRecordUrl,
-						teacherFeedback: data.teacherFeedback,
+						teacherFeedback: decode(data.teacherFeedback ?? ''),
 						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
 						userMatchingPairAnswers: data.userMatchingPairAnswers,
 						userBlankValuePairAnswers: data.userBlankValuePairAnswers,

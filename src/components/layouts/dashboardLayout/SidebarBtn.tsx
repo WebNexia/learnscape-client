@@ -67,34 +67,36 @@ const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: S
 				'marginBottom': isLearner ? '0.35rem' : '0.15rem',
 				'fontFamily': theme.fontFamily?.main,
 				'fontWeight': isLearner && active ? 600 : 500,
-				'fontSize': isMobileSize ? '0.75rem' : '1rem',
+				'fontSize': isLearner ? (isMobileSize ? '0.75rem' : '1rem') : isMobileSize ? '0.75rem' : '1rem',
 				'lineHeight': isLearner ? 1.5 : '2.25',
 				'minHeight': isLearner ? (isMobileSize ? '2.35rem' : '2.65rem') : undefined,
-				'width': isLearner ? (isMobileSize ? 'calc(100% - 1.25rem)' : 'calc(100% - 1.85rem)') : isMobileSize ? '72%' : '76%',
+				'width': isMobileSize ? 'calc(100% - 1rem)' : 'calc(100% - 1.25rem)',
 				'justifyContent': 'flex-start',
-				'paddingLeft': isLearner ? (isMobileSize ? '0.85rem' : '1rem') : undefined,
-				'paddingRight': isLearner ? '1rem' : '1.5rem',
+				'paddingLeft': '0.85rem',
+				'paddingRight': '0.75rem',
 				'borderRadius': isLearner ? '2rem 0 0 2rem' : '1.5rem 0 0 1.5rem',
-				'marginLeft': isLearner ? (isMobileSize ? '1.25rem' : '1.85rem') : '1.85rem',
-				'marginRight': isLearner ? 0 : undefined,
+				'marginLeft': isMobileSize ? '1rem' : '1.25rem',
+				'marginRight': 0,
 				'border': 'none',
 				'boxShadow': 'none',
 				'cursor': 'pointer',
+				'whiteSpace': 'nowrap',
+				'overflow': 'hidden',
 				'& .MuiButton-startIcon': {
-					marginRight: isLearner ? '0.65rem' : undefined,
+					marginRight: isLearner ? '0.5rem' : undefined,
 					color: 'inherit',
 				},
 				'&:hover': isLearner
 					? {
-							color: active ? theme.bgColor?.learnerSidebar : theme.bgColor?.learnerSidebarText,
-							backgroundColor: active ? theme.bgColor?.learnerSidebarActive : theme.bgColor?.learnerSidebarHover,
-							border: 'none',
-						}
+						color: active ? theme.bgColor?.learnerSidebar : theme.bgColor?.learnerSidebarText,
+						backgroundColor: active ? theme.bgColor?.learnerSidebarActive : theme.bgColor?.learnerSidebarHover,
+						border: 'none',
+					}
 					: {
-							color: active ? theme.textColor?.primary.main : getHoverColor(),
-							backgroundColor: active ? theme.palette.secondary.main : 'transparent',
-							border: 'none',
-						},
+						color: active ? theme.textColor?.primary.main : getHoverColor(),
+						backgroundColor: active ? theme.palette.secondary.main : 'transparent',
+						border: 'none',
+					},
 			}}
 			onClick={onClick}>
 			{btnText}

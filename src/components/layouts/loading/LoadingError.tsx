@@ -35,7 +35,7 @@ const LoadingError = () => {
 				sx={{
 					margin: '2rem',
 					fontSize: '2rem',
-					fontFamily: 'Poppins',
+					fontFamily: 'Varela Round',
 					fontWeight: 500,
 					color: '#01435A',
 				}}>

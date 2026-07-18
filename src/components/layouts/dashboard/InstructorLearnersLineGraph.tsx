@@ -41,7 +41,7 @@ const InstructorLearnersLineGraph = ({ chartData, totalUsers }: InstructorLearne
 									display: true,
 									labels: {
 										font: {
-											family: 'Poppins',
+											family: 'Varela Round',
 											size: 12,
 										},
 									},

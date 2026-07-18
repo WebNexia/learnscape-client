@@ -73,6 +73,7 @@ const Sidebar = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
+					width: '100%',
 					marginBottom: '0.5rem',
 				}}>
 				<img

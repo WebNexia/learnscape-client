@@ -9,9 +9,11 @@ import theme from '../../themes';
 interface ChaptersProps {
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
+	staffPreviewMode?: boolean;
+	staffPreviewBasePath?: string;
 }
 
-const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
+const Chapters = ({ course, isEnrolledStatus, staffPreviewMode = false, staffPreviewBasePath }: ChaptersProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [allExpanded, setAllExpanded] = useState<boolean>(false);
@@ -206,6 +208,8 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 								course={course}
 								isEnrolledStatus={isEnrolledStatus}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
+								staffPreviewMode={staffPreviewMode}
+								staffPreviewBasePath={staffPreviewBasePath}
 							/>
 						);
 					}

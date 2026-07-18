@@ -92,7 +92,8 @@ const AdminLessons = () => {
 		resetAll,
 		removeFromSearchResults,
 	} = useFilterSearch<Lesson>({
-		getEndpoint: () => `${base_url}/lessons/organisation/${orgId}`,
+		getEndpoint: () =>
+			isInstructor ? `${base_url}/lessons/organisation/${orgId}/instructor` : `${base_url}/lessons/organisation/${orgId}`,
 		limit: 200,
 		pageSize,
 		contextData: lessons,

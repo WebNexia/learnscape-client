@@ -44,7 +44,7 @@ const EnrolledCoursesLineGraph = ({ chartData, totalEnrolledCourses, totalComple
 									display: true,
 									labels: {
 										font: {
-											family: 'Poppins',
+											family: 'Varela Round',
 											size: 12,
 										},
 									},

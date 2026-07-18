@@ -85,8 +85,8 @@ const AdminCourseEditPage = () => {
 	const { isInstructor } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewLesson, updateLesson, enableLessonsFetch } = useContext(LessonsContext);
-	const { addNewDocument, updateDocument, enableDocumentsFetch } = useContext(DocumentsContext);
+	const { addNewLesson, updateLesson } = useContext(LessonsContext);
+	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -320,11 +320,6 @@ const AdminCourseEditPage = () => {
 	};
 
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
-
-	useEffect(() => {
-		enableLessonsFetch(); // 👈 Enable lessons fetching when component mounts
-		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
-	}, []);
 
 	useEffect(() => {
 		if (courseId) {

@@ -160,6 +160,8 @@ const CourseRoster = () => {
 		const params = new URLSearchParams();
 		params.append('page', currentPage.toString());
 		params.append('limit', pageSize.toString());
+		params.append('sortBy', orderBy);
+		params.append('sortOrder', order);
 		if (filterValue && filterValue.trim()) {
 			params.append('groupName', filterValue === 'unassigned' ? '' : filterValue);
 		}
@@ -167,7 +169,7 @@ const CourseRoster = () => {
 			params.append('search', searchedValue.trim());
 		}
 		return params;
-	}, [currentPage, pageSize, filterValue, searchButtonClicked, searchedValue]);
+	}, [currentPage, pageSize, filterValue, searchButtonClicked, searchedValue, orderBy, order]);
 
 	const refreshRoster = useCallback(async () => {
 		if (!courseId) return;
@@ -205,7 +207,7 @@ const CourseRoster = () => {
 		fetchCourse();
 	}, [courseId, base_url, isInstructor, courses]);
 
-	// Fetch roster - with filter, search, and pagination from backend (sorting done on FE)
+	// Fetch roster — filter, search, sort, pagination from backend
 	useEffect(() => {
 		const fetchRoster = async () => {
 			if (!courseId) return;
@@ -221,42 +223,7 @@ const CourseRoster = () => {
 		fetchRoster();
 	}, [courseId, refreshRoster]);
 
-	// Sort roster on frontend
-	const sortedRoster = useMemo(() => {
-		if (!roster || roster.length === 0) return [];
-
-		const sorted = [...roster].sort((a, b) => {
-			let aValue = '';
-			let bValue = '';
-
-			if (orderBy === 'name') {
-				const aName = `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.username || '';
-				const bName = `${b.firstName || ''} ${b.lastName || ''}`.trim() || b.username || '';
-				aValue = aName.toLowerCase();
-				bValue = bName.toLowerCase();
-			} else if (orderBy === 'username') {
-				aValue = (a.username || '').toLowerCase();
-				bValue = (b.username || '').toLowerCase();
-			} else if (orderBy === 'email') {
-				aValue = (a.email || '').toLowerCase();
-				bValue = (b.email || '').toLowerCase();
-			} else {
-				aValue = (a[orderBy as keyof RosterUser] || '').toString().toLowerCase();
-				bValue = (b[orderBy as keyof RosterUser] || '').toString().toLowerCase();
-			}
-
-			if (order === 'asc') {
-				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			} else {
-				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-			}
-		});
-
-		return sorted;
-	}, [roster, orderBy, order]);
-
-	// Use sorted roster (already filtered and searched from backend, sorted on FE)
-	const paginatedRoster = sortedRoster;
+	const paginatedRoster = roster;
 
 	// Initialize modal state array when roster changes
 	useEffect(() => {
@@ -474,6 +441,7 @@ const CourseRoster = () => {
 			const isAsc = orderBy === propertyStr && order === 'asc';
 			setOrder(isAsc ? 'desc' : 'asc');
 			setOrderBy(propertyStr);
+			setCurrentPage(1);
 		}
 	};
 
@@ -507,78 +475,37 @@ const CourseRoster = () => {
 	const searchResultsTotalItems = totalItems;
 
 	const handleDownloadRoster = async () => {
+		if (!courseId) return;
+
 		try {
-			// Fetch all roster data for export (without pagination, but with filter/search)
 			const params = new URLSearchParams();
-			params.append('limit', '10000'); // Large limit to get all data
-			params.append('page', '1');
+			params.append('sortBy', orderBy);
+			params.append('sortOrder', order);
 			if (filterValue && filterValue.trim()) {
 				params.append('groupName', filterValue === 'unassigned' ? '' : filterValue);
 			}
-			if (isSearchActive && searchedValue.trim()) {
+			if (searchButtonClicked && searchedValue.trim()) {
 				params.append('search', searchedValue.trim());
 			}
-			const response = await axios.get(`${base_url}/userCourses/course/${courseId}?${params.toString()}`);
-			let dataToExport = response.data.users || [];
 
-			// Apply sorting to exported data (same as display)
-			dataToExport = dataToExport.sort((a: RosterUser, b: RosterUser) => {
-				let aValue = '';
-				let bValue = '';
-
-				if (orderBy === 'name') {
-					const aName = `${a.firstName || ''} ${a.lastName || ''}`.trim() || a.username || '';
-					const bName = `${b.firstName || ''} ${b.lastName || ''}`.trim() || b.username || '';
-					aValue = aName.toLowerCase();
-					bValue = bName.toLowerCase();
-				} else if (orderBy === 'username') {
-					aValue = (a.username || '').toLowerCase();
-					bValue = (b.username || '').toLowerCase();
-				} else if (orderBy === 'email') {
-					aValue = (a.email || '').toLowerCase();
-					bValue = (b.email || '').toLowerCase();
-				} else {
-					aValue = (a[orderBy as keyof RosterUser] || '').toString().toLowerCase();
-					bValue = (b[orderBy as keyof RosterUser] || '').toString().toLowerCase();
-				}
-
-				if (order === 'asc') {
-					return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-				} else {
-					return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-				}
+			const response = await axios.get(`${base_url}/userCourses/course/${courseId}/export-excel?${params.toString()}`, {
+				responseType: 'blob',
 			});
 
-			// Format data for Excel
-			const excelData = dataToExport.map((user: RosterUser) => {
-				const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
-				const groupName = user.currentGroupName || 'Unassigned';
-
-				return {
-					'First Name': user.firstName || '',
-					'Last Name': user.lastName || '',
-					'Full Name': fullName,
-					'Username': user.username || '',
-					'Email': user.email || '',
-					'Group': groupName,
-					...(showAdminColumns
-						? {
-							'Status': user.isActive === false ? 'Removed' : 'Active',
-							'Refund Processed': user.refundEligible ? (user.refundProcessed ? 'Yes' : 'No') : 'N/A',
-						}
-						: {}),
-				};
+			const blob = new Blob([response.data], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 			});
-
-			// Create and download Excel file
-			const XLSX = await import('xlsx');
-			const ws = XLSX.utils.json_to_sheet(excelData);
-			const wb = XLSX.utils.book_new();
-			const fileName = course
-				? `${course.title.replace(/[^a-z0-9]/gi, '_')}_Roster_${new Date().toISOString().split('T')[0]}.xlsx`
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			const fileName = course?.title
+				? `${course.title.replace(/[^a-z0-9]+/gi, '_')}_Roster_${new Date().toISOString().split('T')[0]}.xlsx`
 				: `Course_Roster_${new Date().toISOString().split('T')[0]}.xlsx`;
-			XLSX.utils.book_append_sheet(wb, ws, 'Roster');
-			XLSX.writeFile(wb, fileName);
+			link.href = url;
+			link.setAttribute('download', fileName);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
 		}

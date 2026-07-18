@@ -42,9 +42,16 @@ const AddNewDocumentDialog = ({
 }: AddNewDocumentDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { sortDocumentsData, documents, fetchMoreDocuments, loadedPages, updateDocument } = useContext(DocumentsContext);
+	const { sortDocumentsData, documents, fetchMoreDocuments, loadedPages, updateDocument, enableDocumentsFetch } = useContext(DocumentsContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	// Org documents list is deferred on lesson/course-edit (fetchOnMount=false) until picker opens
+	useEffect(() => {
+		if (addNewDocumentModalOpen) {
+			enableDocumentsFetch();
+		}
+	}, [addNewDocumentModalOpen, enableDocumentsFetch]);
 
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');

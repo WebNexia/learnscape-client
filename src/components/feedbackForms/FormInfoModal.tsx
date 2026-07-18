@@ -1,9 +1,10 @@
-import { Box, Grid, Typography, Avatar, DialogContent, DialogActions } from '@mui/material';
+import { Box, Grid, Typography, Avatar, DialogContent, DialogActions, CircularProgress } from '@mui/material';
 import { FeedbackForm } from '../../interfaces/feedbackForm';
 import { dateTimeFormatter } from '../../utils/dateFormatter';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { feedbackFormsService } from '../../services/feedbackFormsService';
 
 interface FormInfoModalProps {
 	form: FeedbackForm;
@@ -13,11 +14,45 @@ interface FormInfoModalProps {
 const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const [detailForm, setDetailForm] = useState<FeedbackForm>(form);
+	const [loading, setLoading] = useState<boolean>(!Array.isArray(form.fields));
 
-	// Extract user info from populated fields
-	const createdBy = form.createdBy as any;
-	const updatedBy = form.updatedBy as any;
-	const course = form.courseId as any;
+	useEffect(() => {
+		let cancelled = false;
+		setDetailForm(form);
+
+		if (Array.isArray(form.fields)) {
+			setLoading(false);
+			return;
+		}
+
+		const load = async () => {
+			setLoading(true);
+			try {
+				const full = await feedbackFormsService.getFeedbackFormById(form._id);
+				if (!cancelled) {
+					setDetailForm(full);
+				}
+			} catch {
+				if (!cancelled) {
+					setDetailForm(form);
+				}
+			} finally {
+				if (!cancelled) {
+					setLoading(false);
+				}
+			}
+		};
+
+		load();
+		return () => {
+			cancelled = true;
+		};
+	}, [form]);
+
+	const createdBy = detailForm.createdBy as any;
+	const updatedBy = detailForm.updatedBy as any;
+	const course = detailForm.courseId as any;
 
 	const createdByName = createdBy?.firstName && createdBy?.lastName ? `${createdBy.firstName} ${createdBy.lastName}` : createdBy?.email || 'Unknown';
 	const createdByImageUrl = createdBy?.imageUrl;
@@ -32,6 +67,11 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 	return (
 		<>
 			<DialogContent>
+				{loading ? (
+					<Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+						<CircularProgress size={28} />
+					</Box>
+				) : (
 				<Box display='flex' flexDirection='column' gap={1}>
 					<Grid container spacing={2.25} alignItems='center'>
 						<Grid item xs={3}>
@@ -42,11 +82,11 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						<Grid item xs={9} display='flex' alignItems='center'>
 							<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={createdByImageUrl} />
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{createdByName} ({createdByRole}) on {dateTimeFormatter(form.createdAt)}
+								{createdByName} ({createdByRole}) on {dateTimeFormatter(detailForm.createdAt)}
 							</Typography>
 						</Grid>
 
-						{form.updatedBy && (
+						{detailForm.updatedBy && (
 							<>
 								<Grid item xs={3}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -56,7 +96,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 								<Grid item xs={9} display='flex' alignItems='center'>
 									<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={updatedByImageUrl} />
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{updatedByName} ({updatedByRole}) on {dateTimeFormatter(form.updatedAt)}
+										{updatedByName} ({updatedByRole}) on {dateTimeFormatter(detailForm.updatedAt)}
 									</Typography>
 								</Grid>
 							</>
@@ -80,11 +120,11 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						</Grid>
 						<Grid item xs={9} display='flex' alignItems='center'>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{form.isPublished ? 'Yes' : 'No'}
+								{detailForm.isPublished ? 'Yes' : 'No'}
 							</Typography>
 						</Grid>
 
-						{form.isPublished && form.publishedAt && (
+						{detailForm.isPublished && detailForm.publishedAt && (
 							<>
 								<Grid item xs={3}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -93,7 +133,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 								</Grid>
 								<Grid item xs={9}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{dateTimeFormatter(form.publishedAt)}
+										{dateTimeFormatter(detailForm.publishedAt)}
 									</Typography>
 								</Grid>
 							</>
@@ -106,7 +146,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						</Grid>
 						<Grid item xs={9}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{form.fields?.length || 0} field(s)
+								{detailForm.fields?.length || 0} field(s)
 							</Typography>
 						</Grid>
 
@@ -117,7 +157,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						</Grid>
 						<Grid item xs={9}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{form.submissionCount || 0}
+								{detailForm.submissionCount || 0}
 							</Typography>
 						</Grid>
 
@@ -128,7 +168,7 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						</Grid>
 						<Grid item xs={9}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{form.allowAnonymous ? 'Yes' : 'No'}
+								{detailForm.allowAnonymous ? 'Yes' : 'No'}
 							</Typography>
 						</Grid>
 
@@ -139,11 +179,11 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 						</Grid>
 						<Grid item xs={9}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{form.allowMultipleSubmissions ? 'Yes' : 'No'}
+								{detailForm.allowMultipleSubmissions ? 'Yes' : 'No'}
 							</Typography>
 						</Grid>
 
-						{form.submissionDeadline && (
+						{detailForm.submissionDeadline && (
 							<>
 								<Grid item xs={3}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -152,13 +192,13 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 								</Grid>
 								<Grid item xs={9}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{dateTimeFormatter(form.submissionDeadline)}
+										{dateTimeFormatter(detailForm.submissionDeadline)}
 									</Typography>
 								</Grid>
 							</>
 						)}
 
-						{form.isPublished && form._id && (
+						{detailForm.isPublished && detailForm._id && (
 							<>
 								<Grid item xs={3}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -172,13 +212,14 @@ const FormInfoModal = ({ form, onClose }: FormInfoModalProps) => {
 											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 											wordBreak: 'break-all',
 										}}>
-										{window.location.origin}/form/{form._id}
+										{window.location.origin}/form/{detailForm._id}
 									</Typography>
 								</Grid>
 							</>
 						)}
 					</Grid>
 				</Box>
+				)}
 			</DialogContent>
 			<DialogActions>
 				<CustomCancelButton

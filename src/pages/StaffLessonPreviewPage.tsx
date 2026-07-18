@@ -1,7 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Collapse, DialogActions, DialogContent, Drawer, IconButton, Skeleton, Slide, Tooltip, Typography } from '@mui/material';
-import { useParams, useSearchParams } from 'react-router-dom';
-import axios from '@utils/axiosInstance';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
 	Article,
 	CheckCircle,
@@ -14,7 +13,7 @@ import {
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
-	Lock,
+	Logout,
 	Menu,
 	MenuBook,
 	NotListedLocation,
@@ -35,107 +34,43 @@ import {
 } from '../utils/learnerTypography';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
-import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 import { UserQuestionData } from '../hooks/useFetchUserQuestion';
-import { useLearnerLesson } from '../hooks/useLearnerLesson';
-import { useLearnerUserAnswersByLesson } from '../hooks/useLearnerUserAnswersByLesson';
 import { LessonType } from '../interfaces/enums';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
-import { Lesson } from '../interfaces/lessons';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
-import LoadingButton from '@mui/lab/LoadingButton';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
-import InstructorFeedbackPanel from '../components/layouts/quizSubmissions/InstructorFeedbackPanel';
-import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
-import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import { stripHtml } from '../utils/stripHtml';
 import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 import DocumentViewer from '../components/documents/DocumentViewer';
-import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import { truncateText } from '@utils/utilText';
 import useQuestionTypes from '../hooks/useQuestionTypes';
 import { QuestionType } from '../interfaces/enums';
 import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
-import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import InstructionalLessonsDialog from '../components/userCourses/InstructionalLessonsDialog';
 import { useWordAssist, wrapWordsForHover } from '../hooks/useWordAssist';
 import { readWordAssistPreference, WORD_ASSIST_STORAGE_KEY } from '../utils/wordAssistPreference';
 import WordAssistPopper from '../components/userCourses/WordAssistPopper';
-import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
-
-const EMPTY_LESSON: Lesson = {
-	_id: '',
-	title: '',
-	type: '',
-	imageUrl: '',
-	videoUrl: '',
-	isActive: true,
-	createdAt: '',
-	updatedAt: '',
-	text: '',
-	orgId: '',
-	questionIds: [],
-	questions: [],
-	documentIds: [],
-	documents: [],
-	clonedFromId: '',
-	clonedFromTitle: '',
-	usedInCourses: [],
-	createdBy: '',
-	updatedBy: '',
-	publishedAt: '',
-	createdByName: '',
-	updatedByName: '',
-	createdByImageUrl: '',
-	updatedByImageUrl: '',
-	createdByRole: '',
-	updatedByRole: '',
-};
-
-const mapUserAnswersToQuizState = (answers: UserQuestionData[]): QuizQuestionAnswer[] =>
-	answers.map((answer) => ({
-		questionId: answer.questionId,
-		userAnswer: answer.userAnswer,
-		audioRecordUrl: answer.audioRecordUrl,
-		videoRecordUrl: answer.videoRecordUrl,
-		teacherFeedback: answer.teacherFeedback,
-		teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
-		userMatchingPairAnswers: answer.userMatchingPairAnswers,
-		userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
-		pointsEarned: answer.pointsEarned,
-		pointsPossible: answer.pointsPossible,
-		isAutoGraded: answer.isAutoGraded,
-		partialScores: answer.partialScores,
-	}));
-
-export interface QuizQuestionAnswer {
-	questionId: string;
-	userAnswer: string;
-	videoRecordUrl: string;
-	audioRecordUrl: string;
-	teacherFeedback: string;
-	teacherAudioFeedbackUrl: string;
-	userMatchingPairAnswers: UserMatchingPairAnswers[];
-	userBlankValuePairAnswers: UserBlankValuePairAnswers[];
-	pointsEarned?: number;
-	pointsPossible?: number;
-	isAutoGraded?: boolean;
-	partialScores?: { [key: string]: number };
-}
+import { useStaffCoursePreview } from '../hooks/useStaffCoursePreview';
+import { useStaffLessonPreview } from '../hooks/useStaffLessonPreview';
+import { useAuth } from '../hooks/useAuth';
+import { QuizQuestionAnswer } from './LessonPage';
 
 const getChapterIdFromChapter = (chapter: { _id?: string; chapterId?: string } | null | undefined) =>
-	String(chapter?._id ?? chapter?.chapterId ?? '');
+	String((chapter as any)?._id ?? chapter?.chapterId ?? '');
 
-const LessonPage = () => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { lessonId, courseId, userCourseId } = useParams();
+/**
+ * Staff learner-view lesson page: renders the exact learner LessonPage UI.
+ * All interactions stay local (no userLesson/userQuestion/quizSubmission writes).
+ */
+const StaffLessonPreviewPage = () => {
+	const { lessonId, courseId } = useParams();
 	const [searchParams] = useSearchParams();
 	const chapterIdFromUrl = searchParams.get('chapterId') || '';
 	const {
@@ -154,57 +89,50 @@ const LessonPage = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const navigate = useNavigate();
-	const { handleNextLesson, nextLessonId, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
-	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
+	const { isInstructor } = useAuth();
 
-	// Check if there are more lessons in the course (in any chapter)
-	const hasMoreLessonsInCourse = useMemo(() => {
-		if (!singleCourseUser || !lessonId) return false;
+	const staffPreviewBasePath = isInstructor
+		? `/instructor/course-preview/course/${courseId}`
+		: `/admin/course-preview/course/${courseId}`;
+	const coursesListPath = isInstructor ? '/instructor/courses' : '/admin/courses';
 
-		// Find current lesson's position
-		for (const chapter of singleCourseUser.chapters || []) {
-			if (!chapter || !chapter.lessons) continue;
-			for (const lesson of chapter.lessons) {
-				if (!lesson) continue;
-				if (lesson._id === lessonId) {
-					// Check if there are more lessons after this one in any chapter
-					const currentChapterIndex = singleCourseUser.chapters.indexOf(chapter);
-					const currentLessonIndex = chapter.lessons.indexOf(lesson);
+	const { data: courseData } = useStaffCoursePreview(courseId || '');
+	const singleCourseUser = courseData && courseData._id === courseId ? courseData : null;
 
-					// Check if there are more lessons in current chapter
-					if (currentLessonIndex < chapter.lessons.length - 1) {
-						return true;
-					}
+	const { data: lessonData, isLoading: isLessonLoading } = useStaffLessonPreview(courseId || '', lessonId || '');
+	const activeLesson = lessonData && String(lessonData._id) === String(lessonId) ? lessonData : null;
+	const lesson = activeLesson;
+	const lessonType = lesson?.type || '';
+	const isLessonContentLoading = isLessonLoading && !activeLesson;
 
-					// Check if there are more chapters with lessons
-					for (let i = currentChapterIndex + 1; i < singleCourseUser.chapters.length; i++) {
-						const nextChapter = singleCourseUser.chapters[i];
-						if (nextChapter && nextChapter.lessons && nextChapter.lessons.length > 0) {
-							return true;
-						}
-					}
-					return false;
-				}
-			}
-		}
-		return false;
-	}, [singleCourseUser, lessonId]);
+	// Flattened lesson list (across chapters) for next-lesson resolution
+	const flatLessons = useMemo(() => {
+		const items: { lessonId: string; chapterId: string }[] = [];
+		(singleCourseUser?.chapters || []).forEach((chapter) => {
+			if (!chapter) return;
+			(chapter.lessons || [])
+				.filter((l) => l && l._id)
+				.forEach((l) => {
+					items.push({ lessonId: l._id, chapterId: getChapterIdFromChapter(chapter) });
+				});
+		});
+		return items;
+	}, [singleCourseUser?.chapters]);
+
+	const currentFlatIndex = flatLessons.findIndex((item) => item.lessonId === lessonId);
+	const nextLessonId = currentFlatIndex >= 0 ? flatLessons[currentFlatIndex + 1]?.lessonId ?? null : null;
+	const hasMoreLessonsInCourse = Boolean(nextLessonId);
 
 	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
-	const [wasLessonCompletedOnMount, setWasLessonCompletedOnMount] = useState<boolean>(isLessonCompleted);
 	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
 	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
 	const [editorContent, setEditorContent] = useState<string>('');
-	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
-	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
-	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
 	const [isWordAssistEnabled, setIsWordAssistEnabled] = useState<boolean>(() => readWordAssistPreference());
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
-	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
 	const [questionsSessionKey, setQuestionsSessionKey] = useState(0);
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
 	const [isQuestionToolbarHelpOpen, setIsQuestionToolbarHelpOpen] = useState<boolean>(false);
@@ -213,13 +141,12 @@ const LessonPage = () => {
 	const [isChapterListDrawerOpen, setIsChapterListDrawerOpen] = useState<boolean>(false);
 	const currentChapterDrawerRef = useRef<HTMLDivElement>(null);
 	const drawerScrollContainerRef = useRef<HTMLDivElement>(null);
-	// Chapters expanded in the drawer: by default only the one containing the current lesson
 	const [drawerExpandedChapterIds, setDrawerExpandedChapterIds] = useState<Set<string>>(() => {
 		const initial = new Set<string>();
 		if (!lessonId || !singleCourseUser?.chapters) return initial;
 		const chapter = singleCourseUser.chapters.find((ch) => ch?.lessons?.some((l) => l?._id === lessonId));
-		const chapterId = (chapter as any)?._id ?? (chapter as any)?.chapterId;
-		if (chapterId) initial.add(String(chapterId));
+		const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
+		if (chapterId) initial.add(chapterId);
 		return initial;
 	});
 	const { anchorEl, activeWord, wordInfo, isLoadingWordInfo, handleWordHover, handleWordTouchStart, handleWordTouchEnd, handleMouseLeave, handlePopperMouseOut } = useWordAssist({
@@ -228,25 +155,9 @@ const LessonPage = () => {
 	});
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
-	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
-	const parsedUserLessonData = useMemo(() => userLessonsData ?? [], [userLessonsData]);
 
-	const { data: lessonData, isLoading: isLessonLoading } = useLearnerLesson(lessonId || '', courseId);
-	const activeLesson = lessonData && String(lessonData._id) === String(lessonId) ? lessonData : null;
-	const lesson = activeLesson ?? EMPTY_LESSON;
-	const lessonType = lesson.type || '';
-	const isLessonContentLoading = isLessonLoading && !activeLesson;
-
-	const { data: lessonAnswersData } = useLearnerUserAnswersByLesson(lessonId || '');
-
-	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions
-
-	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>(() => {
-		const savedAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
-		return savedAnswers ? JSON.parse(savedAnswers) : [];
-	});
-
-	const [teacherQuizFeedback, setTeacherQuizFeedback] = useState<string | undefined>('');
+	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
+	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>([]);
 
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
@@ -294,7 +205,7 @@ const LessonPage = () => {
 		setSelectedInstructionalLessonId('');
 	}, [instructionalLessonsInChapter]);
 
-	/** Course shell (activelessons) omits instructional bodies; load full lesson when the chapter lectures dialog is open. */
+	/** Staff course shell omits instructional bodies; load full lesson via staff preview API when the dialog is open. */
 	const instructionalDialogSelectionValid =
 		isInstructionalLessonsDialogOpen &&
 		Boolean(selectedInstructionalLessonId) &&
@@ -302,9 +213,9 @@ const LessonPage = () => {
 		instructionalLessonsInChapter.some((l) => l._id === selectedInstructionalLessonId);
 
 	const instructionalDialogLessonId = instructionalDialogSelectionValid ? selectedInstructionalLessonId : '';
-	const { data: instructionalDialogLessonPayload, isFetching: isInstructionalDialogLessonFetching } = useLearnerLesson(
+	const { data: instructionalDialogLessonPayload, isFetching: isInstructionalDialogLessonFetching } = useStaffLessonPreview(
+		courseId || '',
 		instructionalDialogLessonId,
-		courseId,
 		{ enabled: instructionalDialogSelectionValid }
 	);
 
@@ -341,9 +252,9 @@ const LessonPage = () => {
 	useEffect(() => {
 		if (!isChapterListDrawerOpen || !lessonId || !singleCourseUser?.chapters) return;
 		const chapter = singleCourseUser.chapters.find((ch) => ch?.lessons?.some((l) => l?._id === lessonId));
-		const chapterId = chapter && ((chapter as any)._id ?? (chapter as any)?.chapterId);
+		const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
 		if (chapterId) {
-			setDrawerExpandedChapterIds((prev) => new Set(prev).add(String(chapterId)));
+			setDrawerExpandedChapterIds((prev) => new Set(prev).add(chapterId));
 		}
 	}, [isChapterListDrawerOpen, lessonId, singleCourseUser?.chapters]);
 
@@ -373,113 +284,19 @@ const LessonPage = () => {
 		return () => clearTimeout(t);
 	}, [isChapterListDrawerOpen]);
 
-
-
 	useEffect(() => {
 		setIsQuestionsVisible(false);
-		setPracticeAgainMode(false);
 		setQuestionsSessionKey(0);
+		setUserAnswers([]);
+		setUserQuizAnswers([]);
+		setIsQuizInProgress(false);
+		setEditorContent('');
 	}, [lessonId]);
-
-	useEffect(() => {
-		if (!activeLesson || !lessonAnswersData) return;
-
-		if (activeLesson.type === LessonType.QUIZ) {
-			setUserQuizAnswers(mapUserAnswersToQuizState(lessonAnswersData));
-		} else {
-			setUserAnswers(lessonAnswersData);
-		}
-	}, [activeLesson, lessonAnswersData]);
-
-	useEffect(() => {
-		if (!lessonId || !activeLesson || activeLesson.type !== LessonType.QUIZ || isLessonCompleted) return;
-
-		const savedQuizAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
-		if (savedQuizAnswers) {
-			setUserQuizAnswers(JSON.parse(savedQuizAnswers));
-			setIsQuizInProgress(true);
-			return;
-		}
-
-		if (lessonAnswersData && lessonAnswersData.length > 0) {
-			setIsQuizInProgress(true);
-		}
-	}, [lessonId, activeLesson, isLessonCompleted, lessonAnswersData]);
 
 	const processedLessonHtml = useMemo(() => {
 		if (!activeLesson?.text) return '';
 		return wrapWordsForHover(prepareLearnerRichTextHtml(sanitizeHtml(decode(activeLesson.text))));
 	}, [activeLesson?.text]);
-
-
-	useEffect(() => {
-		if (!userLessonId) return;
-
-		const fetchUserLessonData = async () => {
-			try {
-				const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
-				if (userLessonResponse.data.data && userLessonResponse.data.data[0]) {
-					const lessonData = userLessonResponse.data.data[0];
-					setUserLessonNotes(lessonData.notes || '');
-					setEditorContent(lessonData.notes || '');
-					setTeacherQuizFeedback(lessonData.teacherFeedback);
-					setIsLessonCompleted(Boolean(lessonData.isCompleted));
-				}
-			} catch (error) {
-				console.log('Error fetching user lesson data:', error);
-			}
-		};
-
-		fetchUserLessonData();
-	}, [userLessonId]);
-
-	useEffect(() => {
-		if (isQuiz && !isLessonCompleted) {
-			localStorage.setItem(`UserQuizAnswers-${lessonId}`, JSON.stringify(userQuizAnswers));
-		}
-	}, [userQuizAnswers]);
-
-	useEffect(() => {
-		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-			if (isQuiz && isQuizInProgress) {
-				event.preventDefault();
-				//@ts-ignore
-				event.returnValue = '';
-			}
-		};
-
-		window.addEventListener('beforeunload', handleBeforeUnload);
-
-		return () => {
-			window.removeEventListener('beforeunload', handleBeforeUnload);
-		};
-	}, [isQuiz, isQuizInProgress]);
-
-	// Show completion dialog when lesson is completed (for practice lessons and quizzes)
-	useEffect(() => {
-		// Only show dialog if lesson just became completed (not if it was already completed on mount)
-		if (isLessonCompleted && !wasLessonCompletedOnMount && (lessonType === LessonType.PRACTICE_LESSON || lessonType === LessonType.QUIZ)) {
-			setIsLessonCourseCompletedModalOpen(true);
-		}
-		setWasLessonCompletedOnMount(isLessonCompleted);
-	}, [isLessonCompleted, wasLessonCompletedOnMount, lessonType]);
-
-	const updateUserLessonNotes = async () => {
-		if (!userLessonId) {
-			console.error('Cannot update notes: userLessonId is undefined');
-			return;
-		}
-		try {
-			setIsUserLessonNotesUploading(true);
-			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent?.trim() });
-			setUserLessonNotes(res.data.data.notes);
-		} catch (error) {
-			console.log(error);
-		} finally {
-			setIsUserLessonNotesUploading(false);
-			setIsNotesUpdated(true);
-		}
-	};
 
 	const handleDownloadPDF = async () => {
 		const tempDiv = document.createElement('div');
@@ -512,44 +329,36 @@ const LessonPage = () => {
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 		pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-		pdf.save(`${lesson.title}_Notes.pdf`);
+		pdf.save(`${lesson?.title}_Notes.pdf`);
 
 		document.body.removeChild(tempDiv);
 	};
 
 	const handleLessonNavigation = () => {
-		// Store current lesson/chapter so the course page can expand and scroll to the active chapter
-		if (lessonId) {
-			for (let i = sessionStorage.length - 1; i >= 0; i--) {
-				const key = sessionStorage.key(i);
-				if (key && (key.startsWith('expand-chapter-for-lesson-') || key.startsWith('expand-chapter-by-id-'))) {
-					sessionStorage.removeItem(key);
-				}
-			}
-
-			sessionStorage.setItem(`expand-chapter-for-lesson-${lessonId}`, 'true');
-
-			const targetChapter = singleCourseUser?.chapters?.find((chapter) => chapter?.lessons?.some((lesson) => lesson && lesson._id === lessonId));
-			const targetChapterId = (targetChapter as any)?._id || (targetChapter as any)?.chapterId;
-
-			if (targetChapterId) {
-				sessionStorage.setItem(`expand-chapter-by-id-${targetChapterId}`, 'true');
-			}
-		}
-		navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+		navigate(staffPreviewBasePath);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
-		if (isNotesUpdated) {
-			updateUserLessonNotes();
+	};
+
+	const goToNextLessonOrCourse = () => {
+		if (nextLessonId) {
+			const nextMeta = flatLessons.find((item) => item.lessonId === nextLessonId);
+			const params = new URLSearchParams();
+			if (nextMeta?.chapterId) params.set('chapterId', nextMeta.chapterId);
+			const query = params.toString();
+			navigate(`${staffPreviewBasePath}/lesson/${nextLessonId}${query ? `?${query}` : ''}`);
+		} else {
+			navigate(staffPreviewBasePath);
 		}
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	const handleDrawerLessonClick = (targetLessonId: string, targetChapterId?: string) => {
-		if (!courseId || !userCourseId || targetLessonId === lessonId) return;
+		if (!courseId || targetLessonId === lessonId) return;
 		setIsChapterListDrawerOpen(false);
 		const params = new URLSearchParams();
 		if (targetChapterId) params.set('chapterId', targetChapterId);
 		const query = params.toString();
-		navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}${query ? `?${query}` : ''}`);
+		navigate(`${staffPreviewBasePath}/lesson/${targetLessonId}${query ? `?${query}` : ''}`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -596,7 +405,7 @@ const LessonPage = () => {
 					mt: isSmallMobileLandscape || isMobileLandscape || isTabletPortrait ? '0.75rem' : '0.5rem',
 					boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
 				}}>
-				<Box sx={{ flex: 1, justifyContent: 'flex-start' }}>
+				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
 					<Button
 						variant='text'
 						startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
@@ -615,9 +424,26 @@ const LessonPage = () => {
 						}}>
 						{isMobileSize ? '' : 'Lesson Instructions'}
 					</Button>
+					<Button
+						variant='text'
+						startIcon={<Logout fontSize='small' />}
+						sx={{
+							'color': theme.textColor?.primary,
+							'width': 'fit-content',
+							'textTransform': 'inherit',
+							'fontFamily': theme.fontFamily?.main,
+							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+						}}
+						onClick={() => {
+							navigate(coursesListPath);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}>
+						{isMobileSize ? '' : 'Leave Learner View'}
+					</Button>
 				</Box>
 
-				{isQuestionsVisible && !lesson.isGraded && (
+				{isQuestionsVisible && !lesson?.isGraded && (
 					<Box
 						sx={{
 							flex: 6,
@@ -679,7 +505,7 @@ const LessonPage = () => {
 						textAlign: 'center',
 						alignItems: 'center',
 					}}>
-					{isQuestionsVisible && lesson.isGraded && lesson.type === LessonType.QUIZ ? (
+					{isQuestionsVisible && lesson?.isGraded && lesson?.type === LessonType.QUIZ ? (
 						(() => {
 							// displayedQuestionNumber is 1-indexed, convert to 0-indexed for array access
 							const questionIndex = currentQuestionNumber > 0 ? currentQuestionNumber - 1 : 0;
@@ -711,11 +537,6 @@ const LessonPage = () => {
 								pointsPossible = typeof scoreConfig === 'number' ? scoreConfig : 0;
 							}
 
-							// Get user's earned score for this question
-							const userAnswer = userQuizAnswers?.find((data) => data.questionId === questionId);
-							const pointsEarned = userAnswer?.pointsEarned;
-							const isOpenEndedOrAudioVideo = questionTypeName === QuestionType.OPEN_ENDED || questionTypeName === QuestionType.AUDIO_VIDEO;
-
 							return pointsPossible > 0 ? (
 								<Box
 									sx={{
@@ -739,13 +560,9 @@ const LessonPage = () => {
 											fontWeight: 'inherit',
 											color: 'inherit',
 										}}>
-										{isLessonCompleted && pointsEarned !== undefined && pointsEarned !== null
-											? isOpenEndedOrAudioVideo && pointsEarned === 0
-												? `- / ${pointsPossible} pts`
-												: `${pointsEarned} / ${pointsPossible} pts`
-											: `${pointsPossible} pts`}
+										{`${pointsPossible} pts`}
 									</Typography>
-									{perItemScore !== undefined && perItemScore !== null && !isLessonCompleted && (
+									{perItemScore !== undefined && perItemScore !== null && (
 										<Typography
 											component='span'
 											sx={{
@@ -766,21 +583,15 @@ const LessonPage = () => {
 								<Typography
 									variant={isMobileSize ? 'h6' : 'h3'}
 									sx={{
-										fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
+										fontSize: isMobileSize ? ((lesson?.title?.length ?? 0) > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
 									}}>
-									{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
+									{truncateText(lesson?.title ?? '', isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
 								</Typography>
 							)}
-							{lesson.isGraded &&
-								lesson.type === LessonType.QUIZ &&
+							{lesson?.isGraded &&
+								lesson?.type === LessonType.QUIZ &&
 								(() => {
 									const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
-									// Calculate user's total earned score
-									const totalEarned =
-										userQuizAnswers?.reduce((sum, answer) => {
-											return sum + (answer.pointsEarned || 0);
-										}, 0) || 0;
-									const percentage = isLessonCompleted && totalEarned > 0 ? calculateScorePercentage(totalEarned, totalPossible) : null;
 									return totalPossible > 0 ? (
 										<Box
 											sx={{
@@ -797,19 +608,7 @@ const LessonPage = () => {
 												whiteSpace: 'nowrap',
 												ml: '0.5rem',
 											}}>
-											{isLessonCompleted && totalEarned > 0 ? `${totalEarned}/${totalPossible} pts` : `${totalPossible} pts`}
-											{percentage !== null && (
-												<Typography
-													component='span'
-													display={isMobilePortrait ? 'none' : ''}
-													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.75rem',
-														color: '#ffff',
-														ml: '0.25rem',
-													}}>
-													- ({percentage}%)
-												</Typography>
-											)}
+											{`${totalPossible} pts`}
 										</Box>
 									) : null;
 								})()}
@@ -817,15 +616,7 @@ const LessonPage = () => {
 					)}
 				</Box>
 				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-					{lesson.isGraded && lesson.type === LessonType.QUIZ && isQuestionsVisible && isLessonCompleted && (
-						<Tooltip title={isWordAssistEnabled ? 'Disable Pronunciation Assist' : 'Enable Pronunciation Assist'} placement='left' arrow>
-							<IconButton
-								onClick={() => setIsWordAssistEnabled((prev) => !prev)}>
-								{!isWordAssistEnabled ? <RecordVoiceOverOutlined fontSize='small' /> : <RecordVoiceOver fontSize='small' />}
-							</IconButton>
-						</Tooltip>
-					)}
-					{lesson.isGraded && lesson.type === LessonType.QUIZ && isQuestionsVisible && (
+					{lesson?.isGraded && lesson?.type === LessonType.QUIZ && isQuestionsVisible && (
 						<Tooltip title='Take Notes' placement='left' arrow>
 							<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
 								<Article fontSize={isMobileSize ? 'small' : 'medium'} />
@@ -834,16 +625,14 @@ const LessonPage = () => {
 					)}
 
 					<Tooltip title='Course Home Page' placement='left' arrow>
-						<IconButton onClick={handleLessonNavigation} disabled={isQuizInProgress} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+						<IconButton onClick={handleLessonNavigation} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 							<Home fontSize='small' />
 						</IconButton>
 					</Tooltip>
 
-
 					<Tooltip title='Chapters & Lessons' placement='top' arrow>
 						<IconButton
 							onClick={() => setIsChapterListDrawerOpen(true)}
-							disabled={isQuizInProgress}
 							sx={{ color: theme.textColor?.primary, ':hover': { backgroundColor: 'transparent' } }}>
 							<Menu fontSize={'small'} />
 						</IconButton>
@@ -877,10 +666,10 @@ const LessonPage = () => {
 						{singleCourseUser?.chapters
 							?.filter((ch) => ch && ch.lessons && ch.lessons.length > 0)
 							.map((chapter, chapterIndex) => {
-								const chapterId = (chapter as any)?._id ?? (chapter as any)?.chapterId ?? '';
+								const chapterId = getChapterIdFromChapter(chapter as { _id?: string; chapterId?: string });
 								const validLessons = chapter.lessons?.filter((l) => l != null) ?? [];
 								const containsCurrentLesson = validLessons.some((l) => l?._id === lessonId);
-								const isExpanded = drawerExpandedChapterIds.has(String(chapterId)) || containsCurrentLesson;
+								const isExpanded = drawerExpandedChapterIds.has(chapterId) || containsCurrentLesson;
 								const isAlternateHeaderTone = chapterIndex % 2 === 1;
 								const chapterHeaderBackground = isAlternateHeaderTone ? '#1a5a71' : theme.bgColor?.primary || theme.palette.primary.main;
 								return (
@@ -896,7 +685,7 @@ const LessonPage = () => {
 											backgroundColor: '#fff',
 										}}>
 										<Box
-											onClick={() => toggleDrawerChapter(String(chapterId))}
+											onClick={() => toggleDrawerChapter(chapterId)}
 											sx={{
 												display: 'flex',
 												alignItems: 'center',
@@ -912,7 +701,7 @@ const LessonPage = () => {
 											onKeyDown={(e) => {
 												if (e.key === 'Enter' || e.key === ' ') {
 													e.preventDefault();
-													toggleDrawerChapter(String(chapterId));
+													toggleDrawerChapter(chapterId);
 												}
 											}}>
 											<IconButton
@@ -931,38 +720,26 @@ const LessonPage = () => {
 										</Box>
 										<Collapse in={isExpanded} timeout='auto' unmountOnExit>
 											<Box sx={{ py: 0.5 }}>
-												{validLessons.map((lesson) => {
-													const isCurrent = lesson._id === lessonId;
-													const isCompleted = parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.isCompleted);
-													// Same as CoursePage Lesson: accessible only if user has a userLesson record (unlocked)
-													const isAccessible = parsedUserLessonData.some(
-														(d) => d.lessonId === lesson._id && d.courseId === courseId
-													);
+												{validLessons.map((chapterLesson) => {
+													const isCurrent = chapterLesson._id === lessonId;
 													return (
 														<Box
-															key={lesson._id}
-															onClick={() => isAccessible && handleDrawerLessonClick(lesson._id, String(chapterId))}
+															key={chapterLesson._id}
+															onClick={() => handleDrawerLessonClick(chapterLesson._id, chapterId)}
 															sx={{
 																display: 'flex',
 																alignItems: 'center',
 																gap: 1,
 																px: 2,
 																py: 1,
-																cursor: isAccessible ? 'pointer' : 'default',
+																cursor: 'pointer',
 																backgroundColor: isCurrent ? theme.palette.primary.light + '25' : 'transparent',
 																borderLeft: 3,
 																borderLeftColor: isCurrent ? theme.palette.primary.main : 'transparent',
-																opacity: isAccessible ? 1 : 0.65,
-																'&:hover': isAccessible
-																	? { backgroundColor: theme.palette.action.hover }
-																	: {},
+																'&:hover': { backgroundColor: theme.palette.action.hover },
 															}}>
-															{!isAccessible ? (
-																<Lock sx={{ fontSize: '1.1rem', color: theme.palette.text.secondary }} />
-															) : isCurrent ? (
+															{isCurrent ? (
 																<PlayCircleOutline sx={{ fontSize: '1.1rem', color: theme.palette.primary.main }} />
-															) : isCompleted ? (
-																<CheckCircle sx={{ fontSize: '1.1rem', color: theme.palette.success.main }} />
 															) : (
 																<Box sx={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 																	<Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: theme.palette.text.secondary, opacity: 0.6 }} />
@@ -973,9 +750,8 @@ const LessonPage = () => {
 																	fontSize: isMobileSize ? '0.6rem' : '0.7rem',
 																	fontWeight: isCurrent ? 600 : 400,
 																	flex: 1,
-																	color: isAccessible ? undefined : 'text.secondary',
 																}}>
-																{truncateText(lesson.title ?? '', 40)}
+																{truncateText(chapterLesson.title ?? '', 40)}
 															</Typography>
 														</Box>
 													);
@@ -1042,10 +818,7 @@ const LessonPage = () => {
 									Lesson Notes
 								</Typography>
 								<IconButton
-									onClick={() => {
-										setIsNotesDrawerOpen(false);
-										setUserLessonNotes(editorContent);
-									}}
+									onClick={() => setIsNotesDrawerOpen(false)}
 									sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
 									<Close sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 								</IconButton>
@@ -1054,10 +827,7 @@ const LessonPage = () => {
 								<TinyMceEditor
 									height='300'
 									enableImage={false}
-									handleEditorChange={(content) => {
-										setEditorContent(content);
-										setIsNotesUpdated(true);
-									}}
+									handleEditorChange={(content) => setEditorContent(content)}
 									value={editorContent}
 								/>
 							</Box>
@@ -1074,18 +844,12 @@ const LessonPage = () => {
 										sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined, marginRight: '0.5rem' }}>
 										Close
 									</CustomCancelButton>
-									{!isUserLessonNotesUploading ? (
-										<CustomSubmitButton
-											size='small'
-											onClick={updateUserLessonNotes}
-											sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-											Save
-										</CustomSubmitButton>
-									) : (
-										<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
-											Upload
-										</LoadingButton>
-									)}
+									<CustomSubmitButton
+										size='small'
+										onClick={() => setIsNotesDrawerOpen(false)}
+										sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+										Save
+									</CustomSubmitButton>
 								</Box>
 							</Box>
 						</Box>
@@ -1390,23 +1154,6 @@ const LessonPage = () => {
 							</Box>
 						</Box>
 					</Box>
-					{isQuiz && teacherQuizFeedback && (
-						<Box sx={{ width: '100%', mt: '2rem' }}>
-							<InstructorFeedbackPanel
-								title="Instructor's Feedback for Quiz"
-								titleFontSize={isMobileSize ? '0.9rem' : '1rem'}>
-								<Typography
-									variant='body2'
-									sx={{
-										fontSize: isMobileSize ? '0.8rem' : '0.9rem',
-										lineHeight: 1.7,
-										color: theme.textColor?.primary?.main,
-									}}>
-									{teacherQuizFeedback}
-								</Typography>
-							</InstructorFeedbackPanel>
-						</Box>
-					)}
 				</Box>
 			)}
 			{!isInstructionalLesson && !isQuestionsVisible && !isLessonContentLoading && (
@@ -1420,60 +1167,35 @@ const LessonPage = () => {
 					}}>
 					<CustomSubmitButton
 						onClick={() => {
-							setPracticeAgainMode(false);
-							if (isLessonCompleted) {
-								setCurrentQuestionNumber(1);
-								setQuestionsSessionKey((key) => key + 1);
-							}
+							setCurrentQuestionNumber(1);
+							setQuestionsSessionKey((key) => key + 1);
 							setIsQuestionsVisible(true);
-							if (isQuiz && !isLessonCompleted) setIsQuizInProgress(true);
+							if (isQuiz) setIsQuizInProgress(true);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
 						capitalize={false}
 						sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						{lessonType === LessonType.PRACTICE_LESSON && !isLessonCompleted
-							? 'Go to Questions'
-							: lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted
-								? 'Review Questions'
-								: isQuiz && !isLessonCompleted && isQuizInProgress
-									? 'Resume'
-									: isQuiz && !isLessonCompleted
-										? 'Start Quiz'
-										: 'Review Quiz'}
+						{lessonType === LessonType.PRACTICE_LESSON ? 'Go to Questions' : 'Start Quiz'}
 					</CustomSubmitButton>
-					{isLessonCompleted && <Box>
-						{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
-							<CustomSubmitButton
-								onClick={() => {
-									setPracticeAgainMode(true);
-									setCurrentQuestionNumber(1);
-									setQuestionsSessionKey((key) => key + 1);
-									setIsQuestionsVisible(true);
-									window.scrollTo({ top: 0, behavior: 'smooth' });
-								}}
-								capitalize={false}
-								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Practice Again
-							</CustomSubmitButton>
-						)}
-						{lessonType === LessonType.PRACTICE_LESSON && (
+					{lessonType === LessonType.PRACTICE_LESSON && (
+						<Box>
 							<IconButton onClick={() => setIsHelpDialogOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 								<HelpOutline fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 							</IconButton>
-						)}
-						<CustomDialog openModal={isHelpDialogOpen} closeModal={() => setIsHelpDialogOpen(false)} maxWidth='xs'>
-							<DialogContent>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
-									You can solve the multiple choice, true/false, fill in the blank, matching pairs, translate, and open-ended questions again.
-								</Typography>
-							</DialogContent>
-							<DialogActions>
-								<CustomCancelButton onClick={() => setIsHelpDialogOpen(false)} sx={{ margin: '0rem 0.5rem 0.5rem 0' }}>
-									Close
-								</CustomCancelButton>
-							</DialogActions>
-						</CustomDialog>
-					</Box>}
+							<CustomDialog openModal={isHelpDialogOpen} closeModal={() => setIsHelpDialogOpen(false)} maxWidth='xs'>
+								<DialogContent>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
+										You can solve the multiple choice, true/false, fill in the blank, matching pairs, translate, and open-ended questions again.
+									</Typography>
+								</DialogContent>
+								<DialogActions>
+									<CustomCancelButton onClick={() => setIsHelpDialogOpen(false)} sx={{ margin: '0rem 0.5rem 0.5rem 0' }}>
+										Close
+									</CustomCancelButton>
+								</DialogActions>
+							</CustomDialog>
+						</Box>
+					)}
 				</Box>
 			)}
 			{isQuestionsVisible && (() => {
@@ -1503,21 +1225,16 @@ const LessonPage = () => {
 								<Button
 									variant='outlined'
 									startIcon={<KeyboardBackspaceOutlined />}
-									onClick={() => navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`)}
+									onClick={() => navigate(staffPreviewBasePath)}
 									sx={{ textTransform: 'none' }}>
 									Back to course
 								</Button>
 								<Button
 									variant='contained'
 									startIcon={<DoneAll />}
-									onClick={async () => {
-										try {
-											await handleNextLesson();
-											navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
-											window.scrollTo({ top: 0, behavior: 'smooth' });
-										} catch (e) {
-											console.error(e);
-										}
+									onClick={() => {
+										navigate(staffPreviewBasePath);
+										window.scrollTo({ top: 0, behavior: 'smooth' });
 									}}
 									sx={{ textTransform: 'none' }}>
 									Mark complete and go back
@@ -1547,27 +1264,31 @@ const LessonPage = () => {
 						}}>
 						<Questions
 							key={questionsSessionKey}
-							questions={lesson?.questions}
+							questions={lesson?.questions || []}
 							lessonType={lessonType}
 							userAnswers={userAnswers}
 							setUserAnswers={setUserAnswers}
 							setIsQuizInProgress={setIsQuizInProgress}
 							userQuizAnswers={userQuizAnswers}
 							setUserQuizAnswers={setUserQuizAnswers}
-							lessonName={lesson.title}
+							lessonName={lesson?.title || ''}
 							onQuestionChange={setCurrentQuestionNumber}
 							isSoundMuted={isSoundMuted}
-							practiceAgainMode={practiceAgainMode}
+							practiceAgainMode
 							questionsSessionKey={questionsSessionKey}
 							enableWordAssist={isWordAssistEnabled}
 							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
 							chapterName={currentChapter?.title}
 							chapterId={activeChapterId || undefined}
+							staffPreviewMode
+							staffPreviewNextLessonId={nextLessonId ?? undefined}
+							staffPreviewCoursePath={staffPreviewBasePath}
+							onStaffPreviewGoToNextLesson={goToNextLessonOrCourse}
 						/>
 					</Box>
 				);
 			})()}
-			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
+			{isQuiz && isQuestionsVisible && (
 				<>
 					<Box sx={{ position: 'fixed', top: '90vh', right: isMobileSize ? '0.5rem' : '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
 						<Tooltip title='Questions Map' placement='left' arrow>
@@ -1577,7 +1298,7 @@ const LessonPage = () => {
 						</Tooltip>
 					</Box>
 					<QuizQuestionsMap
-						questions={lesson?.questions}
+						questions={lesson?.questions || []}
 						userQuizAnswers={userQuizAnswers}
 						isOpen={isQuestionsMapOpen}
 						setIsOpen={setIsQuestionsMapOpen}
@@ -1621,18 +1342,11 @@ const LessonPage = () => {
 						</DialogContent>
 						<CustomDialogActions
 							showCancelBtn={false}
-							onSubmit={async () => {
+							onSubmit={() => {
 								setIsNavigatingToNextLesson(true);
-								try {
-									// Always call handleNextLesson so next-chapter expansion keys are set reliably.
-									await handleNextLesson();
-									// Navigate to course home page
-									navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
-									window.scrollTo({ top: 0, behavior: 'smooth' });
-								} catch (error) {
-									console.error('Error navigating to course home:', error);
-									setIsNavigatingToNextLesson(false);
-								}
+								setIsLessonCourseCompletedModalOpen(false);
+								setIsNavigatingToNextLesson(false);
+								goToNextLessonOrCourse();
 							}}
 							submitBtnText='OK'
 							isSubmitting={isNavigatingToNextLesson}
@@ -1729,4 +1443,4 @@ const LessonPage = () => {
 	);
 };
 
-export default LessonPage;
+export default StaffLessonPreviewPage;

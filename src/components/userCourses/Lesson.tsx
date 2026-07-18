@@ -25,6 +25,9 @@ interface LessonProps {
 	currentChapterHasChecklist?: boolean;
 	currentChapterChecklistCompleted?: boolean;
 	isLastInChapter?: boolean;
+	/** Staff learner-view: unlock all lessons, no progress records */
+	staffPreviewMode?: boolean;
+	staffPreviewBasePath?: string;
 }
 
 const lessonTypeLabel = (type: string) => {
@@ -41,6 +44,8 @@ const Lesson = ({
 	nextChapterFirstLessonId,
 	chapterId,
 	isLastInChapter = false,
+	staffPreviewMode = false,
+	staffPreviewBasePath,
 }: LessonProps) => {
 	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
@@ -49,9 +54,11 @@ const Lesson = ({
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	const { data: userLessonsData, isLoading: isUserLessonsLoading } = useUserLessonsForCourse(courseId || '');
+	const { data: userLessonsData, isLoading: isUserLessonsLoading } = useUserLessonsForCourse(courseId || '', {
+		enabled: !staffPreviewMode,
+	});
 	const parsedUserLessonData = userLessonsData || [];
-	const isProgressPending = isEnrolledStatus && isUserLessonsLoading;
+	const isProgressPending = !staffPreviewMode && isEnrolledStatus && isUserLessonsLoading;
 
 	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
@@ -75,12 +82,26 @@ const Lesson = ({
 		const navigateToLesson = (targetLessonId: string, nextId?: string) => {
 			const params = new URLSearchParams();
 			if (chapterId) params.set('chapterId', chapterId);
-			params.set('isCompleted', String(isLessonCompleted));
+			if (!staffPreviewMode) params.set('isCompleted', String(isLessonCompleted));
 			if (nextId) params.set('next', nextId);
 			const query = params.toString();
-			navigate(`/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}?${query}`);
+			const path = staffPreviewMode
+				? `${staffPreviewBasePath || `/admin/course-preview/course/${courseId}`}/lesson/${targetLessonId}`
+				: `/course/${courseId}/userCourseId/${userCourseId}/lesson/${targetLessonId}`;
+			navigate(query ? `${path}?${query}` : path);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
+
+		if (staffPreviewMode) {
+			if (nextLessonId) {
+				navigateToLesson(lesson._id, nextLessonId);
+			} else if (nextChapterFirstLessonId) {
+				navigateToLesson(lesson._id, nextChapterFirstLessonId);
+			} else {
+				navigateToLesson(lesson._id);
+			}
+			return;
+		}
 
 		if (isEnrolledStatus && isLessonRegisteredInThisCourse) {
 			if (userLessonData?.some((data: UserLessonDataStorage) => data.lessonId === lesson._id && data.courseId === courseId) && nextLessonId) {
@@ -133,10 +154,12 @@ const Lesson = ({
 	}, [user]);
 
 	const isAccessible = useMemo(() => {
+		if (staffPreviewMode) return true;
 		if (!isEnrolledStatus || isProgressPending) return false;
 		if (isFreePlatformCourse && !hasSubscriptionAccess) return false;
 		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
 	}, [
+		staffPreviewMode,
 		isEnrolledStatus,
 		isProgressPending,
 		isFreePlatformCourse,
@@ -241,7 +264,9 @@ const Lesson = ({
 							'& .MuiChip-label': { px: isMobileSize ? 0.6 : 0.85 },
 						}}
 					/>
-					{isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
+					{staffPreviewMode ? (
+						<PlayArrowRounded sx={{ color: theme.palette.primary.main, fontSize: isMobileSize ? '1.05rem' : '1.3rem' }} />
+					) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
 						<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '1.05rem' : '1.3rem' }} />
 					) : isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
 						<PlayArrowRounded sx={{ color: '#f59e0b', fontSize: isMobileSize ? '1.05rem' : '1.3rem' }} />

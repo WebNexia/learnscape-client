@@ -5,7 +5,7 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
-import { Delete, Edit, Event, FileCopy, Info, Visibility, Person } from '@mui/icons-material';
+import { Delete, Edit, Event, FileCopy, Info, Visibility, Person, VisibilityOutlined } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -519,13 +519,13 @@ const AdminCourses = () => {
 						<TableBody>
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '14%' : '10%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '23%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '17%' : isInstructor ? '15%' : '15%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '23%' : isInstructor ? '13%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '13%' : '13%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '11%' : '8%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '27%' : '21%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '17%' : isInstructor ? '14%' : '14%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '23%' : isInstructor ? '12%' : '11%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '12%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '24%' : '11%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '23%', padding: 0, border: 'none' }} />
 							</TableRow>
 						</TableBody>
 						<CustomTableHead<SingleCourse>
@@ -585,6 +585,7 @@ const AdminCourses = () => {
 											<TableCell
 												sx={{
 													textAlign: 'center',
+													whiteSpace: 'nowrap',
 												}}>
 												{/* <CustomActionBtn
 													title='Clone'
@@ -592,7 +593,7 @@ const AdminCourses = () => {
 													icon={
 														<FileCopy
 															fontSize='small'
-															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
+															sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
 														/>
 													}
 												/> */}
@@ -602,10 +603,29 @@ const AdminCourses = () => {
 													icon={
 														<Event
 															fontSize='small'
-															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
+															sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
 														/>
 													}
 												/>
+
+												{!course.courseManagement?.isExternal && (
+													<CustomActionBtn
+														title='Learner View'
+														onClick={() => {
+															if (isInstructor) {
+																navigate(`/instructor/course-preview/course/${course._id}`);
+															} else {
+																navigate(`/admin/course-preview/course/${course._id}`);
+															}
+														}}
+														icon={
+															<VisibilityOutlined
+																fontSize='small'
+																sx={{ fontSize: isMobileSize ? '0.8rem' : '1	rem', mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
+															/>
+														}
+													/>
+												)}
 
 												{!course.isExpired ? (
 													<CustomActionBtn
@@ -618,7 +638,7 @@ const AdminCourses = () => {
 															}
 														}}
 														icon={
-															<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+															<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isMobileSize ? '0rem' : '-0.5rem' }} />
 														}
 													/>
 												) : (
@@ -634,7 +654,7 @@ const AdminCourses = () => {
 														icon={
 															<Visibility
 																fontSize='small'
-																sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }}
+																sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isMobileSize ? '0rem' : '-0.5rem' }}
 															/>
 														}
 													/>
@@ -662,7 +682,7 @@ const AdminCourses = () => {
 														return true;
 													})()}
 													icon={
-														<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+														<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isMobileSize ? '0rem' : '-0.5rem' }} />
 													}
 												/>
 												<CustomActionBtn
@@ -675,7 +695,7 @@ const AdminCourses = () => {
 														}
 													}}
 													icon={
-														<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+														<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem', mr: isMobileSize ? '0rem' : '-0.5rem' }} />
 													}
 												/>
 												<CustomActionBtn
@@ -687,7 +707,7 @@ const AdminCourses = () => {
 															return newState;
 														});
 													}}
-													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }} />}
 												/>
 
 												<CreateCohortDialog
