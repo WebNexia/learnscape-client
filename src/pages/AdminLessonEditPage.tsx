@@ -804,19 +804,25 @@ const AdminLessonEditPage = () => {
 				await Promise.all(
 					updatedQuestions?.map(async (question) => {
 						const trackData = isQuestionUpdated?.find((data) => data.questionId === question._id);
-						if (trackData?.isUpdated) {
-							try {
-								const { questionType, ...questionWithoutType } = question;
-								const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, questionWithoutType);
+						if (!trackData?.isUpdated) return;
 
-								const questionUpdateResponseData = response.data?.data || response.data;
+						const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, {
+							orgId,
+							question: question.question,
+							options: question.options,
+							correctAnswer: question.correctAnswer,
+							videoUrl: question.videoUrl,
+							imageUrl: question.imageUrl,
+							audio: question.audio,
+							video: question.video,
+							matchingPairs: question.matchingPairs,
+							blankValuePairs: question.blankValuePairs,
+							translatePairs: question.translatePairs,
+						});
 
-								if (questionUpdateResponseData) {
-									updateQuestion({ ...questionUpdateResponseData });
-								}
-							} catch (error) {
-								console.error('Error updating question:', error);
-							}
+						const questionUpdateResponseData = response.data?.data || response.data;
+						if (questionUpdateResponseData) {
+							updateQuestion({ ...question, ...questionUpdateResponseData });
 						}
 					})
 				);
@@ -849,8 +855,8 @@ const AdminLessonEditPage = () => {
 							: String(assessmentGroupIdValue)
 						: undefined;
 
+					// Explicit scalar patch only — do not spread nested questions/documents onto the wire
 					const response = await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
-						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
 						type: singleLessonBeforeSave.type,
 						isGraded: singleLessonBeforeSave.isGraded,
@@ -863,7 +869,7 @@ const AdminLessonEditPage = () => {
 						questionScores: migratedQuestionScores,
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
 						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
-						usedInCourses: singleLessonBeforeSave.usedInCourses,
+						assessmentType: singleLessonBeforeSave.assessmentType || 'none',
 						// Only include assessmentGroupId if it has a value (as a string)
 						...(assessmentGroupIdString && { assessmentGroupId: assessmentGroupIdString }),
 					});
@@ -1891,32 +1897,34 @@ const AdminLessonEditPage = () => {
 																						</IconButton>
 																					</Tooltip>
 
-																					<AdminLessonEditPageEditQuestionDialog
-																						lessonType={singleLessonBeforeSave.type}
-																						question={question}
-																						correctAnswerIndex={correctAnswerIndex}
-																						index={index}
-																						options={options}
-																						correctAnswer={correctAnswer}
-																						questionType={fetchQuestionTypeName(question)}
-																						isMinimumOptions={isMinimumOptions}
-																						isDuplicateOption={isDuplicateOption}
-																						singleLessonBeforeSave={singleLessonBeforeSave}
-																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-																						setIsLessonUpdated={setIsLessonUpdated}
-																						handleCorrectAnswerChange={handleCorrectAnswerChange}
-																						setCorrectAnswerIndex={setCorrectAnswerIndex}
-																						handleOptionChange={handleOptionChange}
-																						closeQuestionEditModal={closeQuestionEditModal}
-																						setIsQuestionUpdated={setIsQuestionUpdated}
-																						editQuestionModalOpen={editQuestionModalOpen}
-																						addOption={addOption}
-																						removeOption={removeOption}
-																						setCorrectAnswer={setCorrectAnswer}
-																						setIsDuplicateOption={setIsDuplicateOption}
-																						setIsMinimumOptions={setIsMinimumOptions}
-																						setHasUnsavedChanges={setHasUnsavedChanges}
-																					/>
+																					{editQuestionModalOpen[index] && (
+																						<AdminLessonEditPageEditQuestionDialog
+																							lessonType={singleLessonBeforeSave.type}
+																							question={question}
+																							correctAnswerIndex={correctAnswerIndex}
+																							index={index}
+																							options={options}
+																							correctAnswer={correctAnswer}
+																							questionType={fetchQuestionTypeName(question)}
+																							isMinimumOptions={isMinimumOptions}
+																							isDuplicateOption={isDuplicateOption}
+																							singleLessonBeforeSave={singleLessonBeforeSave}
+																							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																							setIsLessonUpdated={setIsLessonUpdated}
+																							handleCorrectAnswerChange={handleCorrectAnswerChange}
+																							setCorrectAnswerIndex={setCorrectAnswerIndex}
+																							handleOptionChange={handleOptionChange}
+																							closeQuestionEditModal={closeQuestionEditModal}
+																							setIsQuestionUpdated={setIsQuestionUpdated}
+																							editQuestionModalOpen={editQuestionModalOpen}
+																							addOption={addOption}
+																							removeOption={removeOption}
+																							setCorrectAnswer={setCorrectAnswer}
+																							setIsDuplicateOption={setIsDuplicateOption}
+																							setIsMinimumOptions={setIsMinimumOptions}
+																							setHasUnsavedChanges={setHasUnsavedChanges}
+																						/>
+																					)}
 																				</Box>
 																				<Tooltip title='Remove' placement='top' arrow>
 																					<IconButton onClick={() => removeQuestion(question)}>

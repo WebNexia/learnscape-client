@@ -274,9 +274,9 @@ export const router = createBrowserRouter([
 				path: 'admin/lesson-edit/lesson/:lessonId',
 				element: (
 					<AdminRouteGuard>
-						<LessonsContextProvider>
-							<QuestionsContextProvider>
-								<DocumentsContextProvider>
+						<LessonsContextProvider fetchOnMount={false}>
+							<QuestionsContextProvider fetchOnMount={false}>
+								<DocumentsContextProvider fetchOnMount={false}>
 									<AdminLessonEditPage />
 								</DocumentsContextProvider>
 							</QuestionsContextProvider>
@@ -371,9 +371,7 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<AdminQuizSubmissionsContextProvider>
-							<QuestionsContextProvider>
-								<AdminQuizSubmissions />
-							</QuestionsContextProvider>
+							<AdminQuizSubmissions />
 						</AdminQuizSubmissionsContextProvider>
 					</AdminRouteGuard>
 				),
@@ -382,11 +380,9 @@ export const router = createBrowserRouter([
 				path: 'admin/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
 				element: (
 					<AdminRouteGuard>
-						<AdminQuizSubmissionsContextProvider>
-							<QuestionsContextProvider>
-								<AdminQuizSubmissionCheck />
-							</QuestionsContextProvider>
-						</AdminQuizSubmissionsContextProvider>
+						<QuestionsContextProvider fetchOnMount={false}>
+							<AdminQuizSubmissionCheck />
+						</QuestionsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -627,9 +623,9 @@ export const router = createBrowserRouter([
 				path: 'instructor/lesson-edit/lesson/:lessonId',
 				element: (
 					<InstructorRouteGuard>
-						<LessonsContextProvider>
-							<QuestionsContextProvider>
-								<DocumentsContextProvider>
+						<LessonsContextProvider fetchOnMount={false}>
+							<QuestionsContextProvider fetchOnMount={false}>
+								<DocumentsContextProvider fetchOnMount={false}>
 									<AdminLessonEditPage />
 								</DocumentsContextProvider>
 							</QuestionsContextProvider>
@@ -676,9 +672,7 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<AdminQuizSubmissionsContextProvider>
-							<QuestionsContextProvider>
-								<AdminQuizSubmissions />
-							</QuestionsContextProvider>
+							<AdminQuizSubmissions />
 						</AdminQuizSubmissionsContextProvider>
 					</InstructorRouteGuard>
 				),
@@ -687,11 +681,9 @@ export const router = createBrowserRouter([
 				path: 'instructor/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
 				element: (
 					<InstructorRouteGuard>
-						<AdminQuizSubmissionsContextProvider>
-							<QuestionsContextProvider>
-								<AdminQuizSubmissionCheck />
-							</QuestionsContextProvider>
-						</AdminQuizSubmissionsContextProvider>
+						<QuestionsContextProvider fetchOnMount={false}>
+							<AdminQuizSubmissionCheck />
+						</QuestionsContextProvider>
 					</InstructorRouteGuard>
 				),
 			},

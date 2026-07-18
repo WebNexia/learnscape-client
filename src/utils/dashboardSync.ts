@@ -10,7 +10,6 @@ export const useDashboardSync = () => {
 
 	const refreshDashboard = () => {
 		queryClient.invalidateQueries([DASHBOARD_QUERY_ROOT]);
-		queryClient.refetchQueries([DASHBOARD_QUERY_ROOT]);
 	};
 
 	const refreshQuizSubmissions = () => {
@@ -19,13 +18,7 @@ export const useDashboardSync = () => {
 
 		// Invalidate admin/instructor quiz submissions cache
 		queryClient.invalidateQueries(['allAdminQuizSubmissions']);
-
-		// Invalidate submission detail pages (feedback / checked status)
-		queryClient.invalidateQueries(['submissionFeedback']);
-
-		// Also try to refetch immediately
-		queryClient.refetchQueries(['learnerQuizSubmissions']);
-		queryClient.refetchQueries(['allAdminQuizSubmissions']);
+		// Detail pages update their own submissionFeedback cache after mutations.
 	};
 
 	return { refreshDashboard, refreshQuizSubmissions };

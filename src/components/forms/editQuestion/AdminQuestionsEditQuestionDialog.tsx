@@ -79,7 +79,7 @@ const AdminQuestionsEditQuestionDialog = ({
 }: EditQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { updateQuestion } = useContext(QuestionsContext);
 	const { user } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -87,7 +87,8 @@ const AdminQuestionsEditQuestionDialog = ({
 	// Role detection
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
-	const editorId = generateUniqueId('editor-');
+	// Keep TinyMCE's identity stable while local form state rerenders.
+	const [editorId] = useState(() => generateUniqueId('editor-'));
 	const editorRef = useRef<any>(null);
 
 	const isFlipCard = questionType === QuestionType.FLIP_CARD;
@@ -199,8 +200,6 @@ const AdminQuestionsEditQuestionDialog = ({
 	}, [question._id]);
 
 	const handleSubmit = async () => {
-		if (!isFlipCard) await handleInputChange('question', editorContent);
-
 		// Validate URLs before proceeding
 		let hasUrlErrors = false;
 		let errorMessages: string[] = [];
@@ -255,7 +254,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			return;
 		}
 
-		if (isTrueFalseQuestion && !correctAnswer) {
+		if (isTrueFalseQuestion && !correctAnswerAdminQuestions) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -329,6 +328,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			const updatedQuestion = {
 				...question,
 				question: !isFlipCard ? editorContent.trim() : questionAdminQuestions.trim(),
+				options,
 				correctAnswer: updatedCorrectAnswer.trim(),
 				videoUrl: videoUrlAdminQuestions.trim(),
 				imageUrl: imageUrlAdminQuestions.trim(),
@@ -353,16 +353,15 @@ const AdminQuestionsEditQuestionDialog = ({
 			resetImageUpload();
 			resetVideoUpload();
 			resetEnterImageVideoUrl();
-			fetchQuestions(questionsPageNumber);
+			closeQuestionEditModal(index);
 		} catch (error) {
 			console.error('Failed to update the question:', error);
+			setUrlErrorMessage('Failed to update the question. Please try again.');
+			setIsUrlErrorOpen(true);
 		}
-
-		closeQuestionEditModal(index);
 	};
 
-	const handleInputChange = (field: 'question' | 'videoUrl' | 'imageUrl', value: string) => {
-		if (field === 'question') setQuestionAdminQuestions(value);
+	const handleInputChange = (field: 'videoUrl' | 'imageUrl', value: string) => {
 		if (field === 'imageUrl') setImageUrlAdminQuestions(value);
 		if (field === 'videoUrl') setVideoUrlAdminQuestions(value);
 	};
@@ -433,13 +432,10 @@ const AdminQuestionsEditQuestionDialog = ({
 								onImageUploadLogic={(url) => {
 									setImageUrlAdminQuestions(url);
 									if (isFlipCard) setIsQuestionMissing(false);
-									// Validate URL immediately after upload
 									validateUrlOnChange(url, 'image');
 								}}
 								onChangeImgUrl={(e) => {
 									handleInputChange('imageUrl', e.target.value);
-									// Validate URL on change (debounced)
-									validateUrlOnChange(e.target.value, 'image');
 								}}
 								imageUrlValue={imageUrlAdminQuestions}
 								imageFolderName='QuestionImages'
@@ -456,13 +452,10 @@ const AdminQuestionsEditQuestionDialog = ({
 								<HandleVideoUploadURL
 									onVideoUploadLogic={(url) => {
 										setVideoUrlAdminQuestions(url);
-										// Validate URL immediately after upload
 										validateUrlOnChange(url, 'video');
 									}}
 									onChangeVideoUrl={(e) => {
 										handleInputChange('videoUrl', e.target.value);
-										// Validate URL on change (debounced)
-										validateUrlOnChange(e.target.value, 'video');
 									}}
 									videoUrlValue={videoUrlAdminQuestions}
 									videoFolderName='QuestionVideos'
@@ -606,9 +599,9 @@ const AdminQuestionsEditQuestionDialog = ({
 											borderRadius: '0.35rem',
 											padding: '0.5rem',
 										}}>
-										{blankValuePairsAdminQuestions
-											?.sort((a, b) => a.blank - b.blank)
-											?.map((pair: BlankValuePair) => {
+										{[...(blankValuePairsAdminQuestions || [])]
+											.sort((a, b) => a.blank - b.blank)
+											.map((pair: BlankValuePair) => {
 												return (
 													<Box
 														key={pair.id}

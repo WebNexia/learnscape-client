@@ -54,20 +54,20 @@ const AdminQuestions = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'type', label: 'Type' },
+					{ key: 'questionType', label: 'Type' },
 					{ key: 'question', label: 'Question' },
 					{ key: 'actions', label: 'Actions' },
 				]
 			: isInstructor
 				? [
-						{ key: 'type', label: 'Type' },
+						{ key: 'questionType', label: 'Type' },
 						{ key: 'question', label: 'Question' },
 						{ key: 'createdAt', label: 'Created On' },
 						{ key: 'updatedAt', label: 'Updated On' },
 						{ key: 'actions', label: 'Actions' },
 					]
 				: [
-						{ key: 'type', label: 'Type' },
+						{ key: 'questionType', label: 'Type' },
 						{ key: 'question', label: 'Question' },
 						{ key: 'createdByName', label: 'Created By' },
 						{ key: 'updatedAt', label: 'Updated On' },
@@ -104,7 +104,8 @@ const AdminQuestions = () => {
 		resetAll,
 		removeFromSearchResults,
 	} = useFilterSearch<QuestionInterface>({
-		getEndpoint: () => `${base_url}/questions/organisation/${orgId}`,
+		getEndpoint: () =>
+			isInstructor ? `${base_url}/questions/organisation/${orgId}/instructor` : `${base_url}/questions/organisation/${orgId}`,
 		limit: 200,
 		pageSize,
 		contextData: questions,
@@ -488,7 +489,7 @@ const AdminQuestions = () => {
 														onClick={() => {
 															setOptions(question.options);
 															setCorrectAnswer(question.correctAnswer);
-															const correctAnswerIndex = question.options?.indexOf(question.correctAnswer) || -1;
+															const correctAnswerIndex = question.options?.indexOf(question.correctAnswer) ?? -1;
 															setCorrectAnswerIndex(correctAnswerIndex);
 															toggleQuestionEditModal(index);
 															setIsDuplicateOption(false);
@@ -497,26 +498,28 @@ const AdminQuestions = () => {
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													<AdminQuestionsEditQuestionDialog
-														question={question}
-														correctAnswerIndex={correctAnswerIndex}
-														index={index}
-														options={options}
-														correctAnswer={question.correctAnswer}
-														questionType={question.questionType}
-														isMinimumOptions={isMinimumOptions}
-														isDuplicateOption={isDuplicateOption}
-														handleCorrectAnswerChange={handleCorrectAnswerChange}
-														setCorrectAnswerIndex={setCorrectAnswerIndex}
-														handleOptionChange={handleOptionChange}
-														closeQuestionEditModal={closeQuestionEditModal}
-														editQuestionModalOpen={editQuestionModalOpen}
-														addOption={addOption}
-														removeOption={removeOption}
-														setCorrectAnswer={setCorrectAnswer}
-														setIsDuplicateOption={setIsDuplicateOption}
-														setIsMinimumOptions={setIsMinimumOptions}
-													/>
+													{editQuestionModalOpen[index] && (
+														<AdminQuestionsEditQuestionDialog
+															question={question}
+															correctAnswerIndex={correctAnswerIndex}
+															index={index}
+															options={options}
+															correctAnswer={question.correctAnswer}
+															questionType={question.questionType}
+															isMinimumOptions={isMinimumOptions}
+															isDuplicateOption={isDuplicateOption}
+															handleCorrectAnswerChange={handleCorrectAnswerChange}
+															setCorrectAnswerIndex={setCorrectAnswerIndex}
+															handleOptionChange={handleOptionChange}
+															closeQuestionEditModal={closeQuestionEditModal}
+															editQuestionModalOpen={editQuestionModalOpen}
+															addOption={addOption}
+															removeOption={removeOption}
+															setCorrectAnswer={setCorrectAnswer}
+															setIsDuplicateOption={setIsDuplicateOption}
+															setIsMinimumOptions={setIsMinimumOptions}
+														/>
+													)}
 
 													<CustomActionBtn
 														title='Delete'
@@ -534,7 +537,7 @@ const AdminQuestions = () => {
 														icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													{isQuestionDeleteModalOpen[index] !== undefined && (
+													{isQuestionDeleteModalOpen[index] && (
 														<CustomDialog
 															openModal={isQuestionDeleteModalOpen[index]}
 															closeModal={() => {

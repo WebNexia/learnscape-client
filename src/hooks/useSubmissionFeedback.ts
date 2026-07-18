@@ -21,6 +21,7 @@ export interface SubmissionFeedbackUserQuestion {
 
 export interface SubmissionFeedbackData {
 	response: SubmissionFeedbackUserQuestion[];
+	student?: { username?: string; firebaseUserId?: string } | null;
 	lessonName: string;
 	courseName: string;
 	chapterName: string;
@@ -57,6 +58,7 @@ export async function fetchSubmissionFeedback(
 
 	return {
 		response,
+		student: data?.student ?? response[0]?.userId ?? null,
 		lessonName: data?.lessonName ?? '',
 		courseName: data?.courseName ?? '',
 		chapterName: data?.chapterName ?? '',

@@ -103,7 +103,8 @@ const AdminDocuments = () => {
 		resetAll,
 		removeFromSearchResults,
 	} = useFilterSearch<Document>({
-		getEndpoint: () => `${base_url}/documents/organisation/${orgId}`,
+		getEndpoint: () =>
+			isInstructor ? `${base_url}/documents/organisation/${orgId}/instructor` : `${base_url}/documents/organisation/${orgId}`,
 		limit: 200,
 		pageSize,
 		contextData: documents,
@@ -485,11 +486,9 @@ const AdminDocuments = () => {
 		setIsDocumentDeleteModalOpen(updatedState);
 	};
 
-	const openEditDocumentModal = (docId: string) => {
-		const documentIndex = paginatedDocuments.findIndex((d) => d._id === docId);
-		if (documentIndex === -1) return;
-
+	const openEditDocumentModal = (documentIndex: number) => {
 		const documentToEdit = paginatedDocuments[documentIndex];
+		if (!documentToEdit) return;
 		initialSamplePageImageUrlsRef.current = documentToEdit.samplePageImageUrls ?? [];
 		setSingleDocument(documentToEdit);
 
@@ -612,39 +611,41 @@ const AdminDocuments = () => {
 						isSticky={true}
 					/>
 
-					<CreateNewDocumentDialog
-						isOpen={isDocumentCreateModalOpen}
-						onClose={resetForm}
-						onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-							e.preventDefault();
-							const success = await createDocument();
-							if (success) {
-								resetForm({ skipOrphanDelete: true });
-							}
-						}}
-						singleDocument={singleDocument}
-						setSingleDocument={setSingleDocument}
-						enterDocUrl={enterDocUrl}
-						setEnterDocUrl={setEnterDocUrl}
-						enterDocImageUrl={enterDocImageUrl}
-						setEnterDocImageUrl={setEnterDocImageUrl}
-						enterSamplePageImageUrl={enterSamplePageImageUrl}
-						setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
-						fileUploaded={fileUploaded}
-						setFileUploaded={setFileUploaded}
-						isFree={isFree}
-						setIsFree={setIsFree}
-						GBP={GBP}
-						setGBP={setGBP}
-						USD={USD}
-						setUSD={setUSD}
-						EUR={EUR}
-						setEUR={setEUR}
-						TRY={TRY}
-						setTRY={setTRY}
-						isCreating={isCreating}
-						onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
-					/>
+					{isDocumentCreateModalOpen && (
+						<CreateNewDocumentDialog
+							isOpen={isDocumentCreateModalOpen}
+							onClose={resetForm}
+							onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+								e.preventDefault();
+								const success = await createDocument();
+								if (success) {
+									resetForm({ skipOrphanDelete: true });
+								}
+							}}
+							singleDocument={singleDocument}
+							setSingleDocument={setSingleDocument}
+							enterDocUrl={enterDocUrl}
+							setEnterDocUrl={setEnterDocUrl}
+							enterDocImageUrl={enterDocImageUrl}
+							setEnterDocImageUrl={setEnterDocImageUrl}
+							enterSamplePageImageUrl={enterSamplePageImageUrl}
+							setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+							fileUploaded={fileUploaded}
+							setFileUploaded={setFileUploaded}
+							isFree={isFree}
+							setIsFree={setIsFree}
+							GBP={GBP}
+							setGBP={setGBP}
+							USD={USD}
+							setUSD={setUSD}
+							EUR={EUR}
+							setEUR={setEUR}
+							TRY={TRY}
+							setTRY={setTRY}
+							isCreating={isCreating}
+							onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
+						/>
+					)}
 
 					<Box
 						sx={{
@@ -795,52 +796,52 @@ const AdminDocuments = () => {
 													<CustomActionBtn
 														title='Edit'
 														onClick={() => {
-															openEditDocumentModal(document._id);
+															openEditDocumentModal(index);
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													<EditDocumentDialog
-														isOpen={editDocumentModalOpen[paginatedDocuments.findIndex((d) => d._id === document._id)]}
-														onClose={() => {
-															closeDocumentEditModal(paginatedDocuments.findIndex((d) => d._id === document._id));
-															resetForm();
-														}}
-														onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-															e.preventDefault();
-															const fullIndex = paginatedDocuments.findIndex((d) => d._id === document._id);
-
-															if (singleDocument?.name && singleDocument.name.trim()) {
-																const success = await handleDocUpdate();
-																if (success) {
-																	closeDocumentEditModal(fullIndex, { skipOrphanDelete: true });
-																	resetForm();
+													{editDocumentModalOpen[index] && (
+														<EditDocumentDialog
+															isOpen
+															onClose={() => {
+																closeDocumentEditModal(index);
+																resetForm();
+															}}
+															onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+																e.preventDefault();
+																if (singleDocument?.name && singleDocument.name.trim()) {
+																	const success = await handleDocUpdate();
+																	if (success) {
+																		closeDocumentEditModal(index, { skipOrphanDelete: true });
+																		resetForm();
+																	}
 																}
-															}
-														}}
-														document={singleDocument}
-														setDocument={setSingleDocument}
-														enterDocUrl={enterDocUrl}
-														setEnterDocUrl={setEnterDocUrl}
-														enterDocImageUrl={enterDocImageUrl}
-														setEnterDocImageUrl={setEnterDocImageUrl}
-														enterSamplePageImageUrl={enterSamplePageImageUrl}
-														setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
-														fileUploaded={fileUploaded}
-														setFileUploaded={setFileUploaded}
-														isFree={isFree}
-														setIsFree={setIsFree}
-														GBP={GBP}
-														setGBP={setGBP}
-														USD={USD}
-														setUSD={setUSD}
-														EUR={EUR}
-														setEUR={setEUR}
-														TRY={TRY}
-														setTRY={setTRY}
-														isUpdating={isUpdating}
-														onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
-													/>
+															}}
+															document={singleDocument}
+															setDocument={setSingleDocument}
+															enterDocUrl={enterDocUrl}
+															setEnterDocUrl={setEnterDocUrl}
+															enterDocImageUrl={enterDocImageUrl}
+															setEnterDocImageUrl={setEnterDocImageUrl}
+															enterSamplePageImageUrl={enterSamplePageImageUrl}
+															setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+															fileUploaded={fileUploaded}
+															setFileUploaded={setFileUploaded}
+															isFree={isFree}
+															setIsFree={setIsFree}
+															GBP={GBP}
+															setGBP={setGBP}
+															USD={USD}
+															setUSD={setUSD}
+															EUR={EUR}
+															setEUR={setEUR}
+															TRY={TRY}
+															setTRY={setTRY}
+															isUpdating={isUpdating}
+															onDeleteSamplePageImagesFromStorage={deleteSamplePageImagesFromStorage}
+														/>
+													)}
 
 													<CustomActionBtn
 														title='Delete'
@@ -850,7 +851,7 @@ const AdminDocuments = () => {
 														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													{isDocumentDeleteModalOpen[index] !== undefined && (
+													{isDocumentDeleteModalOpen[index] && (
 														<CustomDialog
 															openModal={isDocumentDeleteModalOpen[index]}
 															closeModal={() => {

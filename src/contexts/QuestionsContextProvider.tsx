@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -34,18 +34,20 @@ interface QuestionsContextTypes {
 
 interface QuestionsContextProviderProps {
 	children: ReactNode;
+	/** When false, org questions list waits for enableQuestionsFetch() (e.g. lesson-edit Add Question). Types still load. Default true. */
+	fetchOnMount?: boolean;
 }
 
 export const QuestionsContext = createContext<QuestionsContextTypes>({} as QuestionsContextTypes);
 
-const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) => {
+const QuestionsContextProvider = ({ children, fetchOnMount = true }: QuestionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+	const [isEnabled, setIsEnabled] = useState<boolean>(fetchOnMount);
 	// ✅ hook for paginated questions
 	const {
 		data: questions,
@@ -81,28 +83,33 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 	};
 
 	const { data: questionTypesData } = useQuery(['allQuestionTypes', orgId], fetchQuestionTypes, {
-		enabled: !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute && isEnabled,
+		// Types are small and needed on lesson-edit immediately; do not gate on isEnabled (list fetch).
+		enabled: !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
 		staleTime: 60 * 60 * 1000,
 		cacheTime: 24 * 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});
 
-	const fetchQuestionTypeName = (question: QuestionInterface): string => {
-		const filteredQuestionType = questionTypesData?.filter((type: any) => {
-			if (question !== null) {
-				return type._id === question?.questionType || type.name === question?.questionType;
-			}
+	const questionTypeNameByIdOrName = useMemo(() => {
+		const typeMap = new Map<string, string>();
+		(questionTypesData || []).forEach((type) => {
+			typeMap.set(String(type._id), type.name);
+			typeMap.set(type.name, type.name);
 		});
-		let questionTypeName: string = '';
-		if (filteredQuestionType && filteredQuestionType && filteredQuestionType.length !== 0) {
-			questionTypeName = filteredQuestionType[0].name;
-		}
-		return questionTypeName;
-	};
+		return typeMap;
+	}, [questionTypesData]);
 
-	const enableQuestionsFetch = () => setIsEnabled(true);
-	const disableQuestionsFetch = () => setIsEnabled(false);
+	const fetchQuestionTypeName = useCallback(
+		(question: QuestionInterface): string => {
+			if (!question?.questionType) return '';
+			return questionTypeNameByIdOrName.get(String(question.questionType)) || '';
+		},
+		[questionTypeNameByIdOrName]
+	);
+
+	const enableQuestionsFetch = useCallback(() => setIsEnabled(true), []);
+	const disableQuestionsFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<QuestionsContext.Provider

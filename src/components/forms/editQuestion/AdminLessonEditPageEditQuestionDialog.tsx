@@ -86,7 +86,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	setIsMinimumOptions,
 	setHasUnsavedChanges,
 }: AdminLessonEditPageEditQuestionDialogProps) => {
-	const editorId = generateUniqueId('editor-');
+	// Keep TinyMCE's identity stable while local/parent form state rerenders.
+	const [editorId] = useState(() => generateUniqueId('editor-'));
 	const editorRef = useRef<any>(null);
 
 	const {
@@ -186,8 +187,6 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	}, [blankValuePairs]);
 
 	const handleSubmit = async () => {
-		if (!isFlipCard) await handleInputChange('question', editorContent);
-
 		// Validate URLs before proceeding
 		let hasUrlErrors = false;
 		let errorMessages: string[] = [];
@@ -307,6 +306,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 					if (prevQuestion && prevQuestion._id === question._id) {
 						const updatedQuestion = {
 							...prevQuestion,
+							question: isFlipCard ? prevQuestion.question : editorContent.trim(),
 							options: options?.filter((option) => option !== '') || [],
 							correctAnswer,
 							blankValuePairs,
@@ -330,7 +330,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		closeQuestionEditModal(index);
 	};
 
-	const handleInputChange = async (field: 'question' | 'videoUrl' | 'imageUrl' | 'audio' | 'video', value: string | boolean) => {
+	const handleInputChange = (field: 'videoUrl' | 'imageUrl' | 'audio' | 'video', value: string | boolean) => {
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
@@ -420,13 +420,10 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							<HandleImageUploadURL
 								onImageUploadLogic={(url) => {
 									handleInputChange('imageUrl', url);
-									// Validate URL immediately after upload
 									validateUrlOnChange(url, 'image');
 								}}
 								onChangeImgUrl={(e) => {
 									handleInputChange('imageUrl', e.target.value);
-									// Validate URL on change (debounced)
-									validateUrlOnChange(e.target.value, 'image');
 								}}
 								imageUrlValue={question.imageUrl}
 								imageFolderName='QuestionImages'
@@ -443,13 +440,10 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								<HandleVideoUploadURL
 									onVideoUploadLogic={(url) => {
 										handleInputChange('videoUrl', url);
-										// Validate URL immediately after upload
 										validateUrlOnChange(url, 'video');
 									}}
 									onChangeVideoUrl={(e) => {
 										handleInputChange('videoUrl', e.target.value);
-										// Validate URL on change (debounced)
-										validateUrlOnChange(e.target.value, 'video');
 									}}
 									videoUrlValue={question.videoUrl}
 									videoFolderName='QuestionVideos'
@@ -593,9 +587,9 @@ const AdminLessonEditPageEditQuestionDialog = ({
 											borderRadius: '0.35rem',
 											padding: '0.5rem',
 										}}>
-										{blankValuePairs
-											?.sort((a, b) => a.blank - b.blank)
-											?.map((pair: BlankValuePair) => {
+										{[...(blankValuePairs || [])]
+											.sort((a, b) => a.blank - b.blank)
+											.map((pair: BlankValuePair) => {
 												return (
 													<Box
 														key={pair.id}

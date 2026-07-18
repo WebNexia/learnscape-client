@@ -204,17 +204,19 @@ const HandleDocUploadURL = ({
 								</Box>
 							</>
 						)}
-						<AddNewDocumentDialog
-							addNewDocumentModalOpen={addNewDocumentModalOpen}
-							setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
-							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-							singleLessonBeforeSave={singleLessonBeforeSave}
-							setIsLessonUpdated={setIsLessonUpdated}
-							singleCourse={singleCourseBeforeSave}
-							setSingleCourse={setSingleCourseBeforeSave}
-							fromAdminCourses={fromAdminCourses}
-							setHasUnsavedChanges={setHasUnsavedChanges}
-						/>
+						{!fromAdminDocs && addNewDocumentModalOpen && (
+							<AddNewDocumentDialog
+								addNewDocumentModalOpen={addNewDocumentModalOpen}
+								setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+								setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+								singleLessonBeforeSave={singleLessonBeforeSave}
+								setIsLessonUpdated={setIsLessonUpdated}
+								singleCourse={singleCourseBeforeSave}
+								setSingleCourse={setSingleCourseBeforeSave}
+								fromAdminCourses={fromAdminCourses}
+								setHasUnsavedChanges={setHasUnsavedChanges}
+							/>
+						)}
 					</Box>
 				</Box>
 

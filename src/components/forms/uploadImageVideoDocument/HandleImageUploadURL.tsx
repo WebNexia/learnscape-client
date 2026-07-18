@@ -289,7 +289,6 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 							if (onChangeImgUrl) {
 								onChangeImgUrl(e);
 							}
-							validateImageUrlOnChange(e.target.value);
 						}}
 						InputProps={{
 							sx: {

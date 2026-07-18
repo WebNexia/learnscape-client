@@ -59,7 +59,15 @@ const AddNewQuestionDialog = ({
 		fetchQuestions,
 		questionTypes,
 		updateQuestion,
+		enableQuestionsFetch,
 	} = useContext(QuestionsContext);
+
+	// Org questions list is deferred on lesson-edit (fetchOnMount=false) until picker opens
+	useEffect(() => {
+		if (addNewQuestionModalOpen) {
+			enableQuestionsFetch();
+		}
+	}, [addNewQuestionModalOpen, enableQuestionsFetch]);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');

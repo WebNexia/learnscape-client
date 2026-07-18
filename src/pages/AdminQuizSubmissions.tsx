@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography } from '@mui/mat
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -20,7 +20,6 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { LessonType } from '../interfaces/enums';
-import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 
 const AdminQuizSubmissions = () => {
@@ -49,7 +48,6 @@ const AdminQuizSubmissions = () => {
 		totalItems,
 		loadedPages,
 		fetchMoreQuizSubmissions,
-		enableAdminQuizSubmissionsFetch,
 		setQuizSubmissionsPageNumber,
 	} = useContext(AdminQuizSubmissionsContext);
 
@@ -101,11 +99,6 @@ const AdminQuizSubmissions = () => {
 
 	// For context data, use client-side pagination
 	const paginatedQuizSubmissions = sortedSubmissions;
-
-	// Enable admin quiz submissions fetching only once when component mounts
-	useEffect(() => {
-		enableAdminQuizSubmissionsFetch();
-	}, []);
 
 	// Show loading state while quiz submissions are being fetched
 	if (loading) {
@@ -291,10 +284,7 @@ const AdminQuizSubmissions = () => {
 									const isQuiz = submission.lessonType === LessonType.QUIZ;
 									const isGraded = !!submission.lessonIsGraded && isQuiz;
 
-									const totalPossible =
-										isGraded && submission.lessonQuestionScores
-											? calculateQuizTotalScoreFromScores({ questionScores: submission.lessonQuestionScores })
-											: 0;
+									const totalPossible = isGraded ? (submission.totalPossible ?? 0) : 0;
 									const percentage = calculateScorePercentage(totalEarned, totalPossible);
 
 									return (
