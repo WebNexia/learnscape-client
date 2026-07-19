@@ -42,6 +42,7 @@ export interface Event {
 	courseGroupNames?: {
 		courseId: string;
 		groupNames: string[];
+		courseTitle?: string;
 	}[];
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;

@@ -250,7 +250,9 @@ const AdminLessons = () => {
 					]}
 					isSticky={true}
 				/>
-				<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
+				{isNewLessonModalOpen && (
+					<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
+				)}
 
 				<Box
 					sx={{
@@ -411,7 +413,7 @@ const AdminLessons = () => {
 													}}
 													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
-												{isLessonDeleteModalOpen[index] !== undefined && !lesson.isActive && (
+												{isLessonDeleteModalOpen[index] && !lesson.isActive && (
 													<CustomDialog
 														openModal={isLessonDeleteModalOpen[index]}
 														closeModal={() => {
@@ -457,7 +459,7 @@ const AdminLessons = () => {
 													</CustomDialog>
 												)}
 
-												{isLessonDeleteModalOpen[index] !== undefined && lesson.isActive && (
+												{isLessonDeleteModalOpen[index] && lesson.isActive && (
 													<CustomDialog
 														openModal={isLessonDeleteModalOpen[index]}
 														closeModal={() => closeDeleteLessonModal(index)}

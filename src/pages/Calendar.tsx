@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useCallback } from 'react';
+import { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import axios from '@utils/axiosInstance';
 import { Calendar, dateFnsLocalizer, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -38,7 +38,7 @@ const localizer = dateFnsLocalizer({
 
 const EventCalendar = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
+	const { sortedEventsData, fetchMonthEvents, loadedMonths, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor, isLearner, hasAdminAccess } = useAuth();
@@ -50,7 +50,6 @@ const EventCalendar = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [eventsData, setEventsData] = useState<CalendarDisplayEvent[]>([]);
 	const [newEventModalOpen, setNewEventModalOpen] = useState<boolean>(false);
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [isLoadingEventDetail, setIsLoadingEventDetail] = useState<boolean>(false);
@@ -85,9 +84,9 @@ const EventCalendar = () => {
 		participantCount: 0,
 	});
 
-	useEffect(() => {
-		if (sortedEventsData) {
-			const transformedEvents: CalendarDisplayEvent[] = sortedEventsData.map((event) => {
+	const eventsData = useMemo<CalendarDisplayEvent[]>(
+		() =>
+			sortedEventsData.map((event) => {
 				const startDate = new Date(event.start);
 				let endDate = new Date(event.end);
 				const isAllDayEvent = event.isAllDay || false;
@@ -105,11 +104,9 @@ const EventCalendar = () => {
 					end: endDate,
 					isAllDay: isAllDayEvent,
 				};
-			});
-
-			setEventsData(transformedEvents);
-		}
-	}, [sortedEventsData, isEventDeleted]);
+			}),
+		[sortedEventsData, isEventDeleted]
+	);
 
 	useEffect(() => {
 		if (!isEventDetailLoaded(selectedEvent)) {
@@ -139,11 +136,6 @@ const EventCalendar = () => {
 		setEventDetailsModalOpen(false);
 		setEditEventModalOpen(false);
 	}, []);
-
-	// Enable events fetching only once when component mounts
-	useEffect(() => {
-		enableEventsFetch();
-	}, []); // Empty dependency array - only run once
 
 	const eventStyleGetter = (event: CalendarDisplayEvent) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
@@ -274,27 +266,33 @@ const EventCalendar = () => {
 					/>
 				</Box>
 
-				<CreateEventDialog
-					newEvent={newEvent}
-					newEventModalOpen={newEventModalOpen}
-					setNewEvent={setNewEvent}
-					setNewEventModalOpen={setNewEventModalOpen}
-				/>
+				{newEventModalOpen && (
+					<CreateEventDialog
+						newEvent={newEvent}
+						newEventModalOpen={newEventModalOpen}
+						setNewEvent={setNewEvent}
+						setNewEventModalOpen={setNewEventModalOpen}
+					/>
+				)}
 
-				<EventDetailsDialog
-					eventDetailsModalOpen={eventDetailsModalOpen}
-					selectedEvent={selectedEvent}
-					setSelectedEvent={setSelectedEvent}
-					setEventDetailsModalOpen={setEventDetailsModalOpen}
-				/>
+				{eventDetailsModalOpen && selectedEvent && (
+					<EventDetailsDialog
+						eventDetailsModalOpen={eventDetailsModalOpen}
+						selectedEvent={selectedEvent}
+						setSelectedEvent={setSelectedEvent}
+						setEventDetailsModalOpen={setEventDetailsModalOpen}
+					/>
+				)}
 
-				<EditEventDialog
-					setIsEventDeleted={setIsEventDeleted}
-					editEventModalOpen={editEventModalOpen}
-					selectedEvent={selectedEvent}
-					setEditEventModalOpen={setEditEventModalOpen}
-					setSelectedEvent={setSelectedEvent}
-				/>
+				{editEventModalOpen && selectedEvent && (
+					<EditEventDialog
+						setIsEventDeleted={setIsEventDeleted}
+						editEventModalOpen={editEventModalOpen}
+						selectedEvent={selectedEvent}
+						setEditEventModalOpen={setEditEventModalOpen}
+						setSelectedEvent={setSelectedEvent}
+					/>
+				)}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

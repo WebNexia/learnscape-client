@@ -40,6 +40,8 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 		createdAt: '',
 		updatedAt: '',
 	});
+	const [errorMsg, setErrorMsg] = useState<string>('');
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const resetForm = () => {
 		setNewPromoCode({
@@ -57,10 +59,9 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 			createdAt: '',
 			updatedAt: '',
 		});
+		setErrorMsg('');
 		setIsNewCodeModalOpen(false);
 	};
-
-	const [errorMsg, setErrorMsg] = useState<string>('');
 
 	const createPromoCode = async () => {
 		if (newPromoCode?.discountAmount && newPromoCode?.discountAmount < 0) {
@@ -85,13 +86,15 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 			orgId,
 		};
 
+		setIsSubmitting(true);
 		try {
 			const res = await axios.post(`${base_url}/promocodes`, newCode);
-			addNewPromoCode({ ...newCode, createdAt: res.data.createdAt, _id: res.data._id } as PromoCode);
-
+			addNewPromoCode(res.data.data as PromoCode);
 			resetForm();
 		} catch (error) {
-			console.log(error);
+			console.error('Create promo code error:', error);
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -250,6 +253,9 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 					onCancel={() => {
 						resetForm();
 					}}
+					isSubmitting={isSubmitting}
+					disableBtn={isSubmitting}
+					disableCancelBtn={isSubmitting}
 				/>
 			</form>
 		</CustomDialog>

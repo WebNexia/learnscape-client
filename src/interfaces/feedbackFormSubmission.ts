@@ -34,3 +34,8 @@ export interface FeedbackFormSubmission {
 	createdAt?: string;
 	updatedAt?: string;
 }
+
+export type FeedbackFormSubmissionSummary = Pick<
+	FeedbackFormSubmission,
+	'_id' | 'userId' | 'userName' | 'userEmail' | 'isAnonymous' | 'submittedAt'
+>;

@@ -364,7 +364,9 @@ const AdminCourses = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Courses'>
 			<DashboardPagesLayout pageName={isInstructor ? 'My Courses' : 'Courses'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-				<CreateCourseDialog closeNewCourseModal={closeNewCourseModal} isCourseCreateModalOpen={isCourseCreateModalOpen} />
+				{isCourseCreateModalOpen && (
+					<CreateCourseDialog closeNewCourseModal={closeNewCourseModal} isCourseCreateModalOpen={isCourseCreateModalOpen} />
+				)}
 				<FilterSearchRow
 					filterValue={filterValue}
 					onFilterChange={handleFilterChange}
@@ -710,27 +712,31 @@ const AdminCourses = () => {
 													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }} />}
 												/>
 
-												<CreateCohortDialog
-													isCourseCreateCohortModalOpen={isCreateCohortModalOpen}
-													index={index}
-													closeCreateCohortModal={closeCreateCohortModal}
-													isCreatingCohort={isCreatingCohort}
-													handleCreateCohort={handleCreateCohort}
-													course={course}
-												/>
-												<CoursesInfoModal
-													courseId={course._id}
-													courseTitle={course.title}
-													isCourseInfoDialogOpen={isCourseInfoModalOpen[index]}
-													setIsCourseInfoDialogOpen={() =>
-														setIsCourseInfoModalOpen((prev) => {
-															const newState = [...prev];
-															newState[index] = false;
-															return newState;
-														})
-													}
-												/>
-												{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (
+												{isCreateCohortModalOpen[index] && (
+													<CreateCohortDialog
+														isCourseCreateCohortModalOpen={isCreateCohortModalOpen}
+														index={index}
+														closeCreateCohortModal={closeCreateCohortModal}
+														isCreatingCohort={isCreatingCohort}
+														handleCreateCohort={handleCreateCohort}
+														course={course}
+													/>
+												)}
+												{isCourseInfoModalOpen[index] && (
+													<CoursesInfoModal
+														courseId={course._id}
+														courseTitle={course.title}
+														isCourseInfoDialogOpen={isCourseInfoModalOpen[index]}
+														setIsCourseInfoDialogOpen={() =>
+															setIsCourseInfoModalOpen((prev) => {
+																const newState = [...prev];
+																newState[index] = false;
+																return newState;
+															})
+														}
+													/>
+												)}
+												{isCourseDeleteModalOpen[index] && !course.isActive && (
 													<CustomDialog
 														openModal={isCourseDeleteModalOpen[index]}
 														closeModal={() => {
@@ -776,7 +782,7 @@ const AdminCourses = () => {
 													</CustomDialog>
 												)}
 
-												{isCourseDeleteModalOpen[index] !== undefined && course.isActive && (
+												{isCourseDeleteModalOpen[index] && course.isActive && (
 													<CustomDialog
 														openModal={isCourseDeleteModalOpen[index]}
 														closeModal={() => closeDeleteCourseModal(index)}
@@ -795,7 +801,7 @@ const AdminCourses = () => {
 													</CustomDialog>
 												)}
 
-												{isCourseCloneModalOpen[index] !== undefined && (
+												{isCourseCloneModalOpen[index] && (
 													<CloneCourseDialog
 														isCourseCloneModalOpen={isCourseCloneModalOpen}
 														index={index}

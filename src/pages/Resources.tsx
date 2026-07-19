@@ -28,9 +28,7 @@ const Resources = () => {
 		folders,
 		foldersLoading,
 		foldersError,
-		fetchFolders,
 		fetchMoreFolders,
-		foldersPageNumber,
 		setFoldersPageNumber,
 		foldersTotalItems,
 		foldersLoadedPages,
@@ -75,7 +73,7 @@ const Resources = () => {
 		resetAll,
 	} = useFilterSearch<ResourceFolder>({
 		getEndpoint: () => `${base_url}/resources/folders`,
-		limit: 200,
+		limit: 100,
 		pageSize,
 		contextData: folders,
 		setContextPageNumber: setFoldersPageNumber,
@@ -124,7 +122,6 @@ const Resources = () => {
 			setSnackbarOpen(true);
 			setIsCreateFolderOpen(false);
 			setCurrentFolder(null);
-			fetchFolders(1);
 		} catch (error: any) {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to create folder');
 			setSnackbarSeverity('error');
@@ -148,7 +145,6 @@ const Resources = () => {
 			setSnackbarOpen(true);
 			setIsEditFolderOpen(false);
 			setCurrentFolder(null);
-			fetchFolders(foldersPageNumber);
 		} catch (error: any) {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to update folder');
 			setSnackbarSeverity('error');
@@ -169,7 +165,6 @@ const Resources = () => {
 			setSnackbarOpen(true);
 			setIsDeleteFolderOpen(false);
 			setFolderToDelete(null);
-			fetchFolders(1);
 		} catch (error: any) {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete folder');
 			setSnackbarSeverity('error');
@@ -289,36 +284,41 @@ const Resources = () => {
 				{/* Dialogs */}
 				{!resourcesAccessDenied && (
 				<>
-				<CreateResourceFolderDialog
-					isOpen={isCreateFolderOpen}
-					onClose={() => {
-						setIsCreateFolderOpen(false);
-						setCurrentFolder(null);
-					}}
-					onSubmit={handleCreateFolder}
-					folder={currentFolder}
-					setFolder={setCurrentFolder}
-					isCreating={isCreating}
-				/>
+				{isCreateFolderOpen && (
+					<CreateResourceFolderDialog
+						isOpen={isCreateFolderOpen}
+						onClose={() => {
+							setIsCreateFolderOpen(false);
+							setCurrentFolder(null);
+						}}
+						onSubmit={handleCreateFolder}
+						folder={currentFolder}
+						setFolder={setCurrentFolder}
+						isCreating={isCreating}
+					/>
+				)}
 
-				<EditResourceFolderDialog
-					isOpen={isEditFolderOpen}
-					onClose={() => {
-						setIsEditFolderOpen(false);
-						setCurrentFolder(null);
-					}}
-					onSubmit={handleUpdateFolder}
-					folder={currentFolder as ResourceFolder}
-					setFolder={setCurrentFolder}
-					isUpdating={isUpdating}
-				/>
+				{isEditFolderOpen && (
+					<EditResourceFolderDialog
+						isOpen={isEditFolderOpen}
+						onClose={() => {
+							setIsEditFolderOpen(false);
+							setCurrentFolder(null);
+						}}
+						onSubmit={handleUpdateFolder}
+						folder={currentFolder as ResourceFolder}
+						setFolder={setCurrentFolder}
+						isUpdating={isUpdating}
+					/>
+				)}
 
 				{/* Delete Confirmation */}
-				<CustomDialog
-					title='Delete Folder'
-					openModal={isDeleteFolderOpen}
-					closeModal={() => setIsDeleteFolderOpen(false)}
-					maxWidth='xs'>
+				{isDeleteFolderOpen && (
+					<CustomDialog
+						title='Delete Folder'
+						openModal={isDeleteFolderOpen}
+						closeModal={() => setIsDeleteFolderOpen(false)}
+						maxWidth='xs'>
 					<DialogContent>
 						{folderToDelete && folderToDelete.itemCount !== undefined && folderToDelete.itemCount !== null && folderToDelete.itemCount > 0 ? (
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', color: 'error.main' }}>
@@ -346,7 +346,8 @@ const Resources = () => {
 						isSubmitting={isDeleting}
 						actionSx={{ mb: '0.5rem' }}
 					/>
-				</CustomDialog>
+					</CustomDialog>
+				)}
 				</>
 				)}
 

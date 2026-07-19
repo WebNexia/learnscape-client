@@ -621,7 +621,6 @@ const AdminUsers = () => {
 													<CustomActionBtn
 														title='Edit'
 														onClick={() => {
-															toggleUserEditModal(index);
 															openEditUserModal(index);
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
@@ -641,7 +640,7 @@ const AdminUsers = () => {
 														/>
 													)}
 
-													<CustomDialog
+													{isUserEditModalOpen[index] && <CustomDialog
 														openModal={isUserEditModalOpen[index]}
 														closeModal={() => {
 															closeUserEditModal(index);
@@ -700,7 +699,7 @@ const AdminUsers = () => {
 																submitBtnType='submit'
 															/>
 														</form>
-													</CustomDialog>
+													</CustomDialog>}
 
 													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.SUPER_ADMIN) && (
 														<>
@@ -713,7 +712,7 @@ const AdminUsers = () => {
 																disabled={user._id === userId}
 															/>
 
-															<CustomDialog
+															{isZoomHostModalOpen[index] && <CustomDialog
 																openModal={isZoomHostModalOpen[index]}
 																closeModal={() => closeZoomHostModal(index)}
 																maxWidth='xs'
@@ -745,7 +744,7 @@ const AdminUsers = () => {
 																		submitBtnType='submit'
 																	/>
 																</form>
-															</CustomDialog>
+															</CustomDialog>}
 														</>
 													)}
 
@@ -781,7 +780,7 @@ const AdminUsers = () => {
 														disabled={user._id === userId}
 													/>
 
-													{loggedInUser?.role === Roles.OWNER && isDeleteLearningDataModalOpen[index] !== undefined && (
+													{loggedInUser?.role === Roles.OWNER && isDeleteLearningDataModalOpen[index] && (
 														<CustomDialog
 															openModal={isDeleteLearningDataModalOpen[index]}
 															closeModal={() => {
@@ -834,7 +833,7 @@ const AdminUsers = () => {
 															</CustomDialog>
 													)}
 
-													{loggedInUser?.role === Roles.OWNER && isDeleteUserModalOpen[index] !== undefined && (
+													{loggedInUser?.role === Roles.OWNER && isDeleteUserModalOpen[index] && (
 														<CustomDialog
 															openModal={isDeleteUserModalOpen[index]}
 															closeModal={() => {
@@ -887,7 +886,7 @@ const AdminUsers = () => {
 														</CustomDialog>
 													)}
 
-													{isUserStatusUpdateModalOpen[index] !== undefined && (
+													{isUserStatusUpdateModalOpen[index] && (
 														<CustomDialog
 															openModal={isUserStatusUpdateModalOpen[index]}
 															closeModal={() => closeStatusUpdateUserModal(index)}
@@ -933,7 +932,7 @@ const AdminUsers = () => {
 					paginatedUsers.map((user: User, index) => {
 						const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Unnamed User';
 						const coursesData = user._id ? userCoursesData[user._id] : undefined;
-						return (
+						return isUserCoursesModalOpen[index] ? (
 							<CustomDialog
 								key={`user-courses-${user._id || index}`}
 								openModal={isUserCoursesModalOpen[index] || false}
@@ -1112,7 +1111,7 @@ const AdminUsers = () => {
 									</CustomCancelButton>
 								</DialogActions>
 							</CustomDialog>
-						);
+						) : null;
 					})}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

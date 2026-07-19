@@ -136,7 +136,7 @@ const Topic = ({ topic }: TopicProps) => {
 					</Box>
 				</Box>
 			)}
-			<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
+			{messageNonRegisteredModalOpen && <CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
 				<DialogContent>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 						<Typography variant='body2' sx={{ color: theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined, mt: '1rem' }}>
@@ -151,7 +151,7 @@ const Topic = ({ topic }: TopicProps) => {
 					onClick={() => setMessageNonRegisteredModalOpen(false)}>
 					Close
 				</CustomCancelButton>
-			</CustomDialog>
+			</CustomDialog>}
 		</Box>
 	);
 };

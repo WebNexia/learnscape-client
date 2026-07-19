@@ -314,29 +314,31 @@ const CreateEditTemplateDialog = ({ isOpen, onClose, templateToEdit, onSuccess }
 			</form>
 
 			{/* Field Editor Dialog */}
-			<FieldEditorDialog
-				isOpen={isFieldEditorOpen}
-				onClose={() => {
-					setIsFieldEditorOpen(false);
-					setFieldToEdit(null);
-					setEditingFieldIndex(-1);
-				}}
-				fieldToEdit={fieldToEdit}
-				onSave={(field) => {
-					if (editingFieldIndex >= 0) {
-						// Update existing field
-						const newFields = [...fields];
-						newFields[editingFieldIndex] = field;
-						setFields(newFields);
-					} else {
-						// Add new field
-						setFields([...fields, field]);
-					}
-					setIsFieldEditorOpen(false);
-					setFieldToEdit(null);
-					setEditingFieldIndex(-1);
-				}}
-			/>
+			{isFieldEditorOpen && (
+				<FieldEditorDialog
+					isOpen={isFieldEditorOpen}
+					onClose={() => {
+						setIsFieldEditorOpen(false);
+						setFieldToEdit(null);
+						setEditingFieldIndex(-1);
+					}}
+					fieldToEdit={fieldToEdit}
+					onSave={(field) => {
+						if (editingFieldIndex >= 0) {
+							// Update existing field
+							const newFields = [...fields];
+							newFields[editingFieldIndex] = field;
+							setFields(newFields);
+						} else {
+							// Add new field
+							setFields([...fields, field]);
+						}
+						setIsFieldEditorOpen(false);
+						setFieldToEdit(null);
+						setEditingFieldIndex(-1);
+					}}
+				/>
+			)}
 		</CustomDialog>
 	);
 };

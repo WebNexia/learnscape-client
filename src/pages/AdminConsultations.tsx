@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableRow, TableCell, Typography, Snackbar, Alert
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { ConsultationsContext } from '../contexts/ConsultationsContextProvider';
 import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import { Delete, Edit, Info } from '@mui/icons-material';
@@ -24,6 +24,8 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CreateConsultationDialog from '../components/consultations/CreateConsultationDialog';
 import ConsultationDetailsModal from '../components/consultations/ConsultationDetailsModal';
+
+const getNestedValue = (obj: any, path: string) => path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
 
 const AdminConsultations = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -87,43 +89,35 @@ const AdminConsultations = () => {
 		defaultOrder: 'desc',
 	});
 
-	// Helper function to get nested values for sorting
-	const getNestedValue = (obj: any, path: string) => {
-		return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
-	};
-
-	const sortedConsultations = [...(displayConsultations || [])]?.sort((a, b) => {
+	const sortedConsultations = useMemo(() => [...(displayConsultations || [])].sort((a, b) => {
 		let aValue: any;
 		let bValue: any;
 
-		const orderByStr = String(orderBy);
-		if (orderByStr === 'createdBy') {
-			// For createdBy sorting, use nested property
-			const aCreatedBy = typeof a.createdBy === 'object' ? `${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || ''}`.trim() : 'N/A';
-			const bCreatedBy = typeof b.createdBy === 'object' ? `${b.createdBy?.firstName || ''} ${b.createdBy?.lastName || ''}`.trim() : 'N/A';
-			aValue = aCreatedBy || 'N/A';
-			bValue = bCreatedBy || 'N/A';
-		} else if (orderByStr.includes('.')) {
-			// Handle other nested properties
-			aValue = getNestedValue(a, orderByStr);
-			bValue = getNestedValue(b, orderByStr);
-		} else {
-			// Handle regular properties
-			aValue = (a as any)[orderByStr] ?? '';
-			bValue = (b as any)[orderByStr] ?? '';
-		}
+			const orderByStr = String(orderBy);
+			if (orderByStr === 'createdBy') {
+				// For createdBy sorting, use nested property
+				const aCreatedBy = typeof a.createdBy === 'object' ? `${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || ''}`.trim() : 'N/A';
+				const bCreatedBy = typeof b.createdBy === 'object' ? `${b.createdBy?.firstName || ''} ${b.createdBy?.lastName || ''}`.trim() : 'N/A';
+				aValue = aCreatedBy || 'N/A';
+				bValue = bCreatedBy || 'N/A';
+			} else if (orderByStr.includes('.')) {
+				aValue = getNestedValue(a, orderByStr);
+				bValue = getNestedValue(b, orderByStr);
+			} else {
+				aValue = (a as any)[orderByStr] ?? '';
+				bValue = (b as any)[orderByStr] ?? '';
+			}
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			}
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+		}), [displayConsultations, orderBy, order]);
 	const paginatedConsultations = sortedConsultations;
 
 	// Modal states
 	const [isConsultationCreateModalOpen, setIsConsultationCreateModalOpen] = useState<boolean>(false);
-	const [isConsultationDeleteModalOpen, setIsConsultationDeleteModalOpen] = useState<boolean[]>([]);
+	const [consultationToDelete, setConsultationToDelete] = useState<Consultation | null>(null);
 
 	// Form states
 	const [singleConsultation, setSingleConsultation] = useState<Partial<Consultation> | null>(null);
@@ -139,18 +133,6 @@ const AdminConsultations = () => {
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
 	const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
-	const [isConsultationInfoModalOpen, setIsConsultationInfoModalOpen] = useState<boolean>(false);
-
-	// Keep track of previous length to avoid unnecessary resets
-	const prevLengthRef = useRef<number>(0);
-
-	// Reset modals when consultations change
-	useEffect(() => {
-		if (consultations && consultations.length !== prevLengthRef.current) {
-			setIsConsultationDeleteModalOpen(new Array(consultations.length).fill(false));
-			prevLengthRef.current = consultations.length;
-		}
-	}, [consultations]);
 
 	// Enable fetch on mount
 	useEffect(() => {
@@ -245,20 +227,12 @@ const AdminConsultations = () => {
 		}
 	};
 
-	const openDeleteConsultationModal = (index: number) => {
-		setIsConsultationDeleteModalOpen((prev) => {
-			const newState = [...prev];
-			newState[index] = true;
-			return newState;
-		});
+	const openDeleteConsultationModal = (consultation: Consultation) => {
+		setConsultationToDelete(consultation);
 	};
 
-	const closeDeleteConsultationModal = (index: number) => {
-		setIsConsultationDeleteModalOpen((prev) => {
-			const updatedState = [...prev];
-			updatedState[index] = false;
-			return updatedState;
-		});
+	const closeDeleteConsultationModal = () => {
+		setConsultationToDelete(null);
 	};
 
 	const deleteConsultation = async (id: string) => {
@@ -281,11 +255,9 @@ const AdminConsultations = () => {
 
 	const openConsultationInfoModal = (consultation: Consultation) => {
 		setSelectedConsultation(consultation);
-		setIsConsultationInfoModalOpen(true);
 	};
 
 	const closeConsultationInfoModal = () => {
-		setIsConsultationInfoModalOpen(false);
 		setSelectedConsultation(null);
 	};
 
@@ -355,28 +327,30 @@ const AdminConsultations = () => {
 						isSticky={true}
 					/>
 
-					<CreateConsultationDialog
-						isOpen={isConsultationCreateModalOpen}
-						onClose={closeNewConsultationModal}
-						onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-							e.preventDefault();
-							const success = await createConsultation();
-							if (success) {
-								resetForm();
-							}
-						}}
-						singleConsultation={singleConsultation}
-						setSingleConsultation={setSingleConsultation}
-						GBP={GBP}
-						setGBP={setGBP}
-						USD={USD}
-						setUSD={setUSD}
-						EUR={EUR}
-						setEUR={setEUR}
-						TRY={TRY}
-						setTRY={setTRY}
-						isCreating={isCreating}
-					/>
+					{isConsultationCreateModalOpen && (
+						<CreateConsultationDialog
+							isOpen={isConsultationCreateModalOpen}
+							onClose={closeNewConsultationModal}
+							onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+								e.preventDefault();
+								const success = await createConsultation();
+								if (success) {
+									resetForm();
+								}
+							}}
+							singleConsultation={singleConsultation}
+							setSingleConsultation={setSingleConsultation}
+							GBP={GBP}
+							setGBP={setGBP}
+							USD={USD}
+							setUSD={setUSD}
+							EUR={EUR}
+							setEUR={setEUR}
+							TRY={TRY}
+							setTRY={setTRY}
+							isCreating={isCreating}
+						/>
+					)}
 
 					<Box
 						sx={{
@@ -450,7 +424,7 @@ const AdminConsultations = () => {
 							/>
 							<TableBody>
 								{paginatedConsultations &&
-									paginatedConsultations?.map((consultation: Consultation, index) => {
+									paginatedConsultations?.map((consultation: Consultation) => {
 										return (
 											<TableRow key={consultation._id} hover>
 												<CustomTableCell value={consultation?.title} />
@@ -477,7 +451,7 @@ const AdminConsultations = () => {
 														<CustomActionBtn
 															title='Delete'
 															onClick={() => {
-																openDeleteConsultationModal(index);
+																openDeleteConsultationModal(consultation);
 															}}
 															icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />}
 														/>
@@ -489,73 +463,6 @@ const AdminConsultations = () => {
 														}}
 														icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
-
-													{/* Delete Modal - Only shown for owner */}
-													{isOwner && isConsultationDeleteModalOpen[index] !== undefined && (
-														<CustomDialog
-															openModal={isConsultationDeleteModalOpen[index]}
-															closeModal={() => closeDeleteConsultationModal(index)}
-															title='Delete Consultation'
-															maxWidth='xs'>
-															<DialogContent>
-																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-																	Are you sure you want to delete "{consultation.title}"?
-																</Typography>
-																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
-																	This action will permanently delete:
-																</Typography>
-																<Typography variant='body2' component='ul' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '0.5rem', pl: '1.5rem' }}>
-																	<li>The consultation itself</li>
-																	<li>All consultation slots</li>
-																	<li>All availability records</li>
-																</Typography>
-																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem', color: 'info.main' }}>
-																	The following will be preserved for historical records:
-																</Typography>
-																<Typography variant='body2' component='ul' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '0.5rem', pl: '1.5rem', color: 'info.main' }}>
-																	<li>All appointment records (including client data, dates, consultants, notes)</li>
-																	<li>All payment records (for accounting and audit purposes)</li>
-																</Typography>
-																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem', fontWeight: 'bold', color: 'error.main' }}>
-																	This action cannot be undone.
-																</Typography>
-															</DialogContent>
-															<CustomDialogActions
-																onCancel={() => closeDeleteConsultationModal(index)}
-																deleteBtn={true}
-																onDelete={() => {
-																	deleteConsultation(consultation._id);
-																	closeDeleteConsultationModal(index);
-																}}
-																actionSx={{ mb: '0.5rem' }}
-															/>
-														</CustomDialog>
-													)}
-
-													{/* Delete operation snackbar */}
-													<Snackbar
-														open={snackbarOpen}
-														autoHideDuration={4000}
-														anchorOrigin={{ vertical, horizontal }}
-														sx={{ mt: '4rem' }}
-														onClose={() => {
-															setSnackbarOpen(false);
-														}}>
-														<Alert
-															onClose={() => setSnackbarOpen(false)}
-															severity={snackbarSeverity}
-															sx={{
-																'width': isMobileSize ? '60%' : '100%',
-																'backgroundColor': theme.bgColor?.greenSecondary,
-																'color': theme.textColor?.common.main,
-																'fontSize': isMobileSize ? '0.75rem' : undefined,
-																'& .MuiAlert-icon': {
-																	color: 'white',
-																},
-															}}>
-															{snackbarMessage}
-														</Alert>
-													</Snackbar>
 												</TableCell>
 											</TableRow>
 										);
@@ -574,12 +481,73 @@ const AdminConsultations = () => {
 						<CustomTablePagination count={consultationsNumberOfPages} page={consultationsCurrentPage} onChange={handlePageChange} />
 					</Box>
 
+					{/* Delete Modal - Only shown for owner */}
+					{isOwner && consultationToDelete && (
+						<CustomDialog openModal={true} closeModal={closeDeleteConsultationModal} title='Delete Consultation' maxWidth='xs'>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+									Are you sure you want to delete "{consultationToDelete.title}"?
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+									This action will permanently delete:
+								</Typography>
+								<Typography variant='body2' component='ul' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '0.5rem', pl: '1.5rem' }}>
+									<li>The consultation itself</li>
+									<li>All consultation slots</li>
+									<li>All availability records</li>
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem', color: 'info.main' }}>
+									The following will be preserved for historical records:
+								</Typography>
+								<Typography variant='body2' component='ul' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '0.5rem', pl: '1.5rem', color: 'info.main' }}>
+									<li>All appointment records (including client data, dates, consultants, notes)</li>
+									<li>All payment records (for accounting and audit purposes)</li>
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem', fontWeight: 'bold', color: 'error.main' }}>
+									This action cannot be undone.
+								</Typography>
+							</DialogContent>
+							<CustomDialogActions
+								onCancel={closeDeleteConsultationModal}
+								deleteBtn={true}
+								onDelete={async () => {
+									await deleteConsultation(consultationToDelete._id);
+									closeDeleteConsultationModal();
+								}}
+								actionSx={{ mb: '0.5rem' }}
+							/>
+						</CustomDialog>
+					)}
+
 					{/* Consultation Details Modal */}
-					<ConsultationDetailsModal
-						consultation={selectedConsultation || undefined}
-						isConsultationInfoDialogOpen={isConsultationInfoModalOpen}
-						setIsConsultationInfoDialogOpen={closeConsultationInfoModal}
-					/>
+					{selectedConsultation && (
+						<ConsultationDetailsModal
+							consultation={selectedConsultation}
+							isConsultationInfoDialogOpen={true}
+							setIsConsultationInfoDialogOpen={closeConsultationInfoModal}
+						/>
+					)}
+
+					{/* Consultation operation snackbar */}
+					<Snackbar
+						open={snackbarOpen}
+						autoHideDuration={4000}
+						anchorOrigin={{ vertical, horizontal }}
+						sx={{ mt: '4rem' }}
+						onClose={() => setSnackbarOpen(false)}>
+						<Alert
+							onClose={() => setSnackbarOpen(false)}
+							severity={snackbarSeverity}
+							sx={{
+								'width': isMobileSize ? '60%' : '100%',
+								'backgroundColor': theme.bgColor?.greenSecondary,
+								'color': theme.textColor?.common.main,
+								'fontSize': isMobileSize ? '0.75rem' : undefined,
+								'& .MuiAlert-icon': { color: 'white' },
+							}}>
+							{snackbarMessage}
+						</Alert>
+					</Snackbar>
 				</Box>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

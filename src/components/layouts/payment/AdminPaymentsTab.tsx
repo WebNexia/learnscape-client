@@ -8,7 +8,6 @@ import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import CustomTablePagination from '../table/CustomTablePagination';
 import { Visibility } from '@mui/icons-material';
 import theme from '../../../themes';
-import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomActionBtn from '../table/CustomActionBtn';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
@@ -26,33 +25,48 @@ const AdminPaymentsTab = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { payments, loading: paymentsLoading, totalItems, loadedPages, fetchMorePayments, enablePaymentsFetch, setPaymentsPageNumber } = useContext(PaymentsContext);
-	const { courses } = useContext(CoursesContext);
-
+	const {
+		payments,
+		loading: paymentsLoading,
+		totalItems,
+		loadedPages,
+		fetchMorePayments,
+		enablePaymentsFetch,
+		disablePaymentsFetch,
+		setPaymentsPageNumber,
+	} = useContext(PaymentsContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { isOwner, isSuperAdmin } = useAuth();
 
-	const [documents, setDocuments] = useState<{ name: string }[]>([]);
-	const [consultations, setConsultations] = useState<{ title: string }[]>([]);
+	const [paymentFilterTitles, setPaymentFilterTitles] = useState<{
+		courseTitles: string[];
+		documentNames: string[];
+		consultationTitles: string[];
+	}>({ courseTitles: [], documentNames: [], consultationTitles: [] });
 
 	useEffect(() => {
 		if (!orgId) return;
-		Promise.all([
-			axios.get(`${base_url}/documents/organisation/${orgId}?limit=500`).then((r) => r.data?.data || []),
-			axios.get(`${base_url}/consultations/organisation/${orgId}?limit=500`).then((r) => r.data?.data || []),
-		])
-			.then(([docs, cons]) => {
-				setDocuments(Array.isArray(docs) ? docs : []);
-				setConsultations(Array.isArray(cons) ? cons : []);
+		let cancelled = false;
+		axios
+			.get(`${base_url}/payments/filter-options/${orgId}`)
+			.then((response) => {
+				if (cancelled) return;
+				const data = response.data?.data;
+				setPaymentFilterTitles({
+					courseTitles: Array.isArray(data?.courseTitles) ? data.courseTitles : [],
+					documentNames: Array.isArray(data?.documentNames) ? data.documentNames : [],
+					consultationTitles: Array.isArray(data?.consultationTitles) ? data.consultationTitles : [],
+				});
 			})
 			.catch(() => {});
+		return () => {
+			cancelled = true;
+		};
 	}, [orgId, base_url]);
 
 	const filterOptions = useMemo(() => {
-		const courseTitles = courses?.map((c) => c.title).filter(Boolean) || [];
-		const documentNames = documents?.map((d) => d.name).filter(Boolean) || [];
-		const consultationTitles = consultations?.map((c) => c.title).filter(Boolean) || [];
+		const { courseTitles, documentNames, consultationTitles } = paymentFilterTitles;
 		const all = [
 			{ value: '', label: 'All Payments' },
 			...courseTitles.map((title) => ({
@@ -76,10 +90,10 @@ const AdminPaymentsTab = () => {
 			seen.add(o.value);
 			return true;
 		});
-	}, [courses, documents, consultations]);
+	}, [paymentFilterTitles]);
 
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
 
 	const pageSize = 50;
 
@@ -131,7 +145,8 @@ const AdminPaymentsTab = () => {
 
 	useEffect(() => {
 		enablePaymentsFetch();
-	}, [enablePaymentsFetch]);
+		return disablePaymentsFetch;
+	}, [enablePaymentsFetch, disablePaymentsFetch]);
 
 	// Show skeleton on initial load when we have no data yet
 	if (paymentsLoading && (!payments || payments.length === 0)) {
@@ -140,10 +155,11 @@ const AdminPaymentsTab = () => {
 
 	const handleViewPayment = (payment: Payment) => {
 		setSelectedPayment(payment);
-		setIsDialogOpen(true);
 	};
 
 	const handleDownloadPayments = async () => {
+		if (isDownloading) return;
+		setIsDownloading(true);
 		try {
 			// Build query parameters for download
 			const params = new URLSearchParams();
@@ -174,6 +190,8 @@ const AdminPaymentsTab = () => {
 			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
+		} finally {
+			setIsDownloading(false);
 		}
 	};
 
@@ -198,7 +216,9 @@ const AdminPaymentsTab = () => {
 				onResetFilter={resetFilter}
 				actionButtons={[
 					{
-						label: isSearchActive
+						label: isDownloading
+							? 'Downloading...'
+							: isSearchActive
 							? isMobileSize
 								? 'Download Filtered'
 								: 'Download Filtered Payments'
@@ -207,6 +227,7 @@ const AdminPaymentsTab = () => {
 								: 'Download All Payments',
 						onClick: handleDownloadPayments,
 						startIcon: <DownloadIcon />,
+						disabled: isDownloading,
 					},
 				]}
 				isSticky={true}
@@ -391,14 +412,13 @@ const AdminPaymentsTab = () => {
 				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsCurrentPage} onChange={handlePageChange} />
 			</Box>
 
-			<PaymentDetailsDialog
-				open={isDialogOpen}
-				onClose={() => {
-					setIsDialogOpen(false);
-					setSelectedPayment(null);
-				}}
-				payment={selectedPayment}
-			/>
+			{selectedPayment && (
+				<PaymentDetailsDialog
+					open={true}
+					onClose={() => setSelectedPayment(null)}
+					payment={selectedPayment}
+				/>
+			)}
 		</>
 	);
 };

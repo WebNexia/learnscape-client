@@ -195,7 +195,8 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 	};
 
 	useEffect(() => {
-		if (!userId) return;
+		// refetch() bypasses `enabled`, so gate the periodic refresh on the same route allowlist
+		if (!userId || !shouldFetchUploadCounts(pathname)) return;
 
 		let interval: ReturnType<typeof setInterval> | undefined;
 
@@ -229,7 +230,7 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 			if (interval) clearInterval(interval);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
-	}, [userId, refetch]);
+	}, [userId, pathname, refetch]);
 
 	const value: UploadLimitContextType = useMemo(
 		() => ({

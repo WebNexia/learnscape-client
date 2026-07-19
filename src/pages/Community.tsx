@@ -227,62 +227,68 @@ const Community = () => {
 						maxWidth: '1200px',
 						mx: 'auto',
 					}}>
-					<CustomDialog
-						openModal={communityIntroModalOpen}
-						closeModal={() => setCommunityIntroModalOpen(false)}
-						maxWidth='sm'
-						title='Welcome to our Community'>
-						<DialogContent sx={{ padding: '2rem' }}>
-							<Typography
-								variant='body2'
-								sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-								Our community is here to support your English learning journey. Each topic is a chance to share your thoughts, ask questions, and
-								improve. Dive into the discussions, help others, and don't be afraid to make mistakes—they're part of the journey! your English in a
-								supportive environment.
-							</Typography>
+					{communityIntroModalOpen && (
+						<CustomDialog
+							openModal={communityIntroModalOpen}
+							closeModal={() => setCommunityIntroModalOpen(false)}
+							maxWidth='sm'
+							title='Welcome to our Community'>
+							<DialogContent sx={{ padding: '2rem' }}>
+								<Typography
+									variant='body2'
+									sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									Our community is here to support your English learning journey. Each topic is a chance to share your thoughts, ask questions, and
+									improve. Dive into the discussions, help others, and don't be afraid to make mistakes—they're part of the journey! your English in a
+									supportive environment.
+								</Typography>
 
-							<Typography variant='body2' sx={{ textDecoration: 'underline', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-								The more you participate, the more you'll grow!
-							</Typography>
-						</DialogContent>
+								<Typography variant='body2' sx={{ textDecoration: 'underline', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									The more you participate, the more you'll grow!
+								</Typography>
+							</DialogContent>
 
-						<CustomCancelButton
-							sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
-							onClick={() => setCommunityIntroModalOpen(false)}>
-							Close
-						</CustomCancelButton>
-					</CustomDialog>
+							<CustomCancelButton
+								sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+								onClick={() => setCommunityIntroModalOpen(false)}>
+								Close
+							</CustomCancelButton>
+						</CustomDialog>
+					)}
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '97%' }}>
 						<Box sx={{ display: 'flex', flexDirection: 'column', width: '97%' }}>
-							<CreateTopicDialog
-								setCreateTopicModalOpen={setCreateTopicModalOpen}
-								createTopicModalOpen={createTopicModalOpen}
-								topic={newTopic}
-								setTopic={setNewTopic}
-							/>
-							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
-								<DialogContent>
-									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-										<Typography
-											variant='body2'
-											sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
-											{isSubscriptionsProductEnabled
-												? 'You need to enroll in a paid course or subscribe to create a topic.'
-												: 'You need to enroll in a paid course to create a topic.'}
-										</Typography>
-									</Box>
-								</DialogContent>
-								<CustomCancelButton
-									sx={{
-										alignSelf: 'end',
-										width: isMobileSize ? '20%' : '10%',
-										margin: isMobileSize ? '0 1rem 1rem 0' : '0 1rem 1rem 0',
-										padding: 0,
-									}}
-									onClick={() => setMessageNonRegisteredModalOpen(false)}>
-									Close
-								</CustomCancelButton>
-							</CustomDialog>
+							{createTopicModalOpen && (
+								<CreateTopicDialog
+									setCreateTopicModalOpen={setCreateTopicModalOpen}
+									createTopicModalOpen={createTopicModalOpen}
+									topic={newTopic}
+									setTopic={setNewTopic}
+								/>
+							)}
+							{messageNonRegisteredModalOpen && (
+								<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
+									<DialogContent>
+										<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+											<Typography
+												variant='body2'
+												sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
+												{isSubscriptionsProductEnabled
+													? 'You need to enroll in a paid course or subscribe to create a topic.'
+													: 'You need to enroll in a paid course to create a topic.'}
+											</Typography>
+										</Box>
+									</DialogContent>
+									<CustomCancelButton
+										sx={{
+											alignSelf: 'end',
+											width: isMobileSize ? '20%' : '10%',
+											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1rem 1rem 0',
+											padding: 0,
+										}}
+										onClick={() => setMessageNonRegisteredModalOpen(false)}>
+										Close
+									</CustomCancelButton>
+								</CustomDialog>
+							)}
 						</Box>
 					</Box>
 					<Box
@@ -357,68 +363,70 @@ const Community = () => {
 						<CustomTablePagination count={topicsNumberOfPages} page={topicsCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
-				<CustomDialog openModal={rulesModalOpen} closeModal={() => setRulesModalOpen(false)} title='Community Guidelines'>
-					<DialogContent>
-						<Box>
-							<Typography
-								variant='body2'
-								sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{communityRulesIntro}
-							</Typography>
-						</Box>
-						<Box sx={{ mt: isMobileSize ? '1.5rem' : '2rem' }}>
-							{communityRules?.map((rule, index) => (
-								<Box key={index} sx={{ mb: '2rem' }}>
-									<Box sx={{ mb: '0.5rem' }}>
-										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
-											{rule.rule}
-										</Typography>
-									</Box>
-									<Box>
-										<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											{rule.explanation}
-										</Typography>
-									</Box>
-								</Box>
-							))}
-						</Box>
-						<Box sx={{ mt: isMobileSize ? '2rem' : '3rem' }}>
-							<Box sx={{ mb: '0.5rem' }}>
-								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
-									{consequences.title}
-								</Typography>
-							</Box>
-							<Box sx={{ mb: '0.5rem' }}>
-								<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									{consequences.explanation}
-								</Typography>
-							</Box>
+				{rulesModalOpen && (
+					<CustomDialog openModal={rulesModalOpen} closeModal={() => setRulesModalOpen(false)} title='Community Guidelines'>
+						<DialogContent>
 							<Box>
-								{consequences.consequences?.map((data, index) => (
-									<ul key={index}>
-										<li style={{ margin: '0 0 0.35rem 2rem' }}>
-											<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												{data}
+								<Typography
+									variant='body2'
+									sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{communityRulesIntro}
+								</Typography>
+							</Box>
+							<Box sx={{ mt: isMobileSize ? '1.5rem' : '2rem' }}>
+								{communityRules?.map((rule, index) => (
+									<Box key={index} sx={{ mb: '2rem' }}>
+										<Box sx={{ mb: '0.5rem' }}>
+											<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+												{rule.rule}
 											</Typography>
-										</li>
-									</ul>
+										</Box>
+										<Box>
+											<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												{rule.explanation}
+											</Typography>
+										</Box>
+									</Box>
 								))}
 							</Box>
-						</Box>
-						<Box sx={{ margin: isMobileSize ? '2rem 0' : '3rem 0' }}>
-							<Typography
-								variant='body2'
-								sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{conclusion}
-							</Typography>
-						</Box>
-					</DialogContent>
-					<CustomCancelButton
-						sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
-						onClick={() => setRulesModalOpen(false)}>
-						Close
-					</CustomCancelButton>
-				</CustomDialog>
+							<Box sx={{ mt: isMobileSize ? '2rem' : '3rem' }}>
+								<Box sx={{ mb: '0.5rem' }}>
+									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+										{consequences.title}
+									</Typography>
+								</Box>
+								<Box sx={{ mb: '0.5rem' }}>
+									<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										{consequences.explanation}
+									</Typography>
+								</Box>
+								<Box>
+									{consequences.consequences?.map((data, index) => (
+										<ul key={index}>
+											<li style={{ margin: '0 0 0.35rem 2rem' }}>
+												<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{data}
+												</Typography>
+											</li>
+										</ul>
+									))}
+								</Box>
+							</Box>
+							<Box sx={{ margin: isMobileSize ? '2rem 0' : '3rem 0' }}>
+								<Typography
+									variant='body2'
+									sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{conclusion}
+								</Typography>
+							</Box>
+						</DialogContent>
+						<CustomCancelButton
+							sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+							onClick={() => setRulesModalOpen(false)}>
+							Close
+						</CustomCancelButton>
+					</CustomDialog>
+				)}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

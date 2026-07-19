@@ -11,12 +11,12 @@ import {
 	DialogActions,
 	Paper,
 	Chip,
-	Tooltip,
+	CircularProgress,
 } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useState, useRef, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Delete, Visibility, ArrowBack, Person, Email, Download as DownloadIcon, AccessTime } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -25,14 +25,14 @@ import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { FeedbackFormSubmission } from '../interfaces/feedbackFormSubmission';
+import { FeedbackFormSubmission, FeedbackFormSubmissionSummary } from '../interfaces/feedbackFormSubmission';
 import { FeedbackForm } from '../interfaces/feedbackForm';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { dateTimeFormatter } from '../utils/dateFormatter';
 import { feedbackFormsService } from '../services/feedbackFormsService';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { Rating } from '@mui/material';
@@ -43,26 +43,37 @@ const FeedbackFormSubmissions = () => {
 	const navigate = useNavigate();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const queryClient = useQueryClient();
 
 	const [form, setForm] = useState<FeedbackForm | null>(null);
-	const [submissions, setSubmissions] = useState<FeedbackFormSubmission[]>([]);
+	const [submissions, setSubmissions] = useState<FeedbackFormSubmissionSummary[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
 	const [successMessage, setSuccessMessage] = useState<string>('');
 	const [errorMessage, setErrorMessage] = useState<string>('');
 	const [successSnackbarOpen, setSuccessSnackbarOpen] = useState<boolean>(false);
 	const [errorSnackbarOpen, setErrorSnackbarOpen] = useState<boolean>(false);
+	const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
 	// Modal states
-	const [isSubmissionViewModalOpen, setIsSubmissionViewModalOpen] = useState<boolean[]>([]);
-	const [isSubmissionDeleteModalOpen, setIsSubmissionDeleteModalOpen] = useState<boolean[]>([]);
-	const [selectedSubmission, setSelectedSubmission] = useState<FeedbackFormSubmission | null>(null);
-	const [selectedSubmissionIndex, setSelectedSubmissionIndex] = useState<number>(-1);
-	const [submissionToDelete, setSubmissionToDelete] = useState<FeedbackFormSubmission | null>(null);
+	const [selectedSubmission, setSelectedSubmission] = useState<FeedbackFormSubmissionSummary | null>(null);
+	const [submissionToDelete, setSubmissionToDelete] = useState<FeedbackFormSubmissionSummary | null>(null);
+
+	const {
+		data: selectedSubmissionDetail,
+		isLoading: isSubmissionDetailLoading,
+		isError: isSubmissionDetailError,
+	} = useQuery<FeedbackFormSubmission>(
+		['feedbackFormSubmission', selectedSubmission?._id],
+		() => feedbackFormsService.getSubmissionById(selectedSubmission!._id),
+		{
+			enabled: !!selectedSubmission?._id,
+			staleTime: 5 * 60 * 1000,
+			refetchOnWindowFocus: false,
+		}
+	);
 
 	// Helper functions for submitter info
-	const getSubmitterName = (submission: FeedbackFormSubmission): string => {
+	const getSubmitterName = (submission: FeedbackFormSubmissionSummary | FeedbackFormSubmission): string => {
 		if (submission.isAnonymous) {
 			return submission.userName || 'Anonymous';
 		}
@@ -75,7 +86,7 @@ const FeedbackFormSubmissions = () => {
 		return submission.userName || 'N/A';
 	};
 
-	const getSubmitterEmail = (submission: FeedbackFormSubmission): string => {
+	const getSubmitterEmail = (submission: FeedbackFormSubmissionSummary | FeedbackFormSubmission): string => {
 		if (submission.isAnonymous) {
 			return submission.userEmail || 'N/A';
 		}
@@ -85,7 +96,7 @@ const FeedbackFormSubmissions = () => {
 		return submission.userEmail || 'N/A';
 	};
 
-	const getSubmitterInfo = (submission: FeedbackFormSubmission): string => {
+	const getSubmitterInfo = (submission: FeedbackFormSubmissionSummary | FeedbackFormSubmission): string => {
 		const name = getSubmitterName(submission);
 		const email = getSubmitterEmail(submission);
 		if (email && email !== 'N/A') {
@@ -131,12 +142,17 @@ const FeedbackFormSubmissions = () => {
 
 	const totalPages = Math.ceil(sortedSubmissions.length / pageSize);
 	const paginatedSubmissions = sortedSubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedFormFields = useMemo(() => [...(form?.fields || [])].sort((a, b) => a.order - b.order), [form?.fields]);
+	const selectedResponsesByFieldId = useMemo(
+		() => new Map((selectedSubmissionDetail?.responses || []).map((response) => [response.fieldId, response])),
+		[selectedSubmissionDetail?.responses]
+	);
 
-	const prevLengthRef = useRef<number>(0);
-
-	// Fetch form details
+	// Form metadata and lightweight submission summaries are independent.
 	useEffect(() => {
-		const fetchForm = async () => {
+		let cancelled = false;
+
+		const fetchPageData = async () => {
 			if (!formId) {
 				setError('Form ID is required');
 				setLoading(false);
@@ -144,76 +160,43 @@ const FeedbackFormSubmissions = () => {
 			}
 
 			try {
-				const formData = await feedbackFormsService.getFeedbackFormById(formId);
-				setForm(formData);
-			} catch (err: any) {
-				setError(err?.response?.data?.message || 'Failed to fetch form details');
-			}
-		};
-
-		fetchForm();
-	}, [formId]);
-
-	// Fetch submissions
-	useEffect(() => {
-		const fetchSubmissions = async () => {
-			if (!formId) return;
-
-			try {
 				setLoading(true);
-				const submissionsData = await feedbackFormsService.getFormSubmissions(formId);
-				setSubmissions(submissionsData);
+				const [formData, submissionSummaries] = await Promise.all([
+					feedbackFormsService.getFeedbackFormById(formId),
+					feedbackFormsService.getFormSubmissionSummaries(formId),
+				]);
+				if (cancelled) return;
+				setForm(formData);
+				setSubmissions(submissionSummaries);
 				setError(null);
 			} catch (err: any) {
-				setError(err?.response?.data?.message || 'Failed to fetch submissions');
+				if (cancelled) return;
+				setError(err?.response?.data?.message || 'Failed to fetch form details');
 				setSubmissions([]);
 			} finally {
-				setLoading(false);
+				if (!cancelled) setLoading(false);
 			}
 		};
 
-		if (form) {
-			fetchSubmissions();
-		}
-	}, [formId, form]);
+		void fetchPageData();
+		return () => {
+			cancelled = true;
+		};
+	}, [formId]);
 
-	// Initialize modal states
-	useEffect(() => {
-		if (paginatedSubmissions.length !== prevLengthRef.current) {
-			prevLengthRef.current = paginatedSubmissions.length;
-			setIsSubmissionViewModalOpen(Array(paginatedSubmissions.length).fill(false));
-			setIsSubmissionDeleteModalOpen(Array(paginatedSubmissions.length).fill(false));
-		}
-	}, [currentPage, paginatedSubmissions.length]);
-
-	const openSubmissionViewModal = (index: number) => {
-		const submission = paginatedSubmissions[index];
+	const openSubmissionViewModal = (submission: FeedbackFormSubmissionSummary) => {
 		setSelectedSubmission(submission);
-		setSelectedSubmissionIndex(index);
-		const updatedState = [...isSubmissionViewModalOpen];
-		updatedState[index] = true;
-		setIsSubmissionViewModalOpen(updatedState);
 	};
 
-	const closeSubmissionViewModal = (index: number) => {
-		const updatedState = [...isSubmissionViewModalOpen];
-		updatedState[index] = false;
-		setIsSubmissionViewModalOpen(updatedState);
+	const closeSubmissionViewModal = () => {
 		setSelectedSubmission(null);
-		setSelectedSubmissionIndex(-1);
 	};
 
-	const openDeleteSubmissionModal = (index: number) => {
-		const updatedState = [...isSubmissionDeleteModalOpen];
-		updatedState[index] = true;
-		setIsSubmissionDeleteModalOpen(updatedState);
-		setSubmissionToDelete(paginatedSubmissions[index]);
+	const openDeleteSubmissionModal = (submission: FeedbackFormSubmissionSummary) => {
+		setSubmissionToDelete(submission);
 	};
 
-	const closeDeleteSubmissionModal = (index: number) => {
-		const updatedState = [...isSubmissionDeleteModalOpen];
-		updatedState[index] = false;
-		setIsSubmissionDeleteModalOpen(updatedState);
+	const closeDeleteSubmissionModal = () => {
 		setSubmissionToDelete(null);
 	};
 
@@ -230,11 +213,7 @@ const FeedbackFormSubmissions = () => {
 				setForm({ ...form, submissionCount: Math.max(0, (form.submissionCount || 0) - 1) });
 			}
 
-			// Close modal
-			const index = paginatedSubmissions.findIndex((s) => s._id === submissionToDelete._id);
-			if (index !== -1) {
-				closeDeleteSubmissionModal(index);
-			}
+			closeDeleteSubmissionModal();
 		} catch (error: any) {
 			console.error('Delete submission error:', error);
 			setErrorMessage(error?.response?.data?.message || 'Failed to delete submission');
@@ -335,86 +314,25 @@ const FeedbackFormSubmissions = () => {
 
 	const handleDownloadSubmissions = async () => {
 		try {
-			if (!form || sortedSubmissions.length === 0) {
+			if (!form || submissions.length === 0) {
 				setErrorMessage('No submissions to download');
 				setErrorSnackbarOpen(true);
 				return;
 			}
 
-			// Format field value for Excel
-			const formatFieldValue = (field: any, response: any): string => {
-				if (!response || response.value === undefined || response.value === null) {
-					return 'N/A';
-				}
-
-				const value = response.value;
-
-				switch (field.type) {
-					case 'rating':
-						return String(value || 'N/A');
-					case 'checkbox':
-						return Array.isArray(value) ? value.join(', ') : String(value);
-					case 'multiple-choice':
-						return String(value);
-					case 'date':
-						return value ? new Date(value).toLocaleDateString() : 'N/A';
-					case 'textarea':
-					case 'text':
-					default:
-						return String(value || 'N/A');
-				}
-			};
-
-			// Create Excel data
-			const excelData = sortedSubmissions.map((submission: FeedbackFormSubmission) => {
-				const row: any = {
-					'Submitter Name': getSubmitterName(submission),
-					'Submitter Email': getSubmitterEmail(submission),
-					'Anonymous': submission.isAnonymous ? 'Yes' : 'No',
-					'Submitted At': submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : 'N/A',
-				};
-
-				// Add each form field as a column
-				form.fields
-					.sort((a, b) => a.order - b.order)
-					.forEach((field) => {
-						const response = submission.responses.find((r) => r.fieldId === field.fieldId);
-						row[field.label] = formatFieldValue(field, response);
-					});
-
-				return row;
-			});
-
-			// Create and download Excel file
-			const XLSX = await import('xlsx');
-			const ws = XLSX.utils.json_to_sheet(excelData);
-
-			// Auto-fit column widths based on content (approximate fit)
-			if (excelData.length > 0) {
-				const headers = Object.keys(excelData[0]);
-				const cols = headers.map((key) => {
-					const headerLength = key.length;
-					const maxCellLength = excelData.reduce((max, row) => {
-						const cellValue = row[key];
-						const cellLength = cellValue === undefined || cellValue === null ? 0 : String(cellValue).length;
-						return Math.max(max, cellLength);
-					}, headerLength);
-
-					// Add a little padding, clamp to reasonable range
-					const width = Math.min(Math.max(maxCellLength + 2, 10), 60);
-					return { wch: width };
-				});
-				(ws as any)['!cols'] = cols;
-			}
-
-			const wb = XLSX.utils.book_new();
-			XLSX.utils.book_append_sheet(wb, ws, 'Submissions');
-
-			// Build filename
+			setIsDownloading(true);
+			const blob = await feedbackFormsService.exportSubmissions(formId!);
+			const downloadUrl = window.URL.createObjectURL(blob);
 			const formTitleForFilename = form.title.replace(/[^a-zA-Z0-9]/g, '_');
 			const filename = `${formTitleForFilename}_Submissions_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-			XLSX.writeFile(wb, filename);
+			const link = document.createElement('a');
+			link.href = downloadUrl;
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(downloadUrl);
 
 			setSuccessMessage('Submissions downloaded successfully');
 			setSuccessSnackbarOpen(true);
@@ -422,6 +340,8 @@ const FeedbackFormSubmissions = () => {
 			console.error('Download error:', error);
 			setErrorMessage(error?.message || 'Failed to download submissions');
 			setErrorSnackbarOpen(true);
+		} finally {
+			setIsDownloading(false);
 		}
 	};
 
@@ -472,7 +392,7 @@ const FeedbackFormSubmissions = () => {
 								type='button'
 								size='small'
 								onClick={handleDownloadSubmissions}
-								disabled={submissions.length === 0}
+								disabled={submissions.length === 0 || isDownloading}
 								startIcon={<DownloadIcon />}
 								sx={{
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
@@ -481,7 +401,7 @@ const FeedbackFormSubmissions = () => {
 									padding: isMobileSize ? '0.25rem 0.5rem' : '0.5rem 1rem',
 									mb: '0.5rem',
 								}}>
-								{isMobileSize ? 'Download' : 'Download All Feedback'}
+								{isDownloading ? 'Downloading...' : isMobileSize ? 'Download' : 'Download All Feedback'}
 							</CustomSubmitButton>
 						</Box>
 					</Box>
@@ -511,14 +431,14 @@ const FeedbackFormSubmissions = () => {
 											width: isMobileSize ? '20%' : '18%',
 										},
 									}}>
-									<CustomTableHead<FeedbackFormSubmission>
+									<CustomTableHead<FeedbackFormSubmissionSummary>
 										columns={getColumns(isMobileSize)}
-										orderBy={orderBy as keyof FeedbackFormSubmission}
+										orderBy={orderBy as keyof FeedbackFormSubmissionSummary}
 										order={order}
 										handleSort={handleSort}
 									/>
 									<TableBody>
-										{paginatedSubmissions.map((submission: FeedbackFormSubmission, index: number) => {
+										{paginatedSubmissions.map((submission: FeedbackFormSubmissionSummary) => {
 											return (
 												<TableRow key={submission._id} hover>
 													<CustomTableCell align='center'>
@@ -542,12 +462,12 @@ const FeedbackFormSubmissions = () => {
 													<TableCell align='center' sx={{ textAlign: 'center' }}>
 														<CustomActionBtn
 															title='View Details'
-															onClick={() => openSubmissionViewModal(index)}
+															onClick={() => openSubmissionViewModal(submission)}
 															icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														/>
 														<CustomActionBtn
 															title='Delete'
-															onClick={() => openDeleteSubmissionModal(index)}
+															onClick={() => openDeleteSubmissionModal(submission)}
 															icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														/>
 													</TableCell>
@@ -574,12 +494,19 @@ const FeedbackFormSubmissions = () => {
 					{/* Submission Details Modal */}
 					{selectedSubmission && form && (
 						<CustomDialog
-							openModal={isSubmissionViewModalOpen[selectedSubmissionIndex]}
-							closeModal={() => closeSubmissionViewModal(selectedSubmissionIndex)}
+							openModal={true}
+							closeModal={closeSubmissionViewModal}
 							title='Feedback Details'
 							maxWidth='sm'>
 							<DialogContent>
-								<Box sx={{ p: 2 }}>
+								{isSubmissionDetailLoading ? (
+									<Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+										<CircularProgress size={28} />
+									</Box>
+								) : isSubmissionDetailError || !selectedSubmissionDetail ? (
+									<Alert severity='error'>Failed to load submission details.</Alert>
+								) : (
+									<Box sx={{ p: 2 }}>
 									{/* Submitter Info */}
 									<Paper elevation={1} sx={{ p: 2, mb: 3, backgroundColor: theme.bgColor?.secondary }}>
 										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: 2, fontWeight: 600 }}>
@@ -593,7 +520,7 @@ const FeedbackFormSubmissions = () => {
 														Name:
 													</Typography>
 													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 500 }}>
-														{getSubmitterName(selectedSubmission)}
+														{getSubmitterName(selectedSubmissionDetail)}
 													</Typography>
 												</Box>
 											</Box>
@@ -604,7 +531,7 @@ const FeedbackFormSubmissions = () => {
 														Email:
 													</Typography>
 													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 500 }}>
-														{getSubmitterEmail(selectedSubmission)}
+														{getSubmitterEmail(selectedSubmissionDetail)}
 													</Typography>
 												</Box>
 											</Box>
@@ -614,7 +541,7 @@ const FeedbackFormSubmissions = () => {
 													Submitted At:
 												</Typography>
 												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 500 }}>
-													{selectedSubmission.submittedAt ? dateTimeFormatter(selectedSubmission.submittedAt) : 'N/A'}
+													{selectedSubmissionDetail.submittedAt ? dateTimeFormatter(selectedSubmissionDetail.submittedAt) : 'N/A'}
 												</Typography>
 											</Box>
 										</Box>
@@ -625,10 +552,8 @@ const FeedbackFormSubmissions = () => {
 										Responses
 									</Typography>
 									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-										{form.fields
-											.sort((a, b) => a.order - b.order)
-											.map((field) => {
-												const response = selectedSubmission.responses.find((r) => r.fieldId === field.fieldId);
+										{sortedFormFields.map((field) => {
+												const response = selectedResponsesByFieldId.get(field.fieldId);
 												return (
 													<Paper key={field.fieldId} elevation={1} sx={{ p: 2, backgroundColor: theme.bgColor?.secondary }}>
 														<Typography
@@ -655,53 +580,44 @@ const FeedbackFormSubmissions = () => {
 														)}
 													</Paper>
 												);
-											})}
+										})}
 									</Box>
-								</Box>
+									</Box>
+								)}
 							</DialogContent>
 							<DialogActions sx={{ margin: '0.5rem 0.5rem 0.5rem 0' }}>
-								<CustomCancelButton onClick={() => closeSubmissionViewModal(selectedSubmissionIndex)}>Close</CustomCancelButton>
+								<CustomCancelButton onClick={closeSubmissionViewModal}>Close</CustomCancelButton>
 							</DialogActions>
 						</CustomDialog>
 					)}
 
 					{/* Delete Confirmation Modal */}
-					{paginatedSubmissions.map((submission: FeedbackFormSubmission, index: number) => {
-						const deleteModalOpen = isSubmissionDeleteModalOpen[index] || false;
-						return (
-							deleteModalOpen && (
-								<CustomDialog
-									key={`delete-${submission._id}`}
-									openModal={deleteModalOpen}
-									closeModal={() => closeDeleteSubmissionModal(index)}
-									title='Delete Submission'
-									maxWidth='xs'>
-									<DialogContent>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-											Are you sure you want to delete this submission?
-										</Typography>
-										<Box sx={{ mt: 2, p: 2, backgroundColor: theme.bgColor?.secondary, borderRadius: 1 }}>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>
-												Submitter: {getSubmitterInfo(submission)}
-											</Typography>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', mt: 1 }}>
-												Submitted: {submission.submittedAt ? dateTimeFormatter(submission.submittedAt) : 'N/A'}
-											</Typography>
-										</Box>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
-											This action cannot be undone.
-										</Typography>
-									</DialogContent>
-									<CustomDialogActions
-										onCancel={() => closeDeleteSubmissionModal(index)}
-										deleteBtn={true}
-										onDelete={handleDeleteSubmission}
-										actionSx={{ mb: '0.5rem' }}
-									/>
-								</CustomDialog>
-							)
-						);
-					})}
+					{submissionToDelete && (
+						<CustomDialog openModal={true} closeModal={closeDeleteSubmissionModal} title='Delete Submission' maxWidth='xs'>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+									Are you sure you want to delete this submission?
+								</Typography>
+								<Box sx={{ mt: 2, p: 2, backgroundColor: theme.bgColor?.secondary, borderRadius: 1 }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>
+										Submitter: {getSubmitterInfo(submissionToDelete)}
+									</Typography>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', mt: 1 }}>
+										Submitted: {submissionToDelete.submittedAt ? dateTimeFormatter(submissionToDelete.submittedAt) : 'N/A'}
+									</Typography>
+								</Box>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
+									This action cannot be undone.
+								</Typography>
+							</DialogContent>
+							<CustomDialogActions
+								onCancel={closeDeleteSubmissionModal}
+								deleteBtn={true}
+								onDelete={handleDeleteSubmission}
+								actionSx={{ mb: '0.5rem' }}
+							/>
+						</CustomDialog>
+					)}
 
 					{/* Success Snackbar */}
 					<Snackbar

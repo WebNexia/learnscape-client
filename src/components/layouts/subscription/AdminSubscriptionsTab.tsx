@@ -33,17 +33,17 @@ const AdminSubscriptionsTab = () => {
 		removeSubscription,
 		updateSubscription,
 		enableSubscriptionsFetch,
+		disableSubscriptionsFetch,
 		setSubscriptionsPageNumber,
 	} = useContext(SubscriptionsContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	// Dialog states
-	const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean[]>([]);
-	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState<boolean[]>([]);
-	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean[]>([]);
+	const [activeDialog, setActiveDialog] = useState<'view' | 'cancel' | 'delete' | null>(null);
 	const [selectedSubscription, setSelectedSubscription] = useState<UserSubscription | null>(null);
+	const [isMutating, setIsMutating] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
 
 	// Snackbar states
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -128,9 +128,12 @@ const AdminSubscriptionsTab = () => {
 
 	useEffect(() => {
 		enableSubscriptionsFetch();
-	}, [enableSubscriptionsFetch]);
+		return disableSubscriptionsFetch;
+	}, [enableSubscriptionsFetch, disableSubscriptionsFetch]);
 
 	const handleDownloadSubscriptions = async () => {
+		if (isDownloading) return;
+		setIsDownloading(true);
 		try {
 			// Build query parameters for download
 			const params = new URLSearchParams();
@@ -161,82 +164,42 @@ const AdminSubscriptionsTab = () => {
 			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
+		} finally {
+			setIsDownloading(false);
 		}
 	};
 
-	// Dialog handler functions
-	const openViewDialog = (index: number, subscription: UserSubscription) => {
-		const updatedState = Array(paginatedSubscriptions.length).fill(false);
-		updatedState[index] = true;
-		setIsViewDialogOpen(updatedState);
+	const openDialog = (dialog: 'view' | 'cancel' | 'delete', subscription: UserSubscription) => {
 		setSelectedSubscription(subscription);
+		setActiveDialog(dialog);
 	};
 
-	const closeViewDialog = (index: number) => {
-		const updatedState = [...isViewDialogOpen];
-		updatedState[index] = false;
-		setIsViewDialogOpen(updatedState);
-		setSelectedSubscription(null);
-	};
-
-	const openCancelDialog = (index: number, subscription: UserSubscription) => {
-		const updatedState = Array(paginatedSubscriptions.length).fill(false);
-		updatedState[index] = true;
-		setIsCancelDialogOpen(updatedState);
-		setSelectedSubscription(subscription);
-	};
-
-	const closeCancelDialog = (index: number) => {
-		const updatedState = [...isCancelDialogOpen];
-		updatedState[index] = false;
-		setIsCancelDialogOpen(updatedState);
-		setSelectedSubscription(null);
-	};
-
-	const openDeleteDialog = (index: number, subscription: UserSubscription) => {
-		const updatedState = Array(paginatedSubscriptions.length).fill(false);
-		updatedState[index] = true;
-		setIsDeleteDialogOpen(updatedState);
-		setSelectedSubscription(subscription);
-	};
-
-	const closeDeleteDialog = (index: number) => {
-		const updatedState = [...isDeleteDialogOpen];
-		updatedState[index] = false;
-		setIsDeleteDialogOpen(updatedState);
+	const closeDialog = () => {
+		if (isMutating) return;
+		setActiveDialog(null);
 		setSelectedSubscription(null);
 	};
 
 	const handleCancelSubscription = async (subscriptionId: string) => {
+		if (isMutating) return;
+		setIsMutating(true);
 		try {
 			const response = await axios.delete(`${base_url}/subscriptions/${subscriptionId}`);
 
 			if (response.data.status === 200) {
-				// Find the subscription to update
-				const subscriptionToUpdate = subscriptions.find((sub) => sub._id === subscriptionId);
-				if (subscriptionToUpdate) {
-					// Update the subscription status to 'canceled'
-					const updatedSubscription = {
-						...subscriptionToUpdate,
-						status: 'canceled' as const,
-						isActive: false,
-					};
-
-					// Update local state - update in context data
-					if (!isSearchActive) {
-						updateSubscription(updatedSubscription);
-					}
-
-					// If search is active, also update search results
-					if (isSearchActive) {
-						// The hook will handle updating search results automatically
-					}
+				if (selectedSubscription) {
+					updateSubscription({
+						...selectedSubscription,
+						...response.data.data,
+						userId: selectedSubscription.userId,
+					});
 				}
-
-				// Show success message
+				if (isSearchActive) handleSearch();
 				setSnackbarMessage('Subscription canceled successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				setActiveDialog(null);
+				setSelectedSubscription(null);
 			}
 		} catch (error) {
 			console.error('Error cancelling subscription:', error);
@@ -245,10 +208,14 @@ const AdminSubscriptionsTab = () => {
 			setSnackbarMessage('Failed to cancel subscription');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+		} finally {
+			setIsMutating(false);
 		}
 	};
 
 	const handleDeleteSubscription = async (subscriptionId: string) => {
+		if (isMutating) return;
+		setIsMutating(true);
 		try {
 			const response = await axios.delete(`${base_url}/subscriptions/${subscriptionId}/hard-delete`);
 
@@ -265,6 +232,8 @@ const AdminSubscriptionsTab = () => {
 				setSnackbarMessage('Subscription deleted successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				setActiveDialog(null);
+				setSelectedSubscription(null);
 			}
 		} catch (error) {
 			console.error('Error hard deleting subscription:', error);
@@ -273,6 +242,8 @@ const AdminSubscriptionsTab = () => {
 			setSnackbarMessage('Failed to delete subscription');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
+		} finally {
+			setIsMutating(false);
 		}
 	};
 
@@ -307,7 +278,9 @@ const AdminSubscriptionsTab = () => {
 				onResetFilter={resetFilter}
 				actionButtons={[
 					{
-						label: isSearchActive
+						label: isDownloading
+							? 'Downloading...'
+							: isSearchActive
 							? isMobileSize
 								? 'Download Filtered'
 								: 'Download Filtered Subscriptions'
@@ -316,6 +289,7 @@ const AdminSubscriptionsTab = () => {
 								: 'Download All Subscriptions',
 						onClick: handleDownloadSubscriptions,
 						startIcon: <DownloadIcon />,
+						disabled: isDownloading,
 					},
 				]}
 				isSticky={true}
@@ -448,7 +422,7 @@ const AdminSubscriptionsTab = () => {
 					/>
 					<TableBody>
 						{paginatedSubscriptions &&
-							paginatedSubscriptions?.map((subscription: UserSubscription, index: number) => {
+							paginatedSubscriptions?.map((subscription: UserSubscription) => {
 								return (
 									<TableRow key={subscription._id} hover>
 										<CustomTableCell
@@ -481,7 +455,7 @@ const AdminSubscriptionsTab = () => {
 											}}>
 											<CustomActionBtn
 												title='View Subscription'
-												onClick={() => openViewDialog(index, subscription)}
+												onClick={() => openDialog('view', subscription)}
 												icon={
 													<Visibility
 														fontSize='small'
@@ -492,19 +466,19 @@ const AdminSubscriptionsTab = () => {
 											{
 												<CustomActionBtn
 													title='Cancel Subscription'
-													onClick={() => openCancelDialog(index, subscription)}
+													onClick={() => openDialog('cancel', subscription)}
 													icon={
 														<Cancel
 															fontSize='small'
 															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '-0.35rem' : '-0.75rem' }}
 														/>
 													}
-													disabled={['canceled', 'incomplete', 'unpaid'].includes(subscription.status)}
+													disabled={Boolean(subscription.canceledAt) || ['canceled', 'incomplete', 'unpaid'].includes(subscription.status)}
 												/>
 											}
 											<CustomActionBtn
 												title='Delete Subscription'
-												onClick={() => openDeleteDialog(index, subscription)}
+												onClick={() => openDialog('delete', subscription)}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 										</TableCell>
@@ -527,166 +501,133 @@ const AdminSubscriptionsTab = () => {
 			</Box>
 
 			{/* View Subscription Dialog */}
-			{paginatedSubscriptions &&
-				paginatedSubscriptions?.map((subscription: UserSubscription, index) => (
-					<CustomDialog
-						key={`view-${subscription._id}`}
-						openModal={isViewDialogOpen[index] || false}
-						closeModal={() => closeViewDialog(index)}
-						title='Subscription Details'
-						maxWidth='xs'>
-						<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', p: '2rem 2rem 1rem 2rem' }}>
-							<Box>
-								<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
-									User Information:
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Name:</span>
-									{typeof subscription.userId === 'object'
-										? `${subscription.userId?.firstName || ''} ${subscription.userId?.lastName || ''}`.trim() || 'N/A'
-										: 'N/A'}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Email:</span>
-									{typeof subscription.userId === 'object' ? subscription.userId?.email || 'N/A' : 'N/A'}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Username:</span>
-									{typeof subscription.userId === 'object' ? subscription.userId?.username || 'N/A' : 'N/A'}
-								</Typography>
-							</Box>
-							<Box>
-								<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
-									Subscription Details:
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Type:</span>{' '}
-									{subscription.subscriptionType.charAt(0).toUpperCase() + subscription.subscriptionType.slice(1)}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Status:</span>{' '}
-									{subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Amount:</span>{' '}
-									{setCurrencySymbol(subscription.currentCurrency)}
-									{subscription.currentAmount}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
-										Current Period Start:
-									</span>{' '}
-									{dateFormatter(subscription.currentPeriodStart)}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
-										Current Period End:
-									</span>{' '}
-									{dateFormatter(subscription.currentPeriodEnd)}
-								</Typography>
-								{subscription.nextBillingDate && (
-									<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
-											Next Billing Date:
-										</span>{' '}
-										{dateFormatter(subscription.nextBillingDate)}
-									</Typography>
-								)}
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
-										Stripe Subscription ID:
-									</span>{' '}
-									{subscription.stripeSubscriptionId}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Created:</span>{' '}
-									{dateFormatter(subscription.createdAt)}
-								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Updated:</span>{' '}
-									{dateFormatter(subscription.updatedAt)}
-								</Typography>
-							</Box>
-						</DialogContent>
-						<DialogActions>
-							<CustomCancelButton onClick={() => closeViewDialog(index)} sx={{ margin: '0 1rem 0.5rem 0' }}>
-								Close
-							</CustomCancelButton>
-						</DialogActions>
-					</CustomDialog>
-				))}
-
-			{paginatedSubscriptions &&
-				paginatedSubscriptions?.map((subscription: UserSubscription, index) => (
-					<CustomDialog
-						key={`cancel-${subscription._id}`}
-						openModal={isCancelDialogOpen[index] || false}
-						closeModal={() => closeCancelDialog(index)}
-						title='Cancel Subscription'
-						maxWidth='xs'>
-						<DialogContent>
-							<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{`Are you sure you want to cancel the subscription for "${
-									typeof subscription.userId === 'object'
-										? subscription.userId?.email || subscription.userId?._id || 'N/A'
-										: subscription.userId || 'N/A'
-								}"? `}
+			{activeDialog === 'view' && selectedSubscription && (
+				<CustomDialog openModal={true} closeModal={closeDialog} title='Subscription Details' maxWidth='xs'>
+					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', p: '2rem 2rem 1rem 2rem' }}>
+						<Box>
+							<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+								User Information:
 							</Typography>
-							<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								This action will cancel the subscription but preserve the record for audit purposes.
+							<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Name:</span>
+								{typeof selectedSubscription.userId === 'object'
+									? `${selectedSubscription.userId?.firstName || ''} ${selectedSubscription.userId?.lastName || ''}`.trim() || 'N/A'
+									: 'N/A'}
 							</Typography>
-						</DialogContent>
-						<CustomDialogActions
-							onCancel={() => closeCancelDialog(index)}
-							deleteBtn={true}
-							deleteBtnText='Cancel'
-							cancelBtnText='Close'
-							onDelete={() => {
-								if (selectedSubscription) {
-									handleCancelSubscription(selectedSubscription._id);
-									closeCancelDialog(index);
-								}
-							}}
-							actionSx={{ mb: '0.5rem' }}
-						/>
-					</CustomDialog>
-				))}
-
-			{/* Delete Subscription Dialog */}
-			{paginatedSubscriptions &&
-				paginatedSubscriptions?.map((subscription: UserSubscription, index) => (
-					<CustomDialog
-						key={`delete-${subscription._id}`}
-						openModal={isDeleteDialogOpen[index] || false}
-						closeModal={() => closeDeleteDialog(index)}
-						title='Delete Subscription'
-						maxWidth='xs'>
-						<Box sx={{ p: '1rem' }}>
-							<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Are you sure you want to hard delete the subscription for "
-								{typeof subscription.userId === 'object'
-									? subscription.userId?.email || subscription.userId?._id || 'N/A'
-									: subscription.userId || 'N/A'}
-								"?
+							<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Email:</span>
+								{typeof selectedSubscription.userId === 'object' ? selectedSubscription.userId?.email || 'N/A' : 'N/A'}
 							</Typography>
-							<Typography variant='body2' sx={{ mt: '1rem', color: 'error.main', lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								This action cannot be undone and will remove the subscription from both the database and Stripe.
+							<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Username:</span>
+								{typeof selectedSubscription.userId === 'object' ? selectedSubscription.userId?.username || 'N/A' : 'N/A'}
 							</Typography>
 						</Box>
-						<CustomDialogActions
-							onCancel={() => closeDeleteDialog(index)}
-							deleteBtn={true}
-							onDelete={() => {
-								if (selectedSubscription) {
-									handleDeleteSubscription(selectedSubscription._id);
-									closeDeleteDialog(index);
-								}
-							}}
-							actionSx={{ mb: '0.5rem' }}
-							cancelBtnText='Close'
-						/>
-					</CustomDialog>
-				))}
+						<Box>
+							<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+								Subscription Details:
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Type:</span>{' '}
+								{selectedSubscription.subscriptionType.charAt(0).toUpperCase() + selectedSubscription.subscriptionType.slice(1)}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Status:</span>{' '}
+								{selectedSubscription.status.charAt(0).toUpperCase() + selectedSubscription.status.slice(1)}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Amount:</span>{' '}
+								{setCurrencySymbol(selectedSubscription.currentCurrency)}
+								{selectedSubscription.currentAmount}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Current Period Start:</span>{' '}
+								{dateFormatter(selectedSubscription.currentPeriodStart)}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Current Period End:</span>{' '}
+								{dateFormatter(selectedSubscription.currentPeriodEnd)}
+							</Typography>
+							{selectedSubscription.nextBillingDate && (
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Next Billing Date:</span>{' '}
+									{dateFormatter(selectedSubscription.nextBillingDate)}
+								</Typography>
+							)}
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Stripe Subscription ID:</span>{' '}
+								{selectedSubscription.stripeSubscriptionId}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Created:</span>{' '}
+								{dateFormatter(selectedSubscription.createdAt)}
+							</Typography>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Updated:</span>{' '}
+								{dateFormatter(selectedSubscription.updatedAt)}
+							</Typography>
+						</Box>
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton onClick={closeDialog} sx={{ margin: '0 1rem 0.5rem 0' }}>Close</CustomCancelButton>
+					</DialogActions>
+				</CustomDialog>
+			)}
+
+			{activeDialog === 'cancel' && selectedSubscription && (
+				<CustomDialog openModal={true} closeModal={closeDialog} title='Cancel Subscription' maxWidth='xs'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							{`Are you sure you want to cancel the subscription for "${
+								typeof selectedSubscription.userId === 'object'
+									? selectedSubscription.userId?.email || selectedSubscription.userId?._id || 'N/A'
+									: selectedSubscription.userId || 'N/A'
+							}"? `}
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							This action will cancel the subscription but preserve the record for audit purposes.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={closeDialog}
+						deleteBtn={true}
+						deleteBtnText='Cancel'
+						cancelBtnText='Close'
+						onDelete={() => handleCancelSubscription(selectedSubscription._id)}
+						isDeleting={isMutating}
+						disableBtn={isMutating}
+						disableCancelBtn={isMutating}
+						actionSx={{ mb: '0.5rem' }}
+					/>
+				</CustomDialog>
+			)}
+
+			{activeDialog === 'delete' && selectedSubscription && (
+				<CustomDialog openModal={true} closeModal={closeDialog} title='Delete Subscription' maxWidth='xs'>
+					<Box sx={{ p: '1rem' }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Are you sure you want to hard delete the subscription for "
+							{typeof selectedSubscription.userId === 'object'
+								? selectedSubscription.userId?.email || selectedSubscription.userId?._id || 'N/A'
+								: selectedSubscription.userId || 'N/A'}
+							"?
+						</Typography>
+						<Typography variant='body2' sx={{ mt: '1rem', color: 'error.main', lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							This action cannot be undone and will remove the subscription from both the database and Stripe.
+						</Typography>
+					</Box>
+					<CustomDialogActions
+						onCancel={closeDialog}
+						deleteBtn={true}
+						onDelete={() => handleDeleteSubscription(selectedSubscription._id)}
+						isDeleting={isMutating}
+						disableBtn={isMutating}
+						disableCancelBtn={isMutating}
+						actionSx={{ mb: '0.5rem' }}
+						cancelBtnText='Close'
+					/>
+				</CustomDialog>
+			)}
 
 			{/* Success/Error Snackbar */}
 			<Snackbar
@@ -700,7 +641,7 @@ const AdminSubscriptionsTab = () => {
 					severity={snackbarSeverity}
 					sx={{
 						'width': isMobileSize ? '60%' : '100%',
-						'backgroundColor': theme.bgColor?.greenSecondary,
+						'backgroundColor': snackbarSeverity === 'error' ? theme.palette.error.main : theme.bgColor?.greenSecondary,
 						'color': theme.textColor?.common.main,
 						'fontSize': isMobileSize ? '0.75rem' : undefined,
 						'& .MuiAlert-icon': {

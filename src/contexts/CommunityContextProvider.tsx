@@ -118,10 +118,10 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 
 	const { data: topicsData, isLoading } = useQuery(['allTopics', orgId], () => fetchTopics(1), {
 		enabled: isEnabled && !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
-		staleTime: 0, // Data is always stale - refetch when returning to page
+		staleTime: 0, // Always stale so remount after topic detail refreshes list counts
 		cacheTime: 5 * 60 * 1000, // 5 minutes - data stays in cache
-		refetchOnWindowFocus: true, // Refetch on window focus
-		refetchOnMount: true, // Refetch on component remount
+		refetchOnWindowFocus: false, // Consistent with other staff pages; remount still refetches
+		refetchOnMount: true, // Refetch when returning to community list
 	});
 
 	// Progressive pagination gap-filling (batched)

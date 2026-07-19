@@ -10,15 +10,16 @@ import audioUpload from '../../../../utils/audioUpload';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
-import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import { TopicInfo } from '../../../../interfaces/communityMessage';
+import { CommunityTopic } from '../../../../interfaces/communityTopics';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
 import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
+import { useQueryClient } from 'react-query';
 
 interface EditTopicDialogProps {
 	editTopicModalOpen: boolean;
@@ -31,7 +32,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { updateTopics } = useContext(CommunityContext);
+	const queryClient = useQueryClient();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -124,15 +125,31 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 				audioUrl: topic.audioUrl,
 			});
 
-			updateTopics({
-				...topic,
-				title: topic.title.trim(),
-				text: topic.text.trim(),
-				userId: { _id: user?._id!, username: user?.username!, imageUrl: user?.imageUrl! },
-				orgId,
-				updatedAt: response.data.updatedAt,
-			});
+			const title = topic.title.trim();
+			const text = topic.text.trim();
+			const updatedAt = response.data.updatedAt;
 
+			if (orgId) {
+				queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+					return (
+						oldData?.map((cachedTopic) => {
+							if (cachedTopic._id === topic._id) {
+								return { ...cachedTopic, title, text, imageUrl: topic.imageUrl, audioUrl: topic.audioUrl, updatedAt };
+							}
+							return cachedTopic;
+						}) || []
+					);
+				});
+			}
+
+			setTopic((prev) => ({
+				...prev,
+				title,
+				text,
+				imageUrl: topic.imageUrl,
+				audioUrl: topic.audioUrl,
+				updatedAt,
+			}));
 			// Use optimistic update for instant UI feedback (only for new uploads)
 			// Note: For editing, we only increment if new uploads were added
 			// This is a simplified approach - in production you might want to track original vs new uploads

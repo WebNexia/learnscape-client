@@ -13,7 +13,7 @@ import {
 	SelectChangeEvent,
 } from '@mui/material';
 import { Edit, Delete, Visibility } from '@mui/icons-material';
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { ConsultationSlot } from '../../interfaces/consultation';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
@@ -41,14 +41,15 @@ const ConsultationSlotsList = ({
 
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 
-	const filteredSlots = slots.filter((slot) => {
-		if (statusFilter === 'available') {
-			return !slot.appointmentRef;
-		} else if (statusFilter === 'booked') {
-			return !!slot.appointmentRef;
-		}
-		return true;
-	});
+	const filteredSlots = useMemo(
+		() =>
+			slots.filter((slot) => {
+				if (statusFilter === 'available') return !slot.appointmentRef;
+				if (statusFilter === 'booked') return !!slot.appointmentRef;
+				return true;
+			}),
+		[slots, statusFilter]
+	);
 
 	const formatSlotDateTime = (dateString: string) => {
 		return dateTimeFormatter(dateString);

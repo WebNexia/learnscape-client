@@ -335,7 +335,7 @@ const AdminInquiries = () => {
 														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													<CustomDialog
+													{viewModalOpen[index] && <CustomDialog
 														openModal={viewModalOpen[index]}
 														closeModal={() => handleCloseViewModal(index)}
 														maxWidth='sm'
@@ -385,7 +385,7 @@ const AdminInquiries = () => {
 																Cancel
 															</CustomCancelButton>
 														</DialogActions>
-													</CustomDialog>
+													</CustomDialog>}
 
 													<CustomActionBtn
 														title='Delete'
@@ -393,7 +393,7 @@ const AdminInquiries = () => {
 														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
 
-													<CustomDialog
+													{deleteModalOpen[index] && <CustomDialog
 														openModal={deleteModalOpen[index]}
 														closeModal={() => handleCloseDeleteModal(index)}
 														title='Delete Inquiry'
@@ -405,7 +405,7 @@ const AdminInquiries = () => {
 															onDelete={handleConfirmDelete}
 															actionSx={{ mb: '0.5rem' }}
 														/>
-													</CustomDialog>
+													</CustomDialog>}
 												</TableCell>
 											</TableRow>
 										);

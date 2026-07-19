@@ -12,14 +12,12 @@ import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface EditCodeDialogProps {
-	singleCode: PromoCode | null;
-	isEditCodeModalOpen: boolean[];
-	closeCodeEditModal: (index: number) => void;
-	index: number;
+	singleCode: PromoCode;
 	setSingleCode: React.Dispatch<React.SetStateAction<PromoCode | null>>;
+	onClose: () => void;
 }
 
-const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, index, setSingleCode }: EditCodeDialogProps) => {
+const EditCodeDialog = ({ singleCode, setSingleCode, onClose }: EditCodeDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { updatePromoCode } = useContext(PromoCodesContext);
 
@@ -27,6 +25,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [errorMsg, setErrorMsg] = useState<string>('');
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const { orgId } = useContext(OrganisationContext);
 
 	const editCode = async () => {
@@ -41,30 +40,26 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 		}
 
 		const updatedCode = {
-			_id: singleCode?._id!,
-			code: singleCode?.code!,
-			discountAmount: singleCode?.discountAmount || 0,
-			expirationDate: singleCode?.expirationDate!,
-			usageLimit: singleCode?.usageLimit || 0,
-			isActive: singleCode?.isActive!,
-			coursesApplicable: singleCode?.coursesApplicable!,
-			isAllCoursesSelected: singleCode?.isAllCoursesSelected!,
-			applicableForSubscriptions: singleCode?.applicableForSubscriptions || false,
+			_id: singleCode._id,
+			code: singleCode.code,
+			discountAmount: singleCode.discountAmount || 0,
+			expirationDate: singleCode.expirationDate,
+			usageLimit: singleCode.usageLimit || 0,
+			isActive: singleCode.isActive,
+			coursesApplicable: singleCode.coursesApplicable,
+			isAllCoursesSelected: singleCode.isAllCoursesSelected,
+			applicableForSubscriptions: singleCode.applicableForSubscriptions || false,
 			orgId,
-			usersUsed: singleCode?.usersUsed!,
 		};
-		const res = await axios.patch(`${base_url}/promocodes/${singleCode?._id}`, updatedCode);
-
-		closeCodeEditModal(index);
-
-		updatePromoCode({
-			...updatedCode,
-			createdAt: res.data.createdAt,
-			updatedAt: res.data.updatedAt,
-		});
+		setIsSubmitting(true);
 		try {
+			const res = await axios.patch(`${base_url}/promocodes/${singleCode._id}`, updatedCode);
+			updatePromoCode(res.data.data as PromoCode);
+			onClose();
 		} catch (error) {
-			console.log(error);
+			console.error('Update promo code error:', error);
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -86,10 +81,8 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 
 	return (
 		<CustomDialog
-			openModal={isEditCodeModalOpen[index]}
-			closeModal={() => {
-				closeCodeEditModal(index);
-			}}
+			openModal={true}
+			closeModal={onClose}
 			title='Edit Promo Code'
 			maxWidth='sm'>
 			<form
@@ -222,10 +215,11 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 				</DialogContent>
 				<CustomDialogActions
 					actionSx={{ mt: '-1.5rem', mr: '0.5rem' }}
-					onCancel={() => {
-						closeCodeEditModal(index);
-					}}
+					onCancel={onClose}
 					submitBtnText='Save'
+					isSubmitting={isSubmitting}
+					disableBtn={isSubmitting}
+					disableCancelBtn={isSubmitting}
 				/>
 			</form>
 		</CustomDialog>

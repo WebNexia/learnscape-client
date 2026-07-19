@@ -336,11 +336,13 @@ const ConsultationPaper = ({
 								)}
 							</Box>
 
-							<ConsultationDetailsModal
-								consultation={singleConsultationBeforeSave || undefined}
-								isConsultationInfoDialogOpen={isConsultationInfoDialogOpen}
-								setIsConsultationInfoDialogOpen={setIsConsultationInfoDialogOpen}
-							/>
+							{isConsultationInfoDialogOpen && (
+								<ConsultationDetailsModal
+									consultation={singleConsultationBeforeSave}
+									isConsultationInfoDialogOpen={isConsultationInfoDialogOpen}
+									setIsConsultationInfoDialogOpen={setIsConsultationInfoDialogOpen}
+								/>
+							)}
 						</Box>
 					</Box>
 				</Box>

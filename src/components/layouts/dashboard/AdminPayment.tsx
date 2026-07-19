@@ -56,7 +56,7 @@ const AdminPayment = ({
 				},
 			}}>
 			<Box sx={{ flex: 1 }}>
-				<Typography variant={isMobileSize ? 'h6' : 'h5'}>Your Income</Typography>
+				<Typography variant={isMobileSize ? 'h6' : 'h5'}>Income</Typography>
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 6 }}>
 				<Typography variant='h2' sx={{ fontSize: isMobileSize ? '2.5rem' : '3.5rem' }}>

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -40,7 +40,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 	// ✅ main hook for subscriptions
 	const {
 		data: subscriptions,
@@ -67,8 +67,8 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 		disableAutoGapFill: true,
 	});
 
-	const enableSubscriptionsFetch = () => setIsEnabled(true);
-	const disableSubscriptionsFetch = () => setIsEnabled(false);
+	const enableSubscriptionsFetch = useCallback(() => setIsEnabled(true), []);
+	const disableSubscriptionsFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<SubscriptionsContext.Provider

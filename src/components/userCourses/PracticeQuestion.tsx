@@ -1477,15 +1477,22 @@ const PracticeQuestion = ({
 					</Tooltip>
 				)}
 
-				<CustomDialog
+				{isLessonCourseCompletedModalOpen && <CustomDialog
 					openModal={isLessonCourseCompletedModalOpen}
 					closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
 					disableDismiss
 					maxWidth='xs'
-					title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
+					title={nextLessonId ? 'Lesson Completed / Ders Tamamlandı' : 'Course Completed / Kurs Tamamlandı'}>
 					<DialogContent sx={{ mb: '-0.5rem' }}>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
 							{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+						</Typography>
+						<Typography
+							variant='body2'
+							sx={{ mt: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, color: 'text.secondary' }}>
+							{nextLessonId
+								? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
+								: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -1505,7 +1512,7 @@ const PracticeQuestion = ({
 						isSubmitting={isNavigatingFromCompletedDialog}
 						actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 					/>
-				</CustomDialog>
+				</CustomDialog>}
 			</Box>
 			<Box
 				sx={{

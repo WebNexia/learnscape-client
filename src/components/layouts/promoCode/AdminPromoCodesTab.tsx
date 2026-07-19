@@ -22,7 +22,7 @@ import FilterSearchRow from '../FilterSearchRow';
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { promoCodes, totalItems, loadedPages, fetchMorePromoCodes, removePromoCode, setPromoCodesPageNumber, enablePromoCodesFetch } =
+	const { promoCodes, totalItems, loadedPages, fetchMorePromoCodes, removePromoCode, setPromoCodesPageNumber, enablePromoCodesFetch, disablePromoCodesFetch } =
 		useContext(PromoCodesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -86,59 +86,31 @@ const AdminPromoCodesTab = () => {
 	const paginatedPromoCodes = sortedPromoCodes;
 
 	const [isNewCodeModalOpen, setIsNewCodeModalOpen] = useState<boolean>(false);
-	const [isEditCodeModalOpen, setIsEditCodeModalOpen] = useState<boolean[]>([]);
-	const [isDeleteCodeModalOpen, setIsDeleteCodeModalOpen] = useState<boolean[]>([]);
-
-	const [singleCode, setSingleCode] = useState<PromoCode | null>(null);
+	const [codeToEdit, setCodeToEdit] = useState<PromoCode | null>(null);
+	const [codeToDelete, setCodeToDelete] = useState<PromoCode | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
 		enablePromoCodesFetch();
-	}, [enablePromoCodesFetch]);
+		return disablePromoCodesFetch;
+	}, [enablePromoCodesFetch, disablePromoCodesFetch]);
 
-	useEffect(() => {
-		setIsDeleteCodeModalOpen(Array(promoCodes.length).fill(false));
-		setIsEditCodeModalOpen(Array(promoCodes.length).fill(false));
-	}, [promoCodesCurrentPage, filterValue, searchValue]);
-
-	const openDeleteCodeModal = (index: number) => {
-		const updatedState = [...isDeleteCodeModalOpen];
-		updatedState[index] = true;
-		setIsDeleteCodeModalOpen(updatedState);
-	};
-	const closeDeleteCodeModal = (index: number) => {
-		const updatedState = [...isDeleteCodeModalOpen];
-		updatedState[index] = false;
-		setIsDeleteCodeModalOpen(updatedState);
-	};
-
-	const deleteCode = async (code: string): Promise<void> => {
+	const deleteCode = async (): Promise<void> => {
+		if (!codeToDelete || isDeleting) return;
+		setIsDeleting(true);
 		try {
-			// Find the promo code to get its ID
-			const promoCodeToDelete = promoCodes?.find((pc) => pc.code === code);
-			if (!promoCodeToDelete) return;
+			await axios.delete(`${base_url}/promocodes/${codeToDelete.code}`);
+			removePromoCode(codeToDelete._id);
 
-			await axios.delete(`${base_url}/promocodes/${code}`);
-			removePromoCode(promoCodeToDelete._id);
-
-			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				removeFromSearchResults(promoCodeToDelete._id);
+				removeFromSearchResults(codeToDelete._id);
 			}
+			setCodeToDelete(null);
 		} catch (error) {
 			console.error('Delete promo code error:', error);
+		} finally {
+			setIsDeleting(false);
 		}
-	};
-
-	const toggleCodeEditModal = (index: number) => {
-		const newEditModalOpen = [...isEditCodeModalOpen];
-		newEditModalOpen[index] = !newEditModalOpen[index];
-		setIsEditCodeModalOpen(newEditModalOpen);
-	};
-
-	const closeCodeEditModal = (index: number) => {
-		const newEditModalOpen = [...isEditCodeModalOpen];
-		newEditModalOpen[index] = false;
-		setIsEditCodeModalOpen(newEditModalOpen);
 	};
 
 	return (
@@ -178,7 +150,9 @@ const AdminPromoCodesTab = () => {
 				isPayments={true}
 			/>
 
-			<CreateCodeDialog isNewCodeModalOpen={isNewCodeModalOpen} setIsNewCodeModalOpen={setIsNewCodeModalOpen} />
+			{isNewCodeModalOpen && (
+				<CreateCodeDialog isNewCodeModalOpen={true} setIsNewCodeModalOpen={setIsNewCodeModalOpen} />
+			)}
 
 			<Box
 				sx={{
@@ -294,7 +268,7 @@ const AdminPromoCodesTab = () => {
 					/>
 					<TableBody>
 						{paginatedPromoCodes &&
-							paginatedPromoCodes?.map((promoCode: PromoCode, index) => {
+							paginatedPromoCodes?.map((promoCode: PromoCode) => {
 								return (
 									<TableRow key={promoCode._id} hover>
 										<CustomTableCell value={promoCode.code} />
@@ -313,47 +287,15 @@ const AdminPromoCodesTab = () => {
 											}}>
 											<CustomActionBtn
 												title='Edit'
-												onClick={() => {
-													toggleCodeEditModal(index);
-													setSingleCode(promoCode);
-												}}
+												onClick={() => setCodeToEdit(promoCode)}
 												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
-											<EditCodeDialog
-												isEditCodeModalOpen={isEditCodeModalOpen}
-												closeCodeEditModal={closeCodeEditModal}
-												index={index}
-												singleCode={singleCode}
-												setSingleCode={setSingleCode}
 											/>
 											<CustomActionBtn
 												title='Delete'
-												onClick={() => {
-													openDeleteCodeModal(index);
-												}}
+												onClick={() => setCodeToDelete(promoCode)}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 										</TableCell>
-										{isDeleteCodeModalOpen[index] !== undefined && (
-											<CustomDialog
-												openModal={isDeleteCodeModalOpen[index]}
-												closeModal={() => closeDeleteCodeModal(index)}
-												title='Delete Promo Code'
-												content={`Are you sure you want to delete "${promoCode.code}"?`}
-												maxWidth='xs'>
-												<CustomDialogActions
-													onCancel={() => {
-														closeDeleteCodeModal(index);
-													}}
-													deleteBtn={true}
-													onDelete={() => {
-														deleteCode(promoCode.code);
-														closeDeleteCodeModal(index);
-													}}
-													actionSx={{ mb: '0.5rem' }}
-												/>
-											</CustomDialog>
-										)}
 									</TableRow>
 								);
 							})}
@@ -370,6 +312,37 @@ const AdminPromoCodesTab = () => {
 				)}
 				<CustomTablePagination count={promoCodesNumberOfPages} page={promoCodesCurrentPage} onChange={handlePageChange} />
 			</Box>
+
+			{codeToEdit && (
+				<EditCodeDialog
+					singleCode={codeToEdit}
+					setSingleCode={setCodeToEdit}
+					onClose={() => setCodeToEdit(null)}
+				/>
+			)}
+
+			{codeToDelete && (
+				<CustomDialog
+					openModal={true}
+					closeModal={() => {
+						if (!isDeleting) setCodeToDelete(null);
+					}}
+					title='Delete Promo Code'
+					content={`Are you sure you want to delete "${codeToDelete.code}"?`}
+					maxWidth='xs'>
+					<CustomDialogActions
+						onCancel={() => {
+							if (!isDeleting) setCodeToDelete(null);
+						}}
+						deleteBtn={true}
+						onDelete={deleteCode}
+						isDeleting={isDeleting}
+						disableBtn={isDeleting}
+						disableCancelBtn={isDeleting}
+						actionSx={{ mb: '0.5rem' }}
+					/>
+				</CustomDialog>
+			)}
 		</>
 	);
 };

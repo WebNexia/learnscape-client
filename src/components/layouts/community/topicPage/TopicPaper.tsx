@@ -9,7 +9,6 @@ import { formatMessageTime } from '../../../../utils/formatTime';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
-import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import EditTopicDialog from '../editTopic/EditTopicDialog';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
 import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
@@ -18,6 +17,8 @@ import { truncateText } from '../../../../utils/utilText';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { useStickyPaper } from '../../../../hooks/useStickyPaper';
 import { useAuth } from '../../../../hooks/useAuth';
+import { useQueryClient } from 'react-query';
+import { CommunityTopic } from '../../../../interfaces/communityTopics';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
@@ -32,7 +33,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { removeTopic, fetchTopics } = useContext(CommunityContext);
+	const queryClient = useQueryClient();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -52,21 +53,31 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const [restartTopicModalOpen, setRestartTopicModalOpen] = useState<boolean>(false);
 	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 
+	const navigateToCommunityList = () => {
+		if (hasAdminAccess) {
+			navigate(`/admin/community`);
+		} else if (isInstructor) {
+			navigate(`/instructor/community`);
+		} else {
+			navigate(`/community`);
+		}
+	};
+
 	const deleteTopic = async () => {
 		setIsDeletingTopic(true);
 		try {
 			await axios.delete(`${base_url}/communityTopics/${topic?._id}`);
 
-			removeTopic(topic?._id);
+			if (orgId && topic?._id) {
+				queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+					return oldData?.filter((data) => data._id !== topic._id) || [];
+				});
+			}
 			setDeleteTopicModalOpen(false);
 			setDisplayDeleteTopicMsg(true);
 
 			setTimeout(() => {
-				if (hasAdminAccess) {
-					navigate(`/admin/community`);
-				} else {
-					navigate(`/community`);
-				}
+				navigateToCommunityList();
 			}, 1500);
 		} catch (error) {
 			console.log(error);
@@ -216,15 +227,11 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 								'fontSize': isMobileSize ? '0.65rem' : isSticky ? '0.85rem' : undefined,
 							}}
 							onClick={() => {
-								if (refreshTopics) fetchTopics(1);
-
-								if (hasAdminAccess) {
-									navigate(`/admin/community`);
-								} else if (isInstructor) {
-									navigate(`/instructor/community`);
-								} else {
-									navigate(`/community`);
+								if (refreshTopics && orgId) {
+									queryClient.invalidateQueries(['allTopics', orgId]);
 								}
+
+								navigateToCommunityList();
 
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
@@ -365,8 +372,9 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} actionSx={{ mb: '0.5rem' }} isDeleting={isDeletingTopic} />
 				</CustomDialog>
 
-				<EditTopicDialog topic={topic} setTopic={setTopic} editTopicModalOpen={editTopicModalOpen} setEditTopicModalOpen={setEditTopicModalOpen} />
-
+				{editTopicModalOpen && (
+					<EditTopicDialog topic={topic} setTopic={setTopic} editTopicModalOpen={editTopicModalOpen} setEditTopicModalOpen={setEditTopicModalOpen} />
+				)}
 				<CustomDialog
 					openModal={reportTopicModalOpen}
 					closeModal={() => setReportTopicModalOpen(false)}

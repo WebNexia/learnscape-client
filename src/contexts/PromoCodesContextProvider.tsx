@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { useAuth } from '../hooks/useAuth';
@@ -39,7 +39,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 	const { isAuthenticated, canAccessPayments } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 	const {
 		data: promoCodes,
 		isLoading,
@@ -66,8 +66,8 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 		disableAutoGapFill: true,
 	});
 
-	const enablePromoCodesFetch = () => setIsEnabled(true);
-	const disablePromoCodesFetch = () => setIsEnabled(false);
+	const enablePromoCodesFetch = useCallback(() => setIsEnabled(true), []);
+	const disablePromoCodesFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<PromoCodesContext.Provider

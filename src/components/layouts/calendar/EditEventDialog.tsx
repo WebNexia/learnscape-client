@@ -26,7 +26,6 @@ import 'dayjs/locale/en-gb';
 import { Cancel, InfoOutlined, ContentCopy } from '@mui/icons-material';
 import { useContext, useState, useRef, useEffect } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 
@@ -61,6 +60,12 @@ interface EditEventDialogProps {
 	setIsUpdatingEvent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+type SelectedCourseGroup = {
+	courseId: string;
+	groupName: string | null;
+	courseTitle: string;
+};
+
 const getDateTimeFormat = (locale: string) => {
 	switch (locale.toLowerCase()) {
 		case 'en-gb':
@@ -87,7 +92,6 @@ const EditEventDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { orgId, organisation } = useContext(OrganisationContext);
-	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
 	const canManageEvent = !!selectedEvent && (selectedEvent.createdBy === user?._id || hasAdminAccess);
@@ -108,7 +112,7 @@ const EditEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
-	const [selectedCourseGroups, setSelectedCourseGroups] = useState<{ courseId: string; groupName: string | null }[]>([]);
+	const [selectedCourseGroups, setSelectedCourseGroups] = useState<SelectedCourseGroup[]>([]);
 
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
@@ -169,7 +173,7 @@ const EditEventDialog = ({
 
 			if (groupName === null) {
 				// Main course selected - remove all groups for this course, add main course
-				return [...otherCourses, { courseId: selectedCourse._id, groupName: null }];
+				return [...otherCourses, { courseId: selectedCourse._id, groupName: null, courseTitle: selectedCourse.title }];
 			} else {
 				// Group selected - remove main course selection if exists, add/update group
 				const existingGroups = prev.filter(
@@ -182,7 +186,11 @@ const EditEventDialog = ({
 					return [...otherCourses, ...existingGroups.filter((item) => item.groupName !== groupName)];
 				} else {
 					// Add this group
-					return [...otherCourses, ...existingGroups, { courseId: selectedCourse._id, groupName }];
+					return [
+						...otherCourses,
+						...existingGroups,
+						{ courseId: selectedCourse._id, groupName, courseTitle: selectedCourse.title },
+					];
 				}
 			}
 		});
@@ -205,15 +213,16 @@ const EditEventDialog = ({
 	// Initialize selectedCourseGroups from selectedEvent.courseGroupNames
 	useEffect(() => {
 		if (selectedEvent?.courseGroupNames && selectedEvent.courseGroupNames.length > 0) {
-			const initialCourseGroups: { courseId: string; groupName: string | null }[] = [];
+			const initialCourseGroups: SelectedCourseGroup[] = [];
 			selectedEvent.courseGroupNames.forEach((item) => {
+				const courseTitle = item.courseTitle || 'Unknown Course';
 				if (item.groupNames.length === 0) {
 					// Empty array = main course (all groups)
-					initialCourseGroups.push({ courseId: item.courseId, groupName: null });
+					initialCourseGroups.push({ courseId: item.courseId, groupName: null, courseTitle });
 				} else {
 					// Specific groups
 					item.groupNames.forEach((groupName) => {
-						initialCourseGroups.push({ courseId: item.courseId, groupName });
+						initialCourseGroups.push({ courseId: item.courseId, groupName, courseTitle });
 					});
 				}
 			});
@@ -1268,10 +1277,9 @@ const EditEventDialog = ({
 					{selectedCourseGroups && selectedCourseGroups.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedCourseGroups.map((item, index) => {
-								const course = courses?.find((course) => course._id === item.courseId);
 								const displayText = item.groupName === null
-									? course?.title || 'Unknown Course'
-									: `${truncateText(course?.title || 'Unknown Course', 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
+									? item.courseTitle
+									: `${truncateText(item.courseTitle, 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
 								return (
 									<Box
 										key={`${item.courseId}-${item.groupName || 'main'}-${index}`}

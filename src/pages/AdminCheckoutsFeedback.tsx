@@ -533,7 +533,7 @@ const AdminCheckoutsFeedback = () => {
 														</>
 													)}
 
-													{!isInstructor && isFeedbackDeleteModalOpen[index] !== undefined && (
+													{!isInstructor && isFeedbackDeleteModalOpen[index] && (
 														<CustomDialog
 															openModal={isFeedbackDeleteModalOpen[index]}
 															closeModal={() => closeDeleteFeedbackModal(index)}
@@ -557,7 +557,7 @@ const AdminCheckoutsFeedback = () => {
 														</CustomDialog>
 													)}
 
-													{isFeedbackViewModalOpen[index] !== undefined && (
+													{isFeedbackViewModalOpen[index] && (
 														<CustomDialog
 															openModal={isFeedbackViewModalOpen[index]}
 															closeModal={() => closeFeedbackViewModal(index)}

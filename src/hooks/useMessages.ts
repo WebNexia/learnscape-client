@@ -6,7 +6,6 @@ import { db } from '../firebase';
 interface UseMessagesProps {
 	activeChatId?: string;
 	userFirebaseId?: string;
-	refreshChatList: () => Promise<void>;
 	isMobileSize?: boolean;
 }
 
@@ -31,7 +30,7 @@ interface UseMessagesReturn {
 	setShowScrollToBottom: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useMessages = ({ activeChatId, userFirebaseId, refreshChatList, isMobileSize = false }: UseMessagesProps): UseMessagesReturn => {
+export const useMessages = ({ activeChatId, userFirebaseId, isMobileSize = false }: UseMessagesProps): UseMessagesReturn => {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(false);
 	const [lastMessageDoc, setLastMessageDoc] = useState<any>(null);
@@ -219,10 +218,6 @@ export const useMessages = ({ activeChatId, userFirebaseId, refreshChatList, isM
 
 				return updated;
 			});
-
-			if (incomingMessage.senderId !== userFirebaseId && document.hasFocus()) {
-				refreshChatList();
-			}
 		});
 
 		return () => unsubscribe();

@@ -97,7 +97,7 @@ const SidebarGroupedMenu = ({
 					'textTransform': 'capitalize',
 					'marginBottom': '0.15rem',
 					'fontFamily': theme.fontFamily?.main,
-					'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+					'fontSize': isMobileSize ? '0.75rem' : '1rem',
 					'lineHeight': '2.25',
 					'width': isMobileSize ? 'calc(100% - 1rem)' : 'calc(100% - 1.25rem)',
 					'justifyContent': 'flex-start',

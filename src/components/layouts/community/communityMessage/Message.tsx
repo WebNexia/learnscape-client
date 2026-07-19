@@ -496,14 +496,14 @@ const Message = ({
 									</Tooltip>
 								)}
 
-								<CustomDialog
+								{reportMsgModalOpen && <CustomDialog
 									openModal={reportMsgModalOpen}
 									closeModal={() => setReportMsgModalOpen(false)}
 									title='Report Message'
 									content='Are you sure you want to report the message?'
 									maxWidth='xs'>
 									<CustomDialogActions deleteBtn onDelete={reportMessage} onCancel={() => setReportMsgModalOpen(false)} deleteBtnText='Report' />
-								</CustomDialog>
+								</CustomDialog>}
 
 								{!isMessageWriter && isAdmin && (
 									<Tooltip title='Delete Message' placement='top' arrow>
@@ -550,12 +550,14 @@ const Message = ({
 									</Box>
 								)}
 
-								<EditMessageDialog
-									editMsgModalOpen={editMsgModalOpen}
-									setEditMsgModalOpen={setEditMsgModalOpen}
-									message={message}
-									setIsMsgEdited={setIsMsgEdited}
-								/>
+								{editMsgModalOpen && (
+									<EditMessageDialog
+										editMsgModalOpen={editMsgModalOpen}
+										setEditMsgModalOpen={setEditMsgModalOpen}
+										message={message}
+										setIsMsgEdited={setIsMsgEdited}
+									/>
+								)}
 
 								{message.isReported && isAdmin && (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -574,7 +576,7 @@ const Message = ({
 									</Box>
 								)}
 
-								<CustomDialog
+								{resolveReportModalOpen && <CustomDialog
 									openModal={resolveReportModalOpen}
 									closeModal={() => setResolveReportModalOpen(false)}
 									title='Resolve Report'
@@ -586,14 +588,14 @@ const Message = ({
 										submitBtnText='Resolve'
 										actionSx={{ mb: '0.5rem' }}
 									/>
-								</CustomDialog>
+								</CustomDialog>}
 							</Box>
 						</Box>
 					</Box>
 				</Box>
 			</Box>
 			{/* Full View Message Modal */}
-			<CustomDialog openModal={isFullViewOpen} closeModal={() => setIsFullViewOpen(false)} maxWidth='sm'>
+			{isFullViewOpen && <CustomDialog openModal={isFullViewOpen} closeModal={() => setIsFullViewOpen(false)} maxWidth='sm'>
 				<DialogContent>
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
 						<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, mb: '0.75rem', color: 'gray' }}>
@@ -668,7 +670,7 @@ const Message = ({
 						Close
 					</CustomCancelButton>
 				</DialogActions>
-			</CustomDialog>
+			</CustomDialog>}
 
 			{zoomedImage && (
 				<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
@@ -676,14 +678,14 @@ const Message = ({
 				</Dialog>
 			)}
 
-			<CustomDialog
+			{deleteMessageModalOpen && <CustomDialog
 				openModal={deleteMessageModalOpen}
 				closeModal={() => setDeleteMessageModalOpen(false)}
 				title='Delete Message'
 				content={`Are you sure you want to delete "${truncateText(stripHtml(decode(message.text)), 25)}"?`}
 				maxWidth='xs'>
 				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} actionSx={{ mb: '0.5rem' }} isDeleting={isDeletingMessage} />
-			</CustomDialog>
+			</CustomDialog>}
 		</Box>
 	);
 };
