@@ -133,14 +133,14 @@ const ResourceItemCard = ({ item, onEdit, onDelete, onView }: ResourceItemCardPr
 				{item.type === 'video' ? (
 					<PlayCircle
 						sx={{
-							fontSize: isMobileSize ? '4.5rem' : '6.5rem',
+							fontSize: isMobileSize ? '2.7rem' : '3.9rem',
 							color: 'primary.main',
 						}}
 					/>
 				) : (
 					<InsertDriveFile
 						sx={{
-							fontSize: isMobileSize ? '4.5rem' : '6.5rem',
+							fontSize: isMobileSize ? '2.7rem' : '3.9rem',
 							color: 'primary.main',
 						}}
 					/>

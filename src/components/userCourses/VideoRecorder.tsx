@@ -326,7 +326,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 				</CustomSubmitButton>
 			)}
 
-			<CustomDialog
+			{isUploadModalOpen && <CustomDialog
 				openModal={isUploadModalOpen}
 				closeModal={() => setIsUploadModalOpen(false)}
 				maxWidth='xs'
@@ -345,7 +345,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 					/>
 				)}
-			</CustomDialog>
+			</CustomDialog>}
 		</Box>
 	);
 };

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -21,8 +21,6 @@ interface AdminPublicEventsContextTypes {
 	loadedPages: number[];
 	publicEventsPageNumber: number;
 	setPublicEventsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	enableAdminPublicEventsFetch: () => void;
-	disableAdminPublicEventsFetch: () => void;
 }
 
 interface AdminPublicEventsContextProviderProps {
@@ -37,7 +35,6 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	const {
 		data: publicEvents,
@@ -54,7 +51,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 		orgId,
 		baseUrl: `${base_url}/events/public/${orgId}?upcomingOnly=false`,
 		entityKey: 'allPublicEvents',
-		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
+		enabled: isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
@@ -62,14 +59,11 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 		disableAutoGapFill: true,
 	});
 
-	const enableAdminPublicEventsFetch = () => setIsEnabled(true);
-	const disableAdminPublicEventsFetch = () => setIsEnabled(false);
-
 	return (
 		<AdminPublicEventsContext.Provider
 			value={{
 				publicEvents,
-				loading: isLoading || (isEnabled && !publicEvents),
+				loading: isLoading || !publicEvents,
 				error: isError ? 'Error loading public events' : null,
 				fetchPublicEvents,
 				fetchMorePublicEvents,
@@ -78,8 +72,6 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 				loadedPages,
 				publicEventsPageNumber,
 				setPublicEventsPageNumber,
-				enableAdminPublicEventsFetch,
-				disableAdminPublicEventsFetch,
 			}}>
 			<DataFetchErrorBoundary context='AdminPublicEvents'>{children}</DataFetchErrorBoundary>
 		</AdminPublicEventsContext.Provider>

@@ -582,17 +582,35 @@ const FillInTheBlanksDragDrop = ({
 							}}>
 							Word bank
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{
-								mt: 0.5,
-								color: 'text.secondary',
-								fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
-								fontFamily: LEARNER_TEXT_FONT_FAMILY,
-								lineHeight: 1.5,
-							}}>
-							{getWordBankHint(blankValuePairs?.length ?? 0)}
-						</Typography>
+						{(() => {
+							const hint = getWordBankHint(blankValuePairs?.length ?? 0);
+							return (
+								<>
+									<Typography
+										variant='body2'
+										sx={{
+											mt: 0.5,
+											color: 'text.secondary',
+											fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+											fontFamily: LEARNER_TEXT_FONT_FAMILY,
+											lineHeight: 1.5,
+										}}>
+										{hint.en}
+									</Typography>
+									<Typography
+										variant='body2'
+										sx={{
+											mt: 0.25,
+											color: theme.textColor?.primary?.main,
+											fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+											fontFamily: LEARNER_TEXT_FONT_FAMILY,
+											lineHeight: 1.5,
+										}}>
+										{hint.tr}
+									</Typography>
+								</>
+							);
+						})()}
 					</Box>
 					<Box
 						sx={{

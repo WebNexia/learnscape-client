@@ -4,7 +4,6 @@ import { FormEvent, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import { ConsultationsContext } from '../contexts/ConsultationsContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -29,9 +28,13 @@ const AdminConsultationEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { updateConsultation } = useContext(ConsultationsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const queryClient = useQueryClient();
+	const invalidateConsultationCaches = () => {
+		if (!orgId) return;
+		void queryClient.invalidateQueries(['allConsultations', orgId]);
+		void queryClient.invalidateQueries(['landingPageConsultations', orgId]);
+	};
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -177,13 +180,13 @@ const AdminConsultationEditPage = () => {
 	}, [orgId]);
 
 
-	const feedbackFormIdString = (() => {
+	const feedbackFormIdString = useMemo(() => {
 		const fid = singleConsultationBeforeSave?.feedbackFormId;
 		if (!fid) return undefined;
 		if (typeof fid === 'string') return fid;
 		if (typeof fid === 'object' && fid !== null && '_id' in fid) return (fid as { _id: string })._id;
 		return undefined;
-	})();
+	}, [singleConsultationBeforeSave?.feedbackFormId]);
 
 	const consultationFormOptions = useMemo(() => {
 		const list = orgForms.filter((f) => f.isPublished);
@@ -211,16 +214,12 @@ const AdminConsultationEditPage = () => {
 			if (updated) {
 				setSingleConsultation(updated);
 				setSingleConsultationBeforeSave(updated);
-				updateConsultation(updated);
 			} else {
 				const patched = { ...singleConsultationBeforeSave, isActive: nextIsActive };
 				setSingleConsultation(patched);
 				setSingleConsultationBeforeSave(patched);
-				updateConsultation(patched);
 			}
-			if (orgId) {
-				queryClient.invalidateQueries(['landingPageConsultations', orgId]);
-			}
+			invalidateConsultationCaches();
 			setIsSuccessSnackbarOpen(true);
 		} catch (error: unknown) {
 			const message =
@@ -269,12 +268,12 @@ const AdminConsultationEditPage = () => {
 			}
 
 			const updatedConsultation = {
-				...singleConsultationBeforeSave,
 				title: singleConsultationBeforeSave.title?.trim() || '',
 				description: singleConsultationBeforeSave.description?.trim() || '',
 				duration: singleConsultationBeforeSave.duration ?? 60,
 				prices,
 				coverImageUrl: singleConsultationBeforeSave.coverImageUrl?.trim() || '',
+				tags,
 				feedbackFormId: feedbackFormIdString ?? null,
 				requireFormSubmission: Boolean(singleConsultationBeforeSave.requireFormSubmission),
 			};
@@ -298,13 +297,12 @@ const AdminConsultationEditPage = () => {
 			};
 
 			setSingleConsultationBeforeSave(finalConsultation);
-			updateConsultation(finalConsultation);
 			setSingleConsultation(finalConsultation);
+			invalidateConsultationCaches();
 
 			setHasUnsavedChanges(false);
 			setIsEditMode(false);
 			setIsSuccessSnackbarOpen(true);
-			setSingleConsultation(finalConsultation);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		} catch (error) {
 			console.error('Error updating consultation:', error);
@@ -776,26 +774,28 @@ const AdminConsultationEditPage = () => {
 
 
 			{/* CustomDialog for unsaved changes confirmation */}
-			<CustomDialog openModal={!!pendingTx} closeModal={() => setPendingTx(null)} title='Unsaved Changes' maxWidth='sm'>
-				<DialogContent>
-					<Typography variant='body2'>You have unsaved changes. Are you sure you want to leave this page?</Typography>
-					<Typography variant='body2' sx={{ mt: '0.75rem' }}>
-						If you leave this page, you will lose your unsaved changes.
-					</Typography>
-				</DialogContent>
-				<CustomDialogActions
-					onCancel={() => setPendingTx(null)}
-					onSubmit={() => {
-						if (nextLocation) {
-							setAllowNavigation(true);
-							setPendingTx(null);
-						}
-					}}
-					submitBtnText='Leave Page'
-					cancelBtnText='Stay'
-					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
-				/>
-			</CustomDialog>
+			{pendingTx && (
+				<CustomDialog openModal={true} closeModal={() => setPendingTx(null)} title='Unsaved Changes' maxWidth='sm'>
+					<DialogContent>
+						<Typography variant='body2'>You have unsaved changes. Are you sure you want to leave this page?</Typography>
+						<Typography variant='body2' sx={{ mt: '0.75rem' }}>
+							If you leave this page, you will lose your unsaved changes.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => setPendingTx(null)}
+						onSubmit={() => {
+							if (nextLocation) {
+								setAllowNavigation(true);
+								setPendingTx(null);
+							}
+						}}
+						submitBtnText='Leave Page'
+						cancelBtnText='Stay'
+						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
+					/>
+				</CustomDialog>
+			)}
 
 			{/* URL validation error SnackBar */}
 			<Snackbar

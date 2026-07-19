@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -61,7 +61,8 @@ const ConsultationsContextProvider = ({ children }: ConsultationsContextProvider
 	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+	// Lazy: edit, slots and appointments routes fetch their specific consultation directly.
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 
 	const baseEndpoint = `/consultations/organisation/${orgId}`;
 
@@ -92,8 +93,8 @@ const ConsultationsContextProvider = ({ children }: ConsultationsContextProvider
 		disableAutoGapFill: true,
 	});
 
-		const enableConsultationsFetch = () => setIsEnabled(true);
-	const disableConsultationsFetch = () => setIsEnabled(false);
+	const enableConsultationsFetch = useCallback(() => setIsEnabled(true), []);
+	const disableConsultationsFetch = useCallback(() => setIsEnabled(false), []);
 
 	// Calculate if there are more consultations to load
 	const hasMore = consultations && totalItems > consultations.length;

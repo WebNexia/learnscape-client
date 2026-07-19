@@ -391,36 +391,38 @@ const CreateConsultationSlotDialog = ({
 			</form>
 
 			{/* Delete Confirmation Dialog */}
-			<CustomDialog
-				openModal={isDeleteConfirmOpen}
-				closeModal={() => {
-					if (!isDeleting) {
-						setIsDeleteConfirmOpen(false);
-					}
-				}}
-				title='Delete Slot'
-				maxWidth='xs'>
-				<DialogContent>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-						Are you sure you want to delete this slot?
-					</Typography>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 'bold', color: 'error.main', mt: '1rem' }}>
-						This action cannot be undone.
-					</Typography>
-				</DialogContent>
-				<CustomDialogActions
-					onCancel={() => {
+			{isDeleteConfirmOpen && (
+				<CustomDialog
+					openModal={true}
+					closeModal={() => {
 						if (!isDeleting) {
 							setIsDeleteConfirmOpen(false);
 						}
 					}}
-					deleteBtn={true}
-					onDelete={confirmDelete}
-					disableBtn={isDeleting}
-					disableCancelBtn={isDeleting}
-					isDeleting={isDeleting}
-				/>
-			</CustomDialog>
+					title='Delete Slot'
+					maxWidth='xs'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+							Are you sure you want to delete this slot?
+						</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 'bold', color: 'error.main', mt: '1rem' }}>
+							This action cannot be undone.
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => {
+							if (!isDeleting) {
+								setIsDeleteConfirmOpen(false);
+							}
+						}}
+						deleteBtn={true}
+						onDelete={confirmDelete}
+						disableBtn={isDeleting}
+						disableCancelBtn={isDeleting}
+						isDeleting={isDeleting}
+					/>
+				</CustomDialog>
+			)}
 		</CustomDialog>
 	);
 };

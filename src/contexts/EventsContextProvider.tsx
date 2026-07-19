@@ -29,6 +29,12 @@ const toGridEventFields = (source: {
 	isPublic: source.isPublic,
 	createdBy: source.createdBy,
 });
+
+const mergeUniqueCalendarEvents = (...eventLists: CalendarGridEvent[][]): CalendarGridEvent[] => {
+	const eventById = new Map<string, CalendarGridEvent>();
+	eventLists.flat().forEach((event) => eventById.set(event._id, event));
+	return Array.from(eventById.values());
+};
 import { useAuth } from '../hooks/useAuth';
 import { Roles } from '../interfaces/enums';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -164,10 +170,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			const eventsData = response.data.data as CalendarGridEvent[];
 
 			const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as CalendarGridEvent[]) || [];
-			const combined = [...currentData, ...eventsData];
-			const unique = combined?.filter((event, index, self) => index === self?.findIndex?.((e) => e._id === event._id)) || [];
-
-			queryClient.setQueryData(['calendarEvents', orgId], unique);
+			queryClient.setQueryData(['calendarEvents', orgId], mergeUniqueCalendarEvents(currentData, eventsData));
 
 			// Mark month as loaded
 			setLoadedMonths((prev) => [...prev, monthKey]);
@@ -209,7 +212,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			const allEvents = responses.flatMap((response) => response.data.data);
 
 			// Remove duplicates
-			const uniqueEvents = allEvents?.filter((event, index, self) => index === self?.findIndex?.((e) => e._id === event._id)) || [];
+			const uniqueEvents = mergeUniqueCalendarEvents(allEvents);
 
 			// Update React Query cache
 			queryClient.setQueryData(['calendarEvents', orgId], uniqueEvents);

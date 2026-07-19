@@ -24,7 +24,6 @@ import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useContext, useState, useEffect, useRef } from 'react';
-import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
@@ -56,6 +55,12 @@ interface CreateEventDialogProps {
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+type SelectedCourseGroup = {
+	courseId: string;
+	groupName: string | null;
+	courseTitle: string;
+};
+
 const getDateTimeFormat = (locale: string) => {
 	switch (locale.toLowerCase()) {
 		case 'en-gb':
@@ -76,7 +81,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 	const { user } = useContext(UserAuthContext);
 	const { orgId, organisation } = useContext(OrganisationContext);
-	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
 
@@ -90,12 +94,12 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
-	const [selectedCourseGroups, setSelectedCourseGroups] = useState<{ courseId: string; groupName: string | null }[]>([]);
+	const [selectedCourseGroups, setSelectedCourseGroups] = useState<SelectedCourseGroup[]>([]);
 
 	const [instructorSearchInfoOpen, setInstructorSearchInfoOpen] = useState<boolean>(false);
 	const [learnerSearchInfoOpen, setLearnerSearchInfoOpen] = useState<boolean>(false);
 	const [courseSearchInfoOpen, setCourseSearchInfoOpen] = useState<boolean>(false);
-	const [isZoomConfigured, setIsZoomConfigured] = useState<boolean>(false);
+	const isZoomConfigured = Boolean(organisation?.hasZoomConfigured);
 
 	// Refs for search components to access their reset functions
 	const userSearchRef = useRef<any>(null);
@@ -139,7 +143,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			
 			if (groupName === null) {
 				// Main course selected - remove all groups for this course, add main course
-				return [...otherCourses, { courseId: selectedCourse._id, groupName: null }];
+				return [...otherCourses, { courseId: selectedCourse._id, groupName: null, courseTitle: selectedCourse.title }];
 			} else {
 				// Group selected - remove main course selection if exists, add/update group
 				const existingGroups = prev.filter(
@@ -152,7 +156,11 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					return [...otherCourses, ...existingGroups.filter((item) => item.groupName !== groupName)];
 				} else {
 					// Add this group
-					return [...otherCourses, ...existingGroups, { courseId: selectedCourse._id, groupName }];
+					return [
+						...otherCourses,
+						...existingGroups,
+						{ courseId: selectedCourse._id, groupName, courseTitle: selectedCourse.title },
+					];
 				}
 			}
 		});
@@ -174,16 +182,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		} // Add more mappings as needed
 		dayjs.locale(locale);
 	}, []);
-
-	// Check if Zoom credentials are configured from organisation context
-	useEffect(() => {
-		// Check if Zoom is configured from organisation data
-		if (organisation?.hasZoomConfigured) {
-			setIsZoomConfigured(true);
-		} else {
-			setIsZoomConfigured(false);
-		}
-	}, [organisation?.hasZoomConfigured]);
 
 	// URL validation function
 	const validateUrls = async (): Promise<boolean> => {
@@ -1070,10 +1068,9 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					{selectedCourseGroups && selectedCourseGroups.length > 0 && (
 						<Box sx={{ display: 'flex', margin: hasAdminAccess ? '-2rem 0 0.75rem 0' : '0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedCourseGroups.map((item, index) => {
-								const course = courses?.find((course) => course._id === item.courseId);
 								const displayText = item.groupName === null 
-									? course?.title || 'Unknown Course'
-									: `${truncateText(course?.title || 'Unknown Course', 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
+									? item.courseTitle
+									: `${truncateText(item.courseTitle, 40)} - ${truncateText(item.groupName || 'Unknown Group', 7)}`;
 								return (
 									<Box
 										key={`${item.courseId}-${item.groupName || 'main'}-${index}`}

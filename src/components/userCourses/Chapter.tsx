@@ -576,7 +576,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(
 			</Collapse>
 
 			{/* Checklist Dialog */}
-			{!staffPreviewMode && (hasChecklistItems || chapter.askForFeedback) && (
+			{!staffPreviewMode && checklistDialogOpen && (hasChecklistItems || chapter.askForFeedback) && (
 				<CustomDialog
 					openModal={checklistDialogOpen}
 					closeModal={handleCloseChecklistDialog}

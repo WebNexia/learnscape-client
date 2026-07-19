@@ -44,6 +44,7 @@ export interface UserSubscription {
 	currentPeriodStart: string;
 	currentPeriodEnd: string;
 	nextBillingDate?: string;
+	canceledAt?: string;
 	accessType: 'platform';
 	isActive: boolean;
 	createdAt: string;

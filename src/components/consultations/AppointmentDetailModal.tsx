@@ -26,7 +26,7 @@ interface AppointmentDetailModalProps {
 	appointmentId: string | null;
 	open: boolean;
 	onClose: () => void;
-	onUpdated: () => void; // refetch list after notes/cancel
+	onUpdated: (appointmentId: string, updates: Partial<ConsultationAppointment>) => void;
 }
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -116,7 +116,6 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 		try {
 			await axios.patch(`${base_url}/consultations/appointments/${appointmentId}/notes`, { adminNotes: notesValue });
 			setSnackbar({ open: true, message: 'Notes saved.', severity: 'success' });
-			onUpdated();
 		} catch (err: any) {
 			setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to save notes', severity: 'error' });
 		} finally {
@@ -136,7 +135,7 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 			await axios.patch(`${base_url}/consultations/appointments/${appointmentId}/cancel`, {});
 			setCancelConfirmOpen(false);
 			setSnackbar({ open: true, message: 'Appointment cancelled.', severity: 'success' });
-			onUpdated();
+			onUpdated(appointmentId, { status: 'cancelled' });
 			onClose();
 		} catch (err: any) {
 			setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to cancel', severity: 'error' });
@@ -257,24 +256,26 @@ const AppointmentDetailModal = ({ appointmentId, open, onClose, onUpdated }: App
 				</Alert>
 			</Snackbar>
 
-			<CustomDialog
-				openModal={cancelConfirmOpen}
-				closeModal={() => setCancelConfirmOpen(false)}
-				title='Cancel Appointment'
-				content='The slot will become available again.'
-				maxWidth='xs'
-			>
-				<CustomDialogActions
-					onCancel={() => setCancelConfirmOpen(false)}
-					onDelete={confirmCancelAppointment}
-					cancelBtnText='Keep'
-					deleteBtnText='Yes, cancel'
-					deleteBtn
-					isDeleting={cancelling}
-					disableBtn={cancelling}
-					actionSx={{ mb: '0.5rem' }}
-				/>
-			</CustomDialog>
+			{cancelConfirmOpen && (
+				<CustomDialog
+					openModal={true}
+					closeModal={() => setCancelConfirmOpen(false)}
+					title='Cancel Appointment'
+					content='The slot will become available again.'
+					maxWidth='xs'
+				>
+					<CustomDialogActions
+						onCancel={() => setCancelConfirmOpen(false)}
+						onDelete={confirmCancelAppointment}
+						cancelBtnText='Keep'
+						deleteBtnText='Yes, cancel'
+						deleteBtn
+						isDeleting={cancelling}
+						disableBtn={cancelling}
+						actionSx={{ mb: '0.5rem' }}
+					/>
+				</CustomDialog>
+			)}
 		</CustomDialog>
 	);
 };

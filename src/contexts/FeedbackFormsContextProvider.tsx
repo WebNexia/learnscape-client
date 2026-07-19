@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -99,7 +99,8 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const queryClient = useQueryClient();
 	const [currentCourseId, setCurrentCourseId] = useState<string | undefined>();
-	const [isFormsEnabled, setIsFormsEnabled] = useState<boolean>(true);
+	// Lazy: only AdminForms / AdminCourseFeedbackForms enable this (templates/submissions share the provider)
+	const [isFormsEnabled, setIsFormsEnabled] = useState<boolean>(false);
 	const [isTemplatesEnabled, setIsTemplatesEnabled] = useState<boolean>(false);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -123,7 +124,6 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		data: forms = [],
 		isLoading: formsLoading,
 		isError: formsError,
-		fetchEntities: fetchFormsEntities,
 		fetchMoreEntities: fetchMoreForms,
 		pageNumber: formsPageNumber,
 		setPageNumber: setFormsPageNumber,
@@ -141,26 +141,14 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		disableAutoGapFill: true,
 	});
 
-	const enableFormsFetch = () => setIsFormsEnabled(true);
-	const disableFormsFetch = () => setIsFormsEnabled(false);
-
-	// Refetch when currentCourseId changes (entityKey changes will trigger new query)
-	useEffect(() => {
-		if (isFormsEnabled && orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute) {
-			// The query will automatically refetch when entityKey changes (which includes currentCourseId)
-			// But we need to ensure the first page is fetched
-			if (formsPageNumber === 1 && forms.length === 0) {
-				fetchFormsEntities(1);
-			}
-		}
-	}, [currentCourseId, orgId, isFormsEnabled, isAuthenticated, canFetchStaffForms, isLandingPageRoute]);
+	const enableFormsFetch = useCallback(() => setIsFormsEnabled(true), []);
+	const disableFormsFetch = useCallback(() => setIsFormsEnabled(false), []);
 
 	// Templates — lazy: enabled only after fetchTemplates() (create dialog / templates page)
 	const {
 		data: templates = [],
 		isLoading: templatesLoading,
 		isError: templatesError,
-		refetch: refetchTemplates,
 	} = useQuery({
 		queryKey: ['feedbackFormTemplates', orgId],
 		queryFn: () => feedbackFormsService.getAllTemplates(),
@@ -268,7 +256,7 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 	});
 
 	// Wrapper functions
-	const fetchForms = async (courseId?: string) => {
+	const fetchForms = useCallback(async (courseId?: string) => {
 		if (courseId !== currentCourseId) {
 			setCurrentCourseId(courseId);
 			// Query will automatically refetch when currentCourseId changes
@@ -277,13 +265,12 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		if (!courseId && currentCourseId !== undefined) {
 			setCurrentCourseId(undefined);
 		}
-	};
+	}, [currentCourseId]);
 
-	const fetchTemplates = async (category?: string) => {
+	const fetchTemplates = useCallback(async (_category?: string) => {
 		// For now, we fetch all templates. Category filtering can be added later if needed.
 		setIsTemplatesEnabled(true);
-		await refetchTemplates();
-	};
+	}, []);
 
 	return (
 		<FeedbackFormsContext.Provider

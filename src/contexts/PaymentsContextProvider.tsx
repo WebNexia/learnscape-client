@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -37,7 +37,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 	// ✅ main hook for payments
 	const {
 		data: payments,
@@ -62,8 +62,8 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 		disableAutoGapFill: true,
 	});
 
-	const enablePaymentsFetch = () => setIsEnabled(true);
-	const disablePaymentsFetch = () => setIsEnabled(false);
+	const enablePaymentsFetch = useCallback(() => setIsEnabled(true), []);
+	const disablePaymentsFetch = useCallback(() => setIsEnabled(false), []);
 
 	return (
 		<PaymentsContext.Provider

@@ -65,6 +65,9 @@ const AdminConsultationSlots = () => {
 	const [slotForBookingsView, setSlotForBookingsView] = useState<ConsultationSlot | null>(null);
 	const [isSlotBookingsDialogOpen, setIsSlotBookingsDialogOpen] = useState<boolean>(false);
 
+	const sortSlots = (items: ConsultationSlot[]) =>
+		[...items].sort((a, b) => new Date(a.slotStart).getTime() - new Date(b.slotStart).getTime());
+
 	// Fetch consultation data
 	useEffect(() => {
 		if (consultationId) {
@@ -248,95 +251,95 @@ const AdminConsultationSlots = () => {
 				</Box>
 
 				{/* Create/Edit Slot Dialog */}
-				<CreateConsultationSlotDialog
-					isOpen={isCreateSlotDialogOpen || isEditSlotDialogOpen}
-					onClose={() => {
-						setIsCreateSlotDialogOpen(false);
-						setIsEditSlotDialogOpen(false);
-						setEditingSlot(null);
-					}}
-					onCreate={async (slotData) => {
-						try {
-							if (editingSlot && consultationId) {
-								// Update existing slot
-								const response = await axios.put(
-									`${base_url}/consultations/${consultationId}/slots/${editingSlot._id}`,
-									slotData
-								);
-								if (response.data.status === 200) {
-									setSlots(slots.map((s) => (s._id === editingSlot._id ? response.data.data : s)));
-									setIsEditSlotDialogOpen(false);
-									setEditingSlot(null);
-									if (consultationId) {
-										await fetchSlots(consultationId);
+				{(isCreateSlotDialogOpen || isEditSlotDialogOpen) && (
+					<CreateConsultationSlotDialog
+						isOpen={true}
+						onClose={() => {
+							setIsCreateSlotDialogOpen(false);
+							setIsEditSlotDialogOpen(false);
+							setEditingSlot(null);
+						}}
+						onCreate={async (slotData) => {
+							try {
+								if (editingSlot && consultationId) {
+									const response = await axios.put(
+										`${base_url}/consultations/${consultationId}/slots/${editingSlot._id}`,
+										slotData
+									);
+									if (response.data.status === 200) {
+										const updatedSlot = {
+											...response.data.data,
+											appointmentRef: editingSlot.appointmentRef,
+											appointments: editingSlot.appointments,
+										};
+										setSlots((current) =>
+											sortSlots(current.map((slot) => (slot._id === editingSlot._id ? updatedSlot : slot)))
+										);
+									}
+								} else if (consultationId) {
+									const response = await axios.post(`${base_url}/consultations/${consultationId}/slots`, slotData);
+									if (response.data.status === 201) {
+										setSlots((current) => sortSlots([...current, response.data.data]));
 									}
 								}
-							} else if (consultationId) {
-								// Create new slot
-								const response = await axios.post(`${base_url}/consultations/${consultationId}/slots`, slotData);
-								if (response.data.status === 201) {
-									setSlots([...slots, response.data.data]);
-									setIsCreateSlotDialogOpen(false);
-									if (consultationId) {
-										await fetchSlots(consultationId);
-									}
-								}
+							} catch (error: any) {
+								console.error('Error saving slot:', error);
+								throw error;
 							}
-						} catch (error: any) {
-							console.error('Error saving slot:', error);
-							throw error;
-						}
-					}}
-					onDelete={async (slotId) => {
-						try {
-							if (consultationId) {
-								await axios.delete(`${base_url}/consultations/${consultationId}/slots/${slotId}`);
-								setSlots(slots.filter((s) => s._id !== slotId));
-								setIsEditSlotDialogOpen(false);
-								setEditingSlot(null);
+						}}
+						onDelete={async (slotId) => {
+							try {
 								if (consultationId) {
-									await fetchSlots(consultationId);
+									await axios.delete(`${base_url}/consultations/${consultationId}/slots/${slotId}`);
+									setSlots((current) => current.filter((slot) => slot._id !== slotId));
 								}
+							} catch (error: any) {
+								console.error('Error deleting slot:', error);
+								throw error;
 							}
-						} catch (error: any) {
-							console.error('Error deleting slot:', error);
-							throw error;
-						}
-					}}
-					consultation={consultation}
-					existingSlot={editingSlot}
-				/>
+						}}
+						consultation={consultation}
+						existingSlot={editingSlot}
+					/>
+				)}
 
 				{/* Slot bookings dialog (who booked which consultant) */}
-				<SlotBookingsDialog
-					slot={slotForBookingsView}
-					open={isSlotBookingsDialogOpen}
-					onClose={() => {
-						setIsSlotBookingsDialogOpen(false);
-						setSlotForBookingsView(null);
-					}}
-				/>
+				{isSlotBookingsDialogOpen && slotForBookingsView && (
+					<SlotBookingsDialog
+						slot={slotForBookingsView}
+						open={true}
+						onClose={() => {
+							setIsSlotBookingsDialogOpen(false);
+							setSlotForBookingsView(null);
+						}}
+					/>
+				)}
 
 				{/* Bulk Slot Creation Dialog */}
-				<BulkSlotCreationDialog
-					isOpen={isBulkSlotDialogOpen}
-					onClose={() => setIsBulkSlotDialogOpen(false)}
-					onCreate={async (bulkData) => {
-						if (!consultationId) return;
-						const response = await axios.post(`${base_url}/consultations/${consultationId}/slots/bulk`, bulkData);
-						if (response.data.status === 201) {
-							await fetchSlots(consultationId);
-							setIsBulkSlotDialogOpen(false);
-							setBulkCreateSnackbarMessage(response.data.message || 'Bulk slot creation completed.');
-							setIsBulkCreateSnackbarOpen(true);
-						}
-					}}
-					consultation={consultation}
-				/>
+				{isBulkSlotDialogOpen && (
+					<BulkSlotCreationDialog
+						isOpen={true}
+						onClose={() => setIsBulkSlotDialogOpen(false)}
+						onCreate={async (bulkData) => {
+							if (!consultationId) return;
+							const response = await axios.post(`${base_url}/consultations/${consultationId}/slots/bulk`, bulkData);
+							if (response.data.status === 201) {
+								const createdSlots = Array.isArray(response.data.data) ? response.data.data : [];
+								if (createdSlots.length > 0) {
+									setSlots((current) => sortSlots([...current, ...createdSlots]));
+								}
+								setBulkCreateSnackbarMessage(response.data.message || 'Bulk slot creation completed.');
+								setIsBulkCreateSnackbarOpen(true);
+							}
+						}}
+						consultation={consultation}
+					/>
+				)}
 
 				{/* Delete unbooked slots options dialog */}
-				<CustomDialog
-					openModal={isDeleteOptionsDialogOpen}
+				{isDeleteOptionsDialogOpen && (
+					<CustomDialog
+					openModal={true}
 					closeModal={() => {
 						if (!isDeletingUnbooked) setIsDeleteOptionsDialogOpen(false);
 					}}
@@ -486,11 +489,13 @@ const AdminConsultationSlots = () => {
 						isDeleting={isDeletingUnbooked}
 						actionSx={{ marginBottom: '0.5rem' }}
 					/>
-				</CustomDialog>
+					</CustomDialog>
+				)}
 
 				{/* Delete Slot Confirmation Dialog */}
-				<CustomDialog
-					openModal={isDeleteSlotDialogOpen}
+				{isDeleteSlotDialogOpen && slotToDelete && (
+					<CustomDialog
+					openModal={true}
 					closeModal={() => {
 						if (!isDeletingSlot) {
 							setIsDeleteSlotDialogOpen(false);
@@ -539,7 +544,8 @@ const AdminConsultationSlots = () => {
 						isDeleting={isDeletingSlot}
 						actionSx={{ marginBottom: '0.5rem' }}
 					/>
-				</CustomDialog>
+					</CustomDialog>
+				)}
 
 				{/* Error Snackbar */}
 				<Snackbar

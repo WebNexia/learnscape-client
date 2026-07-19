@@ -1613,10 +1613,21 @@ const LessonPage = () => {
 						}}
 						disableDismiss
 						maxWidth='xs'
-						title={`${nextLessonId || hasMoreLessonsInCourse ? 'Lesson Completed' : 'Course Completed'}`}>
+						title={
+							nextLessonId || hasMoreLessonsInCourse
+								? 'Lesson Completed / Ders Tamamlandı'
+								: 'Course Completed / Kurs Tamamlandı'
+						}>
 						<DialogContent sx={{ mb: '-0.5rem' }}>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
 								{`You have completed this ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}.`}
+							</Typography>
+							<Typography
+								variant='body2'
+								sx={{ mt: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, color: 'text.secondary' }}>
+								{nextLessonId || hasMoreLessonsInCourse
+									? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
+									: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
 							</Typography>
 						</DialogContent>
 						<CustomDialogActions
@@ -1645,7 +1656,7 @@ const LessonPage = () => {
 				openModal={isQuestionToolbarHelpOpen}
 				closeModal={() => setIsQuestionToolbarHelpOpen(false)}
 				maxWidth='sm'
-				title='Question Toolbar'>
+				title='Question Toolbar / Soru Araç Çubuğu'>
 				<DialogContent>
 					{lessonType === LessonType.PRACTICE_LESSON && (
 						<Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'flex-start' }}>
@@ -1656,10 +1667,15 @@ const LessonPage = () => {
 							)}
 							<Box>
 								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
-									Sound effects
+									Sound effects (Ses efektleri)
 								</Typography>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
-									Mute or unmute practice sounds: answer feedback (correct/incorrect) and flip-card flip sounds.
+									‣ Mute or unmute practice sounds: answer feedback (correct/incorrect) and flip-card flip sounds.
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{ mt: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.primary?.main }}>
+									‣ Alıştırma seslerini açıp kapatır: cevap geri bildirimi (doğru/yanlış) ve çevirmeli kart sesleri.
 								</Typography>
 							</Box>
 						</Box>
@@ -1668,10 +1684,15 @@ const LessonPage = () => {
 						<Article fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
 						<Box>
 							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
-								Lesson notes
+								Lesson notes (Ders notları)
 							</Typography>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
-								Open the notes panel to write and save personal notes while answering questions. You can download your notes as a PDF.
+								‣ Open the notes panel to write and save personal notes while answering questions. You can download your notes as a PDF.
+							</Typography>
+							<Typography
+								variant='body2'
+								sx={{ mt: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.primary?.main }}>
+								‣ Soruları yanıtlarken kişisel not yazıp kaydetmek için not panelini açın. Notlarınızı PDF olarak indirebilirsiniz.
 							</Typography>
 						</Box>
 					</Box>
@@ -1680,10 +1701,15 @@ const LessonPage = () => {
 							<RecordVoiceOver fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
 							<Box>
 								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
-									Pronunciation assist
+									Pronunciation assist (Telaffuz yardımı)
 								</Typography>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
-									Turn on to hover over words in questions and hear pronunciation with short definitions.
+									‣ Turn on to hover over words in questions and hear pronunciation with short definitions.
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{ mt: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.primary?.main }}>
+									‣ Açıldığında sorulardaki kelimelerin üzerine gelerek telaffuzlarını dinleyebilir ve kısa tanımlarını görebilirsiniz.
 								</Typography>
 							</Box>
 						</Box>
@@ -1693,10 +1719,15 @@ const LessonPage = () => {
 							<MenuBook fontSize='small' sx={{ mt: 0.2, color: theme.textColor?.secondary?.main }} />
 							<Box>
 								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>
-									Lectures in this chapter
+									Lectures in this chapter (Bu bölümdeki dersler)
 								</Typography>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.secondary?.main }}>
-									Open lectures from this chapter for quick review while you work on practice questions.
+									‣ Open lectures from this chapter for quick review while you work on practice questions.
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{ mt: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, color: theme.textColor?.primary?.main }}>
+									‣ Alıştırma soruları üzerinde çalışırken hızlı tekrar için bu bölümdeki dersleri açın.
 								</Typography>
 							</Box>
 						</Box>

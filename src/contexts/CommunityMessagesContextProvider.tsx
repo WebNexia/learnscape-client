@@ -4,7 +4,7 @@ import { useQueryClient } from 'react-query';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityMessage } from '../interfaces/communityMessage';
-import { CommunityContext } from './CommunityContextProvider';
+import { CommunityTopic } from '../interfaces/communityTopics';
 
 /** UI pagination on topic detail (messages list). */
 export const COMMUNITY_UI_PAGE_SIZE = 20;
@@ -62,7 +62,6 @@ export const CommunityMessagesContext = createContext<CommunityMessagesContextTy
 const CommunityMessagesContextProvider = (props: CommunityMessagesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { updateTopics } = useContext(CommunityContext);
 	const queryClient = useQueryClient();
 
 	const [pageNumber, setPageNumber] = useState<number>(1);
@@ -72,6 +71,24 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [forceUpdate, setForceUpdate] = useState<number>(0);
+
+	/** Keep organisation topics list cache in sync without mounting CommunityContext on topic routes. */
+	const updateTopicsListCache = useCallback(
+		(singleTopic: Partial<CommunityTopic> & { _id: string }) => {
+			if (!orgId || !singleTopic._id) return;
+			queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+				return (
+					oldData?.map((topic) => {
+						if (singleTopic._id === topic._id) {
+							return { ...topic, ...singleTopic };
+						}
+						return topic;
+					}) || []
+				);
+			});
+		},
+		[orgId, queryClient]
+	);
 
 	const fetchMessages = useCallback(
 		async (topicId: string) => {
@@ -168,14 +185,18 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			// Convert frontend page to backend page and fetch directly
 			const backendPage = frontendPageToBackendPage(pageNumber);
 
+			// Already in cache — avoid redundant GET
+			if (loadedPages?.includes(backendPage)) {
+				return [];
+			}
+
 			// Find the highest loaded backend page
 			const maxLoadedPage = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 
-			// If we need to fill gaps, fetch all missing backend pages
+			// Fill gaps up to the requested backend page
 			if (backendPage > maxLoadedPage) {
 				await fetchMoreMessages(topicId, maxLoadedPage + 1, backendPage);
 			} else {
-				// If the page is already loaded, just fetch it directly
 				const response = await axios.get(
 					`${base_url}/communityMessages/topic/${topicId}?page=${backendPage}&limit=${COMMUNITY_BACKEND_BATCH_SIZE}`
 				);
@@ -229,9 +250,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = prevTotalItems + 1;
 
-			// Update the topic's message count, updatedAt, and lastMessage in the community context
+			// Update the topic's message count, updatedAt, and lastMessage in the topics list cache
 			if (currentTopicId) {
-				updateTopics({
+				updateTopicsListCache({
 					_id: currentTopicId,
 					messageCount: newTotalItems,
 					updatedAt: new Date().toISOString(),
@@ -260,9 +281,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = Math.max(0, prevTotalItems - 1);
 
-			// Update the topic's message count in the community context
+			// Update the topic's message count in the topics list cache
 			if (currentTopicId) {
-				updateTopics({
+				updateTopicsListCache({
 					_id: currentTopicId,
 					messageCount: newTotalItems,
 				});

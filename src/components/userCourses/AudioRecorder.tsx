@@ -272,7 +272,7 @@ const AudioRecorder = ({
 				</CustomSubmitButton>
 			)}
 
-			<CustomDialog
+			{isUploadModalOpen && <CustomDialog
 				maxWidth='xs'
 				openModal={isUploadModalOpen}
 				closeModal={() => {
@@ -300,7 +300,7 @@ const AudioRecorder = ({
 						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 					/>
 				)}
-			</CustomDialog>
+			</CustomDialog>}
 		</Box>
 	);
 };

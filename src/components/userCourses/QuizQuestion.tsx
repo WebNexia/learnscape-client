@@ -1148,106 +1148,128 @@ const QuizQuestion = ({
 					</IconButton>
 				</Tooltip>
 				{!staffPreviewMode && (
-				<>
-				<CustomDialog
-					openModal={isSubmitQuizModalOpen}
-					closeModal={() => {
-						if (!userQuizAnswersUploading) setIsSubmitQuizModalOpen(false);
-					}}
-					maxWidth='xs'
-					title='Quiz Submission'
-					disableDismiss={userQuizAnswersUploading}>
-					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, }}>
-							Are you sure you want to submit the quiz? You will not have another chance.
-						</Typography>
-					</DialogContent>
-					{userQuizAnswersUploading ? (
-						<DialogActions sx={{ marginBottom: '1.5rem' }}>
-							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
-						</DialogActions>
-					) : (
-						<CustomDialogActions
-							onCancel={() => setIsSubmitQuizModalOpen(false)}
-							onSubmit={handleQuizSubmission}
-							submitBtnText='Submit'
-							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
-						/>
-					)}
-				</CustomDialog>
-
-				<CustomDialog
-					openModal={isPendingAudioWarningOpen}
-					closeModal={() => {
-						if (!userQuizAnswersUploading) setIsPendingAudioWarningOpen(false);
-					}}
-					maxWidth='xs'
-					title='Audio Not Uploaded'
-					disableDismiss={userQuizAnswersUploading}>
-					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
-							You have an audio recording that has not been uploaded. If you submit the quiz now, your recording will not be included.
-						</Typography>
-					</DialogContent>
-					{userQuizAnswersUploading ? (
-						<DialogActions sx={{ marginBottom: '1.5rem' }}>
-							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
-						</DialogActions>
-					) : (
-						<CustomDialogActions
-							onCancel={() => setIsPendingAudioWarningOpen(false)}
-							onSubmit={async () => {
-								await handleQuizSubmission();
-								setIsPendingAudioWarningOpen(false);
+					<>
+						{isSubmitQuizModalOpen && <CustomDialog
+							openModal={isSubmitQuizModalOpen}
+							closeModal={() => {
+								if (!userQuizAnswersUploading) setIsSubmitQuizModalOpen(false);
 							}}
-							submitBtnText='Submit Anyway'
-							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
-						/>
-					)}
-				</CustomDialog>
-
-				<CustomDialog
-					openModal={isMsgModalAfterSubmitOpen}
-					closeModal={() => {
-						setIsMsgModalAfterSubmitOpen(false);
-						navigateToCourseHome();
-					}}
-					maxWidth='sm'>
-					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
-						<Box>
-							<Typography
-								variant='body1'
-								sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', }}>
-								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
-								revisiting the quiz:
-							</Typography>
-						</Box>
-
-						<Box sx={{ ml: '3rem' }}>
-							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map((type, index) => (
-								<Typography
-									key={index}
-									variant='body2'
-									sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', }}>
-									- {type}
+							maxWidth='xs'
+							title='Quiz Submission'
+							disableDismiss={userQuizAnswersUploading}>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, }}>
+									Are you sure you want to submit the quiz? You will not have another chance.
 								</Typography>
-							))}
-						</Box>
-					</Box>
+							</DialogContent>
+							{userQuizAnswersUploading ? (
+								<DialogActions sx={{ marginBottom: '1.5rem' }}>
+									<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
+								</DialogActions>
+							) : (
+								<CustomDialogActions
+									onCancel={() => setIsSubmitQuizModalOpen(false)}
+									onSubmit={handleQuizSubmission}
+									submitBtnText='Submit'
+									actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+								/>
+							)}
+						</CustomDialog>}
 
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '90%', margin: '0 auto' }}>
-						<CustomSubmitButton
-							type='button'
-							onClick={() => {
+						{isPendingAudioWarningOpen && <CustomDialog
+							openModal={isPendingAudioWarningOpen}
+							closeModal={() => {
+								if (!userQuizAnswersUploading) setIsPendingAudioWarningOpen(false);
+							}}
+							maxWidth='xs'
+							title='Audio Not Uploaded'
+							disableDismiss={userQuizAnswersUploading}>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
+									You have an at least one audio recording that has not been uploaded. If you submit the quiz now, your recording(s) will not be included.
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{
+										mt: '0.75rem',
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										lineHeight: 1.8,
+										fontFamily: 'Poppins, sans-serif',
+										color: 'text.secondary',
+									}}>
+									Yüklenmemiş en az bir ses kaydınız var. Quiz'i şimdi gönderirseniz kaydınız(lar) dahil edilmeyecektir.
+								</Typography>
+							</DialogContent>
+							{userQuizAnswersUploading ? (
+								<DialogActions sx={{ marginBottom: '1.5rem' }}>
+									<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
+								</DialogActions>
+							) : (
+								<CustomDialogActions
+									onCancel={() => setIsPendingAudioWarningOpen(false)}
+									onSubmit={async () => {
+										await handleQuizSubmission();
+										setIsPendingAudioWarningOpen(false);
+									}}
+									submitBtnText='Submit Anyway'
+									actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+								/>
+							)}
+						</CustomDialog>}
+
+						{isMsgModalAfterSubmitOpen && <CustomDialog
+							openModal={isMsgModalAfterSubmitOpen}
+							closeModal={() => {
 								setIsMsgModalAfterSubmitOpen(false);
 								navigateToCourseHome();
 							}}
-							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: isMobileSize ? '1.75rem' : '2rem' }}>
-							Close
-						</CustomSubmitButton>
-					</Box>
-				</CustomDialog>
-				</>
+							maxWidth='sm'>
+							<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
+								<Box>
+									<Typography
+										variant='body1'
+										sx={{ mb: '0.5rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', }}>
+										You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
+										revisiting the quiz:
+									</Typography>
+									<Typography
+										variant='body1'
+										sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', color: 'text.secondary' }}>
+										Quiz hakkında eğitmeninizden yakında geri bildirim alacaksınız. Aşağıdaki soru türlerinin cevaplarını quiz'e tekrar girerek
+										inceleyebilirsiniz:
+									</Typography>
+								</Box>
+
+								<Box sx={{ ml: '3rem' }}>
+									{[
+										{ en: QuestionType.MULTIPLE_CHOICE, tr: 'Çoktan Seçmeli' },
+										{ en: QuestionType.TRUE_FALSE, tr: 'Doğru-Yanlış' },
+										{ en: QuestionType.MATCHING, tr: 'Eşleştirme' },
+										{ en: 'Fill in the Blanks', tr: 'Boşluk Doldurma' },
+									].map((type, index) => (
+										<Typography
+											key={index}
+											variant='body2'
+											sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', }}>
+											- {type.en} / {type.tr}
+										</Typography>
+									))}
+								</Box>
+							</Box>
+
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '90%', margin: '0 auto' }}>
+								<CustomSubmitButton
+									type='button'
+									onClick={() => {
+										setIsMsgModalAfterSubmitOpen(false);
+										navigateToCourseHome();
+									}}
+									sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: isMobileSize ? '1.75rem' : '2rem' }}>
+									Close
+								</CustomSubmitButton>
+							</Box>
+						</CustomDialog>}
+					</>
 				)}
 			</Box>
 		</Box>

@@ -47,8 +47,6 @@ const AdminForms = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Modal states
-	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean[]>([]);
-	const [isFormInfoModalOpen, setIsFormInfoModalOpen] = useState<boolean[]>([]);
 	const [formToDelete, setFormToDelete] = useState<FeedbackForm | null>(null);
 	const [formToViewInfo, setFormToViewInfo] = useState<FeedbackForm | null>(null);
 	const [successMessage, setSuccessMessage] = useState<string>('');
@@ -97,21 +95,12 @@ const AdminForms = () => {
 		defaultOrder: 'desc',
 	});
 
-	// Initial fetch - use context (no courseId, so fetches all forms)
+	// Enable list fetch only on this page; clear course scope so we get all org forms
 	useEffect(() => {
-		if (orgId) {
-			enableFormsFetch();
-			fetchFormsFromContext(); // No courseId = fetch all forms
-		}
-	}, [orgId, enableFormsFetch, fetchFormsFromContext]);
-
-	// Update modal states when data changes
-	useEffect(() => {
-		if (displayForms && displayForms.length !== isDeleteModalOpen.length) {
-			setIsDeleteModalOpen(Array(displayForms.length).fill(false));
-			setIsFormInfoModalOpen(Array(displayForms.length).fill(false));
-		}
-	}, [displayForms, formsCurrentPage, filterValue, searchValue]);
+		if (!orgId) return;
+		fetchFormsFromContext();
+		enableFormsFetch();
+	}, [orgId, fetchFormsFromContext, enableFormsFetch]);
 
 	// Responsive column configuration
 	const getColumns = (isMobileSize: boolean) => {
@@ -142,31 +131,19 @@ const AdminForms = () => {
 
 	const paginatedForms = sortedForms;
 
-	const openDeleteModal = (index: number) => {
-		const newModals = [...isDeleteModalOpen];
-		newModals[index] = true;
-		setIsDeleteModalOpen(newModals);
-		setFormToDelete(paginatedForms[index]);
+	const openDeleteModal = (form: FeedbackForm) => {
+		setFormToDelete(form);
 	};
 
-	const closeDeleteModal = (index: number) => {
-		const newModals = [...isDeleteModalOpen];
-		newModals[index] = false;
-		setIsDeleteModalOpen(newModals);
+	const closeDeleteModal = () => {
 		setFormToDelete(null);
 	};
 
-	const openFormInfoModal = (index: number) => {
-		const newModals = [...isFormInfoModalOpen];
-		newModals[index] = true;
-		setIsFormInfoModalOpen(newModals);
-		setFormToViewInfo(paginatedForms[index]);
+	const openFormInfoModal = (form: FeedbackForm) => {
+		setFormToViewInfo(form);
 	};
 
-	const closeFormInfoModal = (index: number) => {
-		const newModals = [...isFormInfoModalOpen];
-		newModals[index] = false;
-		setIsFormInfoModalOpen(newModals);
+	const closeFormInfoModal = () => {
 		setFormToViewInfo(null);
 	};
 
@@ -176,7 +153,7 @@ const AdminForms = () => {
 			await deleteForm(formToDelete._id);
 			setSuccessMessage('Form deleted successfully');
 			setSuccessSnackbarOpen(true);
-			closeDeleteModal(paginatedForms.findIndex((f) => f._id === formToDelete._id));
+			closeDeleteModal();
 
 			// If search is active, remove from search results
 			if (isSearchActive) {
@@ -248,7 +225,6 @@ const AdminForms = () => {
 	};
 
 	const [isCreateFormDialogOpen, setIsCreateFormDialogOpen] = useState<boolean>(false);
-	const [isEditFormDialogOpen, setIsEditFormDialogOpen] = useState<boolean[]>([]);
 	const [formToEdit, setFormToEdit] = useState<FeedbackForm | null>(null);
 
 	const handleCreateForm = () => {
@@ -259,10 +235,6 @@ const AdminForms = () => {
 		const form = paginatedForms.find((f) => f._id === formId);
 		if (form) {
 			setFormToEdit(form);
-			const index = paginatedForms.findIndex((f) => f._id === formId);
-			const newModals = [...isEditFormDialogOpen];
-			newModals[index] = true;
-			setIsEditFormDialogOpen(newModals);
 		}
 	};
 
@@ -270,10 +242,7 @@ const AdminForms = () => {
 		setIsCreateFormDialogOpen(false);
 	};
 
-	const closeEditFormDialog = (index: number) => {
-		const newModals = [...isEditFormDialogOpen];
-		newModals[index] = false;
-		setIsEditFormDialogOpen(newModals);
+	const closeEditFormDialog = () => {
 		setFormToEdit(null);
 	};
 
@@ -443,7 +412,7 @@ const AdminForms = () => {
 						/>
 						<TableBody>
 							{paginatedForms &&
-								paginatedForms.map((form: FeedbackForm, index: number) => {
+								paginatedForms.map((form: FeedbackForm) => {
 									const courseTitle = (form.courseId as any)?.title || 'N/A';
 									return (
 										<TableRow key={form._id} hover>
@@ -494,12 +463,12 @@ const AdminForms = () => {
 												/>
 												<CustomActionBtn
 													title='Delete'
-													onClick={() => openDeleteModal(index)}
+													onClick={() => openDeleteModal(form)}
 													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 												<CustomActionBtn
 													title='More Info'
-													onClick={() => openFormInfoModal(index)}
+													onClick={() => openFormInfoModal(form)}
 													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 											</TableCell>
@@ -555,80 +524,55 @@ const AdminForms = () => {
 				</Snackbar>
 
 				{/* Create Form Dialog */}
-				<CreateFeedbackFormDialog
-					isOpen={isCreateFormDialogOpen}
-					onClose={closeCreateFormDialog}
-					onSuccess={() => {
-						closeCreateFormDialog();
-						setSuccessMessage('Form created successfully');
-						setSuccessSnackbarOpen(true);
-						// Context will automatically refetch after mutation
-					}}
-				/>
+				{isCreateFormDialogOpen && (
+					<CreateFeedbackFormDialog
+						isOpen={isCreateFormDialogOpen}
+						onClose={closeCreateFormDialog}
+						onSuccess={() => {
+							closeCreateFormDialog();
+							setSuccessMessage('Form created successfully');
+							setSuccessSnackbarOpen(true);
+						}}
+					/>
+				)}
 
 				{/* Edit Form Dialog */}
-				{paginatedForms.map((form, index) => {
-					const editDialogOpen = isEditFormDialogOpen[index] || false;
-					// Don't pass courseId prop when editing from AdminForms - let the dialog handle it via selectedCourse
-					// This allows users to update/remove course selection
-					return (
-						<CreateFeedbackFormDialog
-							key={form._id}
-							isOpen={editDialogOpen}
-							onClose={() => closeEditFormDialog(index)}
-							formToEdit={formToEdit}
-							onSuccess={() => {
-								closeEditFormDialog(index);
-								setSuccessMessage('Form updated successfully');
-								setSuccessSnackbarOpen(true);
-								// Context will automatically refetch after mutation
-							}}
-						/>
-					);
-				})}
+				{formToEdit && (
+					<CreateFeedbackFormDialog
+						isOpen={true}
+						onClose={closeEditFormDialog}
+						formToEdit={formToEdit}
+						onSuccess={() => {
+							closeEditFormDialog();
+							setSuccessMessage('Form updated successfully');
+							setSuccessSnackbarOpen(true);
+						}}
+					/>
+				)}
 
 				{/* Delete Form Dialog */}
-				{paginatedForms.map((form, index) => {
-					const deleteModalOpen = isDeleteModalOpen[index] || false;
-					return (
-						deleteModalOpen && (
-							<CustomDialog
-								key={`delete-${form._id}`}
-								openModal={deleteModalOpen}
-								closeModal={() => closeDeleteModal(index)}
-								title='Delete Form'
-								maxWidth='xs'>
-								<DialogContent>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-										Are you sure you want to delete &quot;{form.title}&quot;?
-									</Typography>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
-										This action will permanently delete the form and all associated submissions
-									</Typography>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
-										This action cannot be undone.
-									</Typography>
-								</DialogContent>
-								<CustomDialogActions
-									onCancel={() => closeDeleteModal(index)}
-									deleteBtn={true}
-									onDelete={handleDelete}
-									actionSx={{ mb: '0.5rem' }}
-								/>
-							</CustomDialog>
-						)
-					);
-				})}
+				{formToDelete && (
+					<CustomDialog openModal={true} closeModal={closeDeleteModal} title='Delete Form' maxWidth='xs'>
+						<DialogContent>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+								Are you sure you want to delete &quot;{formToDelete.title}&quot;?
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+								This action will permanently delete the form and all associated submissions
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
+								This action cannot be undone.
+							</Typography>
+						</DialogContent>
+						<CustomDialogActions onCancel={closeDeleteModal} deleteBtn={true} onDelete={handleDelete} actionSx={{ mb: '0.5rem' }} />
+					</CustomDialog>
+				)}
 
 				{/* Form Info Dialog */}
-				{isFormInfoModalOpen.map(
-					(isOpen, index) =>
-						isOpen &&
-						formToViewInfo && (
-							<CustomDialog key={index} openModal={isOpen} closeModal={() => closeFormInfoModal(index)} title='Form Information' maxWidth='sm'>
-								<FormInfoModal form={formToViewInfo} onClose={() => closeFormInfoModal(index)} />
-							</CustomDialog>
-						)
+				{formToViewInfo && (
+					<CustomDialog openModal={true} closeModal={closeFormInfoModal} title='Form Information' maxWidth='sm'>
+						<FormInfoModal form={formToViewInfo} onClose={closeFormInfoModal} />
+					</CustomDialog>
 				)}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

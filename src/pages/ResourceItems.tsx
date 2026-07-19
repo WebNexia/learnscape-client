@@ -1,7 +1,7 @@
 import { Box, Typography, Snackbar, Alert, Grid, DialogContent } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useState, useMemo, useRef } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import { Add, ArrowBack } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -18,23 +18,25 @@ import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import { useQuery } from 'react-query';
+import axios from '@utils/axiosInstance';
+import type { AxiosError } from 'axios';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+
+type ResourceFolderSummary = Pick<ResourceFolder, '_id' | 'name' | 'itemCount'>;
 
 const ResourceItems = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { folderId } = useParams<{ folderId: string }>();
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { orgId } = useContext(OrganisationContext);
 	const { hasAdminAccess } = useAuth();
 	const {
-		folders,
-		foldersLoading,
-		fetchFolders,
 		items,
 		itemsLoading,
 		itemsError,
-		fetchItems,
 		fetchMoreItems,
-		itemsPageNumber,
 		setItemsPageNumber,
 		itemsTotalItems,
 		itemsLoadedPages,
@@ -74,7 +76,7 @@ const ResourceItems = () => {
 		resetAll,
 	} = useFilterSearch<ResourceItem>({
 		getEndpoint: () => `${base_url}/resources/items`,
-		limit: 200,
+		limit: 100,
 		pageSize,
 		contextData: items,
 		setContextPageNumber: setItemsPageNumber,
@@ -87,7 +89,6 @@ const ResourceItems = () => {
 	});
 
 	// State
-	const [currentFolder, setCurrentFolder] = useState<ResourceFolder | null>(null);
 	const [isCreateItemOpen, setIsCreateItemOpen] = useState(false);
 	const [isEditItemOpen, setIsEditItemOpen] = useState(false);
 	const [isDeleteItemOpen, setIsDeleteItemOpen] = useState(false);
@@ -100,7 +101,31 @@ const ResourceItems = () => {
 	const [snackbarMessage, setSnackbarMessage] = useState('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 	const [duplicateNameError, setDuplicateNameError] = useState<string | null>(null);
-	const prevFolderIdRef = useRef<string | undefined>(undefined);
+
+	const resourcesBasePath = useMemo(() => {
+		if (location.pathname.includes('/instructor')) return '/instructor/resources';
+		if (location.pathname.includes('/admin')) return '/admin/resources';
+		return '/resources';
+	}, [location.pathname]);
+
+	const {
+		data: currentFolder,
+		isLoading: folderLoading,
+		error: folderError,
+	} = useQuery<ResourceFolderSummary, AxiosError>(
+		['resourceFolder', orgId, folderId],
+		async () => {
+			const response = await axios.get(`${base_url}/resources/folders/${folderId}`);
+			return response.data.data;
+		},
+		{
+			enabled: !!orgId && !!folderId && !resourcesAccessLoading && !resourcesAccessDenied,
+			staleTime: 3 * 60 * 1000,
+			cacheTime: 30 * 60 * 1000,
+			refetchOnWindowFocus: false,
+			retry: false,
+		}
+	);
 
 	// Sorted items
 	const sortedItems = useMemo(() => {
@@ -112,34 +137,18 @@ const ResourceItems = () => {
 		});
 	}, [displayItems, orderBy, order]);
 
-	// Load folder and items
+	// Selecting a folder enables the context-owned items query.
 	useEffect(() => {
 		if (!folderId) return;
-
-		// Prevent unnecessary re-runs by checking if folderId actually changed
-		if (prevFolderIdRef.current === folderId) {
-			return;
-		}
-		prevFolderIdRef.current = folderId;
-
 		setCurrentFolderId(folderId);
-		// Find folder from context or fetch
-		const folder = folders.find((f) => f._id === folderId);
-		if (folder) {
-			setCurrentFolder(folder);
-		} else if (!foldersLoading && folders.length > 0) {
-			// Folder not found, redirect back
-			let basePath = '/admin/resources';
-			if (location.pathname.includes('/instructor')) {
-				basePath = '/instructor/resources';
-			} else if (location.pathname.includes('/resources') && !location.pathname.includes('/admin')) {
-				basePath = '/resources';
-			}
-			navigate(basePath);
-			return;
+	}, [folderId, setCurrentFolderId]);
+
+	// Keep invalid/deleted folder links from rendering an orphaned items page.
+	useEffect(() => {
+		if (folderError?.response?.status === 404) {
+			navigate(resourcesBasePath);
 		}
-		fetchItems(folderId, 1);
-	}, [folderId, folders, foldersLoading, setCurrentFolderId, fetchItems, navigate, location.pathname]);
+	}, [folderError, navigate, resourcesBasePath]);
 
 	// Handlers
 	const handleCreateItem = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -160,8 +169,6 @@ const ResourceItems = () => {
 			setSnackbarOpen(true);
 			setIsCreateItemOpen(false);
 			setCurrentItem(null);
-			fetchItems(folderId, itemsPageNumber);
-			fetchFolders(1); // Update itemCount
 		} catch (error: any) {
 			const errorMessage = error.response?.data?.message || 'Failed to add item';
 			// Check if it's the duplicate name error
@@ -197,9 +204,6 @@ const ResourceItems = () => {
 			setSnackbarOpen(true);
 			setIsEditItemOpen(false);
 			setCurrentItem(null);
-			if (folderId) {
-				fetchItems(folderId, itemsPageNumber);
-			}
 		} catch (error: any) {
 			const errorMessage = error.response?.data?.message || 'Failed to update item';
 			// Check if it's the duplicate name error
@@ -226,10 +230,6 @@ const ResourceItems = () => {
 			setSnackbarOpen(true);
 			setIsDeleteItemOpen(false);
 			setItemToDelete(null);
-			if (folderId) {
-				fetchItems(folderId, itemsPageNumber);
-				fetchFolders(1); // Update itemCount
-			}
 		} catch (error: any) {
 			setSnackbarMessage(error.response?.data?.message || 'Failed to delete item');
 			setSnackbarSeverity('error');
@@ -274,15 +274,8 @@ const ResourceItems = () => {
 									{
 										label: isMobileSize ? 'Back' : 'Resources',
 										onClick: () => {
-											// Determine base path based on current route
-											let basePath = '/admin/resources';
-											if (location.pathname.includes('/instructor')) {
-												basePath = '/instructor/resources';
-											} else if (location.pathname.includes('/resources') && !location.pathname.includes('/admin')) {
-												basePath = '/resources';
-											}
 											setCurrentFolderId(null);
-											navigate(basePath);
+											navigate(resourcesBasePath);
 										},
 										startIcon: <ArrowBack />,
 									},
@@ -314,10 +307,10 @@ const ResourceItems = () => {
 
 
 								{/* Items List */}
-								{itemsLoading || isSearchLoading ? (
+								{itemsLoading || folderLoading || isSearchLoading ? (
 									<ResourcesSkeleton isItems={true} />
-								) : itemsError ? (
-									<Alert severity='error'>{itemsError}</Alert>
+								) : itemsError || folderError ? (
+									<Alert severity='error'>{itemsError || 'Failed to fetch folder'}</Alert>
 								) : sortedItems.length === 0 ? (
 									<Box sx={{ p: '5rem 2rem', textAlign: 'center', borderRadius: 1 }}>
 										<Typography variant='body2' color='text.secondary'>
@@ -361,39 +354,44 @@ const ResourceItems = () => {
 				{/* Dialogs */}
 				{!resourcesAccessDenied && (
 					<>
-						<CreateResourceItemDialog
-							isOpen={isCreateItemOpen}
-							onClose={() => {
-								setIsCreateItemOpen(false);
-								setCurrentItem(null);
-								setDuplicateNameError(null);
-							}}
-							onSubmit={handleCreateItem}
-							item={currentItem}
-							setItem={setCurrentItem}
-							folderId={folderId || ''}
-							isCreating={isCreating}
-							duplicateNameError={duplicateNameError}
-							onClearError={() => setDuplicateNameError(null)}
-						/>
+						{isCreateItemOpen && (
+							<CreateResourceItemDialog
+								isOpen={isCreateItemOpen}
+								onClose={() => {
+									setIsCreateItemOpen(false);
+									setCurrentItem(null);
+									setDuplicateNameError(null);
+								}}
+								onSubmit={handleCreateItem}
+								item={currentItem}
+								setItem={setCurrentItem}
+								folderId={folderId || ''}
+								isCreating={isCreating}
+								duplicateNameError={duplicateNameError}
+								onClearError={() => setDuplicateNameError(null)}
+							/>
+						)}
 
-						<EditResourceItemDialog
-							isOpen={isEditItemOpen}
-							onClose={() => {
-								setIsEditItemOpen(false);
-								setCurrentItem(null);
-								setDuplicateNameError(null);
-							}}
-							onSubmit={handleUpdateItem}
-							item={currentItem as ResourceItem}
-							setItem={setCurrentItem}
-							isUpdating={isUpdating}
-							duplicateNameError={duplicateNameError}
-							onClearError={() => setDuplicateNameError(null)}
-						/>
+						{isEditItemOpen && (
+							<EditResourceItemDialog
+								isOpen={isEditItemOpen}
+								onClose={() => {
+									setIsEditItemOpen(false);
+									setCurrentItem(null);
+									setDuplicateNameError(null);
+								}}
+								onSubmit={handleUpdateItem}
+								item={currentItem as ResourceItem}
+								setItem={setCurrentItem}
+								isUpdating={isUpdating}
+								duplicateNameError={duplicateNameError}
+								onClearError={() => setDuplicateNameError(null)}
+							/>
+						)}
 
 						{/* Delete Confirmation */}
-						<CustomDialog title='Delete Resource' openModal={isDeleteItemOpen} closeModal={() => setIsDeleteItemOpen(false)} maxWidth='xs'>
+						{isDeleteItemOpen && (
+							<CustomDialog title='Delete Resource' openModal={isDeleteItemOpen} closeModal={() => setIsDeleteItemOpen(false)} maxWidth='xs'>
 							<DialogContent>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
 									Are you sure you want to delete "{itemToDelete?.title}"?
@@ -413,7 +411,8 @@ const ResourceItems = () => {
 								isSubmitting={isDeleting}
 								actionSx={{ mb: '0.5rem' }}
 							/>
-						</CustomDialog>
+							</CustomDialog>
+						)}
 					</>
 				)}
 

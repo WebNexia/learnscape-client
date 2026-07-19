@@ -555,9 +555,9 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				</Box>
 			</Toolbar>
 
-			<ReportBugDialog open={bugReportDialogOpen} onClose={() => setBugReportDialogOpen(false)} />
+			{bugReportDialogOpen && <ReportBugDialog open={true} onClose={() => setBugReportDialogOpen(false)} />}
 
-			<CustomDialog
+			{isLogoutDialogOpen && <CustomDialog
 				openModal={isLogoutDialogOpen}
 				closeModal={() => {
 					if (!isLoggingOut) setIsLogoutDialogOpen(false);
@@ -579,44 +579,43 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					disableCancelBtn={isLoggingOut}
 					actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 				/>
-			</CustomDialog>
+			</CustomDialog>}
 
 			{/* Subscription Dialog */}
-			{isSubscriptionsProductEnabled && (
-				<>
-					<ConditionalStripeProvider>
-						<SubscriptionDialog
-							open={subscriptionDialogOpen}
-							onClose={() => setSubscriptionDialogOpen(false)}
-							onSuccess={async () => {
-								if (user) {
-									setUser((prevUser) => {
-										if (prevUser) {
-											// Calculate expiry date based on subscription type
-											// For now, we'll use a default 30 days, but this should ideally come from the subscription response
-											const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+			{isSubscriptionsProductEnabled && subscriptionDialogOpen && (
+				<ConditionalStripeProvider>
+					<SubscriptionDialog
+						open={true}
+						onClose={() => setSubscriptionDialogOpen(false)}
+						onSuccess={async () => {
+							if (user) {
+								setUser((prevUser) => {
+									if (prevUser) {
+										// Calculate expiry date based on subscription type
+										// For now, we'll use a default 30 days, but this should ideally come from the subscription response
+										const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-											return {
-												...prevUser,
-												isSubscribed: true,
-												subscriptionStatus: 'active',
-												accessLevel: 'subscription',
-												subscriptionType: 'monthly', // This should ideally come from the subscription data
-												subscriptionValidUntil: expiryDate,
-												subscriptionExpiry: expiryDate,
-											};
-										}
-										return prevUser;
-									});
-								}
-								// Close the subscription dialog
-								setSubscriptionDialogOpen(false);
-							}}
-						/>
-					</ConditionalStripeProvider>
+										return {
+											...prevUser,
+											isSubscribed: true,
+											subscriptionStatus: 'active',
+											accessLevel: 'subscription',
+											subscriptionType: 'monthly', // This should ideally come from the subscription data
+											subscriptionValidUntil: expiryDate,
+											subscriptionExpiry: expiryDate,
+										};
+									}
+									return prevUser;
+								});
+							}
+							setSubscriptionDialogOpen(false);
+						}}
+					/>
+				</ConditionalStripeProvider>
+			)}
 
-					<UnsubscribeDialog open={unsubscribeDialogOpen} onClose={() => setUnsubscribeDialogOpen(false)} />
-				</>
+			{isSubscriptionsProductEnabled && unsubscribeDialogOpen && (
+				<UnsubscribeDialog open={true} onClose={() => setUnsubscribeDialogOpen(false)} />
 			)}
 		</AppBar>
 	);

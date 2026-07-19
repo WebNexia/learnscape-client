@@ -1,5 +1,5 @@
 import { Box, Typography, Grid, Card, CardContent } from '@mui/material';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { ConsultationSlot } from '../../interfaces/consultation';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
@@ -13,7 +13,10 @@ const SlotStatistics = ({ slots }: SlotStatisticsProps) => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const totalSlots = slots.length;
-	const bookedSlots = slots.filter((slot) => slot.appointmentRef).length;
+	const bookedSlots = useMemo(
+		() => slots.reduce((count, slot) => count + (slot.appointmentRef ? 1 : 0), 0),
+		[slots]
+	);
 	const availableSlots = totalSlots - bookedSlots;
 	const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : '0.0';
 

@@ -11,7 +11,6 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useUploadLimit } from '../contexts/UploadLimitContextProvider';
-import { User } from '../interfaces/user';
 import { debounce } from 'lodash';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import ChatList from '../components/messages/ChatList';
@@ -98,7 +97,6 @@ const Messages = () => {
 
 	const [isChatsListVisible, setIsChatsListVisible] = useState<boolean>(false);
 
-	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchChatValue, setSearchChatValue] = useState<string>('');
 
@@ -133,7 +131,6 @@ const Messages = () => {
 	} = useMessages({
 		activeChatId: activeChat?.chatId,
 		userFirebaseId: user?.firebaseUserId,
-		refreshChatList,
 		isMobileSize,
 	});
 
@@ -398,7 +395,6 @@ const Messages = () => {
 					}}
 					onAddUserClick={() => {
 						setAddUserModalOpen(true);
-						setFilteredUsers([]);
 						setSearchValue('');
 					}}
 					onCreateGroupClick={async () => {
@@ -659,276 +655,288 @@ const Messages = () => {
 				)}
 			</Box>
 
-			{/* Custom Dialog for User Search */}
-			<CustomDialog
-				openModal={addUserModalOpen}
-				closeModal={() => {
-					setAddUserModalOpen(false);
-					setSearchValue('');
-					setErrorMsg('');
-				}}
-				title='Find User'
-				maxWidth='sm'>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'center',
-						alignItems: 'center',
-						width: '100%',
-						mb: filteredUsers && filteredUsers.length === 0 ? '1rem' : '0rem',
-					}}>
-					<UserSearchSelect
-						key={`search-${errorMsg ? 'error' : 'normal'}`}
-						context='messages'
-						userRole={user?.role === 'instructor' ? 'admin' : hasAdminAccess ? 'admin' : 'learner'}
-						value={searchValue}
-						onChange={(value) => {
-							setSearchValue(value);
-							// Clear error message when user starts typing
-							if (errorMsg) {
-								setErrorMsg('');
+			{/* Custom Dialog for User Search — mount only when open (UserSearchSelect is heavy) */}
+			{addUserModalOpen && (
+				<CustomDialog
+					openModal={addUserModalOpen}
+					closeModal={() => {
+						setAddUserModalOpen(false);
+						setSearchValue('');
+						setErrorMsg('');
+					}}
+					title='Find User'
+					maxWidth='sm'>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+							mb: '1rem',
+						}}>
+						<UserSearchSelect
+							key={`search-${errorMsg ? 'error' : 'normal'}`}
+							context='messages'
+							userRole={user?.role === 'instructor' ? 'admin' : hasAdminAccess ? 'admin' : 'learner'}
+							value={searchValue}
+							onChange={(value) => {
+								setSearchValue(value);
+								// Clear error message when user starts typing
+								if (errorMsg) {
+									setErrorMsg('');
+								}
+							}}
+							onSelect={handleSearchUserSelection}
+							currentUserId={user?.firebaseUserId}
+							blockedUsers={globalBlockedUsers}
+							placeholder={hasAdminAccess ? 'Search by username, name, or email' : 'Search users by username or name'}
+							sx={{ width: '80%' }}
+							listSx={{
+								margin: '-0.85rem auto 0 0.5rem',
+								width: isMobileSize ? '90%' : '70%',
+								paddingTop: '0rem',
+							}}
+						/>
+						{errorMsg && (
+							<Box sx={{ mt: '-1rem', width: '90%' }}>
+								<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
+							</Box>
+						)}
+					</Box>
+
+					<DialogActions sx={{ mt: '-1rem' }}>
+						<CustomCancelButton
+							onClick={() => setAddUserModalOpen(false)}
+							sx={{ margin: '0rem 1.25rem 0.75rem 0', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+							Close
+						</CustomCancelButton>
+					</DialogActions>
+				</CustomDialog>
+			)}
+
+			{createGroupModalOpen && (
+				<GroupChatModal
+					createGroupModalOpen={createGroupModalOpen}
+					groupName={groupName}
+					groupImageUrl={groupImageUrl}
+					enterGroupImageUrl={enterGroupImageUrl}
+					scopedChatId={pendingGroupChatId}
+					selectedGroupUsers={selectedGroupUsers}
+					groupSearchValue={groupSearchValue}
+					user={user}
+					blockedUsers={globalBlockedUsers}
+					onCloseModal={async () => {
+						if (pendingGroupChatId && groupImageUrl.trim()) {
+							try {
+								await cleanupGroupChatImages(pendingGroupChatId, null, groupImageUrl.trim());
+							} catch (err) {
+								console.warn('Group image orphan cleanup failed on create cancel:', err);
 							}
-						}}
-						onSelect={handleSearchUserSelection}
-						currentUserId={user?.firebaseUserId}
-						blockedUsers={globalBlockedUsers}
-						placeholder={hasAdminAccess ? 'Search by username, name, or email' : 'Search users by username or name'}
-						sx={{ width: '80%' }}
-						listSx={{
-							margin: '-0.85rem auto 0 0.5rem',
-							width: isMobileSize ? '90%' : '70%',
-							paddingTop: isMobileSize ? '0' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
-						}}
-					/>
-					{errorMsg && (
-						<Box sx={{ mt: '-1rem', width: '90%' }}>
-							<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-						</Box>
-					)}
-				</Box>
-
-				<DialogActions sx={{ mt: '-1rem' }}>
-					<CustomCancelButton
-						onClick={() => setAddUserModalOpen(false)}
-						sx={{ margin: '0rem 1.25rem 0.75rem 0', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						Close
-					</CustomCancelButton>
-				</DialogActions>
-			</CustomDialog>
-
-			<GroupChatModal
-				createGroupModalOpen={createGroupModalOpen}
-				groupName={groupName}
-				groupImageUrl={groupImageUrl}
-				enterGroupImageUrl={enterGroupImageUrl}
-				scopedChatId={pendingGroupChatId}
-				selectedGroupUsers={selectedGroupUsers}
-				groupSearchValue={groupSearchValue}
-				user={user}
-				blockedUsers={globalBlockedUsers}
-				onCloseModal={async () => {
-					if (pendingGroupChatId && groupImageUrl.trim()) {
-						try {
-							await cleanupGroupChatImages(pendingGroupChatId, null, groupImageUrl.trim());
-						} catch (err) {
-							console.warn('Group image orphan cleanup failed on create cancel:', err);
 						}
-					}
-					setCreateGroupModalOpen(false);
-					resetGroupChatForm();
-				}}
-				onGroupNameChange={(e) => setGroupName(e.target.value)}
-				onGroupImageUpload={async (url) => {
-					const previous = groupImageUrl.trim();
-					if (!url.trim() && previous && pendingGroupChatId) {
-						try {
-							await cleanupGroupChatImages(pendingGroupChatId, null, previous);
-						} catch (err) {
-							console.warn('Group image cleanup failed on remove:', err);
+						setCreateGroupModalOpen(false);
+						resetGroupChatForm();
+					}}
+					onGroupNameChange={(e) => setGroupName(e.target.value)}
+					onGroupImageUpload={async (url) => {
+						const previous = groupImageUrl.trim();
+						if (!url.trim() && previous && pendingGroupChatId) {
+							try {
+								await cleanupGroupChatImages(pendingGroupChatId, null, previous);
+							} catch (err) {
+								console.warn('Group image cleanup failed on remove:', err);
+							}
 						}
-					}
-					setGroupImageUrl(url);
-				}}
-				onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
-				onEnterGroupImageUrlChange={setEnterGroupImageUrl}
-				onGroupUserSelection={handleGroupUserSelection}
-				onRemoveGroupUser={removeGroupUser}
-				onGroupSearchChange={setGroupSearchValue}
-				onCreateGroupChat={() => {
-					if (!groupName.trim() || selectedGroupUsers.length === 0 || !pendingGroupChatId) return;
-					createGroupChat(pendingGroupChatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers);
-					resetGroupChatForm();
-					setCreateGroupModalOpen(false);
-				}}
-			/>
+						setGroupImageUrl(url);
+					}}
+					onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
+					onEnterGroupImageUrlChange={setEnterGroupImageUrl}
+					onGroupUserSelection={handleGroupUserSelection}
+					onRemoveGroupUser={removeGroupUser}
+					onGroupSearchChange={setGroupSearchValue}
+					onCreateGroupChat={() => {
+						if (!groupName.trim() || selectedGroupUsers.length === 0 || !pendingGroupChatId) return;
+						createGroupChat(pendingGroupChatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers);
+						resetGroupChatForm();
+						setCreateGroupModalOpen(false);
+					}}
+				/>
+			)}
 
-			<GroupChatEditModal
-				editGroupModalOpen={editGroupModalOpen}
-				activeChat={activeChat}
-				groupName={groupName}
-				groupImageUrl={groupImageUrl}
-				selectedGroupUsers={selectedGroupUsers}
-				groupSearchValue={groupSearchValue}
-				removedMembers={removedMembers}
-				user={user}
-				blockedUsers={globalBlockedUsers}
-				onCloseModal={() => {
-					setEditGroupModalOpen(false);
-					resetGroupChatEditForm();
-				}}
-				onGroupNameChange={(e) => setGroupName(e.target.value)}
-				onGroupImageUpload={(url) => setGroupImageUrl(url)}
-				onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
-				onGroupUserSelection={handleGroupUserSelection}
-				onRemoveGroupUser={removeGroupUser}
-				onRemoveExistingMember={removeExistingGroupMember}
-				onRestoreExistingMember={restoreExistingGroupMember}
-				onGroupSearchChange={setGroupSearchValue}
-				onUpdateGroupChat={() => {
-					if (!groupName.trim() || !activeChat || !isGroupChat(activeChat)) return;
-					updateGroupChat(activeChat.chatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers, removedMembers);
-					// Reset form/UI
-					resetGroupChatEditForm();
-					setEditGroupModalOpen(false);
-				}}
-				onDeleteGroupChat={() => {
-					if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
-					setIsDeleteGroupDialogOpen(true);
-				}}
-			/>
+			{editGroupModalOpen && (
+				<GroupChatEditModal
+					editGroupModalOpen={editGroupModalOpen}
+					activeChat={activeChat}
+					groupName={groupName}
+					groupImageUrl={groupImageUrl}
+					selectedGroupUsers={selectedGroupUsers}
+					groupSearchValue={groupSearchValue}
+					removedMembers={removedMembers}
+					user={user}
+					blockedUsers={globalBlockedUsers}
+					onCloseModal={() => {
+						setEditGroupModalOpen(false);
+						resetGroupChatEditForm();
+					}}
+					onGroupNameChange={(e) => setGroupName(e.target.value)}
+					onGroupImageUpload={(url) => setGroupImageUrl(url)}
+					onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
+					onGroupUserSelection={handleGroupUserSelection}
+					onRemoveGroupUser={removeGroupUser}
+					onRemoveExistingMember={removeExistingGroupMember}
+					onRestoreExistingMember={restoreExistingGroupMember}
+					onGroupSearchChange={setGroupSearchValue}
+					onUpdateGroupChat={() => {
+						if (!groupName.trim() || !activeChat || !isGroupChat(activeChat)) return;
+						updateGroupChat(activeChat.chatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers, removedMembers);
+						// Reset form/UI
+						resetGroupChatEditForm();
+						setEditGroupModalOpen(false);
+					}}
+					onDeleteGroupChat={() => {
+						if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
+						setIsDeleteGroupDialogOpen(true);
+					}}
+				/>
+			)}
 
-			<GroupMembersModal membersModalOpen={membersModalOpen} activeChat={activeChat} onCloseModal={() => setMembersModalOpen(false)} />
+			{membersModalOpen && (
+				<GroupMembersModal membersModalOpen={membersModalOpen} activeChat={activeChat} onCloseModal={() => setMembersModalOpen(false)} />
+			)}
 
 			{/* Delete Chat Dialog */}
-			<CustomDialog
-				openModal={isDeleteChatDialogOpen}
-				closeModal={() => {
-					setIsDeleteChatDialogOpen(false);
-					setChatIdToDelete('');
-				}}
-				title='Remove Chat'
-				maxWidth='sm'>
-				<Box sx={{ p: 2, mt: '-1rem' }}>
-					<Typography variant='body2' sx={{ mb: 2, textAlign: 'center', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						Choose how to remove this chat:
-					</Typography>
+			{isDeleteChatDialogOpen && (
+				<CustomDialog
+					openModal={isDeleteChatDialogOpen}
+					closeModal={() => {
+						setIsDeleteChatDialogOpen(false);
+						setChatIdToDelete('');
+					}}
+					title='Remove Chat'
+					maxWidth='sm'>
+					<Box sx={{ p: 2, mt: '-1rem' }}>
+						<Typography variant='body2' sx={{ mb: 2, textAlign: 'center', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+							Choose how to remove this chat:
+						</Typography>
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-						{/* Hide Chat Option - Available for all users */}
-						<Box
-							sx={{
-								'p': 2,
-								'border': '1px solid rgba(1, 67, 90, 0.1)',
-								'borderRadius': '0.75rem',
-								'cursor': 'pointer',
-								'transition': 'background-color 0.2s ease',
-								'&:hover': {
-									backgroundColor: 'rgba(1, 67, 90, 0.06)',
-								},
-							}}
-							onClick={async () => {
-								try {
-									await handleHideChat(chatIdToDelete);
-								} catch (error) {
-									console.error('Error hiding chat:', error);
-								}
-								setIsDeleteChatDialogOpen(false);
-								setChatIdToDelete('');
-							}}>
-							<Typography variant='h6' sx={{ mb: 1, color: 'primary.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
-								Hide Chat
-							</Typography>
-							<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Chat will be hidden from your list but can be restored later. You can still receive messages from this chat.
-							</Typography>
-							{activeChat?.chatType !== 'group' && (
-								<Typography
-									variant='body2'
-									sx={{ color: 'text.secondary', lineHeight: '1.7', mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-									You can also resume chatting after using "Find User" dialog.
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+							{/* Hide Chat Option - Available for all users */}
+							<Box
+								sx={{
+									'p': 2,
+									'border': '1px solid rgba(1, 67, 90, 0.1)',
+									'borderRadius': '0.75rem',
+									'cursor': 'pointer',
+									'transition': 'background-color 0.2s ease',
+									'&:hover': {
+										backgroundColor: 'rgba(1, 67, 90, 0.06)',
+									},
+								}}
+								onClick={async () => {
+									try {
+										await handleHideChat(chatIdToDelete);
+									} catch (error) {
+										console.error('Error hiding chat:', error);
+									}
+									setIsDeleteChatDialogOpen(false);
+									setChatIdToDelete('');
+								}}>
+								<Typography variant='h6' sx={{ mb: 1, color: 'primary.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+									Hide Chat
 								</Typography>
-							)}
-						</Box>
+								<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+									Chat will be hidden from your list but can be restored later. You can still receive messages from this chat.
+								</Typography>
+								{activeChat?.chatType !== 'group' && (
+									<Typography
+										variant='body2'
+										sx={{ color: 'text.secondary', lineHeight: '1.7', mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+										You can also resume chatting after using "Find User" dialog.
+									</Typography>
+								)}
+							</Box>
 
-						{/* Leave Chat Option - Available for learners, not for admins in group chats */}
-						{(() => {
-							const chatToDelete = chatList?.find((chat) => chat.chatId === chatIdToDelete);
-							const isGroupChat = chatToDelete?.chatType === 'group';
-							// Show leave option for learners, or for admins/owner/super-admin in 1-1 chats
-							if (!hasAdminAccess || !isGroupChat) {
-								return (
-									<Box
-										sx={{
-											'p': 2,
-											'border': '1px solid rgba(255, 107, 107, 0.5)',
-											'borderRadius': '0.75rem',
-											'cursor': 'pointer',
-											'transition': 'background-color 0.2s ease',
-											'&:hover': {
-												backgroundColor: 'rgba(255, 107, 107, 0.08)',
-											},
-										}}
-										onClick={async () => {
-											if (!user?.firebaseUserId) return;
-											try {
-												await handleLeaveChat(chatIdToDelete);
-											} catch (err) {
-												console.error('Error leaving chat:', err);
-												alert('Failed to leave chat. Please try again.');
-											}
-											setIsDeleteChatDialogOpen(false);
-											setChatIdToDelete('');
-										}}>
-										<Typography variant='h6' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
-											Leave Chat Permanently
-										</Typography>
-										<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-											You will be removed from this conversation. You won't receive future messages from this chat.
-										</Typography>
-										{!isGroupChat && (
-											<Typography
-												variant='caption'
-												sx={{
-													mt: 2,
-													color: 'text.secondary',
-													textAlign: 'center',
-													display: 'block',
-													lineHeight: '1.7',
-													fontSize: isMobileSize ? '0.65rem' : undefined,
-												}}>
-												Note: You can start a new conversation with this person later if neither of you has blocked the other.
+							{/* Leave Chat Option - Available for learners, not for admins in group chats */}
+							{(() => {
+								const chatToDelete = chatList?.find((chat) => chat.chatId === chatIdToDelete);
+								const isGroupChat = chatToDelete?.chatType === 'group';
+								// Show leave option for learners, or for admins/owner/super-admin in 1-1 chats
+								if (!hasAdminAccess || !isGroupChat) {
+									return (
+										<Box
+											sx={{
+												'p': 2,
+												'border': '1px solid rgba(255, 107, 107, 0.5)',
+												'borderRadius': '0.75rem',
+												'cursor': 'pointer',
+												'transition': 'background-color 0.2s ease',
+												'&:hover': {
+													backgroundColor: 'rgba(255, 107, 107, 0.08)',
+												},
+											}}
+											onClick={async () => {
+												if (!user?.firebaseUserId) return;
+												try {
+													await handleLeaveChat(chatIdToDelete);
+												} catch (err) {
+													console.error('Error leaving chat:', err);
+													alert('Failed to leave chat. Please try again.');
+												}
+												setIsDeleteChatDialogOpen(false);
+												setChatIdToDelete('');
+											}}>
+											<Typography variant='h6' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+												Leave Chat Permanently
 											</Typography>
-										)}
-									</Box>
-								);
-							}
-							return null;
-						})()}
+											<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+												You will be removed from this conversation. You won't receive future messages from this chat.
+											</Typography>
+											{!isGroupChat && (
+												<Typography
+													variant='caption'
+													sx={{
+														mt: 2,
+														color: 'text.secondary',
+														textAlign: 'center',
+														display: 'block',
+														lineHeight: '1.7',
+														fontSize: isMobileSize ? '0.65rem' : undefined,
+													}}>
+													Note: You can start a new conversation with this person later if neither of you has blocked the other.
+												</Typography>
+											)}
+										</Box>
+									);
+								}
+								return null;
+							})()}
+						</Box>
 					</Box>
-				</Box>
-			</CustomDialog>
+				</CustomDialog>
+			)}
 
 			{/* Delete Group Chat Confirmation Dialog */}
-			<CustomDialog openModal={isDeleteGroupDialogOpen} closeModal={() => setIsDeleteGroupDialogOpen(false)} title='Delete Group Chat' maxWidth='xs'>
-				<DialogContent>
-					<Box sx={{ mt: '-0rem', p: 1 }}>
-						<Typography variant='body2' sx={{ mb: 2 }}>
-							Are you sure you want to delete the group "{activeChat?.groupName}"?
-						</Typography>
-						<Typography variant='body2' sx={{ textAlign: 'center', color: 'error.main', fontSize: '0.75rem' }}>
-							This action cannot be undone and will permanently delete all messages and data for all participants.
-						</Typography>
-					</Box>
-				</DialogContent>
-				<CustomDialogActions
-					deleteBtn
-					deleteBtnText='Delete Group'
-					onCancel={() => setIsDeleteGroupDialogOpen(false)}
-					onDelete={confirmDeleteGroupChat}
-					actionSx={{ mb: '0.5rem' }}
-				/>
-			</CustomDialog>
+			{isDeleteGroupDialogOpen && (
+				<CustomDialog openModal={isDeleteGroupDialogOpen} closeModal={() => setIsDeleteGroupDialogOpen(false)} title='Delete Group Chat' maxWidth='xs'>
+					<DialogContent>
+						<Box sx={{ mt: '-0rem', p: 1 }}>
+							<Typography variant='body2' sx={{ mb: 2 }}>
+								Are you sure you want to delete the group "{activeChat?.groupName}"?
+							</Typography>
+							<Typography variant='body2' sx={{ textAlign: 'center', color: 'error.main', fontSize: '0.75rem' }}>
+								This action cannot be undone and will permanently delete all messages and data for all participants.
+							</Typography>
+						</Box>
+					</DialogContent>
+					<CustomDialogActions
+						deleteBtn
+						deleteBtnText='Delete Group'
+						onCancel={() => setIsDeleteGroupDialogOpen(false)}
+						onDelete={confirmDeleteGroupChat}
+						actionSx={{ mb: '0.5rem' }}
+					/>
+				</CustomDialog>
+			)}
 		</DashboardPagesLayout>
 	);
 };

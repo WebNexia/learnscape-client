@@ -13,9 +13,6 @@ export function shouldFetchStaffCoursesList(pathname: string): boolean {
 	if (pathname === '/admin/payments' || pathname.startsWith('/admin/payments/')) {
 		return true;
 	}
-	if (pathname === '/admin/calendar' || pathname.startsWith('/admin/calendar/')) {
-		return true;
-	}
 	if (pathname.startsWith('/admin/course-roster/')) {
 		return true;
 	}
@@ -33,9 +30,6 @@ export function shouldFetchStaffCoursesList(pathname: string): boolean {
 		return true;
 	}
 	if (pathname === '/instructor/submissions' || pathname.startsWith('/instructor/submissions/')) {
-		return true;
-	}
-	if (pathname === '/instructor/calendar' || pathname.startsWith('/instructor/calendar/')) {
 		return true;
 	}
 	if (pathname.startsWith('/instructor/course-roster/')) {

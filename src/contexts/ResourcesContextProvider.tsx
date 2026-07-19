@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState, useCallback, useMemo, } from 'react';
+import { ReactNode, createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -8,6 +8,7 @@ import { Roles } from '../interfaces/enums';
 import { ResourceFolder, ResourceItem, ResourceAccessInfo } from '../interfaces/resource';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import axios from '@utils/axiosInstance';
+import { useLocation } from 'react-router-dom';
 
 interface ResourcesContextTypes {
 	// Folders
@@ -69,6 +70,8 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
+	const location = useLocation();
+	const isResourceFolderRoute = /\/resources\/folder\/[^/]+/.test(location.pathname);
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	const queryClient = useQueryClient();
 
@@ -81,12 +84,10 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 	const [itemsPageNumber, setItemsPageNumber] = useState<number>(1);
 	const [itemsTotalItems, setItemsTotalItems] = useState<number>(0);
 	const [itemsLoadedPages, setItemsLoadedPages] = useState<number[]>([]);
-	const [currentFolderId, setCurrentFolderIdState] = useState<string | null>(null);
+	const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
 
 	// Reset items pagination when folder changes
-	const setCurrentFolderId = useCallback((value: React.SetStateAction<string | null>) => {
-		const newFolderId = typeof value === 'function' ? value(currentFolderId) : value;
-		setCurrentFolderIdState(newFolderId);
+	useEffect(() => {
 		setItemsPageNumber(1);
 		setItemsLoadedPages([]);
 		setItemsTotalItems(0);
@@ -101,11 +102,11 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 			try {
 				const response = await axios.get(`${base_url}/resources/folders?page=${page}&limit=100`);
 				if (response.data.status === 200) {
-					const folders = response.data.data || [];
+					const folders = Array.isArray(response.data.data) ? response.data.data : [];
 					const total = response.data.total || 0;
 					setFoldersTotalItems(total);
-					setFoldersLoadedPages((prev) => Array.from(new Set([...prev, page])));
 					queryClient.setQueryData(['resourceFolders', orgId, page], folders);
+					setFoldersLoadedPages((prev) => Array.from(new Set([...prev, page])));
 					return folders;
 				}
 				return [];
@@ -145,11 +146,11 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 				const folderParam = folderId ? `&folderId=${folderId}` : '';
 				const response = await axios.get(`${base_url}/resources/items?page=${page}&limit=100${folderParam}`);
 				if (response.data.status === 200) {
-					const items = response.data.data || [];
+					const items = Array.isArray(response.data.data) ? response.data.data : [];
 					const total = response.data.total || 0;
 					setItemsTotalItems(total);
-					setItemsLoadedPages((prev) => Array.from(new Set([...prev, page])));
 					queryClient.setQueryData(['resourceItems', orgId, folderId || 'all', page], items);
+					setItemsLoadedPages((prev) => Array.from(new Set([...prev, page])));
 					return items;
 				}
 				return [];
@@ -239,9 +240,10 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 	}, [isAuthenticated, base_url]);
 
 	const { data: accessInfo, isLoading: accessInfoLoading } = useQuery(['resourceAccess', orgId], checkAccess, {
-		enabled: !!orgId && isAuthenticated,
+		enabled: !!orgId && isAuthenticated && isLearner,
 		staleTime: 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
+		refetchOnWindowFocus: false,
 	});
 
 	const learnerResourcesAccessDenied = isLearner && accessInfo !== undefined && !accessInfo.canAccess;
@@ -253,7 +255,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		isLoading: foldersLoading,
 		isError: foldersError,
 	} = useQuery(['resourceFolders', orgId, foldersPageNumber], () => fetchFolders(foldersPageNumber), {
-		enabled: !!orgId && canFetchResourcesData,
+		enabled: !!orgId && canFetchResourcesData && !isResourceFolderRoute,
 		staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 		cacheTime: 30 * 60 * 1000,
 		refetchOnMount: true,
@@ -282,7 +284,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		(folder: Partial<ResourceFolder>) => axios.post(`${base_url}/resources/admin/folders`, folder),
 		{
 			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceFolders']);
+				queryClient.invalidateQueries(['resourceFolders', orgId]);
 			},
 		}
 	);
@@ -291,8 +293,9 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		({ id, folder }: { id: string; folder: Partial<ResourceFolder> }) =>
 			axios.patch(`${base_url}/resources/admin/folders/${id}`, folder),
 		{
-			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceFolders']);
+			onSuccess: (_data, variables) => {
+				queryClient.invalidateQueries(['resourceFolders', orgId]);
+				queryClient.invalidateQueries(['resourceFolder', orgId, variables.id]);
 			},
 		}
 	);
@@ -300,9 +303,10 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 	const deleteFolderMutation = useMutation(
 		(id: string) => axios.delete(`${base_url}/resources/admin/folders/${id}`),
 		{
-			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceFolders']);
-				queryClient.invalidateQueries(['resourceItems']);
+			onSuccess: (_data, id) => {
+				queryClient.invalidateQueries(['resourceFolders', orgId]);
+				queryClient.removeQueries(['resourceFolder', orgId, id]);
+				queryClient.invalidateQueries(['resourceItems', orgId]);
 			},
 		}
 	);
@@ -311,8 +315,8 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		(item: Partial<ResourceItem>) => axios.post(`${base_url}/resources/admin/items`, item),
 		{
 			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceItems']);
-				queryClient.invalidateQueries(['resourceFolders']); // Update itemCount
+				queryClient.invalidateQueries(['resourceItems', orgId]);
+				queryClient.invalidateQueries(['resourceFolders', orgId]); // Update itemCount
 			},
 		}
 	);
@@ -322,8 +326,8 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 			axios.patch(`${base_url}/resources/admin/items/${id}`, item),
 		{
 			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceItems']);
-				queryClient.invalidateQueries(['resourceFolders']); // Update itemCount if folder changed
+				queryClient.invalidateQueries(['resourceItems', orgId]);
+				queryClient.invalidateQueries(['resourceFolders', orgId]); // Update itemCount if folder changed
 			},
 		}
 	);
@@ -332,8 +336,8 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		(id: string) => axios.delete(`${base_url}/resources/admin/items/${id}`),
 		{
 			onSuccess: () => {
-				queryClient.invalidateQueries(['resourceItems']);
-				queryClient.invalidateQueries(['resourceFolders']); // Update itemCount
+				queryClient.invalidateQueries(['resourceItems', orgId]);
+				queryClient.invalidateQueries(['resourceFolders', orgId]); // Update itemCount
 			},
 		}
 	);
@@ -345,30 +349,48 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 
 	// Accumulate all folders from all loaded pages
 	const allFolders = useMemo(() => {
-		if (!orgId || foldersLoadedPages.length === 0) return folders || [];
-		let accumulated: ResourceFolder[] = [];
-		for (const page of foldersLoadedPages) {
-			const pageData = queryClient.getQueryData<ResourceFolder[]>(['resourceFolders', orgId, page]) || [];
-			accumulated = [...accumulated, ...pageData];
+		if (!orgId) return [];
+		if (foldersLoadedPages.length === 0) {
+			return Array.isArray(folders) ? folders : [];
 		}
-		// Remove duplicates by _id
-		const unique = accumulated.filter((item, index, self) => index === self.findIndex((i) => i._id === item._id));
-		// Sort by name
-		return unique.sort((a, b) => a.name.localeCompare(b.name));
+
+		const uniqueFolders = new Map<string, ResourceFolder>();
+		for (const page of foldersLoadedPages) {
+			const pageData = queryClient.getQueryData<ResourceFolder[]>(['resourceFolders', orgId, page]);
+			if (!Array.isArray(pageData)) continue;
+			for (const folder of pageData) {
+				if (folder?._id) uniqueFolders.set(folder._id, folder);
+			}
+		}
+
+		if (uniqueFolders.size === 0 && Array.isArray(folders)) {
+			return folders;
+		}
+
+		return Array.from(uniqueFolders.values()).sort((a, b) => a.name.localeCompare(b.name));
 	}, [orgId, foldersLoadedPages, folders, queryClient]);
 
 	// Accumulate all items from all loaded pages
 	const allItems = useMemo(() => {
-		if (!orgId || itemsLoadedPages.length === 0) return items || [];
-		let accumulated: ResourceItem[] = [];
-		for (const page of itemsLoadedPages) {
-			const pageData = queryClient.getQueryData<ResourceItem[]>(['resourceItems', orgId, currentFolderId, page]) || [];
-			accumulated = [...accumulated, ...pageData];
+		if (!orgId) return [];
+		if (itemsLoadedPages.length === 0) {
+			return Array.isArray(items) ? items : [];
 		}
-		// Remove duplicates by _id
-		const unique = accumulated.filter((item, index, self) => index === self.findIndex((i) => i._id === item._id));
-		// Sort by title
-		return unique.sort((a, b) => a.title.localeCompare(b.title));
+
+		const uniqueItems = new Map<string, ResourceItem>();
+		for (const page of itemsLoadedPages) {
+			const pageData = queryClient.getQueryData<ResourceItem[]>(['resourceItems', orgId, currentFolderId, page]);
+			if (!Array.isArray(pageData)) continue;
+			for (const item of pageData) {
+				if (item?._id) uniqueItems.set(item._id, item);
+			}
+		}
+
+		if (uniqueItems.size === 0 && Array.isArray(items)) {
+			return items;
+		}
+
+		return Array.from(uniqueItems.values()).sort((a, b) => a.title.localeCompare(b.title));
 	}, [orgId, itemsLoadedPages, items, currentFolderId, queryClient]);
 
 	return (

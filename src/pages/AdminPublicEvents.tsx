@@ -2,9 +2,8 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography, Divider, Dialog
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Download, Visibility } from '@mui/icons-material';
-import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
@@ -26,7 +25,7 @@ const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, setPublicEventsPageNumber, enableAdminPublicEventsFetch, loading } =
+	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, setPublicEventsPageNumber, loading } =
 		useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -88,13 +87,6 @@ const AdminPublicEvents = () => {
 	}, [displayEvents, orderBy, order]);
 
 	const paginatedPublicEvents = sortedPublicEvents;
-
-	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
-
-	// Enable admin public events fetching only once when component mounts
-	useEffect(() => {
-		enableAdminPublicEventsFetch();
-	}, [enableAdminPublicEventsFetch]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
@@ -162,8 +154,6 @@ const AdminPublicEvents = () => {
 					onResetFilter={resetFilter}
 					isSticky={true}
 				/>
-				<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
-
 				<Box
 					sx={{
 						display: 'flex',
@@ -347,9 +337,9 @@ const AdminPublicEvents = () => {
 					<CustomTablePagination count={eventsNumberOfPages} page={publicEventsCurrentPage} onChange={handlePageChange} />
 				</Box>
 
-				<CustomDialog openModal={eventDetailsModalOpen} closeModal={() => setEventDetailsModalOpen(false)} title='Event Details' maxWidth='sm'>
-					<DialogContent>
-						{selectedEvent ? (
+				{eventDetailsModalOpen && selectedEvent && (
+					<CustomDialog openModal={eventDetailsModalOpen} closeModal={() => setEventDetailsModalOpen(false)} title='Event Details' maxWidth='sm'>
+						<DialogContent>
 							<Box>
 								<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
 									{selectedEvent.title}
@@ -387,16 +377,14 @@ const AdminPublicEvents = () => {
 									<b>Last Updated At:</b> {dateTimeFormatter(selectedEvent.updatedAt)}
 								</Typography>
 							</Box>
-						) : (
-							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>No event selected.</Typography>
-						)}
-					</DialogContent>
-					<DialogActions>
-						<CustomCancelButton onClick={() => setEventDetailsModalOpen(false)} sx={{ margin: '0 1rem 1rem 0' }}>
-							Close
-						</CustomCancelButton>
-					</DialogActions>
-				</CustomDialog>
+						</DialogContent>
+						<DialogActions>
+							<CustomCancelButton onClick={() => setEventDetailsModalOpen(false)} sx={{ margin: '0 1rem 1rem 0' }}>
+								Close
+							</CustomCancelButton>
+						</DialogActions>
+					</CustomDialog>
+				)}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

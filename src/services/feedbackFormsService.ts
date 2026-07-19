@@ -1,7 +1,7 @@
 import axiosInstance from '../utils/axiosInstance';
 import { FeedbackForm } from '../interfaces/feedbackForm';
 import { FeedbackFormTemplate } from '../interfaces/feedbackFormTemplate';
-import { FeedbackFormSubmission } from '../interfaces/feedbackFormSubmission';
+import { FeedbackFormSubmission, FeedbackFormSubmissionSummary } from '../interfaces/feedbackFormSubmission';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -65,6 +65,13 @@ export const feedbackFormsService = {
 	// Submissions
 	getFormSubmissions: async (formId: string): Promise<FeedbackFormSubmission[]> => {
 		const response = await axiosInstance.get(`${base_url}/feedback-forms/${formId}/submissions`);
+		return response.data.data;
+	},
+
+	getFormSubmissionSummaries: async (formId: string): Promise<FeedbackFormSubmissionSummary[]> => {
+		const response = await axiosInstance.get(`${base_url}/feedback-forms/${formId}/submissions`, {
+			params: { summary: true },
+		});
 		return response.data.data;
 	},
 

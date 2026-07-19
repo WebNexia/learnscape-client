@@ -1173,83 +1173,85 @@ const CommunityTopicPage = () => {
 										/>
 									</IconButton>
 								</Tooltip>
-								<CustomDialog openModal={uploadAudioDialogOpen} closeModal={() => setUploadAudioDialogOpen(false)} maxWidth='sm'>
-									<DialogContent>
-										<Typography
-											variant='body2'
-											sx={{
-												mb: '2rem',
-												textAlign: 'center',
-												color: 'gray',
-												padding: '0 1rem',
-												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-												lineHeight: 1.6,
-											}}>
-											You can add a single audio recording per message and it will be displayed at the bottom of the message
-										</Typography>
+								{uploadAudioDialogOpen && (
+									<CustomDialog openModal={uploadAudioDialogOpen} closeModal={() => setUploadAudioDialogOpen(false)} maxWidth='sm'>
+										<DialogContent>
+											<Typography
+												variant='body2'
+												sx={{
+													mb: '2rem',
+													textAlign: 'center',
+													color: 'gray',
+													padding: '0 1rem',
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+													lineHeight: 1.6,
+												}}>
+												You can add a single audio recording per message and it will be displayed at the bottom of the message
+											</Typography>
 
-										{!audioUrl && getRemainingAudioUploads() > 0 ? (
-											<AudioRecorder
-												uploadAudio={uploadAudio}
-												isAudioUploading={isAudioUploading}
-												maxRecordTime={120000}
-												fromCreateCommunityTopic={true}
-												audioUploadAttempts={audioUploadAttempts}
-												maxSessionAttempts={MAX_SESSION_ATTEMPTS}
-												onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
-												recorderTitleDescription={
-													getRemainingAudioUploads() <= 0
-														? '(Daily limit reached. Resets everyday)'
-														: getRemainingAudioUploads() <= 5
-															? '(' + getRemainingAudioUploads() + ' of ' + getAudioLimit() + ' audio uploads remaining today)'
-															: ''
-												}
-											/>
-										) : (
-											<Box sx={{ display: 'flex', alignItems: 'center', mb: isMobileSize ? '1rem' : '2rem' }}>
-												{getRemainingAudioUploads() > 0 && (
-													<>
-														<Box sx={{ flex: 9 }}>
-															<audio
-																src={audioUrl}
-																controls
-																style={{
-																	marginTop: '1rem',
-																	boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-																	borderRadius: '0.35rem',
-																	width: '100%',
-																	height: isMobileSize ? '1.75rem' : '2rem',
-																}}
-															/>
-														</Box>
-														<Box sx={{ flex: 1, margin: isMobileSize ? '0.75rem -0.5rem 0 1.5rem' : '0.75rem 0 0 1.5rem' }}>
-															<CustomSubmitButton
-																sx={{ borderRadius: '0.35rem', padding: isMobileSize ? '0.1rem' : undefined }}
-																onClick={() => {
-																	setAudioUrl('');
-																}}>
-																Remove
-															</CustomSubmitButton>
-														</Box>
-													</>
-												)}
-											</Box>
-										)}
-									</DialogContent>
-									<CustomCancelButton
-										onClick={() => {
-											setUploadAudioDialogOpen(false);
-										}}
-										sx={{
-											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
-											width: '8%',
-											alignSelf: 'flex-end',
-											padding: 0,
-											fontSize: isMobileSize ? '0.7rem' : undefined,
-										}}>
-										Close
-									</CustomCancelButton>
-								</CustomDialog>
+											{!audioUrl && getRemainingAudioUploads() > 0 ? (
+												<AudioRecorder
+													uploadAudio={uploadAudio}
+													isAudioUploading={isAudioUploading}
+													maxRecordTime={120000}
+													fromCreateCommunityTopic={true}
+													audioUploadAttempts={audioUploadAttempts}
+													maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+													onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
+													recorderTitleDescription={
+														getRemainingAudioUploads() <= 0
+															? '(Daily limit reached. Resets everyday)'
+															: getRemainingAudioUploads() <= 5
+																? '(' + getRemainingAudioUploads() + ' of ' + getAudioLimit() + ' audio uploads remaining today)'
+																: ''
+													}
+												/>
+											) : (
+												<Box sx={{ display: 'flex', alignItems: 'center', mb: isMobileSize ? '1rem' : '2rem' }}>
+													{getRemainingAudioUploads() > 0 && (
+														<>
+															<Box sx={{ flex: 9 }}>
+																<audio
+																	src={audioUrl}
+																	controls
+																	style={{
+																		marginTop: '1rem',
+																		boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+																		borderRadius: '0.35rem',
+																		width: '100%',
+																		height: isMobileSize ? '1.75rem' : '2rem',
+																	}}
+																/>
+															</Box>
+															<Box sx={{ flex: 1, margin: isMobileSize ? '0.75rem -0.5rem 0 1.5rem' : '0.75rem 0 0 1.5rem' }}>
+																<CustomSubmitButton
+																	sx={{ borderRadius: '0.35rem', padding: isMobileSize ? '0.1rem' : undefined }}
+																	onClick={() => {
+																		setAudioUrl('');
+																	}}>
+																	Remove
+																</CustomSubmitButton>
+															</Box>
+														</>
+													)}
+												</Box>
+											)}
+										</DialogContent>
+										<CustomCancelButton
+											onClick={() => {
+												setUploadAudioDialogOpen(false);
+											}}
+											sx={{
+												margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
+												width: '8%',
+												alignSelf: 'flex-end',
+												padding: 0,
+												fontSize: isMobileSize ? '0.7rem' : undefined,
+											}}>
+											Close
+										</CustomCancelButton>
+									</CustomDialog>
+								)}
 
 								<Tooltip title={imgUrl ? 'Update Image' : 'Upload Image'} placement='top' arrow>
 									<IconButton
@@ -1267,57 +1269,59 @@ const CommunityTopicPage = () => {
 										/>
 									</IconButton>
 								</Tooltip>
-								<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)} maxWidth='sm'>
-									<DialogContent>
-										<Typography
+								{uploadImgDialogOpen && (
+									<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)} maxWidth='sm'>
+										<DialogContent>
+											<Typography
+												sx={{
+													mb: '2rem',
+													textAlign: 'center',
+													color: 'gray',
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+													lineHeight: 1.6,
+													padding: '0 1rem',
+												}}>
+												You can add a single image per message and it will be displayed at the bottom of the message
+											</Typography>
+
+											<HandleImageUploadURL
+												onImageUploadLogic={(url) => setImgUrl(url)}
+												onChangeImgUrl={(e) => setImgUrl(e.target.value)}
+												imageUrlValue={imgUrl}
+												imageFolderName='TopicMessageImages'
+												enterImageUrl={enterImageUrl}
+												setEnterImageUrl={setEnterImageUrl}
+												isImageUploadLimitReached={getRemainingImageUploads() <= 0}
+												imageUploadAttempts={imageUploadAttempts}
+												maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+												onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
+												labelDescription={
+													getRemainingImageUploads() <= 0
+														? '(Daily limit reached. Resets everyday)'
+														: getRemainingImageUploads() <= 5
+															? '(' + getRemainingImageUploads() + ' of ' + getImageLimit() + ' image uploads remaining today)'
+															: ''
+												}
+
+											/>
+											{<ImageThumbnail imgSource={imgUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'} removeImage={() => setImgUrl('')} />}
+
+										</DialogContent>
+										<CustomCancelButton
+											onClick={() => {
+												setUploadImgDialogOpen(false);
+											}}
 											sx={{
-												mb: '2rem',
-												textAlign: 'center',
-												color: 'gray',
-												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-												lineHeight: 1.6,
-												padding: '0 1rem',
+												margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
+												width: '8%',
+												alignSelf: 'flex-end',
+												padding: 0,
+												fontSize: isMobileSize ? '0.7rem' : undefined,
 											}}>
-											You can add a single image per message and it will be displayed at the bottom of the message
-										</Typography>
-
-										<HandleImageUploadURL
-											onImageUploadLogic={(url) => setImgUrl(url)}
-											onChangeImgUrl={(e) => setImgUrl(e.target.value)}
-											imageUrlValue={imgUrl}
-											imageFolderName='TopicMessageImages'
-											enterImageUrl={enterImageUrl}
-											setEnterImageUrl={setEnterImageUrl}
-											isImageUploadLimitReached={getRemainingImageUploads() <= 0}
-											imageUploadAttempts={imageUploadAttempts}
-											maxSessionAttempts={MAX_SESSION_ATTEMPTS}
-											onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
-											labelDescription={
-												getRemainingImageUploads() <= 0
-													? '(Daily limit reached. Resets everyday)'
-													: getRemainingImageUploads() <= 5
-														? '(' + getRemainingImageUploads() + ' of ' + getImageLimit() + ' image uploads remaining today)'
-														: ''
-											}
-
-										/>
-										{<ImageThumbnail imgSource={imgUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'} removeImage={() => setImgUrl('')} />}
-
-									</DialogContent>
-									<CustomCancelButton
-										onClick={() => {
-											setUploadImgDialogOpen(false);
-										}}
-										sx={{
-											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
-											width: '8%',
-											alignSelf: 'flex-end',
-											padding: 0,
-											fontSize: isMobileSize ? '0.7rem' : undefined,
-										}}>
-										Close
-									</CustomCancelButton>
-								</CustomDialog>
+											Close
+										</CustomCancelButton>
+									</CustomDialog>
+								)}
 
 								<IconButton
 									disabled={isTopicLocked || isSending || (!!!currentMessage && !imgUrl && !audioUrl)}

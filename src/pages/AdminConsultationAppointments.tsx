@@ -15,7 +15,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useContext, useEffect, useState, useCallback } from 'react';
+import { useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { KeyboardBackspaceOutlined, Visibility, Delete, Description, Person, Email, AccessTime, Star, StarBorder } from '@mui/icons-material';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -117,21 +117,18 @@ const AdminConsultationAppointments = () => {
 
 	useEffect(() => {
 		if (!formDialogAppointmentId) return;
+		let cancelled = false;
 		setFormSubmissionLoading(true);
 		axios
 			.get(`${base_url}/consultations/appointments/${formDialogAppointmentId}/form-submissions`)
-			.then((subRes) => {
-				const list = subRes.data?.data;
+			.then((response) => {
+				if (cancelled) return;
+				const list = response.data?.data;
 				if (!Array.isArray(list) || list.length === 0) {
 					setFormSubmissionDetail(null);
 					return;
 				}
-				const firstId = list[0]._id;
-				return axios.get(`${base_url}/feedback-forms/submissions/${firstId}`);
-			})
-			.then((detailRes) => {
-				if (!detailRes?.data?.data) return;
-				const data = detailRes.data.data;
+				const data = list[0];
 				const form = data.formId;
 				const title = (form && (typeof form === 'object' ? form.title : null)) || 'Form submission';
 				const fields = (form && typeof form === 'object' && Array.isArray(form.fields)) ? form.fields : [];
@@ -142,8 +139,15 @@ const AdminConsultationAppointments = () => {
 					submittedAt: data.submittedAt,
 				});
 			})
-			.catch(() => setFormSubmissionDetail(null))
-			.finally(() => setFormSubmissionLoading(false));
+			.catch(() => {
+				if (!cancelled) setFormSubmissionDetail(null);
+			})
+			.finally(() => {
+				if (!cancelled) setFormSubmissionLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [formDialogAppointmentId]);
 
 	const formatSubmissionFieldValue = (field: { type: string }, value: unknown): string => {
@@ -198,8 +202,10 @@ const AdminConsultationAppointments = () => {
 		setFormSubmissionDetail(null);
 	};
 
-	const onDetailUpdated = () => {
-		fetchAppointments();
+	const onDetailUpdated = (appointmentId: string, updates: Partial<ConsultationAppointment>) => {
+		setAppointments((current) =>
+			current.map((appointment) => (appointment._id === appointmentId ? { ...appointment, ...updates } : appointment))
+		);
 	};
 
 	const openDeleteConfirm = (appointmentId: string) => setAppointmentIdToDelete(appointmentId);
@@ -212,9 +218,15 @@ const AdminConsultationAppointments = () => {
 		setDeleting(true);
 		try {
 			await consultationsService.deleteAppointment(appointmentIdToDelete);
+			const remainingTotal = Math.max(0, totalItems - 1);
+			setAppointments((current) => current.filter((appointment) => appointment._id !== appointmentIdToDelete));
+			setTotalItems(remainingTotal);
+			setTotalPages(Math.max(1, Math.ceil(remainingTotal / pageSize)));
+			setAppointmentIdToDelete(null);
+			if (appointments.length === 1 && page > 1) {
+				setPage((current) => current - 1);
+			}
 			setSnackbar({ open: true, message: 'Appointment deleted successfully.', severity: 'success' });
-			closeDeleteConfirm();
-			fetchAppointments();
 		} catch (err: any) {
 			setSnackbar({
 				open: true,
@@ -226,17 +238,17 @@ const AdminConsultationAppointments = () => {
 		}
 	};
 
-	const getColumns = () => {
-		const cols = [
+	const columns = useMemo(
+		() => [
 			{ key: 'appointmentDate', label: 'Date & time' },
 			{ key: 'guestName', label: 'Guest' },
 			{ key: 'assignedConsultantId', label: 'Consultant' },
 			{ key: 'status', label: 'Status' },
 			...(isMobileSize ? [] : [{ key: 'payment', label: 'Payment' }]),
 			{ key: 'actions', label: 'Actions' },
-		];
-		return cols;
-	};
+		],
+		[isMobileSize]
+	);
 
 	const consultantDisplay = (apt: ConsultationAppointment) => {
 		const c = apt.assignedConsultantId;
@@ -276,13 +288,25 @@ const AdminConsultationAppointments = () => {
 		setOrder(isAsc ? 'desc' : 'asc');
 	};
 
-	const sortedAppointments = [...appointments].sort((a, b) => {
-		const aVal = getSortValue(a, orderBy);
-		const bVal = getSortValue(b, orderBy);
-		if (aVal < bVal) return order === 'asc' ? -1 : 1;
-		if (aVal > bVal) return order === 'asc' ? 1 : -1;
-		return 0;
-	});
+	const sortedAppointments = useMemo(
+		() =>
+			[...appointments].sort((a, b) => {
+				const aVal = getSortValue(a, orderBy);
+				const bVal = getSortValue(b, orderBy);
+				if (aVal < bVal) return order === 'asc' ? -1 : 1;
+				if (aVal > bVal) return order === 'asc' ? 1 : -1;
+				return 0;
+			}),
+		[appointments, orderBy, order]
+	);
+	const sortedSubmissionFields = useMemo(
+		() => [...(formSubmissionDetail?.fields ?? [])].sort((a, b) => a.order - b.order),
+		[formSubmissionDetail?.fields]
+	);
+	const submissionResponsesByField = useMemo(
+		() => new Map((formSubmissionDetail?.responses ?? []).map((response) => [response.fieldId, response.value])),
+		[formSubmissionDetail?.responses]
+	);
 
 	if (loading && (!appointments || appointments.length === 0) && !error) {
 		return (
@@ -376,7 +400,7 @@ const AdminConsultationAppointments = () => {
 						>
 							<TableBody>
 								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-									{getColumns().map((_, idx) => (
+									{columns.map((_, idx) => (
 										<TableCell key={idx} sx={{ padding: 0, border: 'none' }} />
 									))}
 								</TableRow>
@@ -385,7 +409,7 @@ const AdminConsultationAppointments = () => {
 								orderBy={orderBy as keyof ConsultationAppointment}
 								order={order}
 								handleSort={handleSort}
-								columns={getColumns()}
+								columns={columns}
 							/>
 							<TableBody>
 								{!loading &&
@@ -432,15 +456,18 @@ const AdminConsultationAppointments = () => {
 						)}
 					</Box>
 
-					<AppointmentDetailModal
-						appointmentId={selectedAppointmentId}
-						open={detailOpen}
-						onClose={closeDetail}
-						onUpdated={onDetailUpdated}
-					/>
+					{detailOpen && selectedAppointmentId && (
+						<AppointmentDetailModal
+							appointmentId={selectedAppointmentId}
+							open={true}
+							onClose={closeDetail}
+							onUpdated={onDetailUpdated}
+						/>
+					)}
 
-					<CustomDialog
-						openModal={!!formDialogAppointmentId}
+					{formDialogAppointmentId && (
+						<CustomDialog
+						openModal={true}
 						closeModal={closeFormDialog}
 						title='Client Answers'
 						maxWidth='sm'
@@ -520,11 +547,9 @@ const AdminConsultationAppointments = () => {
 											Responses
 										</Typography>
 										<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-											{[...formSubmissionDetail.fields]
-												.sort((a, b) => a.order - b.order)
+											{sortedSubmissionFields
 												.map((field) => {
-													const response = formSubmissionDetail.responses.find((r) => r.fieldId === field.fieldId);
-													const value = response?.value;
+													const value = submissionResponsesByField.get(field.fieldId);
 													const isRating = field.type === 'rating';
 													const ratingNum = isRating ? Number(value) : 0;
 													const maxStars = 5;
@@ -588,10 +613,12 @@ const AdminConsultationAppointments = () => {
 							)}
 						</DialogContent>
 						<CustomDialogActions onCancel={closeFormDialog} hideSubmit cancelBtnText='Close' actionSx={{ margin: '0.5rem 0.5rem 0rem 0rem' }} />
-					</CustomDialog>
+						</CustomDialog>
+					)}
 
-					<CustomDialog
-						openModal={!!appointmentIdToDelete}
+					{appointmentIdToDelete && (
+						<CustomDialog
+						openModal={true}
 						closeModal={closeDeleteConfirm}
 						title='Delete appointment'
 						content=''
@@ -610,7 +637,8 @@ const AdminConsultationAppointments = () => {
 							actionSx={{ mb: '0.5rem' }}
 							isDeleting={deleting}
 						/>
-					</CustomDialog>
+						</CustomDialog>
+					)}
 
 					<Snackbar
 						open={snackbar.open}

@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography, Snackbar, Alert
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FeedbackFormsContext } from '../contexts/FeedbackFormsContextProvider';
 import { useAuth } from '../hooks/useAuth';
@@ -35,8 +35,6 @@ const AdminFeedbackFormTemplates = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Modal states
-	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean[]>([]);
-	const [isTemplateInfoModalOpen, setIsTemplateInfoModalOpen] = useState<boolean[]>([]);
 	const [isCreateEditDialogOpen, setIsCreateEditDialogOpen] = useState<boolean>(false);
 	const [templateToDelete, setTemplateToDelete] = useState<FeedbackFormTemplate | null>(null);
 	const [templateToViewInfo, setTemplateToViewInfo] = useState<FeedbackFormTemplate | null>(null);
@@ -47,16 +45,16 @@ const AdminFeedbackFormTemplates = () => {
 	const [errorSnackbarOpen, setErrorSnackbarOpen] = useState<boolean>(false);
 
 	// Pagination state for useFilterSearch (templates are not paginated, but useFilterSearch expects these)
-	const [templatesPageNumber, setTemplatesPageNumber] = useState<number>(1);
+	const [, setTemplatesPageNumber] = useState<number>(1);
 	const totalItems = templates?.length || 0;
-	const loadedPages: number[] = templates && templates.length > 0 ? [1] : [];
+	const loadedPages = useMemo(() => (templates.length > 0 ? [1] : []), [templates.length]);
 
 	const pageSize = 50;
 
 	// Dummy fetchMoreTemplates function (templates are fetched all at once, no pagination)
-	const fetchMoreTemplates = async () => {
+	const fetchMoreTemplates = useCallback(async () => {
 		// Templates are not paginated, so this is a no-op
-	};
+	}, []);
 
 	// Use the filter search hook
 	const {
@@ -102,14 +100,6 @@ const AdminFeedbackFormTemplates = () => {
 		}
 	}, [orgId, fetchTemplatesFromContext]);
 
-	// Update modal states when data changes
-	useEffect(() => {
-		if (displayTemplates && displayTemplates.length !== isDeleteModalOpen.length) {
-			setIsDeleteModalOpen(Array(displayTemplates.length).fill(false));
-			setIsTemplateInfoModalOpen(Array(displayTemplates.length).fill(false));
-		}
-	}, [displayTemplates, templatesCurrentPage, filterValue, searchValue]);
-
 	// Responsive column configuration
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
@@ -140,31 +130,19 @@ const AdminFeedbackFormTemplates = () => {
 
 	const paginatedTemplates = sortedTemplates;
 
-	const openDeleteModal = (index: number) => {
-		const newModals = [...isDeleteModalOpen];
-		newModals[index] = true;
-		setIsDeleteModalOpen(newModals);
-		setTemplateToDelete(paginatedTemplates[index]);
+	const openDeleteModal = (template: FeedbackFormTemplate) => {
+		setTemplateToDelete(template);
 	};
 
-	const closeDeleteModal = (index: number) => {
-		const newModals = [...isDeleteModalOpen];
-		newModals[index] = false;
-		setIsDeleteModalOpen(newModals);
+	const closeDeleteModal = () => {
 		setTemplateToDelete(null);
 	};
 
-	const openTemplateInfoModal = (index: number) => {
-		const newModals = [...isTemplateInfoModalOpen];
-		newModals[index] = true;
-		setIsTemplateInfoModalOpen(newModals);
-		setTemplateToViewInfo(paginatedTemplates[index]);
+	const openTemplateInfoModal = (template: FeedbackFormTemplate) => {
+		setTemplateToViewInfo(template);
 	};
 
-	const closeTemplateInfoModal = (index: number) => {
-		const newModals = [...isTemplateInfoModalOpen];
-		newModals[index] = false;
-		setIsTemplateInfoModalOpen(newModals);
+	const closeTemplateInfoModal = () => {
 		setTemplateToViewInfo(null);
 	};
 
@@ -174,14 +152,11 @@ const AdminFeedbackFormTemplates = () => {
 			await deleteTemplate(templateToDelete._id);
 			setSuccessMessage('Template deleted successfully');
 			setSuccessSnackbarOpen(true);
-			closeDeleteModal(paginatedTemplates.findIndex((t) => t._id === templateToDelete._id));
+			closeDeleteModal();
 
 			// If search is active, remove from search results
 			if (isSearchActive) {
 				removeFromSearchResults(templateToDelete._id);
-			} else {
-				// Update local state
-				// Templates will be automatically refetched via context query invalidation
 			}
 		} catch (error: any) {
 			setErrorMessage(error?.message || 'Failed to delete template');
@@ -202,19 +177,16 @@ const AdminFeedbackFormTemplates = () => {
 		setIsCreateEditDialogOpen(true);
 	};
 
-	const handleTemplateDialogSuccess = async () => {
+	const handleTemplateDialogSuccess = () => {
 		setIsCreateEditDialogOpen(false);
 		setTemplateToEdit(null);
 		setSuccessMessage(templateToEdit ? 'Template updated successfully' : 'Template created successfully');
 		setSuccessSnackbarOpen(true);
-
-		// Refresh templates - context will automatically refetch via query invalidation
-		await fetchTemplatesFromContext();
 	};
 
 	if (templatesError) return <Typography color='error'>{templatesError}</Typography>;
 
-	if (templatesLoading && !displayTemplates) {
+	if (templatesLoading && displayTemplates.length === 0) {
 		return (
 			<DashboardPagesLayout pageName='Form Templates' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={6} />
@@ -382,8 +354,7 @@ const AdminFeedbackFormTemplates = () => {
 						/>
 						<TableBody>
 							{paginatedTemplates &&
-								paginatedTemplates.map((template: FeedbackFormTemplate, index: number) => {
-									const deleteModalOpen = isDeleteModalOpen[index] || false;
+								paginatedTemplates.map((template: FeedbackFormTemplate) => {
 									const createdBy = template.createdBy as any;
 									const createdByName =
 										createdBy?.firstName && createdBy?.lastName ? `${createdBy.firstName} ${createdBy.lastName}` : createdBy?.email || 'Unknown';
@@ -431,12 +402,12 @@ const AdminFeedbackFormTemplates = () => {
 												/>
 												<CustomActionBtn
 													title='Delete'
-													onClick={() => openDeleteModal(index)}
+													onClick={() => openDeleteModal(template)}
 													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 												<CustomActionBtn
 													title='More Info'
-													onClick={() => openTemplateInfoModal(index)}
+													onClick={() => openTemplateInfoModal(template)}
 													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 											</TableCell>
@@ -492,72 +463,40 @@ const AdminFeedbackFormTemplates = () => {
 				</Snackbar>
 
 				{/* Delete Template Dialog */}
-				{paginatedTemplates.map((template, index) => {
-					const deleteModalOpen = isDeleteModalOpen[index] || false;
-					return (
-						deleteModalOpen && (
-							<CustomDialog
-								key={`delete-${template._id}`}
-								openModal={deleteModalOpen}
-								closeModal={() => closeDeleteModal(index)}
-								title='Delete Template'
-								maxWidth='xs'>
-								<DialogContent>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-										Are you sure you want to delete &quot;{template.name}&quot;?
-									</Typography>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
-										This action will permanently delete the template.
-									</Typography>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
-										This action cannot be undone.
-									</Typography>
-								</DialogContent>
-								<CustomDialogActions
-									onCancel={() => closeDeleteModal(index)}
-									deleteBtn={true}
-									onDelete={async () => {
-										try {
-											await deleteTemplate(template._id);
-											setSuccessMessage('Template deleted successfully');
-											setSuccessSnackbarOpen(true);
-											closeDeleteModal(index);
-
-											// If search is active, remove from search results
-											if (isSearchActive) {
-												removeFromSearchResults(template._id);
-											}
-										} catch (error: any) {
-											setErrorMessage(error?.message || 'Failed to delete template');
-											setErrorSnackbarOpen(true);
-										}
-									}}
-									actionSx={{ mb: '0.5rem' }}
-								/>
-							</CustomDialog>
-						)
-					);
-				})}
+				{templateToDelete && (
+					<CustomDialog openModal={true} closeModal={closeDeleteModal} title='Delete Template' maxWidth='xs'>
+						<DialogContent>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+								Are you sure you want to delete &quot;{templateToDelete.name}&quot;?
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+								This action will permanently delete the template.
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1.5rem' }}>
+								This action cannot be undone.
+							</Typography>
+						</DialogContent>
+						<CustomDialogActions onCancel={closeDeleteModal} deleteBtn={true} onDelete={handleDelete} actionSx={{ mb: '0.5rem' }} />
+					</CustomDialog>
+				)}
 
 				{/* Template Info Dialog */}
-				{isTemplateInfoModalOpen.map(
-					(isOpen, index) =>
-						isOpen &&
-						templateToViewInfo && (
-							<TemplateInfoModal key={index} isOpen={isOpen} onClose={() => closeTemplateInfoModal(index)} template={templateToViewInfo} />
-						)
+				{templateToViewInfo && (
+					<TemplateInfoModal isOpen={true} onClose={closeTemplateInfoModal} template={templateToViewInfo} />
 				)}
 
 				{/* Create/Edit Template Dialog */}
-				<CreateEditTemplateDialog
-					isOpen={isCreateEditDialogOpen}
-					onClose={() => {
-						setIsCreateEditDialogOpen(false);
-						setTemplateToEdit(null);
-					}}
-					templateToEdit={templateToEdit}
-					onSuccess={handleTemplateDialogSuccess}
-				/>
+				{isCreateEditDialogOpen && (
+					<CreateEditTemplateDialog
+						isOpen={isCreateEditDialogOpen}
+						onClose={() => {
+							setIsCreateEditDialogOpen(false);
+							setTemplateToEdit(null);
+						}}
+						templateToEdit={templateToEdit}
+						onSuccess={handleTemplateDialogSuccess}
+					/>
+				)}
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

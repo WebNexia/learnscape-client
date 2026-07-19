@@ -440,7 +440,7 @@ const SubmissionFeedbackDetails = () => {
 						</>
 					)}
 
-					{renderFeedbackModal()}
+					{openQuestionFeedbackModal && userSingleResponseWithFeedback && renderFeedbackModal()}
 
 					{quizFeedback && (
 						<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
