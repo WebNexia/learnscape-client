@@ -4,6 +4,16 @@ import { Document } from './document';
 /** evergreen: start lessons right after enroll. cohort: lessons stay locked until course startingDate. */
 export type CourseAccessTiming = 'evergreen' | 'cohort';
 
+/**
+ * Ownership proof sent with landing page enrollment, which runs without a session.
+ * The server accepts the account email for free courses and a Stripe payment
+ * reference for paid ones.
+ */
+export interface CourseEnrollmentProof {
+	email?: string;
+	paymentIntentId?: string;
+}
+
 /** Public LP detail: heading + rich HTML (limits in `landingPageCourseLimits`). */
 export interface CourseLandingPageSection {
 	title: string;
