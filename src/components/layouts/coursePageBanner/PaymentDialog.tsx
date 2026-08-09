@@ -12,7 +12,7 @@ import axios from 'axios';
 import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
-import { SingleCourse } from '../../../interfaces/course';
+import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
 import { useNavigate, Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
@@ -39,7 +39,12 @@ interface PaymentDialogProps {
 	course: SingleCourse | undefined;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	courseRegistration: (resolvedUserId: string, resolvedOrgId: string, groupName?: string) => Promise<string>;
+	courseRegistration: (
+		resolvedUserId: string,
+		resolvedOrgId: string,
+		groupName?: string,
+		proof?: CourseEnrollmentProof
+	) => Promise<string>;
 	fromHomePage?: boolean;
 	setDisplayEnrollmentMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
@@ -292,17 +297,19 @@ const PaymentDialog = ({
 						return;
 					}
 
-					// Override IDs and user info for homepage registrations
+					// Override IDs for homepage registrations (names/country stay from session or geo)
 					resolvedUserId = userExistsResponse.data.userId;
 					resolvedOrgId = userExistsResponse.data.orgId;
-					resolvedCountryCode = userExistsResponse.data.countryCode;
-					resolvedFirstName = userExistsResponse.data.firstName;
-					resolvedLastName = userExistsResponse.data.lastName;
+					if (!resolvedFirstName) {
+						resolvedFirstName = (email || '').split('@')[0] || 'Guest';
+					}
 
 					// For free courses, proceed with registration
 					if (isCourseFree) {
 						try {
-							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
+								email: email || user?.email,
+							});
 							syncEnrollmentAccessOnClient();
 
 							setIsPaymentDialogOpen(false);
@@ -355,7 +362,9 @@ const PaymentDialog = ({
 			// For free courses (logged-in users, not from homepage), skip payment and register directly
 			if (isCourseFree && !fromHomePage) {
 				try {
-					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
+						email: email || user?.email,
+					});
 					syncEnrollmentAccessOnClient();
 
 					setIsPaymentDialogOpen(false);
@@ -404,6 +413,7 @@ const PaymentDialog = ({
 					lastName: resolvedLastName,
 					paymentType: 'course',
 					recaptchaToken,
+					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 				});
 
 				const { clientSecret, paymentIntentId } = response.data;
@@ -460,7 +470,10 @@ const PaymentDialog = ({
 				// Step 4: Register the course
 				let userCourseId: string;
 				try {
-					userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+					userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
+						email: email || user?.email,
+						paymentIntentId,
+					});
 				} catch (regErr) {
 					resetForm(true);
 					setErrorMessage(

@@ -46,6 +46,31 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
+ * Sanitizer for landing page course section bodies.
+ *
+ * Mirrors the server's allowlist for `landingPageSections[].body` so rendering is
+ * unchanged, while still stripping scripts and event handlers from any row that
+ * predates server-side sanitization.
+ */
+export function sanitizeLandingPageHtml(html: string): string {
+	if (typeof html !== 'string') {
+		return '';
+	}
+
+	return DOMPurify.sanitize(html, {
+		ALLOWED_TAGS: [
+			'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'p', 'br', 'span', 'u', 's',
+			'sub', 'sup', 'blockquote', 'pre', 'code',
+			'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img',
+		],
+		ALLOWED_ATTR: ['href', 'name', 'target', 'rel', 'src', 'alt', 'width', 'height', 'style', 'class'],
+		ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|#|\/)/i,
+		FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'style'],
+		KEEP_CONTENT: true,
+	});
+}
+
+/**
  * Sanitize text input for form fields
  * More restrictive than HTML sanitization - removes all HTML tags
  * @param text - The text to sanitize

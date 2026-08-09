@@ -249,8 +249,8 @@ export default function LandingPageCart() {
 		setSuccessMessage(
 			result?.documentDeliveryFailed
 				? result.documentDeliveryMessage ||
-						'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin; ekibimiz size dokümanı manuel olarak iletecektir.'
-				: 'Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin; kaynaklar ve randevu onayları e-posta ile gönderilir.'
+				'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin; ekibimiz size dokümanı manuel olarak iletecektir.'
+				: 'Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin.'
 		);
 		setSuccessSnack(true);
 	};
@@ -478,9 +478,9 @@ export default function LandingPageCart() {
 													inputProps: { maxLength: 254 },
 													sx: user
 														? {
-																backgroundColor: 'action.hover',
-																cursor: 'default',
-															}
+															backgroundColor: 'action.hover',
+															cursor: 'default',
+														}
 														: undefined,
 												}}
 												helperText={

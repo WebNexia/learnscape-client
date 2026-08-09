@@ -2,7 +2,7 @@ import { Box, Typography, Button, Snackbar, Alert } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { SingleCourse } from '../interfaces/course';
+import { CourseEnrollmentProof, SingleCourse } from '../interfaces/course';
 import ConditionalStripeProvider from '../components/common/ConditionalStripeProvider';
 import CoursePaymentForm from '../components/layouts/coursePageBanner/CoursePaymentForm';
 import axios from 'axios';
@@ -46,7 +46,8 @@ export default function LandingPageCoursePayment() {
 	const courseRegistration = async (
 		resolvedUserId: string,
 		resolvedOrgId: string,
-		groupName?: string
+		groupName?: string,
+		proof?: CourseEnrollmentProof
 	): Promise<string> => {
 		if (!courseId || !resolvedUserId || !resolvedOrgId) throw new Error('Missing required data for course registration');
 		const response = await axios.post(`${base_url}/userCourses/`, {
@@ -56,6 +57,8 @@ export default function LandingPageCoursePayment() {
 			isInProgress: true,
 			orgId: resolvedOrgId,
 			...(groupName && { groupName }),
+			...(proof?.email && { email: proof.email }),
+			...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
 		});
 		if (!response.data?._id) throw new Error('User course creation failed: Missing ID');
 		const userCourseId = response.data._id;
