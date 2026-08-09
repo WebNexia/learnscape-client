@@ -342,54 +342,45 @@ const AboutUs = () => {
 									}}>
 									<Table sx={{ minWidth: 200 }}>
 										<TableHead>
-											<TableRow sx={{ background: 'linear-gradient(135deg, #0052a3 0%, #4ECDC4 100%)' }}>
-												<TableCell
-													sx={{
-														color: 'white',
-														fontWeight: 700,
-														fontSize: { xs: '0.8rem', sm: '0.95rem', md: '1rem' },
-														fontFamily: 'Varela Round',
-														border: 'none',
-													}}>
-													Özellikler
-												</TableCell>
-												<TableCell
-													align='center'
-													sx={{
-														color: 'white',
-														fontWeight: 700,
-														fontSize: { xs: '0.7rem', sm: '0.95rem', md: '1rem' },
-														fontFamily: 'Varela Round',
-														border: 'none',
-														position: 'relative',
-													}}>
-													<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-														{!isMobileSize && <Star sx={{ color: '#ffd700' }} fontSize='small' />}
-														Bizim Platformumuz
-													</Box>
-												</TableCell>
-												<TableCell
-													align='center'
-													sx={{
-														color: 'white',
-														fontWeight: 700,
-														fontSize: { xs: '0.7rem', sm: '0.95rem', md: '1rem' },
-														fontFamily: 'Varela Round',
-														border: 'none',
-													}}>
-													Diğer Uygulamalar
-												</TableCell>
-												<TableCell
-													align='center'
-													sx={{
-														color: 'white',
-														fontWeight: 700,
-														fontSize: { xs: '0.7rem', sm: '0.95rem', md: '1rem' },
-														fontFamily: 'Varela Round',
-														border: 'none',
-													}}>
-													Geleneksel Kurslar
-												</TableCell>
+											<TableRow>
+												{[
+													{ label: 'Özellikler', align: 'left' as const, highlight: false },
+													{ label: 'Bizim Platformumuz', align: 'center' as const, highlight: true },
+													{ label: 'Diğer Uygulamalar', align: 'center' as const, highlight: false },
+													{ label: 'Geleneksel Kurslar', align: 'center' as const, highlight: false },
+												].map((col) => (
+													<TableCell
+														key={col.label}
+														align={col.align}
+														sx={{
+															// MUI TableCell paints its own bg — must set on the cell, not only the row
+															background: 'linear-gradient(135deg, #0052a3 0%, #4ECDC4 100%)',
+															color: '#ffffff',
+															fontWeight: 700,
+															fontSize: { xs: '0.7rem', sm: '0.95rem', md: '1rem' },
+															fontFamily: 'Varela Round',
+															border: 'none',
+															py: { xs: 1.25, md: 1.75 },
+														}}>
+														{col.highlight ? (
+															<Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+																{!isMobileSize && (
+																	<Star
+																		fontSize='small'
+																		sx={{
+																			color: '#FFD54F',
+																			filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))',
+																			flexShrink: 0,
+																		}}
+																	/>
+																)}
+																{col.label}
+															</Box>
+														) : (
+															col.label
+														)}
+													</TableCell>
+												))}
 											</TableRow>
 										</TableHead>
 										<TableBody>

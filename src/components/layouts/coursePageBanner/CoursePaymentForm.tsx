@@ -30,7 +30,7 @@ import axios from 'axios';
 import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
-import { SingleCourse } from '../../../interfaces/course';
+import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
 import { Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import theme from '../../../themes';
@@ -48,7 +48,12 @@ const INPUT_RADIUS = '0.5rem';
 
 interface CoursePaymentFormProps {
 	course: SingleCourse;
-	courseRegistration: (userId: string, orgId: string, groupName?: string) => Promise<string>;
+	courseRegistration: (
+		userId: string,
+		orgId: string,
+		groupName?: string,
+		proof?: CourseEnrollmentProof
+	) => Promise<string>;
 	onSuccess: () => void;
 	onCancel: () => void;
 }
@@ -243,11 +248,12 @@ export default function CoursePaymentForm({
 			}
 			resolvedUserId = userExistsResponse.data.userId;
 			resolvedOrgId = userExistsResponse.data.orgId;
-			resolvedFirstName = userExistsResponse.data.firstName;
-			resolvedLastName = userExistsResponse.data.lastName;
+			if (!resolvedFirstName) {
+				resolvedFirstName = (email || '').split('@')[0] || 'Guest';
+			}
 
 			if (isCourseFree) {
-				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email });
 				resetForm();
 				setIsProcessing(false);
 				onSuccess();
@@ -303,6 +309,7 @@ export default function CoursePaymentForm({
 				firstName: resolvedFirstName,
 				lastName: resolvedLastName,
 				paymentType: 'course',
+				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 				recaptchaToken,
 			});
 			const { clientSecret, paymentIntentId } = response.data;
@@ -332,7 +339,7 @@ export default function CoursePaymentForm({
 			}
 
 			try {
-				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined);
+				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email, paymentIntentId });
 			} catch (regErr) {
 				resetForm(true);
 				setErrorMessage('Kurs kaydı başarısız oldu. Ücretlendirilmediniz.');

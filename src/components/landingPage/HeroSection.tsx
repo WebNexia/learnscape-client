@@ -113,7 +113,7 @@ const HeroSection = () => {
 			sx={{
 				display: 'flex',
 				justifyContent: 'center',
-				alignItems: 'center',
+				alignItems: stackHeroLayout ? 'center' : 'stretch',
 				background: 'transparent',
 				position: 'relative',
 				width: '100%',
@@ -122,7 +122,7 @@ const HeroSection = () => {
 					xs: 'clamp(4.25rem, 11vh, 6.5rem)',
 					md: 'clamp(4.75rem, 10vh, 7rem)',
 				},
-				pb: { xs: 2, sm: 3, md: 4 },
+				pb: { xs: 2, sm: 3, md: 0 },
 				overflow: 'hidden',
 				boxSizing: 'border-box',
 			}}>
@@ -133,10 +133,11 @@ const HeroSection = () => {
 					maxWidth: '1400px',
 					mx: 'auto',
 					px: { xs: '4%', sm: '5%', md: '4%', lg: '3.5%' },
-					py: { xs: 1.5, sm: 2.5, md: 3 },
-					gap: { xs: 2, sm: 2.5, md: 3, lg: 4 },
-					alignItems: 'center',
-					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.12fr) minmax(0, 0.88fr)' },
+					py: { xs: 1.5, sm: 2.5, md: 0 },
+					flex: stackHeroLayout ? 'none' : 1,
+					gap: { xs: 2, sm: 2.5, md: 2, lg: 3 },
+					alignItems: stackHeroLayout ? 'center' : 'stretch',
+					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.05fr) minmax(0, 0.95fr)' },
 					gridTemplateAreas: stackHeroLayout
 						? '"copy" "visual"'
 						: { md: '"copy visual"' },
@@ -149,6 +150,7 @@ const HeroSection = () => {
 						gridArea: 'copy',
 						width: '100%',
 						minWidth: 0,
+						height: '100%',
 						display: 'flex',
 						flexDirection: 'column',
 						justifyContent: 'center',
@@ -157,7 +159,7 @@ const HeroSection = () => {
 						position: 'relative',
 						zIndex: 2,
 					}}>
-					<Box sx={{ width: '100%', maxWidth: stackHeroLayout ? '36rem' : 'none' }}>
+					<Box sx={{ width: '100%', maxWidth: stackHeroLayout ? '36rem' : { md: '34rem', lg: '38rem' } }}>
 						<Typography
 							variant='h2'
 							className='kaizen-title'
@@ -168,7 +170,7 @@ const HeroSection = () => {
 									lg: 'clamp(2.15rem, 2.3vw + 1.05rem, 4.1rem)',
 								},
 								fontWeight: 700,
-								mb: { xs: 1, sm: 1.5, md: 3.5 },
+								mb: { xs: 1, sm: 1.5, md: 2, lg: 2.5 },
 								letterSpacing: '-0.02em',
 								lineHeight: 1.15,
 								fontFamily: 'Varela Round',
@@ -206,7 +208,7 @@ const HeroSection = () => {
 								fontWeight: 400,
 								lineHeight: 1.65,
 								fontFamily: 'Varela Round',
-								mt: { xs: 1, md: 2.5 },
+								mt: { xs: 1, md: 1.75 },
 							}}>
 							Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik
 						</Typography>
@@ -222,8 +224,8 @@ const HeroSection = () => {
 								fontWeight: 400,
 								lineHeight: 1.65,
 								fontFamily: 'Varela Round',
-								mt: { xs: 0.75, md: 2 },
-								mb: { xs: 0.5, md: 1.5 },
+								mt: { xs: 0.75, md: 1.5 },
+								mb: { xs: 0.5, md: 0.75 },
 							}}>
 							Kurslarımızı keşfedin!
 						</Typography>
@@ -236,7 +238,7 @@ const HeroSection = () => {
 							flexWrap: 'wrap',
 							justifyContent: stackHeroLayout ? 'center' : 'flex-start',
 							width: '100%',
-							mt: { xs: 1.25, sm: 1.75, md: 2 },
+							mt: { xs: 1.25, sm: 1.75, md: 1.75 },
 						}}>
 						<Button
 							variant='contained'
@@ -313,9 +315,10 @@ const HeroSection = () => {
 						gridArea: 'visual',
 						width: '100%',
 						minWidth: 0,
+						height: '100%',
 						display: 'flex',
 						justifyContent: 'center',
-						alignItems: stackHeroLayout ? 'center' : 'flex-end',
+						alignItems: 'center',
 						position: 'relative',
 						zIndex: 2,
 					}}>
@@ -323,23 +326,22 @@ const HeroSection = () => {
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
-							alignItems: 'flex-end',
+							alignItems: 'center',
 							width: '100%',
 							maxWidth: stackHeroLayout
 								? { xs: 'min(100%, 18rem)', sm: 'min(100%, 22rem)' }
-								: { md: 'min(100%, 38rem)', lg: 'min(100%, 44rem)' },
+								: { md: 'min(100%, 34rem)', lg: 'min(100%, 40rem)', xl: 'min(100%, 44rem)' },
 							position: 'relative',
 							mx: 'auto',
-							minHeight: stackHeroLayout ? 'auto' : { md: 'clamp(18rem, 55vh, 36rem)', lg: 'clamp(20rem, 62vh, 42rem)' },
 						}}>
 						<Box
 							sx={{
 								position: 'absolute',
-								top: stackHeroLayout ? '50%' : '42%',
+								top: '50%',
 								left: '50%',
 								transform: 'translate(-50%, -50%)',
-								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 480px)',
-								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 480px)',
+								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 420px)',
+								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 420px)',
 								borderRadius: '50%',
 								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
 								filter: 'blur(40px)',
@@ -360,12 +362,13 @@ const HeroSection = () => {
 								maxHeight: stackHeroLayout
 									? { xs: 'clamp(9rem, 32vh, 18rem)', sm: 'clamp(10rem, 34vh, 20rem)' }
 									: {
-										md: 'clamp(18rem, 58vh, 38rem)',
-										lg: 'clamp(22rem, 68vh, 44rem)',
-										xl: 'clamp(24rem, 72vh, 48rem)',
+										md: 'clamp(17rem, 52vh, 32rem)',
+										lg: 'clamp(20rem, 58vh, 38rem)',
+										xl: 'clamp(22rem, 62vh, 42rem)',
 									},
 								objectFit: 'contain',
-								objectPosition: 'center bottom',
+								objectPosition: 'center center',
+								display: 'block',
 								position: 'relative',
 								zIndex: 1,
 								transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',

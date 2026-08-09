@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import { CourseLandingPageSection } from '../../interfaces/course';
+import { sanitizeLandingPageHtml } from '../../utils/sanitizeHtml';
 
 /** LP / Academy brand blues (chevron alternate) */
 const ACADEMY_BLUE_GRADIENT = 'linear-gradient(145deg, #0052a3 0%, #0066cc 55%, #0ea5e9 100%)';
@@ -556,7 +557,7 @@ const LandingPageCourseDetailSections = ({ sections }: Props) => {
 									<Box
 										className={LP_SECTION_PROSE_CLASS}
 										sx={proseSx}
-										dangerouslySetInnerHTML={{ __html: s.body }}
+										dangerouslySetInnerHTML={{ __html: sanitizeLandingPageHtml(s.body) }}
 									/>
 								</Box>
 							</Box>

@@ -13,6 +13,29 @@ export interface UseChatExportReturn {
 	downloadChatHistoryAsTXT: () => Promise<void>;
 }
 
+function escapeHtml(value: unknown): string {
+	return String(value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+/** Only allow http(s) URLs in export markup (blocks javascript: / data: etc.). */
+function safeHttpUrl(url: unknown): string | null {
+	if (typeof url !== 'string' || !url.trim()) return null;
+	try {
+		const parsed = new URL(url.trim());
+		if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+			return parsed.href;
+		}
+	} catch {
+		/* ignore invalid */
+	}
+	return null;
+}
+
 export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps): UseChatExportReturn => {
 	const downloadChatHistoryAsPDF = useCallback(async () => {
 		if (!activeChat || !messages.length) {
@@ -21,54 +44,20 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 		}
 
 		try {
-			// Create PDF content
-			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName =
+				activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const safeChatName = escapeHtml(chatName);
+			const safeChatType = escapeHtml(activeChat.chatType || '1-1');
+			const safeParticipants = escapeHtml(activeChat.participants?.map((p) => p.username)?.join(', ') || '');
+			const safeExportDate = escapeHtml(new Date().toLocaleString());
 
-			let pdfContent = `CHAT HISTORY EXPORT\n`;
-			pdfContent += `==================\n\n`;
-			pdfContent += `Chat: ${chatName}\n`;
-			pdfContent += `Type: ${activeChat.chatType || '1-1'}\n`;
-			pdfContent += `Participants: ${activeChat.participants?.map((p) => p.username)?.join(', ')}\n`;
-			pdfContent += `Export Date: ${new Date().toLocaleString()}\n`;
-			pdfContent += `Total Messages: ${messages.length}\n\n`;
-			pdfContent += `MESSAGES\n`;
-			pdfContent += `========\n\n`;
-
-			// Add messages
-			messages?.forEach((msg, index) => {
-				const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
-				const timestamp = msg.timestamp.toLocaleString();
-				const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
-
-				pdfContent += `${index + 1}. ${sender} (${timestamp})\n`;
-				if (msg.isSystemMessage) {
-					pdfContent += `   [SYSTEM] ${msg.text}\n`;
-				} else {
-					pdfContent += `   ${msg.text} ${messageType}\n`;
-				}
-
-				// Add media URLs
-				if (msg.imageUrl) {
-					pdfContent += `   Image URL: ${msg.imageUrl}\n`;
-				}
-				if (msg.videoUrl) {
-					pdfContent += `   Video URL: ${msg.videoUrl}\n`;
-				}
-
-				if (msg.replyTo) {
-					pdfContent += `   [Reply to message: ${msg.quotedText}]\n`;
-				}
-				pdfContent += `\n`;
-			});
-
-			// Create PDF using browser print functionality
 			const printWindow = window.open('', '_blank');
 			if (printWindow) {
 				printWindow.document.write(`
 					<!DOCTYPE html>
 					<html>
 					<head>
-						<title>Chat History - ${chatName}</title>
+						<title>Chat History - ${safeChatName}</title>
 						<style>
 							body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
 							.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -87,46 +76,51 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 					<body>
 						<div class="header">
 							<h1>Chat History Export</h1>
-							<p><strong>Chat:</strong> ${chatName}</p>
-							<p><strong>Type:</strong> ${activeChat.chatType || '1-1'}</p>
-							<p><strong>Participants:</strong> ${activeChat.participants?.map((p) => p.username)?.join(', ')}</p>
-							<p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
+							<p><strong>Chat:</strong> ${safeChatName}</p>
+							<p><strong>Type:</strong> ${safeChatType}</p>
+							<p><strong>Participants:</strong> ${safeParticipants}</p>
+							<p><strong>Export Date:</strong> ${safeExportDate}</p>
 							<p><strong>Total Messages:</strong> ${messages.length}</p>
 						</div>
 						
 						<div class="messages">
 							${messages
-								?.map((msg, _) => {
-									const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+								?.map((msg) => {
+									const sender =
+										activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 									const timestamp = msg.timestamp.toLocaleString();
 									const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
 									const isSystem = msg.isSystemMessage;
 									const replyText = msg.replyTo ? msg.quotedText : '';
+									const safeImageUrl = safeHttpUrl(msg.imageUrl);
+									const safeVideoUrl = safeHttpUrl(msg.videoUrl);
 
 									let mediaContent = '';
-									if (msg.imageUrl) {
+									if (safeImageUrl) {
+										const escapedUrl = escapeHtml(safeImageUrl);
 										mediaContent = `
 											<div class="media-content">
-												<img src="${msg.imageUrl}" alt="Image" class="media-image" />
+												<img src="${escapedUrl}" alt="Image" class="media-image" />
 												<br />
-												<a href="${msg.imageUrl}" target="_blank" class="media-url">View Full Image</a>
+												<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="media-url">View Full Image</a>
 											</div>
 										`;
-									} else if (msg.videoUrl) {
+									} else if (safeVideoUrl) {
+										const escapedUrl = escapeHtml(safeVideoUrl);
 										mediaContent = `
 											<div class="media-content">
-												<a href="${msg.videoUrl}" target="_blank" class="media-url">View Video: ${msg.videoUrl}</a>
+												<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="media-url">View Video: ${escapedUrl}</a>
 											</div>
 										`;
 									}
 
 									return `
 									<div class="message ${isSystem ? 'system' : ''}">
-										<div class="sender">${sender}</div>
-										<div class="timestamp">${timestamp}</div>
-										<div class="text">${isSystem ? '[SYSTEM] ' : ''}${msg.text} ${messageType}</div>
+										<div class="sender">${escapeHtml(sender)}</div>
+										<div class="timestamp">${escapeHtml(timestamp)}</div>
+										<div class="text">${isSystem ? '[SYSTEM] ' : ''}${escapeHtml(msg.text)} ${escapeHtml(messageType)}</div>
 										${mediaContent}
-										${replyText ? `<div class="reply">[Reply to: ${replyText}]</div>` : ''}
+										${replyText ? `<div class="reply">[Reply to: ${escapeHtml(replyText)}]</div>` : ''}
 									</div>
 								`;
 								})
@@ -137,7 +131,6 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 				`);
 				printWindow.document.close();
 
-				// Wait for content to load then print
 				setTimeout(() => {
 					printWindow.print();
 					printWindow.close();
@@ -155,8 +148,8 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 		}
 
 		try {
-			// Create TXT content
-			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName =
+				activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
 
 			let txtContent = `CHAT HISTORY EXPORT\n`;
 			txtContent += `==================\n\n`;
@@ -168,7 +161,6 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 			txtContent += `MESSAGES\n`;
 			txtContent += `========\n\n`;
 
-			// Add messages
 			messages?.forEach((msg, index) => {
 				const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 				const timestamp = msg.timestamp.toLocaleString();
@@ -181,7 +173,6 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 					txtContent += `   ${msg.text} ${messageType}\n`;
 				}
 
-				// Add media URLs
 				if (msg.imageUrl) {
 					txtContent += `   Image URL: ${msg.imageUrl}\n`;
 				}
@@ -195,7 +186,6 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 				txtContent += `\n`;
 			});
 
-			// Create and download file
 			const blob = new Blob([txtContent], {
 				type: 'text/plain',
 			});
@@ -204,7 +194,6 @@ export const useChatExport = ({ activeChat, messages, user }: UseChatExportProps
 			const a = document.createElement('a');
 			a.href = url;
 
-			// Generate filename
 			const timestamp = new Date().toISOString().split('T')[0];
 			a.download = `chat-history-${chatName}-${timestamp}.txt`;
 

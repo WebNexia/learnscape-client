@@ -1,6 +1,6 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography, DialogContent } from '@mui/material';
 import theme from '../../../themes';
-import { SingleCourse } from '../../../interfaces/course';
+import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
 import { Info, KeyboardBackspaceOutlined, Insights, PlayCircleOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
@@ -163,7 +163,12 @@ const CoursePageBanner = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string, groupName?: string): Promise<string> => {
+	const courseRegistration = async (
+		resolvedUserId: string,
+		resolvedOrgId: string,
+		groupName?: string,
+		proof?: CourseEnrollmentProof
+	): Promise<string> => {
 		try {
 			if (!courseId || !resolvedUserId || !resolvedOrgId) {
 				throw new Error('Missing required data for course registration');
@@ -176,6 +181,8 @@ const CoursePageBanner = ({
 				isInProgress: true,
 				orgId: resolvedOrgId,
 				...(groupName && { groupName }),
+				...(proof?.email && { email: proof.email }),
+				...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
 			});
 
 			if (!response.data?._id) {
@@ -219,7 +226,7 @@ const CoursePageBanner = ({
 					setIsPaymentDialogOpen(true);
 					setIsProcessing(false);
 				} else {
-					await courseRegistration(user?._id!, course?.orgId!);
+					await courseRegistration(user?._id!, course?.orgId!, undefined, { email: user?.email });
 					const patch = getPostEnrollmentUserPatch(user, course);
 					if (patch) {
 						setUser((prev) => (prev ? { ...prev, ...patch } : prev));

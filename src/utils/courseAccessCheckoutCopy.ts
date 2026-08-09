@@ -31,10 +31,7 @@ export function requiresImmediateAccessWaiver(course: CourseAccessFields | null 
 	return !isCohortBeforeStart(course);
 }
 
-export function formatCourseStartDate(
-	startingDate: Date | string | null | undefined,
-	locale: CheckoutCopyLocale
-): string {
+export function formatCourseStartDate(startingDate: Date | string | null | undefined, locale: CheckoutCopyLocale): string {
 	const start = parseCourseStartDate(startingDate);
 	if (!start) return '';
 	return start.toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB', {
@@ -54,7 +51,7 @@ export interface CourseAccessCheckoutCopy {
 
 export function getCourseAccessCheckoutCopy(
 	course: CourseAccessFields | null | undefined,
-	locale: CheckoutCopyLocale = 'tr'
+	locale: CheckoutCopyLocale = 'tr',
 ): CourseAccessCheckoutCopy {
 	const cohortBeforeStart = isCohortBeforeStart(course);
 	const needsWaiver = requiresImmediateAccessWaiver(course);
@@ -67,8 +64,8 @@ export function getCourseAccessCheckoutCopy(
 			withdrawalWaiverLabel:
 				'Dijital içeriğe satın alma sonrası hemen erişim istiyorum. Hizmetin derhal başlayacağını biliyor ve 14 günlük cayma hakkımdan feragat ettiğimi kabul ediyorum.',
 			cohortNotice: formattedStart
-				? `Bu kurs ${formattedStart} tarihinde başlayacaktır. Sözleşmeden itibaren 14 gün içinde ve kurs başlamadan önce iptal hakkınız olduğunu biliyorum.`
-				: 'Bu planlı bir kurstur. Sözleşmeden itibaren 14 gün içinde ve kurs başlamadan önce iptal hakkınız olduğunu biliyorum.',
+				? `Bu kurs ${formattedStart} tarihinde başlayacaktır. Sözleşmeden itibaren 14 gün içinde ve kurs başlamadan önce iptal hakkım olduğunu biliyorum.`
+				: 'Bu planlı bir kurstur. Sözleşmeden itibaren 14 gün içinde ve kurs başlamadan önce iptal hakkım olduğunu biliyorum.',
 			waiverRequiredError: 'Lütfen dijital içeriğe hemen erişim ve cayma hakkından feragat onayını işaretleyin.',
 		};
 	}
