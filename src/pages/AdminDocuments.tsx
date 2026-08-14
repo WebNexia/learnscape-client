@@ -20,6 +20,7 @@ import { dateFormatter } from '../utils/dateFormatter';
 import DocumentInfoModal from '../components/documents/DocumentInfoModal';
 import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDialog';
 import EditDocumentDialog from '../components/documents/EditDocumentDialog';
+import { hydrateDetailBlocksFromLegacy } from '../components/documents/DocumentDetailBlocksEditor';
 import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
@@ -27,6 +28,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { DocumentDetailBlock } from '../interfaces/document';
+
+const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) =>
+	(blocks || []).map((b) => {
+		const { rowKey: _rowKey, ...rest } = b as DocumentDetailBlock & { rowKey?: string };
+		return rest;
+	});
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -136,6 +144,7 @@ const AdminDocuments = () => {
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
 	/** Sample page URLs when dialog was opened (for cleanup on close without save) */
 	const initialSamplePageImageUrlsRef = useRef<string[]>([]);
+	const initialDetailImageUrlsRef = useRef<string[]>([]);
 
 	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
 	const [enterDocImageUrl, setEnterDocImageUrl] = useState<boolean>(true);
@@ -204,9 +213,15 @@ const AdminDocuments = () => {
 	};
 
 	const resetForm = (opts?: { skipOrphanDelete?: boolean }) => {
-		// Delete sample page images only when closing the CREATE dialog without saving (not when closing the edit dialog)
+		// Delete sample/detail page images only when closing the CREATE dialog without saving (not when closing the edit dialog)
 		if (isDocumentCreateModalOpen && !opts?.skipOrphanDelete) {
-			const urlsToDelete = singleDocument?.samplePageImageUrls ?? [];
+			const sampleUrlsToDelete = singleDocument?.samplePageImageUrls ?? [];
+			const detailBlockImageUrls = (singleDocument?.detailBlocks || [])
+				.filter((b): b is Extract<DocumentDetailBlock, { type: 'image' }> => b.type === 'image')
+				.map((b) => b.imageUrl)
+				.filter(Boolean);
+			const detailUrlsToDelete = [...(singleDocument?.detailImageUrls ?? []), ...detailBlockImageUrls];
+			const urlsToDelete = [...sampleUrlsToDelete, ...detailUrlsToDelete];
 			if (urlsToDelete.length > 0) {
 				deleteSamplePageImagesFromStorage(urlsToDelete);
 			}
@@ -261,6 +276,23 @@ const AdminDocuments = () => {
 				}
 			}
 
+			const detailUrls = [
+				...(singleDocument?.detailImageUrls ?? []),
+				...((singleDocument?.detailBlocks || [])
+					.filter((b): b is Extract<DocumentDetailBlock, { type: 'image' }> => b.type === 'image')
+					.map((b) => b.imageUrl)
+					.filter(Boolean) as string[]),
+			];
+			for (let i = 0; i < detailUrls.length; i++) {
+				if (detailUrls[i]?.trim()) {
+					const detailImageValidation = await validateImageUrl(detailUrls[i].trim());
+					if (!detailImageValidation.isValid) {
+						errorMessages.push(`Detail Page Image ${i + 1}: ${detailImageValidation.error}`);
+						hasUrlErrors = true;
+					}
+				}
+			}
+
 			// Show error SnackBar if there are validation errors
 			if (hasUrlErrors) {
 				setUrlErrorMessage(errorMessages.join('\n'));
@@ -282,6 +314,9 @@ const AdminDocuments = () => {
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
 				samplePageImageUrls: singleDocument?.samplePageImageUrls ?? [],
+				detailIntroText: singleDocument?.detailIntroText || '',
+				detailImageUrls: singleDocument?.detailImageUrls ?? [],
+				detailBlocks: serializeDetailBlocksForApi(singleDocument?.detailBlocks),
 				isOnLandingPage: singleDocument?.isOnLandingPage,
 				prices,
 				description: singleDocument?.description,
@@ -298,6 +333,9 @@ const AdminDocuments = () => {
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
 				samplePageImageUrls: singleDocument?.samplePageImageUrls ?? [],
+				detailIntroText: singleDocument?.detailIntroText || '',
+				detailImageUrls: singleDocument?.detailImageUrls ?? [],
+				detailBlocks: documentResponseData.detailBlocks ?? serializeDetailBlocksForApi(singleDocument?.detailBlocks),
 				isOnLandingPage: singleDocument?.isOnLandingPage,
 				prices,
 				description: singleDocument?.description,
@@ -359,6 +397,23 @@ const AdminDocuments = () => {
 					}
 				}
 
+				const detailUrlsUpdate = [
+					...(singleDocument.detailImageUrls ?? []),
+					...((singleDocument.detailBlocks || [])
+						.filter((b): b is Extract<DocumentDetailBlock, { type: 'image' }> => b.type === 'image')
+						.map((b) => b.imageUrl)
+						.filter(Boolean) as string[]),
+				];
+				for (let i = 0; i < detailUrlsUpdate.length; i++) {
+					if (detailUrlsUpdate[i]?.trim()) {
+						const detailImageValidation = await validateImageUrl(detailUrlsUpdate[i].trim());
+						if (!detailImageValidation.isValid) {
+							errorMessages.push(`Detail Page Image ${i + 1}: ${detailImageValidation.error}`);
+							hasUrlErrors = true;
+						}
+					}
+				}
+
 				// Show error SnackBar if there are validation errors
 				if (hasUrlErrors) {
 					setUrlErrorMessage(errorMessages.join('\n'));
@@ -384,6 +439,9 @@ const AdminDocuments = () => {
 					documentUrl: singleDocument.documentUrl,
 					imageUrl: singleDocument.imageUrl || '',
 					samplePageImageUrls: singleDocument.samplePageImageUrls ?? [],
+					detailIntroText: singleDocument.detailIntroText || '',
+					detailImageUrls: singleDocument.detailImageUrls ?? [],
+					detailBlocks: serializeDetailBlocksForApi(singleDocument.detailBlocks),
 					isOnLandingPage: singleDocument.isOnLandingPage || false,
 					prices,
 					description: singleDocument.description || '',
@@ -490,7 +548,17 @@ const AdminDocuments = () => {
 		const documentToEdit = paginatedDocuments[documentIndex];
 		if (!documentToEdit) return;
 		initialSamplePageImageUrlsRef.current = documentToEdit.samplePageImageUrls ?? [];
-		setSingleDocument(documentToEdit);
+		initialDetailImageUrlsRef.current = [
+			...(documentToEdit.detailImageUrls ?? []),
+			...((documentToEdit.detailBlocks || [])
+				.filter((b): b is Extract<DocumentDetailBlock, { type: 'image' }> => b.type === 'image')
+				.map((b) => b.imageUrl)
+				.filter(Boolean) as string[]),
+		];
+		setSingleDocument({
+			...documentToEdit,
+			detailBlocks: hydrateDetailBlocksFromLegacy(documentToEdit),
+		});
 
 		const updatedState = [...editDocumentModalOpen];
 		updatedState[documentIndex] = true;
@@ -517,11 +585,23 @@ const AdminDocuments = () => {
 	};
 
 	const closeDocumentEditModal = (index: number, opts?: { skipOrphanDelete?: boolean }) => {
-		// Delete sample page images uploaded this session only when user closes WITHOUT saving
+		// Delete sample/detail page images uploaded this session only when user closes WITHOUT saving
 		if (!opts?.skipOrphanDelete) {
-			const currentUrls = singleDocument?.samplePageImageUrls ?? [];
-			const initialUrls = initialSamplePageImageUrlsRef.current ?? [];
-			const urlsToDelete = currentUrls.filter((u) => !initialUrls.includes(u));
+			const currentSampleUrls = singleDocument?.samplePageImageUrls ?? [];
+			const initialSampleUrls = initialSamplePageImageUrlsRef.current ?? [];
+			const sampleUrlsToDelete = currentSampleUrls.filter((u) => !initialSampleUrls.includes(u));
+
+			const currentDetailUrls = [
+				...(singleDocument?.detailImageUrls ?? []),
+				...((singleDocument?.detailBlocks || [])
+					.filter((b): b is Extract<DocumentDetailBlock, { type: 'image' }> => b.type === 'image')
+					.map((b) => b.imageUrl)
+					.filter(Boolean) as string[]),
+			];
+			const initialDetailUrls = initialDetailImageUrlsRef.current ?? [];
+			const detailUrlsToDelete = currentDetailUrls.filter((u) => !initialDetailUrls.includes(u));
+
+			const urlsToDelete = [...sampleUrlsToDelete, ...detailUrlsToDelete];
 			if (urlsToDelete.length > 0) {
 				deleteSamplePageImagesFromStorage(urlsToDelete);
 			}
@@ -578,6 +658,7 @@ const AdminDocuments = () => {
 								label: isMobileSize ? 'New' : 'New Document',
 								onClick: () => {
 									initialSamplePageImageUrlsRef.current = [];
+									initialDetailImageUrlsRef.current = [];
 									setIsDocumentCreateModalOpen(true);
 									setSingleDocument({
 										name: '',
@@ -586,6 +667,9 @@ const AdminDocuments = () => {
 										orgId,
 										imageUrl: '',
 										samplePageImageUrls: [],
+										detailIntroText: '',
+										detailImageUrls: [],
+										detailBlocks: [],
 										isOnLandingPage: false,
 										prices: [
 											{ currency: 'gbp', amount: '0' },
