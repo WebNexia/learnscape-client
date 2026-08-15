@@ -1185,7 +1185,7 @@ const QuizQuestion = ({
 							title='Audio Not Uploaded'
 							disableDismiss={userQuizAnswersUploading}>
 							<DialogContent>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Varela Round, sans-serif' }}>
 									You have an at least one audio recording that has not been uploaded. If you submit the quiz now, your recording(s) will not be included.
 								</Typography>
 								<Typography
@@ -1194,7 +1194,7 @@ const QuizQuestion = ({
 										mt: '0.75rem',
 										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 										lineHeight: 1.8,
-										fontFamily: 'Poppins, sans-serif',
+										fontFamily: 'Varela Round, sans-serif',
 										color: 'text.secondary',
 									}}>
 									Yüklenmemiş en az bir ses kaydınız var. Quiz'i şimdi gönderirseniz kaydınız(lar) dahil edilmeyecektir.

@@ -728,7 +728,7 @@ const LessonPage = () => {
 										borderRadius: '1.5rem',
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										fontWeight: 600,
-										fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+										fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 										whiteSpace: 'nowrap',
 									}}>
@@ -792,7 +792,7 @@ const LessonPage = () => {
 												borderRadius: '1.5rem',
 												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												fontWeight: 600,
-												fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+												fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 												boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 												whiteSpace: 'nowrap',
 												ml: '0.5rem',

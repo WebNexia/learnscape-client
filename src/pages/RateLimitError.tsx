@@ -81,10 +81,10 @@ const RateLimitError = () => {
 					padding: '2rem',
 				}}>
 				<img src={logo} alt='LearnScape Logo' style={{ width: '200px', marginBottom: '2rem' }} />
-				<Typography variant='h4' sx={{ color: theme.textColor?.primary, marginBottom: '1rem', textAlign: 'center', fontFamily: 'Poppins' }}>
+				<Typography variant='h4' sx={{ color: theme.textColor?.primary, marginBottom: '1rem', textAlign: 'center', fontFamily: 'Varela Round' }}>
 					Rate limit bilgisi bulunamadı.
 				</Typography>
-				<Typography variant='h5' sx={{ color: theme.textColor?.secondary, marginBottom: '2rem', textAlign: 'center', fontFamily: 'Poppins' }}>
+				<Typography variant='h5' sx={{ color: theme.textColor?.secondary, marginBottom: '2rem', textAlign: 'center', fontFamily: 'Varela Round' }}>
 					Lütfen daha sonra tekrar deneyin.
 				</Typography>
 				<Button
@@ -154,7 +154,7 @@ const RateLimitError = () => {
 					color: theme.textColor?.primary,
 					marginBottom: '1rem',
 					textAlign: 'center',
-					fontFamily: 'Poppins',
+					fontFamily: 'Varela Round',
 				}}>
 				{getMessage()}
 			</Typography>
@@ -165,7 +165,7 @@ const RateLimitError = () => {
 					color: theme.textColor?.secondary,
 					marginBottom: '2rem',
 					textAlign: 'center',
-					fontFamily: 'Poppins',
+					fontFamily: 'Varela Round',
 				}}>
 				{getTimeDisplay()} sonra tekrar deneyin
 			</Typography>
@@ -176,7 +176,7 @@ const RateLimitError = () => {
 					color: theme.textColor?.secondary,
 					marginBottom: '2rem',
 					textAlign: 'center',
-					fontFamily: 'Poppins',
+					fontFamily: 'Varela Round',
 					fontSize: '1rem',
 					maxWidth: '500px',
 					marginX: 'auto',
