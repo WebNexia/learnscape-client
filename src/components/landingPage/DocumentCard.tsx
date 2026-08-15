@@ -250,7 +250,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								textAlign: 'justify',
 								color: topAccent,
 								lineHeight: isMobileSize ? 1.4 : 1.5,
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								fontFamily: fromHomePage ? 'Varela Round' : theme.typography.fontFamily,
 								fontSize: isMobileSize ? '0.75rem' : '0.875rem',
 								wordBreak: 'break-word',
 							}}>

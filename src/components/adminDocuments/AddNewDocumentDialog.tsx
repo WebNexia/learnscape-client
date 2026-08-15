@@ -86,14 +86,15 @@ const AddNewDocumentDialog = ({
 	const sortedDocuments = [...filteredDocuments].sort((a, b) => {
 		if (!orderBy) return 0;
 
-		let aValue = a[orderBy];
-		let bValue = b[orderBy];
+		const aRaw = a[orderBy];
+		const bRaw = b[orderBy];
 
-		// Handle different data types
-		if (typeof aValue === 'string' && typeof bValue === 'string') {
-			aValue = aValue.toLowerCase();
-			bValue = bValue.toLowerCase();
-		}
+		if (aRaw == null && bRaw == null) return 0;
+		if (aRaw == null) return order === 'asc' ? 1 : -1;
+		if (bRaw == null) return order === 'asc' ? -1 : 1;
+
+		const aValue = typeof aRaw === 'string' ? aRaw.toLowerCase() : aRaw;
+		const bValue = typeof bRaw === 'string' ? bRaw.toLowerCase() : bRaw;
 
 		if (aValue < bValue) return order === 'asc' ? -1 : 1;
 		if (aValue > bValue) return order === 'asc' ? 1 : -1;
