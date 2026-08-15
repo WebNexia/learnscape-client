@@ -10,24 +10,26 @@ import {
 	DialogContent,
 	DialogActions,
 	IconButton,
-	TextField,
 	FormControlLabel,
 	Checkbox,
 	Alert,
 	CircularProgress,
 } from '@mui/material';
 import { Document } from '../../interfaces/document';
-import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, AddShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
-import { decodeHtmlEntities } from '../../utils/utilText';
+import { decodeHtmlEntities, truncateText } from '../../utils/utilText';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { isAxiosError } from 'axios';
 import { requestFreeResourceEmail } from '../../services/freeResourceDownloadService';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { LEARNER_EMPHASIS_FONT_FAMILY } from '../../utils/learnerTypography';
+import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 
 interface DocumentCardProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrls' | 'documentUrl' | 'orgId' | 'pageCount'>;
@@ -38,6 +40,9 @@ interface DocumentCardProps {
 
 const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: DocumentCardProps) => {
 	const theme = useTheme();
+	const navigate = useNavigate();
+	const { isSmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotated;
 	const { items: documentCartItems, addItem: addToDocumentCart } = useDocumentCart();
 	const isInCart = documentCartItems.some((item) => item.documentId === document._id);
 	const [openSample, setOpenSample] = useState(false);
@@ -53,6 +58,15 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 	const currentSampleUrl = sampleUrls[sampleIndex];
 	const price = document.prices?.find((p) => p.currency === userCurrency);
 	const isFree = !price || price.amount === '0' || price.amount === 'Free';
+	const topAccent = '#0052a3';
+	const hoverBorderGradient = `linear-gradient(90deg, ${topAccent} 0%, ${topAccent}80 100%)`;
+	const decodedName = decodeHtmlEntities(document.name || '');
+
+	const goToDetail = () => {
+		if (!fromHomePage || !document._id) return;
+		navigate(`/landing-page-document/${encodeURIComponent(document.name || '')}/${document._id}`);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
 
 	const handleAddToCart = () => {
 		if (isFree || !price || !document.orgId) return;
@@ -122,202 +136,158 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 
 	return (
 		<>
-			<motion.div transition={{ duration: 0.3 }} style={{ width: '100%', maxWidth: '17.5rem' }}>
+			<Box
+				sx={{
+					width: isMobileSize ? '17rem' : '21rem',
+					height: isMobileSize ? '23rem' : '29rem',
+					p: '4px',
+					borderRadius: '0.75rem',
+					boxSizing: 'border-box',
+					position: 'relative',
+					margin: '0 1rem 2rem 1rem',
+					backgroundColor: 'transparent',
+					border: '1.5px solid transparent',
+					boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+					transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+					cursor: fromHomePage ? 'pointer' : 'default',
+					'&::before': {
+						content: '""',
+						position: 'absolute',
+						inset: 0,
+						borderRadius: '0.75rem',
+						background: hoverBorderGradient,
+						opacity: 0,
+						transition: 'opacity 0.25s ease-out',
+						pointerEvents: 'none',
+						zIndex: 0,
+					},
+					'&:hover': {
+						transform: 'translate3d(0, -4px, 0)',
+						boxShadow: `0 8px 24px ${topAccent}28`,
+						'&::before': { opacity: 1 },
+					},
+				}}
+				onClick={fromHomePage ? goToDetail : undefined}
+				role={fromHomePage ? 'link' : undefined}
+				tabIndex={fromHomePage ? 0 : undefined}
+				onKeyDown={
+					fromHomePage
+						? (e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									goToDetail();
+								}
+						  }
+						: undefined
+				}>
 				<Card
 					sx={{
-						height: { xs: '22rem', sm: '22rem', md: '24rem', lg: '24rem' },
+						position: 'relative',
+						zIndex: 1,
+						height: '100%',
+						width: '100%',
+						borderRadius: 'calc(0.75rem - 4px)',
+						overflow: 'hidden',
+						margin: 0,
+						backgroundColor: '#FFFFFF',
+						border: 'none',
+						boxShadow: 'none',
 						display: 'flex',
 						flexDirection: 'column',
-						borderRadius: '0.75rem',
-						border: '1px solid rgba(0, 82, 163, 0.15)',
-						boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-						overflow: 'hidden',
-						backgroundColor: theme.palette.background.paper,
-						position: 'relative',
-						width: { xs: '15.5rem', sm: '15.5rem', md: '17.5rem', lg: '17.5rem' },
-						maxWidth: '17.5rem',
-						transition: 'transform 0.2s ease-out',
-						'&::before': {
-							content: '""',
-							position: 'absolute',
-							top: 0,
-							left: 0,
-							right: 0,
-							height: '3px',
-							background: '#0052a3',
-							transform: 'scaleX(0)',
-							transformOrigin: 'left',
-							transition: 'transform 0.2s ease-out',
-							zIndex: 1,
-						},
-						'&:hover': {
-							transform: 'translate3d(0, -4px, 0)',
-							'&::before': { transform: 'scaleX(1)' },
-						},
 					}}>
-					{/* Cover Image */}
+					{/* Cover — full-bleed like course cards */}
 					<Box
 						sx={{
-							height: { xs: '12rem', sm: '12rem', md: '15rem', lg: '15rem' },
-							position: 'relative',
-							backgroundColor: theme.palette.grey[100],
+							width: '100%',
+							height: isMobileSize ? '10rem' : '13rem',
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
+							backgroundColor: '#f4f7fa',
+							overflow: 'hidden',
+							flexShrink: 0,
 						}}>
 						{document.imageUrl ? (
 							<CardMedia
 								component='img'
 								image={document.imageUrl}
-								alt={decodeHtmlEntities(document.name || '')}
+								alt={decodedName}
 								sx={{
-									height: { xs: '8rem', sm: '8rem', md: '9rem', lg: '9rem' },
+									width: '100%',
+									height: '100%',
 									objectFit: 'cover',
+									objectPosition: 'center',
 								}}
 							/>
 						) : (
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									alignItems: 'center',
-									gap: 1,
-									color: theme.palette.grey[500],
-									height: { xs: '7rem', sm: '7rem', md: '8rem', lg: '8rem' },
-									padding: '1.5rem',
-								}}>
-								<svg width='3rem' height='5rem' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-									<path
-										d='M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z'
-										stroke='currentColor'
-										strokeWidth='2'
-										strokeLinecap='round'
-										strokeLinejoin='round'
-									/>
-									<path
-										d='M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z'
-										stroke='currentColor'
-										strokeWidth='2'
-										strokeLinecap='round'
-										strokeLinejoin='round'
-									/>
-									<path d='M21 15L16 10L5 21' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
-								</svg>
-								<Typography variant='body2'>No Cover Image</Typography>
-							</Box>
+							<Typography sx={{ fontFamily: 'Varela Round', color: '#94a3b8', fontSize: '0.85rem' }}>Kapak görseli yok</Typography>
 						)}
 					</Box>
 
-					{/* Price Tag */}
-					{!isFree && (
-						<Box
-							sx={{
-								position: 'absolute',
-								top: '0.75rem',
-								right: '0.75rem',
-								backgroundColor: 'rgba(0, 82, 163, 0.9)',
-								color: 'white',
-								px: 1,
-								py: 0.375,
-								borderRadius: '999px',
-								fontWeight: 600,
-								boxShadow: '0 2px 8px rgba(0, 82, 163, 0.3)',
-								fontFamily: "'Varela Round', sans-serif",
-								fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-							}}>
-							{price?.amount} {userCurrency.toUpperCase()}
-						</Box>
-					)}
-
-					<CardContent sx={{ flexGrow: 1, padding: { xs: '0.75rem', sm: '0.75rem', md: '1.25rem', lg: '1.25rem' } }}>
+					<CardContent sx={{ flexGrow: 1, padding: '1rem 1.5rem 0.5rem', pb: '5.5rem !important' }}>
 						<Typography
-							variant='h6'
 							component='h3'
 							sx={{
-								fontFamily: "'Varela Round', sans-serif",
-								fontWeight: 'bold',
-								marginBottom: { xs: '0.5rem', sm: '0.5rem', md: '0.75rem', lg: '0.75rem' },
-								color: fromHomePage ? '#0052a3' : theme.palette.text.primary,
-								fontSize: {
-									xs: document?.name?.length > 35 ? '0.7rem' : '0.8rem',
-									sm: document?.name?.length > 35 ? '0.725rem' : '0.8rem',
-									md: document?.name?.length > 35 ? '0.775rem' : '0.9rem',
-									lg: document?.name?.length > 35 ? '0.775rem' : '0.9rem',
-								},
+								fontFamily: LEARNER_EMPHASIS_FONT_FAMILY,
+								fontWeight: 700,
+								marginBottom: isMobileSize ? '0.4rem' : '0.55rem',
+								color: fromHomePage ? topAccent : theme.palette.text.primary,
+								lineHeight: 1.3,
+								fontSize: isMobileSize
+									? document?.name?.length > 35
+										? '0.95rem'
+										: '1.05rem'
+									: document?.name?.length > 35
+										? '1.05rem'
+										: '1.15rem',
 							}}>
-							{decodeHtmlEntities(document.name || '')}
+							{decodedName}
 						</Typography>
-
-						<Box
-							sx={{
-								'height': 'auto',
-								'minHeight': '2.5rem',
-								'maxHeight': '4rem',
-								'overflow': 'auto',
-								'marginBottom': '20px',
-								'&::-webkit-scrollbar': {
-									width: '4px',
-								},
-								'&::-webkit-scrollbar-track': {
-									background: theme.palette.grey[100],
-									borderRadius: '4px',
-								},
-								'&::-webkit-scrollbar-thumb': {
-									'background': theme.palette.grey[400],
-									'borderRadius': '4px',
-									'&:hover': {
-										background: theme.palette.grey[500],
-									},
-								},
-							}}>
-							<Typography
-								variant='body2'
-								sx={{
-									color: theme.palette.text.secondary,
-									lineHeight: 1.4,
-									fontFamily: "'Varela Round', sans-serif",
-									paddingRight: '0.1rem',
-									whiteSpace: 'pre-wrap',
-									wordBreak: 'break-word',
-									fontSize: {
-										xs: document?.description?.length > 60 ? '0.65rem' : '0.75rem',
-										sm: document?.description?.length > 60 ? '0.7rem' : '0.8rem',
-										md: document?.description?.length > 60 ? '0.7rem' : '0.85rem',
-										lg: document?.description?.length > 60 ? '0.7rem' : '0.85rem',
-									},
-									overflow: 'hidden',
-								}}>
-								{document.description || 'No description available'}
-							</Typography>
-						</Box>
 
 						<Typography
 							variant='body2'
 							sx={{
-								color: theme.palette.text.secondary,
-								fontFamily: "'Varela Round', sans-serif",
-								fontSize: { xs: '0.8rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-								mb: 1,
+								textAlign: 'justify',
+								color: topAccent,
+								lineHeight: isMobileSize ? 1.4 : 1.5,
+								fontFamily: fromHomePage ? 'Varela Round' : theme.typography.fontFamily,
+								fontSize: isMobileSize ? '0.75rem' : '0.875rem',
+								wordBreak: 'break-word',
 							}}>
-							{document.pageCount} sayfa
+							{truncateText(document.description || 'No description available', isMobileSize ? 110 : 160)}
 						</Typography>
+					</CardContent>
 
-						<Box sx={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
+					{/* Footer — mirrors course card bottom bar + action buttons */}
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							width: '100%',
+							position: 'absolute',
+							bottom: 0,
+						}}
+						onClick={(e) => e.stopPropagation()}>
+						<Box sx={{ display: 'flex', gap: '0.5rem', px: '1.25rem', pb: 0.75 }} onClick={(e) => e.stopPropagation()}>
 							<Button
 								variant='outlined'
 								fullWidth
-								onClick={handleOpenSample}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleOpenSample();
+								}}
 								sx={{
-									'borderColor': '#0052a3',
-									'color': '#0052a3',
+									borderColor: topAccent,
+									color: topAccent,
 									'&:hover': {
 										borderColor: '#004c99',
 										backgroundColor: 'rgba(0, 82, 163, 0.06)',
 									},
-									'fontFamily': "'Varela Round', sans-serif",
-									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-									'textTransform': 'none',
-									'height': '1.85rem',
+									fontFamily: 'Varela Round',
+									fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+									textTransform: 'none',
+									height: '1.85rem',
+									minWidth: 0,
 								}}>
 								{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
 							</Button>
@@ -325,20 +295,28 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								<Button
 									variant='text'
 									fullWidth
-									onClick={() => (fromHomePage ? openFreeDownloadDialog() : window.open(document.documentUrl, '_blank'))}
+									onClick={(e) => {
+										e.stopPropagation();
+										if (fromHomePage) {
+											openFreeDownloadDialog();
+										} else {
+											window.open(document.documentUrl, '_blank');
+										}
+									}}
 									sx={{
-										'background': 'linear-gradient(135deg, rgba(0, 82, 163, 0.9) 0%, rgba(0, 102, 204, 0.9) 100%)',
-										'color': 'white',
+										background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.9) 0%, rgba(0, 102, 204, 0.9) 100%)',
+										color: 'white',
 										'&:hover': {
 											background: 'linear-gradient(135deg, rgba(0, 82, 163, 1) 0%, rgba(0, 102, 204, 1) 100%)',
 											boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
 										},
-										'fontFamily': "'Varela Round', sans-serif",
-										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-										'textTransform': 'none',
-										'height': '1.85rem',
+										fontFamily: 'Varela Round',
+										fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+										textTransform: 'none',
+										height: '1.85rem',
+										minWidth: 0,
 									}}
-									endIcon={<Download />}>
+									endIcon={<Download sx={{ fontSize: '1rem !important' }} />}>
 									İndir
 								</Button>
 							) : (
@@ -346,24 +324,87 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 									variant='text'
 									fullWidth
 									disabled={isInCart}
-									onClick={handleAddToCart}
-									sx={{
-										'background': isInCart ? 'grey.300' : '#FF6B3D',
-										'color': 'white',
-										'&:hover': !isInCart ? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
-										'fontFamily': "'Varela Round', sans-serif",
-										'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-										'textTransform': 'none',
-										'height': '1.85rem',
+									onClick={(e) => {
+										e.stopPropagation();
+										handleAddToCart();
 									}}
-									endIcon={isInCart ? <Check /> : <AddShoppingCart />}>
+									sx={{
+										background: isInCart ? 'grey.300' : '#FF6B3D',
+										color: 'white',
+										'&:hover': !isInCart ? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
+										fontFamily: 'Varela Round',
+										fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+										textTransform: 'none',
+										height: '1.85rem',
+										minWidth: 0,
+									}}
+									endIcon={isInCart ? <Check sx={{ fontSize: '1rem !important' }} /> : <AddShoppingCart sx={{ fontSize: '1rem !important' }} />}>
 									{isInCart ? 'Eklendi' : 'Sepete Ekle'}
 								</Button>
 							)}
 						</Box>
-					</CardContent>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								padding: '0.5rem 1.25rem',
+								borderTop: '1px solid rgba(0, 82, 163, 0.1)',
+								backgroundColor: 'rgba(0, 82, 163, 0.04)',
+								borderRadius: '0 0 calc(0.75rem - 4px) calc(0.75rem - 4px)',
+							}}>
+							<Typography
+								sx={{
+									fontSize: isMobileSize ? '0.72rem' : '0.8rem',
+									fontWeight: 600,
+									color: topAccent,
+									fontFamily: 'Varela Round',
+								}}>
+								{document.pageCount} sayfa
+							</Typography>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'flex-end',
+									gap: 0.25,
+									pl: isFree ? 0 : 1,
+									borderLeft: isFree ? 'none' : '2px solid',
+									borderLeftColor: isFree ? 'transparent' : 'rgba(0, 82, 163, 0.35)',
+								}}>
+								{!isFree && (
+									<Typography
+										component='span'
+										sx={{
+											fontFamily: 'Varela Round',
+											fontSize: '0.5625rem',
+											fontWeight: 700,
+											letterSpacing: '0.14em',
+											textTransform: 'uppercase',
+											color: 'text.secondary',
+											lineHeight: 1,
+										}}>
+										Ücret
+									</Typography>
+								)}
+								<Typography
+									component='span'
+									sx={{
+										fontFamily: 'Varela Round',
+										fontWeight: 700,
+										fontSize: isMobileSize ? '0.8125rem' : '0.9375rem',
+										fontVariantNumeric: 'tabular-nums',
+										letterSpacing: isFree ? 'normal' : '-0.02em',
+										lineHeight: 1.2,
+										color: isFree ? '#047857' : '#0f172a',
+									}}>
+									{isFree ? 'Ücretsiz' : `${setCurrencySymbol(price?.currency)}${price?.amount}`}
+								</Typography>
+							</Box>
+						</Box>
+					</Box>
 				</Card>
-			</motion.div>
+			</Box>
 
 			{/* Sample Page Dialog */}
 			<Dialog
@@ -502,7 +543,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 						Kaynağı e-posta ile al
 					</Typography>
 					<Typography variant='body2' color='text.secondary' sx={{ fontFamily: "'Varela Round', sans-serif", mb: 2 }}>
-						{decodeHtmlEntities(document.name || '')} e-posta adresinize gönderilecektir.
+						{decodedName} e-posta adresinize gönderilecektir.
 					</Typography>
 					{downloadError && (
 						<Alert severity='error' sx={{ mb: 2, fontFamily: "'Varela Round', sans-serif" }}>

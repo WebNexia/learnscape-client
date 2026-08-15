@@ -40,7 +40,6 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -549,7 +548,7 @@ const StaffLessonPreviewPage = () => {
 										borderRadius: '1.5rem',
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										fontWeight: 600,
-										fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+										fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 										whiteSpace: 'nowrap',
 									}}>
@@ -603,7 +602,7 @@ const StaffLessonPreviewPage = () => {
 												borderRadius: '1.5rem',
 												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												fontWeight: 600,
-												fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+												fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 												boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 												whiteSpace: 'nowrap',
 												ml: '0.5rem',
@@ -1186,6 +1185,16 @@ const StaffLessonPreviewPage = () => {
 								<DialogContent>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
 										You can solve the multiple choice, true/false, fill in the blank, matching pairs, translate, and open-ended questions again.
+									</Typography>
+									<Typography
+										variant='body2'
+										sx={{
+											mt: 0.75,
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											lineHeight: 1.9,
+											color: theme.textColor?.primary?.main,
+										}}>
+										Çoktan seçmeli, doğru/yanlış, boşluk doldurma, eşleştirme, çeviri ve açık uçlu soruları tekrar çözebilirsiniz.
 									</Typography>
 								</DialogContent>
 								<DialogActions>

@@ -25,7 +25,7 @@ const ResourcesAccessMessage = () => {
 				sx={{
 					textAlign: 'center',
 					maxWidth: '36rem',
-					fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+					fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 					fontSize: isMobileSize ? '0.85rem' : '1rem',
 					lineHeight: 1.6,
 					color: theme.textColor?.error?.main ?? '#d32f2f',

@@ -37,6 +37,9 @@ const LandingPage = React.lazy(() => import("./pages/LandingPage"));
 const LandingPageResources = React.lazy(
   () => import("./pages/LandingPageResources"),
 );
+const LandingPageDocument = React.lazy(
+  () => import("./pages/LandingPageDocument"),
+);
 const LandingPageCourse = React.lazy(() => import("./pages/LandingPageCourse"));
 const LandingPageCoursePayment = React.lazy(
   () => import("./pages/LandingPageCoursePayment"),
@@ -182,6 +185,10 @@ export const router = createBrowserRouter([
             <LandingPageResources />
           </LandingPageResourcesContextProvider>
         ),
+      },
+      {
+        path: "landing-page-document/:name/:documentId",
+        element: <LandingPageDocument />,
       },
       {
         path: "landing-page-course/:title/:courseId/payment",

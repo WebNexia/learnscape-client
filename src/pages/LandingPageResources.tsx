@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useContext, useEffect, useState } from 'react';
 import { LandingPageResourcesContext } from '../contexts/LandingPageResourcesContextProvider';
@@ -242,52 +242,65 @@ const LandingPageResources = () => {
 								sx={{
 									display: 'flex',
 									justifyContent: 'center',
-									alignItems: 'center',
-									margin: '0rem 0 3rem 0',
+									flexWrap: 'wrap',
+									gap: '1rem',
+									mt: '3rem',
 									width: { xs: '90%', sm: '90%', md: '100%', lg: '85%' },
+									mb: '3rem',
 								}}>
-								<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ maxWidth: '80rem', margin: '0 auto', width: '100%' }}>
-									{error ? (
-										<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
-											<Typography sx={{ textAlign: 'center', fontSize: '1.1rem', color: 'error.main', fontFamily: 'Varela Round' }}>
-												{error}
-											</Typography>
-										</Grid>
-									) : (loading || isSearching) && resources.length === 0 ? (
-										<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
-											<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-												<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
-												<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+								{error ? (
+									<Typography sx={{ textAlign: 'center', fontSize: '1.1rem', color: 'error.main', fontFamily: 'Varela Round', mt: 5 }}>
+										{error}
+									</Typography>
+								) : (loading || isSearching) && resources.length === 0 ? (
+									<Box
+										sx={{
+											display: 'flex',
+											flexDirection: 'column',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: 2,
+											minHeight: '40vh',
+											width: '100%',
+										}}>
+										<CircularProgress sx={{ color: '#0052a3' }} aria-busy aria-label='Yükleniyor' />
+										<Typography sx={{ fontFamily: 'Varela Round', color: '#64748b', fontSize: '1rem' }}>Yükleniyor</Typography>
+									</Box>
+								) : resources && resources.length > 0 ? (
+									<Box
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											width: '100%',
+											flexWrap: 'wrap',
+											gap: '1rem',
+											mb: '2rem',
+											mt: '-2rem',
+										}}>
+										{resources.map((doc) => (
+											<Box key={doc._id}>
+												<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
 											</Box>
-										</Grid>
-									) : (
-										<>
-											{resources?.map((doc) => (
-												<Grid item xs={12} sm={6} md={4} lg={3} display='flex' justifyContent='center' key={doc._id}>
-													<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
-												</Grid>
-											))}
-											{resources.length === 0 && (
-												<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '30vh' }}>
-													<Typography
-														align='center'
-														sx={{
-															fontFamily: 'Varela Round',
-															color: '#475569',
-															fontSize: { xs: '1rem', sm: '1.05rem' },
-															lineHeight: 1.65,
-															maxWidth: '28rem',
-															px: 2,
-														}}>
-														{searchedValue || activeFilter
-															? 'Arama kriterlerinize uygun kaynak bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
-															: 'Yeni kaynaklarımız yakında eklenecek. Güncel materyaller için sayfayı düzenli kontrol edebilirsiniz.'}
-													</Typography>
-												</Grid>
-											)}
-										</>
-									)}
-								</Grid>
+										))}
+									</Box>
+								) : (
+									<Typography
+										align='center'
+										sx={{
+											fontFamily: 'Varela Round',
+											color: '#475569',
+											fontSize: { xs: '1rem', sm: '1.05rem' },
+											lineHeight: 1.65,
+											maxWidth: '28rem',
+											px: 2,
+											mt: 5,
+										}}>
+										{searchedValue || activeFilter
+											? 'Arama kriterlerinize uygun kaynak bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
+											: 'Yeni kaynaklarımız yakında eklenecek. Güncel materyaller için sayfayı düzenli kontrol edebilirsiniz.'}
+									</Typography>
+								)}
 							</Box>
 
 							{/* Load More Button and Total Count */}

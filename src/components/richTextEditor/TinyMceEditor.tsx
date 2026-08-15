@@ -153,20 +153,20 @@ const TinyMceEditor = ({
 					toolbar:
 						`undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor${allowImages ? ' | image' : ''} | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code`,
 					font_family_formats:
-						'Varela Round=Varela Round,sans-serif;Poppins=Poppins,sans-serif;System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
+						'Varela Round=Varela Round,sans-serif;Nunito=Nunito,sans-serif;System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
 					font_size_formats: '12pt',
 					content_style: `
-						@import url('https://fonts.googleapis.com/css2?family=Varela+Round&family=Poppins:wght@400;600;700;800&display=swap');
+						@import url('https://fonts.googleapis.com/css2?family=Varela+Round&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&display=swap');
 						body {
 							font-size: 12pt;
 							font-family: 'Varela Round', sans-serif;
 						}
 						strong, b {
-							font-family: 'Poppins', 'Varela Round', sans-serif;
+							font-family: 'Nunito', sans-serif;
 							font-weight: 700;
 						}
 						em, i {
-							font-family: 'Poppins', 'Varela Round', sans-serif;
+							font-family: 'Nunito', sans-serif;
 							font-style: italic;
 						}
 					`,

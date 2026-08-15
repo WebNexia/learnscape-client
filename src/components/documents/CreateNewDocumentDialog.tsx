@@ -10,6 +10,7 @@ import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import DocumentDetailBlocksEditor from './DocumentDetailBlocksEditor';
 
 interface CreateNewDocumentDialogProps {
 	isOpen: boolean;
@@ -155,6 +156,13 @@ const CreateNewDocumentDialog = ({
 						</Box>
 					)}
 				</Box>
+				{singleDocument?.isOnLandingPage && (
+					<DocumentDetailBlocksEditor
+						document={singleDocument}
+						setDocument={setSingleDocument}
+						onDeleteImageFromStorage={onDeleteSamplePageImagesFromStorage}
+					/>
+				)}
 				<Box
 					sx={{
 						display: 'flex',

@@ -249,7 +249,7 @@ const EventCalendar = () => {
 						selectable={true}
 						style={{
 							height: isVerySmallScreen ? '65vh' : '78vh',
-							fontFamily: 'Poppins',
+							fontFamily: 'Varela Round',
 							fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
 							width: isMobileSizeSmall ? '91vw' : '76vw',
 							backgroundColor: '#fff',

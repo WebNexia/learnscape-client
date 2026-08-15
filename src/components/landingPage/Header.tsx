@@ -89,7 +89,9 @@ const Header = () => {
             navigate("/landing-page-resources");
             window.scrollTo({ top: 0, behavior: "smooth" });
           },
-          isActive: location.pathname === "/landing-page-resources",
+          isActive:
+            location.pathname === "/landing-page-resources" ||
+            location.pathname.startsWith("/landing-page-document/"),
         },
         {
           label: "Danışmanlık",

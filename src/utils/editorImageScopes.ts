@@ -2,6 +2,7 @@
 export const lessonEditorScope = (lessonId: string) => `lessons/${lessonId}`;
 export const questionEditorScope = (questionId: string) => `questions/${questionId}`;
 export const courseEditorScope = (courseId: string) => `courses/${courseId}`;
+export const documentEditorScope = (documentId: string) => `documents/${documentId}`;
 export const emailEditorScope = (sessionId: string) => `emails/${sessionId}`;
 
 /** Client-side MongoDB ObjectId for uploads before create API returns. */

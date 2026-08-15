@@ -1,12 +1,12 @@
 /** Shared typography for learner-facing lesson & question rich text. */
 export const LEARNER_TEXT_FONT_FAMILY = "'Varela Round', sans-serif";
 
-/** Bold/italic face — Varela Round has no 700/italic cut; Poppins does. */
-export const LEARNER_EMPHASIS_FONT_FAMILY = "'Poppins', 'Varela Round', sans-serif";
+/** Bold/italic face — Varela Round has no weight cuts; Nunito does. */
+export const LEARNER_EMPHASIS_FONT_FAMILY = "'Nunito', sans-serif";
 
 export const LEARNER_RICH_TEXT_CLASS = 'learner-rich-text';
 
-/** Strip editor inline font-family so Varela Round applies consistently. */
+/** Strip editor inline font-family so Varela Round / Nunito apply consistently. */
 export function stripInlineFontFamily(html: string): string {
 	if (!html) return '';
 

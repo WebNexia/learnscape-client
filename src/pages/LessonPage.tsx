@@ -46,7 +46,6 @@ import { Lesson } from '../interfaces/lessons';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 import InstructorFeedbackPanel from '../components/layouts/quizSubmissions/InstructorFeedbackPanel';
@@ -420,8 +419,11 @@ const LessonPage = () => {
 				const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
 				if (userLessonResponse.data.data && userLessonResponse.data.data[0]) {
 					const lessonData = userLessonResponse.data.data[0];
-					setUserLessonNotes(lessonData.notes || '');
-					setEditorContent(lessonData.notes || '');
+					const notes = lessonData.notes || '';
+					// Older saves used validator.escape — restore HTML for TinyMCE
+					const restoredNotes = /&lt;\/?[a-z]/i.test(notes) ? decode(notes) : notes;
+					setUserLessonNotes(restoredNotes);
+					setEditorContent(restoredNotes);
 					setTeacherQuizFeedback(lessonData.teacherFeedback);
 					setIsLessonCompleted(Boolean(lessonData.isCompleted));
 				}
@@ -472,12 +474,15 @@ const LessonPage = () => {
 		try {
 			setIsUserLessonNotesUploading(true);
 			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent?.trim() });
-			setUserLessonNotes(res.data.data.notes);
+			const savedNotes = res.data.data.notes || '';
+			const restoredNotes = /&lt;\/?[a-z]/i.test(savedNotes) ? decode(savedNotes) : savedNotes;
+			setUserLessonNotes(restoredNotes);
+			setEditorContent(restoredNotes);
+			setIsNotesUpdated(false);
 		} catch (error) {
 			console.log(error);
 		} finally {
 			setIsUserLessonNotesUploading(false);
-			setIsNotesUpdated(true);
 		}
 	};
 
@@ -728,7 +733,7 @@ const LessonPage = () => {
 										borderRadius: '1.5rem',
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										fontWeight: 600,
-										fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+										fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 										whiteSpace: 'nowrap',
 									}}>
@@ -792,7 +797,7 @@ const LessonPage = () => {
 												borderRadius: '1.5rem',
 												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												fontWeight: 600,
-												fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+												fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
 												boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
 												whiteSpace: 'nowrap',
 												ml: '0.5rem',
@@ -1465,6 +1470,16 @@ const LessonPage = () => {
 							<DialogContent>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
 									You can solve the multiple choice, true/false, fill in the blank, matching pairs, translate, and open-ended questions again.
+								</Typography>
+								<Typography
+									variant='body2'
+									sx={{
+										mt: '1.5rem',
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										lineHeight: 1.9,
+										color: theme.textColor?.primary?.main,
+									}}>
+									Çoktan seçmeli, doğru/yanlış, boşluk doldurma, eşleştirme, çeviri ve açık uçlu soruları tekrar çözebilirsiniz.
 								</Typography>
 							</DialogContent>
 							<DialogActions>

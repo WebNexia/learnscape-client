@@ -10,6 +10,7 @@ import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import DocumentDetailBlocksEditor from './DocumentDetailBlocksEditor';
 
 interface EditDocumentDialogProps {
 	isOpen: boolean;
@@ -156,6 +157,13 @@ const EditDocumentDialog = ({
 						</Box>
 					)}
 				</Box>
+				{document?.isOnLandingPage && (
+					<DocumentDetailBlocksEditor
+						document={document}
+						setDocument={setDocument}
+						onDeleteImageFromStorage={onDeleteSamplePageImagesFromStorage}
+					/>
+				)}
 				<Box
 					sx={{
 						display: 'flex',
