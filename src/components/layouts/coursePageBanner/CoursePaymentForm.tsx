@@ -45,6 +45,15 @@ import { getCourseAccessCheckoutCopy } from '../../../utils/courseAccessCheckout
 
 const FONT = 'Varela Round';
 const INPUT_RADIUS = '0.5rem';
+const GROUP_DESCRIPTION_BREAK =
+	/\s+(?=(?:Türkiye Saati|Berlin Saati|Londra Saati|London Time|Berlin Time|UK Time))/g;
+
+const formatGroupDescription = (description?: string): string => {
+	if (!description) return '';
+	const normalized = description.replace(/\r\n/g, '\n');
+	if (normalized.includes('\n')) return normalized;
+	return normalized.replace(GROUP_DESCRIPTION_BREAK, '\n').replace(/^(Ders Günleri:[^\n]*)\n/, '$1\n\n');
+};
 
 interface CoursePaymentFormProps {
 	course: SingleCourse;
@@ -550,11 +559,23 @@ export default function CoursePaymentForm({
 											gap: 1,
 										}}
 										onClick={() => setIsGroupSelectionExpanded(!isGroupSelectionExpanded)}>
-										<Typography sx={{ fontFamily: FONT, fontWeight: 500, fontSize: isMobileSize ? '0.85rem' : '0.95rem', color: 'white', ml: '0.25rem', flex: 1, minWidth: 0 }}>
+										<Typography
+											sx={{
+												fontFamily: FONT,
+												fontWeight: 500,
+												fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+												color: 'white',
+												ml: '0.25rem',
+												flex: 1,
+												minWidth: 0,
+												whiteSpace: 'nowrap',
+												overflow: 'hidden',
+												textOverflow: 'ellipsis',
+											}}>
 											{selectedGroupName
 												? (() => {
 													const sel = course.groups?.find((g) => g.name === selectedGroupName);
-													return sel ? `Seçilen: ${sel.name}${sel.description ? ` — ${sel.description}` : ''}` : `Seçili: ${selectedGroupName}`;
+													return sel ? `Seçilen: ${sel.name}` : `Seçili: ${selectedGroupName}`;
 												})()
 												: `Grup Seçimi (${course.groups?.length ?? 0} seçenek)`}
 										</Typography>
@@ -618,8 +639,16 @@ export default function CoursePaymentForm({
 																	<Typography sx={{ fontWeight: 600, fontSize: isMobileSize ? '0.85rem' : '0.95rem', color: group.isFull ? '#ef4444' : '#2C3E50', fontFamily: FONT }}>
 																		{group.name} {group.isFull && '(Kontenjan Doldu)'}
 																	</Typography>
-																	<Typography variant="body2" sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: '#475569', fontFamily: FONT }}>
-																		{group.description}
+																	<Typography
+																		variant="body2"
+																		sx={{
+																			fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																			color: '#475569',
+																			fontFamily: FONT,
+																			whiteSpace: 'pre-line',
+																			mt: 0.5,
+																		}}>
+																		{formatGroupDescription(group.description)}
 																	</Typography>
 																</Box>
 															</Box>

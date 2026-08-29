@@ -97,9 +97,9 @@ const LandingPageResources = () => {
 	return (
 		<>
 			<SEO
-				title='Learning Resources - Aden Academy'
-				description='Access free learning resources, documents, and educational materials. Download PDFs, guides, and study materials to enhance your learning experience.'
-				keywords='learning resources, educational documents, study materials, PDF downloads, free resources, educational content, learning guides, Aden Academy resources'
+				title='Kitaplar - Aden Academy'
+				description='Ders kitapları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.'
+				keywords='kitaplar, ders kitapları, eğitim materyalleri, çalışma materyalleri, PDF indirme, ücretsiz kitap, Aden Academy kitaplar'
 				type='website'
 			/>
 			<StructuredData type='Organization' />
@@ -109,17 +109,17 @@ const LandingPageResources = () => {
 				data={{
 					breadcrumbs: [
 						{ name: 'Home', url: baseUrl },
-						{ name: 'Resources', url: `${baseUrl}/resources` },
+						{ name: 'Kitaplar', url: `${baseUrl}/landing-page-resources` },
 					],
 				}}
 			/>
 			<StructuredData
 				type='WebPage'
 				data={{
-					url: `${baseUrl}/resources`,
-					name: 'Learning Resources - Aden Academy',
+					url: `${baseUrl}/landing-page-resources`,
+					name: 'Kitaplar - Aden Academy',
 					description:
-						'Access free learning resources, documents, and educational materials. Download PDFs, guides, and study materials to enhance your learning experience.',
+						'Ders kitapları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.',
 				}}
 			/>
 			<Box
@@ -199,7 +199,7 @@ const LandingPageResources = () => {
 									borderBottom: isScrolled ? '1px solid rgba(0, 0, 0, 0.04)' : '1px solid transparent',
 									transition: 'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, padding 0.25s ease',
 								}}>
-								<Box sx={{ width: '85%' }}>
+								{/* <Box sx={{ width: '85%' }}>
 									<SearchFilter
 										searchValue={searchValue}
 										onSearchChange={setSearchValue}
@@ -209,8 +209,8 @@ const LandingPageResources = () => {
 										onFilterChange={setActiveFilter}
 										filterOptions={resourceFilterOptions}
 										loading={isSearching}
-										placeholder='Kaynak ismi veya açıklamasında arayın...'
-										searchLabel='Kaynak Ara'
+										placeholder='Kitap ismi veya açıklamasında arayın...'
+										searchLabel='Kitap Ara'
 										searchedValue={searchedValue}
 										onRemoveSearch={onRemoveSearch}
 										totalCount={total}
@@ -218,7 +218,7 @@ const LandingPageResources = () => {
 										transparentSearchBox
 										isScrolled={isScrolled}
 									/>
-								</Box>
+								</Box> */}
 							</Box>
 
 							{/* Intro — scrolls with page */}
@@ -234,7 +234,7 @@ const LandingPageResources = () => {
 										maxWidth: { xs: '100%', sm: '36rem', md: '42rem' },
 										mx: 'auto',
 									}}>
-									Ders notları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kaynakları arayıp indirebilirsiniz.
+									Ders notları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları indirebilirsiniz.
 								</Typography>
 							</Box>
 
@@ -297,8 +297,8 @@ const LandingPageResources = () => {
 											mt: 5,
 										}}>
 										{searchedValue || activeFilter
-											? 'Arama kriterlerinize uygun kaynak bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
-											: 'Yeni kaynaklarımız yakında eklenecek. Güncel materyaller için sayfayı düzenli kontrol edebilirsiniz.'}
+											? 'Arama kriterlerinize uygun kitap bulunamadı. Farklı bir anahtar kelime deneyebilir veya filtreleri temizleyebilirsiniz.'
+											: 'Yeni kitaplarımız yakında eklenecek. Güncel materyaller için sayfayı düzenli kontrol edebilirsiniz.'}
 									</Typography>
 								)}
 							</Box>
@@ -334,7 +334,7 @@ const LandingPageResources = () => {
 														color: 'rgba(0, 0, 0, 0.26)',
 													},
 												}}>
-												{loading ? 'Yükleniyor...' : 'Daha Fazla Kaynak Yükle'}
+												{loading ? 'Yükleniyor...' : 'Daha Fazla Kitap Yükle'}
 											</Button>
 										</Box>
 									)}

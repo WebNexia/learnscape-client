@@ -87,12 +87,13 @@ const LandingPageDocumentDetailBlocks = ({ blocks }: Props) => {
 
 				if (block.type === 'image' && block.imageUrl) {
 					return (
-						<Box key={key} sx={{ width: '100%' }}>
+						<Box key={key} sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 							<Box
 								sx={{
+									width: '100%',
 									borderRadius: '0.75rem',
 									overflow: 'hidden',
-									backgroundColor: '#f1f5f9',
+									backgroundColor: 'transparent',
 									display: 'flex',
 									alignItems: 'center',
 									justifyContent: 'center',

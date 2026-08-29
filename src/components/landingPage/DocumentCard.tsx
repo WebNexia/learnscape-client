@@ -73,7 +73,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 		addToDocumentCart({
 			documentId: document._id,
 			orgId: document.orgId,
-			title: document.name || 'Kaynak',
+			title: document.name || 'Kitap',
 			amount: price.amount,
 			currency: price.currency,
 			imageUrl: document.imageUrl,
@@ -111,7 +111,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 			return;
 		}
 		if (!document.orgId) {
-			setDownloadError('Kaynak bilgisi eksik.');
+			setDownloadError('Kitap bilgisi eksik.');
 			return;
 		}
 		setDownloadSubmitting(true);
@@ -139,7 +139,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 			<Box
 				sx={{
 					width: isMobileSize ? '17rem' : '21rem',
-					height: isMobileSize ? '23rem' : '29rem',
+					height: isMobileSize ? '26rem' : '29rem',
 					p: '4px',
 					borderRadius: '0.75rem',
 					boxSizing: 'border-box',
@@ -224,7 +224,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 						)}
 					</Box>
 
-					<CardContent sx={{ flexGrow: 1, padding: '1rem 1.5rem 0.5rem', pb: '5.5rem !important' }}>
+					<CardContent sx={{ flexGrow: 1, padding: '1rem 1.5rem 0.5rem', pb: isMobileSize ? '6.5rem !important' : '5.5rem !important' }}>
 						<Typography
 							component='h3'
 							sx={{
@@ -254,7 +254,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								fontSize: isMobileSize ? '0.75rem' : '0.875rem',
 								wordBreak: 'break-word',
 							}}>
-							{truncateText(document.description || 'No description available', isMobileSize ? 110 : 160)}
+							{truncateText(document.description || 'No description available', 150)}
 						</Typography>
 					</CardContent>
 
@@ -268,7 +268,15 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 							bottom: 0,
 						}}
 						onClick={(e) => e.stopPropagation()}>
-						<Box sx={{ display: 'flex', gap: '0.5rem', px: '1.25rem', pb: 0.75 }} onClick={(e) => e.stopPropagation()}>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								gap: isMobileSize ? '0.35rem' : '0.5rem',
+								px: isMobileSize ? '0.85rem' : '1.25rem',
+								pb: 0.75,
+							}}
+							onClick={(e) => e.stopPropagation()}>
 							<Button
 								variant='outlined'
 								fullWidth
@@ -284,10 +292,13 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 										backgroundColor: 'rgba(0, 82, 163, 0.06)',
 									},
 									fontFamily: 'Varela Round',
-									fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+									fontSize: isMobileSize ? '0.68rem' : '0.82rem',
 									textTransform: 'none',
-									height: '1.85rem',
+									height: isMobileSize ? '2.15rem' : '1.85rem',
 									minWidth: 0,
+									px: isMobileSize ? 0.5 : 1,
+									whiteSpace: 'nowrap',
+									lineHeight: 1.2,
 								}}>
 								{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
 							</Button>
@@ -311,12 +322,16 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 											boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
 										},
 										fontFamily: 'Varela Round',
-										fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+										fontSize: isMobileSize ? '0.68rem' : '0.82rem',
 										textTransform: 'none',
-										height: '1.85rem',
+										height: isMobileSize ? '2.15rem' : '1.85rem',
 										minWidth: 0,
+										px: isMobileSize ? 0.5 : 1,
+										whiteSpace: 'nowrap',
+										lineHeight: 1.2,
+										'& .MuiButton-endIcon': { ml: 0.4, mr: 0 },
 									}}
-									endIcon={<Download sx={{ fontSize: '1rem !important' }} />}>
+									endIcon={<Download sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />}>
 									İndir
 								</Button>
 							) : (
@@ -333,12 +348,22 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 										color: 'white',
 										'&:hover': !isInCart ? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
 										fontFamily: 'Varela Round',
-										fontSize: isMobileSize ? '0.75rem' : '0.82rem',
+										fontSize: isMobileSize ? '0.68rem' : '0.82rem',
 										textTransform: 'none',
-										height: '1.85rem',
+										height: isMobileSize ? '2.15rem' : '1.85rem',
 										minWidth: 0,
+										px: isMobileSize ? 0.5 : 1,
+										whiteSpace: 'nowrap',
+										lineHeight: 1.2,
+										'& .MuiButton-endIcon': { ml: 0.4, mr: 0 },
 									}}
-									endIcon={isInCart ? <Check sx={{ fontSize: '1rem !important' }} /> : <AddShoppingCart sx={{ fontSize: '1rem !important' }} />}>
+									endIcon={
+										isInCart ? (
+											<Check sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
+										) : (
+											<AddShoppingCart sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
+										)
+									}>
 									{isInCart ? 'Eklendi' : 'Sepete Ekle'}
 								</Button>
 							)}
@@ -540,7 +565,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 			<Dialog open={downloadDialogOpen} onClose={closeFreeDownloadDialog} fullWidth maxWidth='xs'>
 				<DialogContent sx={{ pt: 3, pb: 1 }}>
 					<Typography variant='h6' sx={{ fontFamily: "'Varela Round', sans-serif", fontWeight: 700, mb: 1, color: '#0f172a' }}>
-						Kaynağı e-posta ile al
+						Kitabı e-posta ile al
 					</Typography>
 					<Typography variant='body2' color='text.secondary' sx={{ fontFamily: "'Varela Round', sans-serif", mb: 2 }}>
 						{decodedName} e-posta adresinize gönderilecektir.

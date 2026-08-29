@@ -424,7 +424,7 @@ const CoursePageBanner = ({
 										backgroundColor: '#FF6F4E !important',
 									},
 								}}>
-								Kayıt Ol
+								Kursu Satın Al
 							</CustomSubmitButton>
 							<CustomSubmitButton
 								variant='outlined'
@@ -487,7 +487,7 @@ const CoursePageBanner = ({
 									backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
 								},
 							}}>
-							{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
+							{fromHomePage ? 'Kursu Satın Al' : isProcessing ? 'Processing...' : 'Enroll'}
 						</CustomSubmitButton>
 					)
 				) : !isEnrolledStatus && !course.isExpired && (isManuallyClosed || isCapacityFull) ? (
@@ -814,7 +814,7 @@ const CoursePageBanner = ({
 									<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem', color: theme.textColor?.primary.main }}>
 										Description:
 									</Typography>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', whiteSpace: 'pre-line' }}>
 										{userGroup.description}
 									</Typography>
 								</Box>
