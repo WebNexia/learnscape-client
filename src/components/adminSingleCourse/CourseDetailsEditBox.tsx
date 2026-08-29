@@ -1068,7 +1068,7 @@ const CourseDetailsEditBox = ({
 													</Typography>
 												)}
 											</Box>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem', mb: '0.5rem' }}>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.25rem', mb: '0.5rem', whiteSpace: 'pre-line' }}>
 												{group.description}
 											</Typography>
 											<Typography

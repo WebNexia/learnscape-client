@@ -310,12 +310,12 @@ const EditDocumentDialog = ({
 							}}
 							InputProps={{
 								inputProps: {
-									maxLength: 100,
+									maxLength: 350,
 								},
 							}}
 						/>
 						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-							{document?.description.length}/100 Characters
+							{document?.description.length}/350 Characters
 						</Typography>
 					</Box>
 				</Box>

@@ -83,7 +83,7 @@ const Header = () => {
           isActive: location.pathname === "/landing-page-courses",
         },
         {
-          label: "Kaynaklar",
+          label: "Kitaplar",
           NavIcon: MenuBookOutlined,
           action: () => {
             navigate("/landing-page-resources");

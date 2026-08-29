@@ -115,14 +115,14 @@ const LandingPageDocument = () => {
 	const seoDescription =
 		introPlainForSeo ||
 		document?.description ||
-		'Aden Academy öğrenme kaynağı. Detayları inceleyin, örnek sayfalara bakın ve indirin veya satın alın.';
+		'Aden Academy kitabı. Detayları inceleyin, örnek sayfalara bakın ve indirin veya satın alın.';
 
 	const handleAddToCart = () => {
 		if (!document || isFree || !price || !document.orgId) return;
 		addToDocumentCart({
 			documentId: document._id,
 			orgId: document.orgId,
-			title: document.name || 'Kaynak',
+			title: document.name || 'Kitap',
 			amount: price.amount,
 			currency: price.currency,
 			imageUrl: document.imageUrl,
@@ -152,7 +152,7 @@ const LandingPageDocument = () => {
 			return;
 		}
 		if (!document.orgId) {
-			setDownloadError('Kaynak bilgisi eksik.');
+			setDownloadError('Kitap bilgisi eksik.');
 			return;
 		}
 		setDownloadSubmitting(true);
@@ -181,9 +181,9 @@ const LandingPageDocument = () => {
 			{document && (
 				<>
 					<SEO
-						title={`${decodedName} - Kaynaklar | Aden Academy`}
+						title={`${decodedName} - Kitaplar | Aden Academy`}
 						description={seoDescription.slice(0, 160)}
-						keywords={`${decodedName}, kaynak, öğrenme, Aden Academy`}
+						keywords={`${decodedName}, kitap, öğrenme, Aden Academy`}
 						image={document.imageUrl}
 						url={docUrl}
 						type='article'
@@ -194,7 +194,7 @@ const LandingPageDocument = () => {
 						data={{
 							breadcrumbs: [
 								{ name: 'Home', url: baseUrl },
-								{ name: 'Kaynaklar', url: `${baseUrl}/landing-page-resources` },
+								{ name: 'Kitaplar', url: `${baseUrl}/landing-page-resources` },
 								{ name: decodedName, url: docUrl },
 							],
 						}}
@@ -253,7 +253,7 @@ const LandingPageDocument = () => {
 						{showError && (
 							<Box sx={{ paddingTop: '25vh', textAlign: 'center', px: 2 }}>
 								<Typography variant='h6' sx={{ fontFamily: 'Varela Round', color: 'error.main' }}>
-									Kaynak yüklenirken bir hata oluştu
+									Kitap yüklenirken bir hata oluştu
 								</Typography>
 							</Box>
 						)}
@@ -261,7 +261,7 @@ const LandingPageDocument = () => {
 						{showNotFound && (
 							<Box sx={{ paddingTop: '25vh', textAlign: 'center' }}>
 								<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
-									Kaynak bulunamadı
+									Kitap bulunamadı
 								</Typography>
 							</Box>
 						)}
@@ -289,7 +289,7 @@ const LandingPageDocument = () => {
 										px: 0,
 										'&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 									}}>
-									Kaynaklara dön
+									Kitaplara dön
 								</Button>
 
 								<Box
@@ -644,7 +644,7 @@ const LandingPageDocument = () => {
 			<Dialog open={downloadDialogOpen} onClose={closeFreeDownloadDialog} fullWidth maxWidth='xs'>
 				<DialogContent sx={{ pt: 3, pb: 1 }}>
 					<Typography variant='h6' sx={{ fontFamily: "'Varela Round', sans-serif", fontWeight: 700, mb: 1, color: '#0f172a' }}>
-						Kaynağı e-posta ile al
+						Kitabı e-posta ile al
 					</Typography>
 					<Typography variant='body2' color='text.secondary' sx={{ fontFamily: "'Varela Round', sans-serif", mb: 2 }}>
 						{decodedName} e-posta adresinize gönderilecektir.

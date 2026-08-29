@@ -889,6 +889,7 @@ const PaymentDialog = ({
 																lineHeight: 1.5,
 																fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 																mb: '0.5rem',
+																whiteSpace: 'pre-line',
 															}}>
 															{group.description}
 														</Typography>

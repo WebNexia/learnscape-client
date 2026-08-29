@@ -295,7 +295,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 								display: 'flex',
 								alignItems: 'center',
 							}}>
-							{hasActiveSearchOrFilter ? `${totalCount} sonuç bulundu` : `Toplam ${totalCount} ${isCoursesPage ? 'kurs' : 'kaynak'}`}
+							{hasActiveSearchOrFilter ? `${totalCount} sonuç bulundu` : `Toplam ${totalCount} ${isCoursesPage ? 'kurs' : 'kitap'}`}
 						</Typography>
 
 						{isCoursesPage && (

@@ -7,7 +7,7 @@ const faqData = [
 	{
 		question: 'LearnScape nedir?',
 		answer:
-			'LearnScape, kendi hızınızda öğrenmenize ve gelişmenize yardımcı olacak kurslar, etkinlikler ve kaynaklar sunan interaktif bir online platformdur.',
+			'LearnScape, kendi hızınızda öğrenmenize ve gelişmenize yardımcı olacak kurslar, etkinlikler ve kitaplar sunan interaktif bir online platformdur.',
 	},
 	{
 		question: 'Bir kursa nasıl kayıt olabilirim?',

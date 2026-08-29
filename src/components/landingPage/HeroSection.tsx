@@ -137,7 +137,7 @@ const HeroSection = () => {
 					flex: stackHeroLayout ? 'none' : 1,
 					gap: { xs: 2, sm: 2.5, md: 2, lg: 3 },
 					alignItems: stackHeroLayout ? 'center' : 'stretch',
-					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.05fr) minmax(0, 0.95fr)' },
+					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.25fr) minmax(0, 0.75fr)' },
 					gridTemplateAreas: stackHeroLayout
 						? '"copy" "visual"'
 						: { md: '"copy visual"' },
@@ -159,7 +159,7 @@ const HeroSection = () => {
 						position: 'relative',
 						zIndex: 2,
 					}}>
-					<Box sx={{ width: '100%', maxWidth: stackHeroLayout ? '36rem' : { md: '34rem', lg: '38rem' } }}>
+					<Box sx={{ width: '100%', maxWidth: stackHeroLayout ? '36rem' : { md: '42rem', lg: '48rem' } }}>
 						<Typography
 							variant='h2'
 							className='kaizen-title'
@@ -329,8 +329,8 @@ const HeroSection = () => {
 							alignItems: 'center',
 							width: '100%',
 							maxWidth: stackHeroLayout
-								? { xs: 'min(100%, 18rem)', sm: 'min(100%, 22rem)' }
-								: { md: 'min(100%, 34rem)', lg: 'min(100%, 40rem)', xl: 'min(100%, 44rem)' },
+								? { xs: 'min(100%, 20rem)', sm: 'min(100%, 24rem)' }
+								: { md: 'min(100%, 36rem)', lg: 'min(100%, 43rem)', xl: 'min(100%, 47rem)' },
 							position: 'relative',
 							mx: 'auto',
 						}}>
@@ -340,8 +340,8 @@ const HeroSection = () => {
 								top: '50%',
 								left: '50%',
 								transform: 'translate(-50%, -50%)',
-								width: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 420px)',
-								height: stackHeroLayout ? 'min(100%, 280px)' : 'min(100%, 420px)',
+								width: stackHeroLayout ? 'min(100%, 300px)' : 'min(100%, 450px)',
+								height: stackHeroLayout ? 'min(100%, 300px)' : 'min(100%, 450px)',
 								borderRadius: '50%',
 								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
 								filter: 'blur(40px)',
@@ -360,11 +360,11 @@ const HeroSection = () => {
 								width: '100%',
 								height: 'auto',
 								maxHeight: stackHeroLayout
-									? { xs: 'clamp(9rem, 32vh, 18rem)', sm: 'clamp(10rem, 34vh, 20rem)' }
+									? { xs: 'clamp(10rem, 35vh, 20rem)', sm: 'clamp(11rem, 37vh, 22rem)' }
 									: {
-										md: 'clamp(17rem, 52vh, 32rem)',
-										lg: 'clamp(20rem, 58vh, 38rem)',
-										xl: 'clamp(22rem, 62vh, 42rem)',
+										md: 'clamp(18.5rem, 56vh, 34.5rem)',
+										lg: 'clamp(21.5rem, 62vh, 41rem)',
+										xl: 'clamp(24rem, 66vh, 45rem)',
 									},
 								objectFit: 'contain',
 								objectPosition: 'center center',

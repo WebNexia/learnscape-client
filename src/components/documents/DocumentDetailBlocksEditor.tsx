@@ -268,6 +268,7 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 									<CustomTextField
 										fullWidth
 										label='Caption (optional)'
+										required={false}
 										value={block.caption || ''}
 										onChange={(e) =>
 											patchBlock(index, {
@@ -370,7 +371,7 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 						)}
 					</Box>
 				);
-			}			)}
+			})}
 		</Box>
 	);
 };

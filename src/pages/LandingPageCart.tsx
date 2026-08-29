@@ -291,7 +291,7 @@ export default function LandingPageCart() {
 								Sepetiniz boş
 							</Typography>
 							<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.95rem', mb: 3 }}>
-								Kaynak veya danışmanlık ekleyerek devam edin.
+								Kitap veya danışmanlık ekleyerek devam edin.
 							</Typography>
 							<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
 								<Button
@@ -309,7 +309,7 @@ export default function LandingPageCart() {
 										'&:hover': { background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)', boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)' },
 									}}
 								>
-									Kaynaklara Git
+									Kitaplara Git
 								</Button>
 								<Button
 									variant="outlined"
@@ -643,7 +643,7 @@ export default function LandingPageCart() {
 													onClick={() => setKaynaklarExpanded((e) => !e)}
 													role="button"
 													aria-expanded={kaynaklarExpanded}
-													aria-label={kaynaklarExpanded ? 'Kaynakları daralt' : 'Kaynakları genişlet'}
+													aria-label={kaynaklarExpanded ? 'Kitapları daralt' : 'Kitapları genişlet'}
 													sx={{
 														px: 2.5,
 														py: 1,
@@ -661,7 +661,7 @@ export default function LandingPageCart() {
 														<Description sx={{ color: 'white', fontSize: 20 }} />
 													</Box>
 													<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: '1rem', color: '#0A1A2F' }}>
-														Kaynaklar
+														Kitaplar
 													</Typography>
 													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.8rem', color: 'text.secondary' }}>
 														{documentItems.length} {documentItems.length === 1 ? 'ürün' : 'ürün'}
