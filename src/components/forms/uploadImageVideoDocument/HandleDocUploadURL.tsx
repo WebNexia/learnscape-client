@@ -12,6 +12,12 @@ import { SingleCourse } from '../../../interfaces/course';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { validateDocumentUrl } from '../../../utils/urlValidation';
 
+import { useAuth } from '../../../hooks/useAuth';
+import { deleteFirebaseStorageUrls } from '../../../utils/deleteFirebaseStorageUrls';
+
+const DEFAULT_DOC_MAX_MB = 10;
+const OWNER_SUPER_ADMIN_DOC_MAX_MB = 250;
+
 interface HandleDocUploadURLProps {
 	onDocUploadLogic?: (url: string, docName: string) => void;
 	setEnterDocUrl: React.Dispatch<React.SetStateAction<boolean>>;
@@ -34,6 +40,8 @@ interface HandleDocUploadURLProps {
 	initialDocumentName?: string;
 	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>>;
 	maxSizeMB?: number; // Optional file size limit override (default 10MB)
+	/** Document Mongo id — uploads to Materials/{id}/ like DocumentImages */
+	scopedEntityId?: string;
 }
 
 const HandleDocUploadURL = ({
@@ -58,8 +66,17 @@ const HandleDocUploadURL = ({
 	initialDocumentName,
 	setHasUnsavedChanges,
 	maxSizeMB,
+	scopedEntityId,
 }: HandleDocUploadURLProps) => {
-	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload({ maxSizeMB });
+	const { isOwner, isSuperAdmin } = useAuth();
+	const resolvedMaxSizeMB = Math.max(
+		maxSizeMB ?? DEFAULT_DOC_MAX_MB,
+		isOwner || isSuperAdmin ? OWNER_SUPER_ADMIN_DOC_MAX_MB : 0,
+	);
+	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload({
+		maxSizeMB: resolvedMaxSizeMB,
+		scopedEntityId,
+	});
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -69,11 +86,13 @@ const HandleDocUploadURL = ({
 	const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+	const [activeDocumentUrl, setActiveDocumentUrl] = useState<string>(initialDocumentUrl || '');
 
 	// Set initial values when they change
 	useEffect(() => {
 		if (initialDocumentUrl) {
 			setManualDocUrl(initialDocumentUrl);
+			setActiveDocumentUrl(initialDocumentUrl);
 			setEnterDocUrl(true);
 			if (setDocumentUrl) {
 				setDocumentUrl(initialDocumentUrl);
@@ -86,6 +105,19 @@ const HandleDocUploadURL = ({
 			}
 		}
 	}, [initialDocumentUrl, initialDocumentName]);
+
+	const applyNewDocumentUrl = async (url: string) => {
+		const previousUrl = activeDocumentUrl?.trim();
+		if (previousUrl && previousUrl !== url) {
+			// Create flow (no entity id yet): remove replaced Storage file immediately.
+			// Edit flow: server cleanupDocumentFiles runs on save (same as cover images).
+			if (!scopedEntityId) {
+				await deleteFirebaseStorageUrls([previousUrl]);
+			}
+		}
+		setActiveDocumentUrl(url);
+		if (setDocumentUrl) setDocumentUrl(url);
+	};
 
 	// Debounced URL validation
 	useEffect(() => {
@@ -110,17 +142,19 @@ const HandleDocUploadURL = ({
 
 	const handleDocUploadReusable = () => {
 		handleDocUpload(docFolderName, (url: string) => {
-			if (onDocUploadLogic) {
-				onDocUploadLogic(url, docName);
-			}
-			if (setDocumentName) setDocumentName(docName);
-			if (setDocumentUrl) setDocumentUrl(url);
-			if (setFileUploaded) setFileUploaded(true);
+			void (async () => {
+				if (onDocUploadLogic) {
+					onDocUploadLogic(url, docName);
+				}
+				if (setDocumentName) setDocumentName(docName);
+				await applyNewDocumentUrl(url);
+				if (setFileUploaded) setFileUploaded(true);
 
-			// Don't clear the name when in admin docs mode
-			if (!fromAdminDocs) {
-				setDocName('');
-			}
+				// Don't clear the name when in admin docs mode
+				if (!fromAdminDocs) {
+					setDocName('');
+				}
+			})();
 		});
 	};
 
@@ -144,7 +178,7 @@ const HandleDocUploadURL = ({
 
 				if (setDocumentName) setDocumentName(docName.trim());
 				if (setFileUploaded) setFileUploaded(true);
-				if (setDocumentUrl) setDocumentUrl(manualDocUrl);
+				await applyNewDocumentUrl(manualDocUrl);
 
 				// Don't clear the fields when in admin docs mode
 				if (!fromAdminDocs) {
@@ -272,7 +306,9 @@ const HandleDocUploadURL = ({
 									</LoadingButton>
 								)}
 							</Box>
-							{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of {maxSizeMB || 10} MB </CustomErrorMessage>}
+							{isDocSizeLarge && (
+								<CustomErrorMessage>Document size exceeds the limit of {resolvedMaxSizeMB} MB </CustomErrorMessage>
+							)}
 						</Box>
 					)}
 

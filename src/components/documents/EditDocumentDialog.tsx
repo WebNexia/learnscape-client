@@ -77,6 +77,7 @@ const EditDocumentDialog = ({
 						setEnterDocUrl={setEnterDocUrl}
 						docFolderName='Materials'
 						fromAdminDocs={true}
+						scopedEntityId={document?._id}
 						setDocumentUrl={(url) => {
 							if (document) {
 								setDocument({ ...document, documentUrl: typeof url === 'string' ? url : '' });

@@ -77,6 +77,7 @@ const CreateNewDocumentDialog = ({
 						setEnterDocUrl={setEnterDocUrl}
 						docFolderName='Materials'
 						fromAdminDocs={true}
+						scopedEntityId={singleDocument?._id}
 						setDocumentUrl={(url) => {
 							if (singleDocument) {
 								setSingleDocument({ ...singleDocument, documentUrl: typeof url === 'string' ? url : '' });
