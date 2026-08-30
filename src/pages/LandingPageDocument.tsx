@@ -306,7 +306,7 @@ const LandingPageDocument = () => {
 											borderRadius: '0.75rem',
 											overflow: 'hidden',
 											boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
-											backgroundColor: '#f1f5f9',
+											backgroundColor: 'transparent',
 											aspectRatio: '3 / 4',
 											display: 'flex',
 											alignItems: 'center',

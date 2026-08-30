@@ -139,7 +139,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 			<Box
 				sx={{
 					width: isMobileSize ? '17rem' : '21rem',
-					height: isMobileSize ? '26rem' : '29rem',
+					height: isMobileSize ? '27.5rem' : '30.5rem',
 					p: '4px',
 					borderRadius: '0.75rem',
 					boxSizing: 'border-box',
@@ -195,15 +195,15 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 						display: 'flex',
 						flexDirection: 'column',
 					}}>
-					{/* Cover — full-bleed like course cards */}
+					{/* Cover — full book cover, no crop (portrait covers letterbox) */}
 					<Box
 						sx={{
 							width: '100%',
-							height: isMobileSize ? '10rem' : '13rem',
+							height: isMobileSize ? '11.5rem' : '14.5rem',
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
-							backgroundColor: '#f4f7fa',
+							backgroundColor: '#f8fafc',
 							overflow: 'hidden',
 							flexShrink: 0,
 						}}>
@@ -215,7 +215,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								sx={{
 									width: '100%',
 									height: '100%',
-									objectFit: 'cover',
+									objectFit: 'contain',
 									objectPosition: 'center',
 								}}
 							/>

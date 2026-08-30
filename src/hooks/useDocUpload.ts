@@ -4,10 +4,12 @@ import { storage } from '../firebase';
 
 interface UseDocUploadOptions {
 	maxSizeMB?: number; // Default 10MB, can be overridden (e.g., 25MB for resources)
+	/** Document Mongo id — uploads to {folderName}/{scopedEntityId}/ (same pattern as images) */
+	scopedEntityId?: string;
 }
 
 const useDocUpload = (options: UseDocUploadOptions = {}) => {
-	const { maxSizeMB = 10 } = options;
+	const { maxSizeMB = 10, scopedEntityId } = options;
 	const [docUpload, setDocUpload] = useState<File | null>(null);
 	const [isDocSizeLarge, setIsDocSizeLarge] = useState<boolean>(false);
 	const [isDocLoading, setIsDocLoading] = useState<boolean>(false);
@@ -38,7 +40,10 @@ const useDocUpload = (options: UseDocUploadOptions = {}) => {
 		try {
 			const timestamp = Date.now();
 			const sanitizedFilename = docUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-			const storageRef = ref(storage, `${folderName}/${timestamp}-${sanitizedFilename}`);
+			const storagePath = scopedEntityId
+				? `${folderName}/${scopedEntityId}/${timestamp}-${sanitizedFilename}`
+				: `${folderName}/${timestamp}-${sanitizedFilename}`;
+			const storageRef = ref(storage, storagePath);
 			const uploadTask = uploadBytesResumable(storageRef, docUpload);
 
 			uploadTask.on(

@@ -6,7 +6,6 @@ import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import { useAuth } from '../../../hooks/useAuth';
 
 interface PaymentDetailsDialogProps {
 	open: boolean;
@@ -19,7 +18,6 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const { isOwner, isSuperAdmin } = useAuth();
 
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString('en-US', {
@@ -31,35 +29,16 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 		});
 	};
 
-	// Build income details based on user role
-	const incomeDetails = [];
-	if (isOwner && payment.ownerIncome !== undefined) {
-		incomeDetails.push({ label: 'Your Income (Commission)', value: `£${payment.ownerIncome.toFixed(2)}` });
-		if (payment.commissionRate !== undefined) {
-			const commissionPercent = (payment.commissionRate * 100).toFixed(2);
-			incomeDetails.push({ label: 'Commission Rate', value: `${commissionPercent}%` });
-		}
-		if (payment.commissionType) {
-			incomeDetails.push({ label: 'Commission Type', value: payment.commissionType === 'percentage' ? 'Percentage' : 'Fixed' });
-		}
-	} else if (isSuperAdmin && payment.superAdminIncome !== undefined) {
-		incomeDetails.push({ label: 'Your Income (Share)', value: `£${payment.superAdminIncome.toFixed(2)}` });
-		if (payment.commissionRate !== undefined) {
-			const commissionPercent = (payment.commissionRate * 100).toFixed(2);
-			incomeDetails.push({ label: 'Commission Rate', value: `${commissionPercent}%` });
-		}
-	}
-
 	const sections = [
 		{
 			title: 'Payment Information',
 			details: [
 				{ label: 'Payment ID', value: payment.paymentId },
+				{ label: 'Fatura No', value: payment.invoiceNumber },
 				{ label: 'Amount', value: `${setCurrencySymbol(payment.currency)}${payment.amount}` },
 				{ label: 'Amount Received (GBP)', value: `£${payment.amountReceivedInGbp}` },
 				{ label: 'Status', value: payment.status },
 				{ label: 'Payment Type', value: payment.paymentType },
-				...incomeDetails, // Add income details if available
 			],
 		},
 		{

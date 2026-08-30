@@ -3,6 +3,7 @@ export interface Payment {
 	firstName: string;
 	lastName: string;
 	paymentId: string;
+	invoiceNumber?: string;
 	amount: number;
 	currency: string;
 	amountReceivedInGbp: number;
