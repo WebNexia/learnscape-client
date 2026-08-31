@@ -890,28 +890,10 @@ const PaymentDialog = ({
 																color: group.isFull ? '#94a3b8' : '#475569',
 																lineHeight: 1.5,
 																fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-																mb: '0.5rem',
 																whiteSpace: 'pre-line',
 															}}>
 															{group.description}
 														</Typography>
-														{group.capacity !== undefined && (
-															<Typography
-																variant='body2'
-																sx={{
-																	fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-																	color: group.isFull ? '#ef4444' : group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? '#f59e0b' : '#64748b',
-																	mb: 0.5,
-																	fontWeight: group.remainingSeats !== null && group.remainingSeats !== undefined && group.remainingSeats <= 3 ? 600 : 400,
-																	fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-																}}>
-																{fromHomePage
-																	? typeof group.remainingSeats === 'number'
-																		? `Kalan: ${group.remainingSeats} (Toplam kontenjan: ${group.capacity})`
-																		: `${group.enrolledCount || 0}/${group.capacity} kontenjan`
-																	: `${group.enrolledCount || 0}/${group.capacity} seats${typeof group.remainingSeats === 'number' ? `  (${group.remainingSeats} remaining)` : ''}`}
-															</Typography>
-														)}
 
 													</Box>
 												</CardContent>
