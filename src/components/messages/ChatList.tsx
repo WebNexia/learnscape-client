@@ -144,11 +144,14 @@ const ChatList = ({
 								const isGroup = isGroupChat(chat);
 								const chatDisplayName = getChatDisplayName(chat);
 								const chatDisplayImage = getChatDisplayImage(chat);
-								const participantCount = chat.participants.length;
+								const participants = Array.isArray(chat.participants) ? chat.participants.filter(Boolean) : [];
+								const participantCount = participants.length;
+								const firstParticipantId = participants[0]?.firebaseUserId || 'unknown';
+								const lastMessageText = chat.lastMessage?.text || '';
 
 								return (
 									<Box
-										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
+										key={`${chat.chatId}-${firstParticipantId}`}
 										sx={{
 											'display': 'flex',
 											'borderRadius': '0.5rem',
@@ -223,9 +226,11 @@ const ChatList = ({
 
 															// Check if current user has blocked any participant in this chat
 															const hasBlockedParticipant =
-																chat.participants?.some(
+																participants.some(
 																	(participant) =>
-																		participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes(participant.firebaseUserId)
+																		participant?.firebaseUserId &&
+																		participant.firebaseUserId !== user?.firebaseUserId &&
+																		globalBlockedUsers?.includes(participant.firebaseUserId)
 																) || false;
 
 															return hasBlockedParticipant ? <DoNotDisturbAlt fontSize='small' sx={{ color: 'gray', marginLeft: '0.5rem' }} /> : null;
@@ -254,7 +259,7 @@ const ChatList = ({
 														color: LEARNER_SAAS.secondaryText,
 														fontSize: isMobileSize ? '0.6rem' : undefined,
 													}}>
-													{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
+													{lastMessageText.length > 20 ? `${lastMessageText.substring(0, 20)}...` : lastMessageText}
 												</Typography>
 											</Box>
 										</Box>

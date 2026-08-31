@@ -260,6 +260,9 @@ export default function CoursePaymentForm({
 			if (!resolvedFirstName) {
 				resolvedFirstName = (email || '').split('@')[0] || 'Guest';
 			}
+			if (!resolvedLastName) {
+				resolvedLastName = '-';
+			}
 
 			if (isCourseFree) {
 				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email });

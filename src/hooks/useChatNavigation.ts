@@ -280,8 +280,10 @@ export const useChatNavigation = ({
 				if (isGroupChat(chat) && chat.groupName) {
 					return chat.groupName;
 				}
-				const otherParticipant = chat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId);
-				return otherParticipant?.username || 'Unknown User';
+				const otherParticipant = chat.participants?.find((p) => p?.firebaseUserId && p.firebaseUserId !== user?.firebaseUserId);
+				if (!otherParticipant) return 'Deleted User';
+				if (otherParticipant.firebaseUserId === 'deleted-user') return 'Deleted User';
+				return otherParticipant.username || 'Deleted User';
 			},
 		[isGroupChat, user?.firebaseUserId]
 	);
