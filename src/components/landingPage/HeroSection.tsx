@@ -135,7 +135,7 @@ const HeroSection = () => {
 					px: { xs: '4%', sm: '5%', md: '4%', lg: '3.5%' },
 					py: { xs: 1.5, sm: 2.5, md: 0 },
 					flex: stackHeroLayout ? 'none' : 1,
-					gap: { xs: 2, sm: 2.5, md: 2, lg: 3 },
+					gap: stackHeroLayout ? { xs: 5.5, sm: 6.5 } : { md: 2, lg: 3 },
 					alignItems: stackHeroLayout ? 'center' : 'stretch',
 					gridTemplateColumns: stackHeroLayout ? '1fr' : { md: 'minmax(0, 1.25fr) minmax(0, 0.75fr)' },
 					gridTemplateAreas: stackHeroLayout
@@ -329,7 +329,7 @@ const HeroSection = () => {
 							alignItems: 'center',
 							width: '100%',
 							maxWidth: stackHeroLayout
-								? { xs: 'min(100%, 16rem)', sm: 'min(100%, 19rem)' }
+								? { xs: 'min(100%, 18.5rem)', sm: 'min(100%, 21.5rem)' }
 								: { md: 'min(100%, 40rem)', lg: 'min(100%, 48rem)', xl: 'min(100%, 52rem)' },
 							position: 'relative',
 							mx: 'auto',
@@ -412,7 +412,7 @@ const HeroSection = () => {
 								width: '100%',
 								height: 'auto',
 								maxHeight: stackHeroLayout
-									? { xs: 'clamp(8.5rem, 28vh, 15rem)', sm: 'clamp(10rem, 32vh, 18rem)' }
+									? { xs: 'clamp(10rem, 34vh, 17.5rem)', sm: 'clamp(12rem, 38vh, 20.5rem)' }
 									: {
 										md: 'clamp(22rem, 64vh, 40rem)',
 										lg: 'clamp(26rem, 72vh, 48rem)',
@@ -423,7 +423,7 @@ const HeroSection = () => {
 								display: 'block',
 								position: 'relative',
 								zIndex: 1,
-								transform: stackHeroLayout ? 'scale(1.04)' : 'scale(1.18)',
+								transform: stackHeroLayout ? 'scale(1.08)' : 'scale(1.18)',
 								transformOrigin: 'center center',
 							}}
 						/>

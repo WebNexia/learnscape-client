@@ -1254,12 +1254,12 @@ const PracticeQuestion = ({
 					mb: '1rem',
 					bottom:
 						isSmallMobilePortrait || isMobilePortrait
-							? '4rem'
+							? '4.5rem'
 							: isMobileLandscape || isSmallMobileLandscape
-								? '3rem'
+								? '3.5rem'
 								: isTabletLandscape || isDesktopLandscape
-									? '4rem'
-									: '3.5rem',
+									? '4.5rem'
+									: '4rem',
 				}}>
 				<IconButton
 					sx={{
