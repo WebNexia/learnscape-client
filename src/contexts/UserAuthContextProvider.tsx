@@ -100,6 +100,12 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					/* reload optional; fall through to emailVerified check */
 				}
 				if (!currentUser.emailVerified) {
+					// Signup creates an unverified Firebase user briefly; do not sign them out
+					// until Auth.tsx finishes Mongo create + verification email + its own signOut.
+					if (skipFetchDuringSignupRef.current) {
+						setIsAuthReady(true);
+						return;
+					}
 					await signOut(auth);
 					localStorage.removeItem('sessionTimestamp');
 					clearLearnerSessionId();
