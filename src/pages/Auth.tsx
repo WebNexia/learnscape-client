@@ -284,17 +284,21 @@ const Auth = () => {
 			const user = userCredential.user;
 			userCreated = true;
 
-			// Step 2: Create a Firestore document for the user
-			const userRef = doc(db, 'users', user.uid);
-			await setDoc(userRef, {
-				firebaseUserId: user.uid,
-				email: user.email,
-				username: username,
-				activeChatId: null,
-				createdAt: new Date(),
-			});
+			// Step 2: Create a Firestore document for the user (non-blocking for account creation)
+			try {
+				const userRef = doc(db, 'users', user.uid);
+				await setDoc(userRef, {
+					firebaseUserId: user.uid,
+					email: user.email,
+					username: username,
+					activeChatId: null,
+					createdAt: new Date(),
+				});
+			} catch (firestoreError) {
+				console.error('Firestore user doc create failed during signup (continuing):', firestoreError);
+			}
 
-			// Step 4: Create MongoDB user record immediately
+			// Step 3: Create MongoDB user record immediately
 			const signupData = {
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
@@ -311,9 +315,14 @@ const Auth = () => {
 
 			await axiosInstance.post(`${base_url}/users/signup`, signupData);
 
-			await axiosInstance.post(`${base_url}/users/resend-verification`, {
-				email: signupData.email,
-			});
+			try {
+				await axiosInstance.post(`${base_url}/users/resend-verification`, {
+					email: signupData.email,
+				});
+			} catch (verificationError) {
+				console.error('Verification email send failed during signup:', verificationError);
+				// Account exists; user can resend from sign-in
+			}
 
 			await signOut(auth);
 
@@ -369,14 +378,9 @@ const Auth = () => {
 			}
 			setRecaptchaToken(null);
 		} finally {
-			// Prevent multiple executions of the finally block
-			if (signupFinallyExecutedRef.current) {
-				return;
-			}
-			signupFinallyExecutedRef.current = true;
-
 			setSigningUp(false);
 			setSkipFetchDuringSignup(false);
+			signupFinallyExecutedRef.current = true;
 		}
 	};
 
