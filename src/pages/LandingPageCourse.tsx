@@ -1,8 +1,23 @@
 import { useParams } from 'react-router-dom';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { SingleCourse } from '../interfaces/course';
-import { Box, Card, CardContent, Typography, Avatar, Chip, Stack, IconButton, CircularProgress } from '@mui/material';
+import {
+	Box,
+	Card,
+	CardContent,
+	Typography,
+	Avatar,
+	Chip,
+	Stack,
+	IconButton,
+	CircularProgress,
+	Button,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+} from '@mui/material';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
@@ -14,8 +29,17 @@ import { SEO, StructuredData } from '../components/seo';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+
+const INSTRUCTOR_BIO_PREVIEW_LENGTH = 450;
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
+	const { isMobile } = useContext(MediaQueryContext);
+	const [bioModalOpen, setBioModalOpen] = useState(false);
+	const bio = instructor?.bio || '';
+	const shouldTruncate = !isMobile && bio.length > INSTRUCTOR_BIO_PREVIEW_LENGTH;
+	const displayedBio = shouldTruncate ? `${bio.slice(0, INSTRUCTOR_BIO_PREVIEW_LENGTH).trimEnd()}…` : bio;
+
 	// Ensure URLs have proper protocol
 	const formatUrl = (url: string | undefined) => {
 		if (!url) return '';
@@ -24,101 +48,162 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 	};
 
 	return (
-		<Card
-			sx={{
-				width: { xs: '85%', sm: '60%', md: '30vw' },
-				maxWidth: '35rem',
-				minHeight: '15rem',
-				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: '54vh' },
-				maxHeight: { md: '480px' },
-				borderRadius: '0.5rem',
-				boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-				background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
-				transition: 'transform 0.2s ease-in-out',
-				display: 'flex', // ✅ ensures flexible layout inside
-				flexDirection: 'column',
-				mt: { xs: '-1rem', sm: '-1rem', md: '1rem' },
-				justifyContent: 'space-between',
-				position: 'relative',
-			}}>
-			<CardContent sx={{ p: 3, flexGrow: 1 }}>
-				<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-					<Avatar
-						src={instructor.imageUrl}
-						alt={instructor.name}
-						sx={{
-							width: { xs: '4.5rem', sm: '5.5rem' },
-							height: { xs: '4.5rem', sm: '5.5rem' },
-							border: '3px solid',
-							borderColor: theme.palette.primary.main,
-						}}
-					/>
-					<Box sx={{ ml: 2.5 }}>
-						<Typography variant='h6' sx={{ fontWeight: 600, color: theme.palette.primary.main, fontFamily: 'Varela Round' }}>
-							{instructor.name}
-						</Typography>
-						<Typography variant='subtitle2' color='text.secondary' sx={{ fontFamily: 'Varela Round' }}>
-							{instructor.title}
-						</Typography>
-					</Box>
-				</Box>
-
-				<Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontFamily: 'Varela Round', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
-					{instructor.bio}
-				</Typography>
-
-				<Stack direction='row' spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
-					{instructor.expertise?.map((skill, index) => (
-						<Chip
-							key={index}
-							label={skill}
-							size='small'
+		<>
+			<Card
+				sx={{
+					width: { xs: '85%', sm: '60%', md: '30vw' },
+					maxWidth: '35rem',
+					minHeight: '15rem',
+					height: isMobile ? 'auto' : { xs: 'auto', sm: 'auto', md: 'auto', lg: '54vh' },
+					maxHeight: isMobile ? 'none' : { md: '480px' },
+					borderRadius: '0.5rem',
+					boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+					background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+					transition: 'transform 0.2s ease-in-out',
+					display: 'flex',
+					flexDirection: 'column',
+					mt: { xs: '-1rem', sm: '-1rem', md: '1rem' },
+					justifyContent: 'space-between',
+					position: 'relative',
+					overflow: isMobile ? 'visible' : 'hidden',
+				}}>
+				<CardContent sx={{ p: 3, flexGrow: 1, pb: isMobile ? 5 : 3 }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+						<Avatar
+							src={instructor.imageUrl}
+							alt={instructor.name}
 							sx={{
-								backgroundColor: theme.palette.primary.light,
-								color: '#fff',
-								fontWeight: 500,
-								fontFamily: 'Varela Round',
-								borderRadius: '0.35rem',
-								fontSize: '0.7rem',
+								width: { xs: '4.5rem', sm: '5.5rem' },
+								height: { xs: '4.5rem', sm: '5.5rem' },
+								border: '3px solid',
+								borderColor: theme.palette.primary.main,
 							}}
 						/>
-					))}
-				</Stack>
+						<Box sx={{ ml: 2.5 }}>
+							<Typography variant='h6' sx={{ fontWeight: 600, color: theme.palette.primary.main, fontFamily: 'Varela Round' }}>
+								{instructor.name}
+							</Typography>
+							<Typography variant='subtitle2' color='text.secondary' sx={{ fontFamily: 'Varela Round' }}>
+								{instructor.title}
+							</Typography>
+						</Box>
+					</Box>
 
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						gap: { xs: 0.25, sm: 0.25 },
-						mt: 'auto',
-						mb: '-1.25rem',
-						mr: '-1.25rem',
-						position: 'absolute',
-						bottom: '1.5rem',
-						right: '1.5rem',
-					}}>
-					<IconButton
-						href={formatUrl(instructor.linkedInUrl)}
-						target='_blank'
-						sx={{
-							'color': theme.palette.primary.main,
-							'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
-						}}>
-						<LinkedIn fontSize='small' />
-					</IconButton>
+					{bio ? (
+						<Box sx={{ mb: 2 }}>
+							<Typography
+								variant='body2'
+								color='text.secondary'
+								sx={{
+									fontFamily: 'Varela Round',
+									fontSize: { xs: '0.75rem', sm: '0.85rem' },
+									whiteSpace: 'pre-wrap',
+									wordBreak: 'break-word',
+								}}>
+								{displayedBio}
+							</Typography>
+							{shouldTruncate ? (
+								<Button
+									onClick={() => setBioModalOpen(true)}
+									sx={{
+										mt: 0.5,
+										p: 0,
+										minWidth: 0,
+										textTransform: 'none',
+										fontFamily: 'Varela Round',
+										fontSize: { xs: '0.75rem', sm: '0.85rem' },
+										fontWeight: 600,
+										color: theme.palette.primary.main,
+										'&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+									}}>
+									Fazlasını gör
+								</Button>
+							) : null}
+						</Box>
+					) : null}
 
-					<IconButton
-						href={formatUrl(instructor.website)}
-						target='_blank'
+					<Stack direction='row' spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+						{instructor.expertise?.map((skill, index) => (
+							<Chip
+								key={index}
+								label={skill}
+								size='small'
+								sx={{
+									backgroundColor: theme.palette.primary.light,
+									color: '#fff',
+									fontWeight: 500,
+									fontFamily: 'Varela Round',
+									borderRadius: '0.35rem',
+									fontSize: '0.7rem',
+								}}
+							/>
+						))}
+					</Stack>
+
+					<Box
 						sx={{
-							'color': theme.palette.primary.main,
-							'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
+							display: 'flex',
+							justifyContent: 'flex-end',
+							gap: { xs: 0.25, sm: 0.25 },
+							mt: 'auto',
+							mb: '-1.25rem',
+							mr: '-1.25rem',
+							position: 'absolute',
+							bottom: '1.5rem',
+							right: '1.5rem',
 						}}>
-						<Language fontSize='small' />
-					</IconButton>
-				</Box>
-			</CardContent>
-		</Card>
+						<IconButton
+							href={formatUrl(instructor.linkedInUrl)}
+							target='_blank'
+							sx={{
+								'color': theme.palette.primary.main,
+								'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
+							}}>
+							<LinkedIn fontSize='small' />
+						</IconButton>
+
+						<IconButton
+							href={formatUrl(instructor.website)}
+							target='_blank'
+							sx={{
+								'color': theme.palette.primary.main,
+								'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
+							}}>
+							<Language fontSize='small' />
+						</IconButton>
+					</Box>
+				</CardContent>
+			</Card>
+
+			<Dialog open={bioModalOpen} onClose={() => setBioModalOpen(false)} fullWidth maxWidth='sm'>
+				<DialogTitle sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: theme.palette.primary.main }}>
+					{instructor.name}
+					{instructor.title ? (
+						<Typography component='span' sx={{ display: 'block', mt: 0.5, fontFamily: 'Varela Round', fontSize: '0.9rem', color: 'text.secondary', fontWeight: 400 }}>
+							{instructor.title}
+						</Typography>
+					) : null}
+				</DialogTitle>
+				<DialogContent>
+					<Typography
+						sx={{
+							fontFamily: 'Varela Round',
+							fontSize: '0.95rem',
+							color: 'text.secondary',
+							whiteSpace: 'pre-wrap',
+							wordBreak: 'break-word',
+							lineHeight: 1.7,
+						}}>
+						{bio}
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 2 }}>
+					<Button onClick={() => setBioModalOpen(false)} sx={{ fontFamily: 'Varela Round', textTransform: 'none' }}>
+						Kapat
+					</Button>
+				</DialogActions>
+			</Dialog>
+		</>
 	);
 };
 

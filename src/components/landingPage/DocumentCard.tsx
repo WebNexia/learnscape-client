@@ -2,7 +2,6 @@ import {
 	Box,
 	Button,
 	Card,
-	CardContent,
 	CardMedia,
 	Typography,
 	useTheme,
@@ -20,7 +19,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, AddShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
-import { decodeHtmlEntities, truncateText } from '../../utils/utilText';
+import { decodeHtmlEntities } from '../../utils/utilText';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { isAxiosError } from 'axios';
 import { requestFreeResourceEmail } from '../../services/freeResourceDownloadService';
@@ -28,7 +27,6 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import { LEARNER_EMPHASIS_FONT_FAMILY } from '../../utils/learnerTypography';
 import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 
 interface DocumentCardProps {
@@ -61,6 +59,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 	const topAccent = '#0052a3';
 	const hoverBorderGradient = `linear-gradient(90deg, ${topAccent} 0%, ${topAccent}80 100%)`;
 	const decodedName = decodeHtmlEntities(document.name || '');
+	const footerReserve = isMobileSize ? '6.5rem' : '5.5rem';
 
 	const goToDetail = () => {
 		if (!fromHomePage || !document._id) return;
@@ -195,17 +194,19 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 						display: 'flex',
 						flexDirection: 'column',
 					}}>
-					{/* Cover — full book cover, no crop (portrait covers letterbox) */}
+					{/* Cover fills all space above the footer */}
 					<Box
 						sx={{
+							flex: 1,
+							minHeight: 0,
 							width: '100%',
-							height: isMobileSize ? '11.5rem' : '14.5rem',
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
 							backgroundColor: '#f8fafc',
 							overflow: 'hidden',
-							flexShrink: 0,
+							pb: footerReserve,
+							boxSizing: 'border-box',
 						}}>
 						{document.imageUrl ? (
 							<CardMedia
@@ -223,40 +224,6 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 							<Typography sx={{ fontFamily: 'Varela Round', color: '#94a3b8', fontSize: '0.85rem' }}>Kapak görseli yok</Typography>
 						)}
 					</Box>
-
-					<CardContent sx={{ flexGrow: 1, padding: '1rem 1.5rem 0.5rem', pb: isMobileSize ? '6.5rem !important' : '5.5rem !important' }}>
-						<Typography
-							component='h3'
-							sx={{
-								fontFamily: LEARNER_EMPHASIS_FONT_FAMILY,
-								fontWeight: 700,
-								marginBottom: isMobileSize ? '0.4rem' : '0.55rem',
-								color: fromHomePage ? topAccent : theme.palette.text.primary,
-								lineHeight: 1.3,
-								fontSize: isMobileSize
-									? document?.name?.length > 35
-										? '0.95rem'
-										: '1.05rem'
-									: document?.name?.length > 35
-										? '1.05rem'
-										: '1.15rem',
-							}}>
-							{decodedName}
-						</Typography>
-
-						<Typography
-							variant='body2'
-							sx={{
-								textAlign: 'justify',
-								color: topAccent,
-								lineHeight: isMobileSize ? 1.4 : 1.5,
-								fontFamily: fromHomePage ? 'Varela Round' : theme.typography.fontFamily,
-								fontSize: isMobileSize ? '0.75rem' : '0.875rem',
-								wordBreak: 'break-word',
-							}}>
-							{truncateText(document.description || 'No description available', 150)}
-						</Typography>
-					</CardContent>
 
 					{/* Footer — mirrors course card bottom bar + action buttons */}
 					<Box
