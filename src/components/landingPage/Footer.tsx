@@ -49,7 +49,7 @@ const Footer = () => {
 								fontSize: responsiveStyles.typography.body2,
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							Aden Academy
+							Aden Academy operated by NEXTEDU LTD
 						</Typography>
 						<Typography
 							variant='body2'
@@ -58,7 +58,7 @@ const Footer = () => {
 								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							275 New North Road,
+							124 City Road
 						</Typography>
 						<Typography
 							variant='body2'
@@ -67,8 +67,9 @@ const Footer = () => {
 								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							London, England, N1 7AA
+							EC1V 2NX, London
 						</Typography>
+
 
 						<Box
 							component='a'

@@ -179,8 +179,7 @@ const EditInstructorDialog = ({
 											instructor: {
 												...prevData.instructor,
 												name: e.target.value,
-												imageUrl: '',
-												email: '',
+												// Keep email/image; unlink system user so fields stay editable independently
 												userId: '',
 											},
 										};
@@ -202,7 +201,7 @@ const EditInstructorDialog = ({
 								type='email'
 								label='Email Address'
 								value={singleCourseCopy?.instructor?.email}
-								disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
+								disabled={!hasAdminAccess}
 								onChange={(e) =>
 									setSingleCourseCopy((prevData) => {
 										if (!prevData) return prevData;
@@ -233,7 +232,7 @@ const EditInstructorDialog = ({
 							<Box sx={{ width: '100%', mr: '3rem' }}>
 								<HandleImageUploadURL
 									label={isMobileSize ? 'Image' : 'Instructor Image'}
-									disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
+									disabled={!hasAdminAccess}
 									onImageUploadLogic={(url) => {
 										if (singleCourseCopy) {
 											setSingleCourseCopy({
@@ -262,6 +261,7 @@ const EditInstructorDialog = ({
 									}}
 									imageUrlValue={singleCourseCopy?.instructor?.imageUrl || ''}
 									imageFolderName='InstructorImages'
+									scopedEntityId={singleCourseCopy?._id}
 									enterImageUrl={enterImageUrl}
 									setEnterImageUrl={setEnterImageUrl}
 								/>
@@ -296,7 +296,7 @@ const EditInstructorDialog = ({
 											' ' +
 											(selectedUser?.lastName?.charAt?.(0)?.toUpperCase?.() || '') +
 											(selectedUser?.lastName?.slice(1) || ''),
-										userId: selectedUser?.firebaseUserId,
+										userId: selectedUser?._id || selectedUser?.firebaseUserId,
 										email: selectedUser?.email || '',
 										imageUrl: selectedUser?.imageUrl,
 									},
@@ -314,7 +314,7 @@ const EditInstructorDialog = ({
 				<CustomTextField
 					fullWidth={false}
 					label='Bio'
-					placeholder='Enter bio (max 200 characters)'
+					placeholder='Enter bio (max 1000 characters)'
 					value={singleCourseCopy?.instructor?.bio}
 					onChange={(e) =>
 						setSingleCourseCopy((prevData) => {
@@ -328,12 +328,19 @@ const EditInstructorDialog = ({
 							};
 						})
 					}
-					sx={{ margin: '-0.5rem 2rem 0.5rem 2rem' }}
+					sx={{
+						margin: '-0.5rem 2rem 0.5rem 2rem',
+						'& .MuiInputBase-input': {
+							whiteSpace: 'pre-wrap',
+						},
+					}}
 					multiline
+					rows={4}
 					InputLabelProps={{
 						sx: { fontSize: '0.8rem' },
 					}}
-					InputProps={{ inputProps: { maxLength: 200 } }}
+					InputProps={{ inputProps: { maxLength: 1000 } }}
+					helperText={`${singleCourseCopy?.instructor?.bio?.length || 0}/1000`}
 					required={false}
 				/>
 

@@ -24,8 +24,8 @@ let chatListCacheUserId: string | undefined;
 
 const sortChatList = (chatListData: Chat[]) =>
 	[...chatListData].sort((a, b) => {
-		const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-		const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+		const aTime = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+		const bTime = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
 		return bTime - aTime;
 	});
 

@@ -329,29 +329,81 @@ const HeroSection = () => {
 							alignItems: 'center',
 							width: '100%',
 							maxWidth: stackHeroLayout
-								? { xs: 'min(100%, 20rem)', sm: 'min(100%, 24rem)' }
-								: { md: 'min(100%, 36rem)', lg: 'min(100%, 43rem)', xl: 'min(100%, 47rem)' },
+								? { xs: 'min(100%, 16rem)', sm: 'min(100%, 19rem)' }
+								: { md: 'min(100%, 40rem)', lg: 'min(100%, 48rem)', xl: 'min(100%, 52rem)' },
 							position: 'relative',
 							mx: 'auto',
 						}}>
+						{/* Soft organic Aden-blue wash — blurred blobs, no hard bands */}
 						<Box
+							aria-hidden
 							sx={{
 								position: 'absolute',
-								top: '50%',
-								left: '50%',
-								transform: 'translate(-50%, -50%)',
-								width: stackHeroLayout ? 'min(100%, 300px)' : 'min(100%, 450px)',
-								height: stackHeroLayout ? 'min(100%, 300px)' : 'min(100%, 450px)',
-								borderRadius: '50%',
-								background: 'radial-gradient(circle, rgba(0, 204, 255, 0.12) 0%, transparent 70%)',
-								filter: 'blur(40px)',
-								animation: 'pulseGlow 3s ease-in-out infinite',
-								'@keyframes pulseGlow': {
-									'0%, 100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.6 },
-									'50%': { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 0.8 },
-								},
-							}}
-						/>
+								zIndex: 0,
+								pointerEvents: 'none',
+								inset: stackHeroLayout ? '-12% -30% -8% -32%' : '-16% -38% -14% -40%',
+								overflow: 'visible',
+							}}>
+							{/* Deep swell — lower left → center */}
+							<Box
+								sx={{
+									position: 'absolute',
+									left: '2%',
+									bottom: '4%',
+									width: '78%',
+									height: '62%',
+									borderRadius: '62% 38% 48% 52% / 48% 55% 45% 52%',
+									background:
+										'radial-gradient(ellipse 75% 70% at 42% 58%, rgba(0, 61, 122, 0.28) 0%, rgba(0, 82, 163, 0.16) 42%, transparent 72%)',
+									filter: 'blur(28px)',
+									transform: 'rotate(-8deg)',
+								}}
+							/>
+							{/* Mid curl — behind figure */}
+							<Box
+								sx={{
+									position: 'absolute',
+									left: '18%',
+									bottom: '10%',
+									width: '88%',
+									height: '78%',
+									borderRadius: '48% 52% 42% 58% / 55% 42% 58% 45%',
+									background:
+										'radial-gradient(ellipse 70% 65% at 55% 48%, rgba(0, 102, 204, 0.22) 0%, rgba(77, 163, 232, 0.14) 40%, transparent 70%)',
+									filter: 'blur(36px)',
+									transform: 'rotate(6deg)',
+								}}
+							/>
+							{/* Soft crest — upper right lift */}
+							<Box
+								sx={{
+									position: 'absolute',
+									right: '-4%',
+									top: '6%',
+									width: '70%',
+									height: '58%',
+									borderRadius: '55% 45% 60% 40% / 42% 58% 42% 58%',
+									background:
+										'radial-gradient(ellipse 68% 62% at 48% 52%, rgba(182, 224, 254, 0.45) 0%, rgba(159, 208, 240, 0.2) 38%, transparent 68%)',
+									filter: 'blur(32px)',
+									transform: 'rotate(12deg)',
+								}}
+							/>
+							{/* Light foam highlight */}
+							<Box
+								sx={{
+									position: 'absolute',
+									left: '28%',
+									bottom: '18%',
+									width: '55%',
+									height: '42%',
+									borderRadius: '50% 50% 45% 55% / 60% 40% 60% 40%',
+									background:
+										'radial-gradient(ellipse 60% 55% at 50% 50%, rgba(255, 255, 255, 0.42) 0%, rgba(232, 244, 252, 0.18) 45%, transparent 72%)',
+									filter: 'blur(24px)',
+								}}
+							/>
+						</Box>
 						<Box
 							component='img'
 							src={Hero_Img}
@@ -360,23 +412,19 @@ const HeroSection = () => {
 								width: '100%',
 								height: 'auto',
 								maxHeight: stackHeroLayout
-									? { xs: 'clamp(10rem, 35vh, 20rem)', sm: 'clamp(11rem, 37vh, 22rem)' }
+									? { xs: 'clamp(8.5rem, 28vh, 15rem)', sm: 'clamp(10rem, 32vh, 18rem)' }
 									: {
-										md: 'clamp(18.5rem, 56vh, 34.5rem)',
-										lg: 'clamp(21.5rem, 62vh, 41rem)',
-										xl: 'clamp(24rem, 66vh, 45rem)',
+										md: 'clamp(22rem, 64vh, 40rem)',
+										lg: 'clamp(26rem, 72vh, 48rem)',
+										xl: 'clamp(28rem, 76vh, 52rem)',
 									},
 								objectFit: 'contain',
 								objectPosition: 'center center',
 								display: 'block',
 								position: 'relative',
 								zIndex: 1,
-								transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-								'@media (hover: hover)': {
-									'&:hover': {
-										transform: 'scale(1.02) translateY(-8px)',
-									},
-								},
+								transform: stackHeroLayout ? 'scale(1.04)' : 'scale(1.18)',
+								transformOrigin: 'center center',
 							}}
 						/>
 					</Box>

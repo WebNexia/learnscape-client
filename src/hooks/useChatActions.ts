@@ -351,40 +351,50 @@ export const useChatActions = ({
 		[user?.firebaseUserId, refreshChatList]
 	);
 
+	// Permanently delete a chat doc + messages + related Storage files
+	const permanentlyDeleteChatDocument = useCallback(async (chatId: string) => {
+		const chatRef = doc(db, 'chats', chatId);
+		const messagesRef = collection(db, 'chats', chatId, 'messages');
+		const chatSnap = await getDoc(chatRef);
+		const groupImageUrl =
+			chatSnap.exists() && typeof chatSnap.data()?.groupImageUrl === 'string' ? chatSnap.data().groupImageUrl : '';
+
+		const messagesSnapshot = await getDocs(messagesRef);
+		const urls: string[] = [];
+		messagesSnapshot.forEach((msgDoc) => {
+			const data = msgDoc.data() || {};
+			if (data.imageUrl && typeof data.imageUrl === 'string') urls.push(data.imageUrl);
+			if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
+		});
+		if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
+
+		try {
+			await cleanupGroupChatImages(chatId, null, groupImageUrl || null);
+		} catch (cleanupErr) {
+			console.warn('Group image storage cleanup failed on permanent chat delete:', cleanupErr);
+		}
+
+		const batch = writeBatch(db);
+		messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
+		batch.delete(chatRef);
+		await batch.commit();
+	}, []);
+
+	const getParticipantId = (participant: unknown): string | null => {
+		if (typeof participant === 'string' && participant.trim()) return participant;
+		if (participant && typeof participant === 'object' && typeof (participant as { firebaseUserId?: unknown }).firebaseUserId === 'string') {
+			return (participant as { firebaseUserId: string }).firebaseUserId;
+		}
+		return null;
+	};
+
 	// Delete group chat
 	const deleteGroupChat = useCallback(
 		async (chatId: string) => {
 			if (!user?.firebaseUserId) return;
 
 			try {
-				const chatRef = doc(db, 'chats', chatId);
-				const messagesRef = collection(db, 'chats', chatId, 'messages');
-
-				const chatSnap = await getDoc(chatRef);
-				const groupImageUrl =
-					chatSnap.exists() && typeof chatSnap.data()?.groupImageUrl === 'string' ? chatSnap.data().groupImageUrl : '';
-
-				const messagesSnapshot = await getDocs(messagesRef);
-				// Collect image/video URLs and delete from Firebase Storage before removing Firestore docs
-				const urls: string[] = [];
-				messagesSnapshot.forEach((msgDoc) => {
-					const data = msgDoc.data() || {};
-					if (data.imageUrl && typeof data.imageUrl === 'string') urls.push(data.imageUrl);
-					if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
-				});
-				if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
-
-				try {
-					await cleanupGroupChatImages(chatId, null, groupImageUrl || null);
-				} catch (cleanupErr) {
-					console.warn('Group image storage cleanup failed on delete:', cleanupErr);
-				}
-
-				const batch = writeBatch(db);
-				messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
-				batch.delete(chatRef);
-
-				await batch.commit(); // ✅ ONE atomic write — deletes EVERYTHING
+				await permanentlyDeleteChatDocument(chatId);
 
 				// ✅ Remove from UI instantly
 				setChatList((prev) => prev?.filter((chat) => chat.chatId !== chatId));
@@ -402,23 +412,34 @@ export const useChatActions = ({
 				console.error('Error deleting group chat:', error);
 			}
 		},
-		[user?.firebaseUserId, refreshChatList]
+		[user?.firebaseUserId, activeChat?.chatId, permanentlyDeleteChatDocument, refreshChatList]
 	);
 
-	// Hide chat
+	// Hide chat (or permanently delete when no other active participant remains — e.g. Deleted User)
 	const handleHideChat = useCallback(
 		async (chatId: string) => {
 			if (!user?.firebaseUserId) return;
 
 			try {
 				const chatRef = doc(db, 'chats', chatId);
-				const batch = writeBatch(db);
+				const chatSnap = await getDoc(chatRef);
 
-				batch.update(chatRef, {
-					isDeletedBy: arrayUnion(user.firebaseUserId),
-				});
+				if (chatSnap.exists()) {
+					const chatData = chatSnap.data();
+					const participantIds = (chatData.participants || []).map(getParticipantId).filter(Boolean) as string[];
+					const removedUsers: string[] = chatData.removedParticipants || [];
+					const activeAfter = participantIds.filter((uid) => uid !== user.firebaseUserId && !removedUsers.includes(uid));
 
-				await batch.commit();
+					if (activeAfter.length === 0) {
+						await permanentlyDeleteChatDocument(chatId);
+					} else {
+						const batch = writeBatch(db);
+						batch.update(chatRef, {
+							isDeletedBy: arrayUnion(user.firebaseUserId),
+						});
+						await batch.commit();
+					}
+				}
 			} catch (error) {
 				console.error('Error hiding chat:', error);
 			}
@@ -447,7 +468,7 @@ export const useChatActions = ({
 			setIsDeleteChatDialogOpen(false);
 			setChatIdToDelete('');
 		},
-		[user?.firebaseUserId, activeChatId, refreshChatList]
+		[user?.firebaseUserId, activeChatId, permanentlyDeleteChatDocument, refreshChatList]
 	);
 
 	// Leave chat
@@ -462,37 +483,15 @@ export const useChatActions = ({
 				if (!chatSnap.exists()) return;
 
 				const chatData = chatSnap.data();
-				const participants: string[] = chatData.participants || [];
+				const participantIds = (chatData.participants || []).map(getParticipantId).filter(Boolean) as string[];
 				const removedUsers: string[] = chatData.removedParticipants || [];
 
-				const activeUsers = participants.filter((uid) => !removedUsers.includes(uid));
+				const activeUsers = participantIds.filter((uid) => !removedUsers.includes(uid));
 				const activeAfter = activeUsers.filter((uid) => uid !== user.firebaseUserId);
 
 				// ✅ CASE 1: LAST active user → MUST DELETE ALL MESSAGES FIRST (rule-safe)
 				if (activeAfter.length === 0) {
-					const groupImageUrl = typeof chatData.groupImageUrl === 'string' ? chatData.groupImageUrl : '';
-
-					const messagesSnapshot = await getDocs(messagesRef);
-					// Delete uploaded files from Firebase Storage before removing Firestore docs
-					const urls: string[] = [];
-					messagesSnapshot.forEach((msgDoc) => {
-						const data = msgDoc.data() || {};
-						if (data.imageUrl && typeof data.imageUrl === 'string') urls.push(data.imageUrl);
-						if (data.videoUrl && typeof data.videoUrl === 'string') urls.push(data.videoUrl);
-					});
-					if (urls.length > 0) await deleteFirebaseStorageUrls(urls);
-
-					try {
-						await cleanupGroupChatImages(chatId, null, groupImageUrl || null);
-					} catch (cleanupErr) {
-						console.warn('Group image storage cleanup failed on leave (last user):', cleanupErr);
-					}
-
-					const batch = writeBatch(db);
-					messagesSnapshot.forEach((msgDoc) => batch.delete(msgDoc.ref));
-					batch.delete(chatRef);
-
-					await batch.commit();
+					await permanentlyDeleteChatDocument(chatId);
 				} else {
 					// ✅ CASE 2: Other users still active → leave normally
 					const batch = writeBatch(db);
@@ -542,7 +541,7 @@ export const useChatActions = ({
 			setIsDeleteChatDialogOpen(false);
 			setChatIdToDelete('');
 		},
-		[user?.firebaseUserId, activeChatId, refreshChatList]
+		[user?.firebaseUserId, user?.username, activeChatId, permanentlyDeleteChatDocument, refreshChatList]
 	);
 
 	// Block user

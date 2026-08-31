@@ -11,6 +11,92 @@ type Props = {
 	blocks: DocumentDetailBlock[];
 };
 
+type ImageBlock = Extract<DocumentDetailBlock, { type: 'image' }>;
+
+/** Consecutive image blocks render side by side; other blocks stay stacked. */
+function groupBlocksForLayout(blocks: DocumentDetailBlock[]): Array<
+	| { kind: 'single'; block: DocumentDetailBlock; index: number }
+	| { kind: 'images'; images: Array<{ block: ImageBlock; index: number }> }
+> {
+	const groups: Array<
+		| { kind: 'single'; block: DocumentDetailBlock; index: number }
+		| { kind: 'images'; images: Array<{ block: ImageBlock; index: number }> }
+	> = [];
+
+	for (let i = 0; i < blocks.length; i++) {
+		const block = blocks[i];
+		if (block.type === 'image' && block.imageUrl) {
+			const images: Array<{ block: ImageBlock; index: number }> = [{ block, index: i }];
+			while (i + 1 < blocks.length && blocks[i + 1].type === 'image' && (blocks[i + 1] as ImageBlock).imageUrl) {
+				i += 1;
+				images.push({ block: blocks[i] as ImageBlock, index: i });
+			}
+			groups.push({ kind: 'images', images });
+			continue;
+		}
+		groups.push({ kind: 'single', block, index: i });
+	}
+
+	return groups;
+}
+
+function renderImageBlock(block: ImageBlock, index: number, inRow: boolean) {
+	const rowHeight = { xs: 260, sm: 320, md: 380 };
+
+	return (
+		<Box
+			key={`image-${index}`}
+			sx={{
+				flex: inRow ? '1 1 0' : undefined,
+				minWidth: inRow ? 0 : undefined,
+				width: inRow ? undefined : '100%',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				alignSelf: inRow ? 'stretch' : undefined,
+			}}>
+			<Box
+				sx={{
+					width: '100%',
+					height: inRow ? rowHeight : 'auto',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					overflow: 'hidden',
+					borderRadius: '0.75rem',
+				}}>
+				<Box
+					component='img'
+					src={block.imageUrl}
+					alt={block.caption || `Görsel ${index + 1}`}
+					sx={{
+						maxWidth: '100%',
+						maxHeight: inRow ? '100%' : { xs: '55vh', md: '60vh' },
+						width: inRow ? 'auto' : '100%',
+						height: inRow ? '100%' : 'auto',
+						objectFit: 'contain',
+						objectPosition: 'center',
+						display: 'block',
+						borderRadius: '0.75rem',
+					}}
+				/>
+			</Box>
+			{block.caption ? (
+				<Typography
+					sx={{
+						mt: 1,
+						textAlign: 'center',
+						fontFamily: 'Varela Round',
+						fontSize: '0.85rem',
+						color: '#64748b',
+					}}>
+					{block.caption}
+				</Typography>
+			) : null}
+		</Box>
+	);
+}
+
 /**
  * Renders ordered document detail blocks (section / image / bullets / cta)
  * for the public book intro page.
@@ -18,9 +104,31 @@ type Props = {
 const LandingPageDocumentDetailBlocks = ({ blocks }: Props) => {
 	if (!blocks?.length) return null;
 
+	const layoutGroups = groupBlocksForLayout(blocks);
+
 	return (
 		<Box sx={{ mt: { xs: 4, md: 5 }, display: 'flex', flexDirection: 'column', gap: { xs: 3.5, md: 4.5 } }}>
-			{blocks.map((block, index) => {
+			{layoutGroups.map((group) => {
+				if (group.kind === 'images') {
+					const inRow = group.images.length > 1;
+					return (
+						<Box
+							key={`images-${group.images[0].index}`}
+							sx={{
+								width: '100%',
+								display: 'flex',
+								flexDirection: inRow ? 'row' : 'column',
+								flexWrap: 'nowrap',
+								alignItems: inRow ? 'stretch' : 'flex-start',
+								justifyContent: 'center',
+								gap: { xs: 1.5, md: 2 },
+							}}>
+							{group.images.map(({ block, index }) => renderImageBlock(block, index, inRow))}
+						</Box>
+					);
+				}
+
+				const { block, index } = group;
 				const key = `${block.type}-${index}`;
 
 				if (block.type === 'section') {
@@ -81,47 +189,6 @@ const LandingPageDocumentDetailBlocks = ({ blocks }: Props) => {
 									}}
 								/>
 							)}
-						</Box>
-					);
-				}
-
-				if (block.type === 'image' && block.imageUrl) {
-					return (
-						<Box key={key} sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-							<Box
-								sx={{
-									width: '100%',
-									borderRadius: '0.75rem',
-									overflow: 'hidden',
-									backgroundColor: 'transparent',
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-								}}>
-								<Box
-									component='img'
-									src={block.imageUrl}
-									alt={block.caption || `Görsel ${index + 1}`}
-									sx={{
-										maxWidth: '100%',
-										maxHeight: { xs: '55vh', md: '60vh' },
-										objectFit: 'contain',
-										display: 'block',
-									}}
-								/>
-							</Box>
-							{block.caption ? (
-								<Typography
-									sx={{
-										mt: 1,
-										textAlign: 'center',
-										fontFamily: 'Varela Round',
-										fontSize: '0.85rem',
-										color: '#64748b',
-									}}>
-									{block.caption}
-								</Typography>
-							) : null}
 						</Box>
 					);
 				}

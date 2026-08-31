@@ -131,7 +131,7 @@ const ChatHeader = ({
 												textDecoration: 'underline',
 											}}
 											onClick={onViewGroupMembers}>
-											({activeChat.participants.length} members)
+											({activeChat.participants?.length || 0} members)
 										</Typography>
 									)}
 								</Typography>
@@ -145,15 +145,16 @@ const ChatHeader = ({
 									</Typography>
 								)}
 								{activeChat.participants
-									?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
+									?.filter((participant) => participant?.firebaseUserId && participant.firebaseUserId !== user?.firebaseUserId)
 									?.map((otherParticipant) => {
 										// Determine if current user can block this participant
 										const canBlock =
-											(hasAdminAccess &&
+											otherParticipant.firebaseUserId !== 'deleted-user' &&
+											((hasAdminAccess &&
 												otherParticipant.role !== 'admin' &&
 												otherParticipant.role !== 'owner' &&
 												otherParticipant.role !== 'super-admin') ||
-											(user?.role === 'instructor' && otherParticipant.role === 'learner');
+												(user?.role === 'instructor' && otherParticipant.role === 'learner'));
 
 										if (canBlock) {
 											const isBlocked = blockedUsers?.includes(otherParticipant.firebaseUserId) || false;
