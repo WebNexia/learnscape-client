@@ -20,6 +20,7 @@ import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -73,12 +74,12 @@ const PaymentDialog = ({
 
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 
-	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course!, resolvedCountryCode!)?.amount === 'Free' ||
-		getPriceForCountry(course!, resolvedCountryCode!)?.amount === '' ||
-		getPriceForCountry(course!, resolvedCountryCode!)?.amount === '0';
+		getPriceForCountry(course!, resolvedCountryCode)?.amount === 'Free' ||
+		getPriceForCountry(course!, resolvedCountryCode)?.amount === '' ||
+		getPriceForCountry(course!, resolvedCountryCode)?.amount === '0';
 
 	useEffect(() => {
 		if (!course) return;
@@ -90,7 +91,8 @@ const PaymentDialog = ({
 	}, [user, location, course, isPromoCodeApplied]);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
-	const checkoutCopy = getCourseAccessCheckoutCopy(course, fromHomePage ? 'tr' : 'en');
+	const isTrUi = Boolean(fromHomePage || user);
+	const checkoutCopy = getCourseAccessCheckoutCopy(course, isTrUi ? 'tr' : 'en');
 
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [agreed, setAgreed] = useState<boolean>(false);
@@ -157,7 +159,7 @@ const PaymentDialog = ({
 	// Add function to validate reCAPTCHA token
 	const validateRecaptchaToken = () => {
 		if (!recaptchaToken) {
-			setErrorMessage(fromHomePage ? 'Lütfen reCAPTCHA doğrulamasını tamamlayın.' : 'Please complete the reCAPTCHA verification.');
+			setErrorMessage(isTrUi ? 'Lütfen reCAPTCHA doğrulamasını tamamlayın.' : 'Please complete the reCAPTCHA verification.');
 			return false;
 		}
 		return true;
@@ -208,7 +210,7 @@ const PaymentDialog = ({
 
 		// Validate agreement to User Agreement and Privacy Policy
 		if (!agreed) {
-			setErrorMessage(fromHomePage ? 'Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.' : 'Please accept the User Agreement and Privacy Policy.');
+			setErrorMessage(isTrUi ? 'Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.' : 'Please accept the User Agreement and Privacy Policy.');
 			setIsProcessing(false);
 			setIsSubmitted(false);
 			return;
@@ -229,7 +231,7 @@ const PaymentDialog = ({
 
 		// Validate group selection if groups exist
 		if (course?.groups && course.groups.length > 0 && !selectedGroupName.trim()) {
-			setErrorMessage(fromHomePage ? 'Lütfen bir grup seçin.' : 'Please select a group.');
+			setErrorMessage(isTrUi ? 'Lütfen bir grup seçin.' : 'Please select a group.');
 			setIsProcessing(false);
 			setIsSubmitted(false);
 			return;
@@ -239,7 +241,7 @@ const PaymentDialog = ({
 		if (selectedGroupName.trim()) {
 			const selectedGroup = course?.groups?.find((g) => g.name === selectedGroupName);
 			if (selectedGroup?.isFull) {
-				setErrorMessage(fromHomePage ? 'Seçilen grup dolu. Lütfen başka bir grup seçin.' : 'Selected group is full. Please select another group.');
+				setErrorMessage(isTrUi ? 'Seçilen grup dolu. Lütfen başka bir grup seçin.' : 'Selected group is full. Please select another group.');
 				setSelectedGroupName(''); // Clear selection if group is full
 				setIsProcessing(false);
 				setIsSubmitted(false);
@@ -266,7 +268,7 @@ const PaymentDialog = ({
 
 					if (!userExistsResponse.data.exists) {
 						setErrorMessage(
-							fromHomePage
+							isTrUi
 								? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
 								: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
 						);
@@ -279,7 +281,7 @@ const PaymentDialog = ({
 					// Add email verification check
 					if (!userExistsResponse.data.isEmailVerified) {
 						setErrorMessage(
-							fromHomePage
+							isTrUi
 								? `Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.`
 								: `Please verify your email address first. Check your inbox for the verification link.`
 						);
@@ -290,7 +292,7 @@ const PaymentDialog = ({
 					}
 
 					if (userExistsResponse.data.isEnrolledInCourse) {
-						setErrorMessage(fromHomePage ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
+						setErrorMessage(isTrUi ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
 						setIsAlreadyEnrolled(true);
 						setIsProcessing(false);
 						resetRecaptcha();
@@ -324,18 +326,18 @@ const PaymentDialog = ({
 				} catch (error) {
 					if (axios.isAxiosError(error)) {
 						if (error.code === 'ECONNABORTED') {
-							setErrorMessage(fromHomePage ? 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'Connection timed out. Please try again.');
+							setErrorMessage(isTrUi ? 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'Connection timed out. Please try again.');
 							resetRecaptcha();
 						} else if (!error.response) {
 							setErrorMessage(
-								fromHomePage ? 'İnternet bağlantınızı kontrol edin ve tekrar deneyin.' : 'Please check your internet connection and try again.'
+								isTrUi ? 'İnternet bağlantınızı kontrol edin ve tekrar deneyin.' : 'Please check your internet connection and try again.'
 							);
 							resetRecaptcha();
 						} else if (error.response?.data?.message) {
 							const backendMsg = error.response.data.message;
 							if (backendMsg.toLowerCase()?.includes('recaptcha')) {
 								setErrorMessage(
-									fromHomePage
+									isTrUi
 										? "reCAPTCHA doğrulaması başarısız. Lütfen reCAPTCHA'yı tekrar tamamlayın ve deneyin."
 										: 'reCAPTCHA verification failed. Please complete the reCAPTCHA again and try.'
 								);
@@ -347,11 +349,11 @@ const PaymentDialog = ({
 								resetRecaptcha();
 							}
 						} else {
-							setErrorMessage(fromHomePage ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
+							setErrorMessage(isTrUi ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
 							resetRecaptcha();
 						}
 					} else {
-						setErrorMessage(fromHomePage ? 'Beklenmeyen bir hata oluştu.' : 'An unexpected error occurred.');
+						setErrorMessage(isTrUi ? 'Beklenmeyen bir hata oluştu.' : 'An unexpected error occurred.');
 						resetRecaptcha();
 					}
 					setIsProcessing(false);
@@ -375,7 +377,7 @@ const PaymentDialog = ({
 					return;
 				} catch (regErr) {
 					resetForm(true);
-					setErrorMessage(fromHomePage ? 'Kurs kaydı başarısız oldu.' : 'Course registration failed.');
+					setErrorMessage(isTrUi ? 'Kurs kaydı başarısız oldu.' : 'Course registration failed.');
 					resetRecaptcha();
 					setIsProcessing(false);
 					return;
@@ -383,7 +385,7 @@ const PaymentDialog = ({
 			}
 
 			if (!stripe || !elements) {
-				setErrorMessage(fromHomePage ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
+				setErrorMessage(isTrUi ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
 				resetRecaptcha();
 				setIsProcessing(false);
 				return;
@@ -394,7 +396,7 @@ const PaymentDialog = ({
 			const cardCvcElement = elements.getElement(CardCvcElement);
 
 			if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
-				setErrorMessage(fromHomePage ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
+				setErrorMessage(isTrUi ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
 				setIsProcessing(false);
 				resetRecaptcha();
 				return;
@@ -404,7 +406,7 @@ const PaymentDialog = ({
 				// Step 1: Create PaymentIntent (manual capture)
 				const response = await axiosInstance.post(`${base_url}/payments`, {
 					amount: lockedAmount, // Use locked amount to prevent price changes
-					currency: getPriceForCountry(course, resolvedCountryCode!).currency,
+					currency: getPriceForCountry(course, resolvedCountryCode).currency,
 					orgId: resolvedOrgId,
 					userId: resolvedUserId,
 					courseId: course._id,
@@ -420,7 +422,7 @@ const PaymentDialog = ({
 
 				// Step 2: Create Payment Method
 				if (!cardNumberElement) {
-					setErrorMessage(fromHomePage ? 'Kart bilgileri eksik.' : 'Card details are missing.');
+					setErrorMessage(isTrUi ? 'Kart bilgileri eksik.' : 'Card details are missing.');
 					resetRecaptcha();
 					return;
 				}
@@ -436,10 +438,10 @@ const PaymentDialog = ({
 					resetForm(true);
 					setErrorMessage(
 						methodError.message
-							? fromHomePage
+							? isTrUi
 								? `Ödeme yöntemi oluşturulurken bir hata oluştu`
 								: `An error occurred while creating payment method: ${methodError.message}`
-							: fromHomePage
+							: isTrUi
 								? 'Ödeme yöntemi oluşturulurken bilinmeyen bir hata oluştu'
 								: 'An unknown error occurred while creating payment method'
 					);
@@ -456,10 +458,10 @@ const PaymentDialog = ({
 					resetForm(true);
 					setErrorMessage(
 						error?.message
-							? fromHomePage
+							? isTrUi
 								? `Ödeme onayı başarısız: ${error.message}`
 								: `Payment confirmation failed: ${error.message}`
-							: fromHomePage
+							: isTrUi
 								? 'Ödeme onayı başarısız oldu.'
 								: 'Payment confirmation failed.'
 					);
@@ -477,7 +479,7 @@ const PaymentDialog = ({
 				} catch (regErr) {
 					resetForm(true);
 					setErrorMessage(
-						fromHomePage ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.'
+						isTrUi ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.'
 					);
 					resetRecaptcha();
 					return;
@@ -537,7 +539,7 @@ const PaymentDialog = ({
 
 					resetForm(true);
 					setErrorMessage(
-						fromHomePage
+						isTrUi
 							? 'Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.'
 							: 'Payment processing failed. Please try again or contact support.'
 					);
@@ -565,13 +567,13 @@ const PaymentDialog = ({
 			} catch (err) {
 				console.log(err);
 				resetForm(true);
-				setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
+				setErrorMessage(isTrUi ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
 				resetRecaptcha();
 			}
 		} catch (error) {
 			console.error(error);
 			resetForm(true);
-			setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
+			setErrorMessage(isTrUi ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
 			resetRecaptcha();
 		} finally {
 			setIsProcessing(false);
@@ -581,13 +583,13 @@ const PaymentDialog = ({
 	const handleApplyPromoCode = async () => {
 		if (!course) return;
 		if (!email && fromHomePage) {
-			setErrorMessage(fromHomePage ? 'Lütfen e-posta adresinizi giriniz.' : 'Please enter your email address.');
+			setErrorMessage(isTrUi ? 'Lütfen e-posta adresinizi giriniz.' : 'Please enter your email address.');
 			resetRecaptcha();
 			return;
 		}
 
 		if (!promoCode) {
-			setErrorMessage(fromHomePage ? 'Promosyon kodu girin' : 'Enter a promo code');
+			setErrorMessage(isTrUi ? 'Promosyon kodu girin' : 'Enter a promo code');
 			resetRecaptcha();
 			return;
 		}
@@ -601,7 +603,7 @@ const PaymentDialog = ({
 
 				if (!userExistsResponse.data.exists) {
 					setErrorMessage(
-						fromHomePage
+						isTrUi
 							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
 							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
 					);
@@ -636,10 +638,10 @@ const PaymentDialog = ({
 			setUsersUsedPromoCode(usersUsed);
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response?.data?.message) {
-				setErrorMessage(fromHomePage ? `Geçersiz promosyon kodu` : error.response.data.message);
+				setErrorMessage(isTrUi ? `Geçersiz promosyon kodu` : error.response.data.message);
 			} else {
 				// Fallback in case it's not an AxiosError or the message isn't available
-				setErrorMessage(fromHomePage ? 'Geçersiz promosyon kodu' : 'Invalid promo code');
+				setErrorMessage(isTrUi ? 'Geçersiz promosyon kodu' : 'Invalid promo code');
 			}
 			const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 			setDiscountedAmount(isNaN(amount) ? 0 : amount); // Reset to original price
@@ -654,16 +656,16 @@ const PaymentDialog = ({
 			await axiosInstance.post(`${base_url}/users/resend-verification`, { email });
 			setVerificationSent(true);
 			setErrorMessage(
-				fromHomePage ? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.' : 'Verification email sent. Please check your inbox.'
+				isTrUi ? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.' : 'Verification email sent. Please check your inbox.'
 			);
 			resetRecaptcha();
 		} catch (error) {
 			if (axios.isAxiosError(error)) {
 				if (error.response?.data?.isEmailVerified) {
-					setErrorMessage(fromHomePage ? 'E-posta adresiniz zaten doğrulanmış.' : 'Your email is already verified.');
+					setErrorMessage(isTrUi ? 'E-posta adresiniz zaten doğrulanmış.' : 'Your email is already verified.');
 				} else {
 					setErrorMessage(
-						fromHomePage
+						isTrUi
 							? 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
 							: 'Error sending verification email. Please try again.'
 					);
@@ -709,7 +711,7 @@ const PaymentDialog = ({
 					setIsPaymentDialogOpen(false);
 				}
 			}}
-			title={fromHomePage && !isCourseFree ? 'Ödeme Yap' : isCourseFree ? 'Kayıt Ol' : 'Make Payment'}
+			title={isCourseFree ? 'Kayıt Ol' : isTrUi ? 'Ödeme Yap' : 'Make Payment'}
 			maxWidth='sm'
 			{...(fromHomePage
 				? {
@@ -800,8 +802,8 @@ const PaymentDialog = ({
 											}
 									}>
 									{selectedGroupName
-										? `${fromHomePage ? 'Seçilen Grup: ' : 'Selected Group: '}${selectedGroupName}`
-										: fromHomePage
+										? `${isTrUi ? 'Seçilen Grup: ' : 'Selected Group: '}${selectedGroupName}`
+										: isTrUi
 											? 'Grup Seçin*'
 											: 'Select Group*'}
 								</Typography>
@@ -877,7 +879,7 @@ const PaymentDialog = ({
 																		fontWeight: 600,
 																		fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 																	}}>
-																	{fromHomePage ? '(Kontenjan Doldu)' : '(No seats available)'}
+																	{isTrUi ? '(Kontenjan Doldu)' : '(No seats available)'}
 																</Typography>
 															)}
 														</Box>
@@ -924,7 +926,7 @@ const PaymentDialog = ({
 					{fromHomePage && (
 						<Box>
 							<CustomTextField
-								label={fromHomePage ? 'E-posta Adresi' : 'Email Address'}
+								label={isTrUi ? 'E-posta Adresi' : 'Email Address'}
 								size='small'
 								value={email}
 								type='email'
@@ -970,7 +972,7 @@ const PaymentDialog = ({
 					{!isCourseFree && (
 						<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
 							<CustomTextField
-								label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
+								label={isTrUi ? 'Promosyon Kodu' : 'Promo Code'}
 								size='small'
 								required={false}
 								disabled={isCourseFree}
@@ -1042,7 +1044,7 @@ const PaymentDialog = ({
 										: undefined
 								}
 								onClick={handleApplyPromoCode}>
-								{fromHomePage ? 'Uygula' : 'Apply'}
+								{isTrUi ? 'Uygula' : 'Apply'}
 							</CustomSubmitButton>
 						</Box>
 					)}
@@ -1063,7 +1065,7 @@ const PaymentDialog = ({
 											}
 											: { fontSize: '0.9rem', mb: '-1rem' }
 									}>
-									{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
+									{isTrUi ? 'Kart Numarası*' : 'Card Number*'}
 								</Typography>
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 									<Box
@@ -1145,7 +1147,7 @@ const PaymentDialog = ({
 												}
 												: { fontSize: '0.9rem', mb: 0.5 }
 										}>
-										{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
+										{isTrUi ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
 									</Typography>
 									<Box
 										sx={
@@ -1296,7 +1298,7 @@ const PaymentDialog = ({
 										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 										color: '#223354',
 									}}>
-									{fromHomePage ? 'Toplam Tutar: ' : 'Total Amount: '}
+									{isTrUi ? 'Toplam Tutar: ' : 'Total Amount: '}
 									{course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
 									{discountedAmount}
 								</Typography>
@@ -1308,7 +1310,7 @@ const PaymentDialog = ({
 											ml: isMobileSize ? '1rem' : '2rem',
 											fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 										}}>
-										{fromHomePage ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
+										{isTrUi ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
 									</Typography>
 								)}
 							</Box>
@@ -1358,11 +1360,11 @@ const PaymentDialog = ({
 										}
 										label={
 											<Typography component="span" sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main, color: 'text.secondary' }}>
-												{fromHomePage ? null : 'I have read and agree to the '}
-												<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{fromHomePage ? 'Kullanıcı Sözleşmesi' : 'User Agreement'}</Link>
-												{fromHomePage ? ' ve ' : ' and '}
-												<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{fromHomePage ? 'Gizlilik Politikası' : 'Privacy Policy'}</Link>
-												{fromHomePage ? " nı okudum ve kabul ediyorum." : '.'}
+												{isTrUi ? null : 'I have read and agree to the '}
+												<Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{isTrUi ? 'Kullanıcı Sözleşmesi' : 'User Agreement'}</Link>
+												{isTrUi ? ' ve ' : ' and '}
+												<Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: theme.palette?.primary?.main ?? '#0052a3', textDecoration: 'underline' }}>{isTrUi ? 'Gizlilik Politikası' : 'Privacy Policy'}</Link>
+												{isTrUi ? " nı okudum ve kabul ediyorum." : '.'}
 											</Typography>
 										}
 										sx={{ alignItems: 'flex-start', '& .MuiFormControlLabel-label': { mt: '2px' } }}
@@ -1451,7 +1453,7 @@ const PaymentDialog = ({
 										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 									}}>
-									{fromHomePage ? 'Buraya tıklayın' : 'Click here'}
+									{isTrUi ? 'Buraya tıklayın' : 'Click here'}
 								</span>
 							)}
 							{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
@@ -1472,10 +1474,10 @@ const PaymentDialog = ({
 											},
 										}}>
 										{isResendingVerification
-											? fromHomePage
+											? isTrUi
 												? 'Gönderiliyor...'
 												: 'Sending...'
-											: fromHomePage
+											: isTrUi
 												? 'Doğrulama e-postasını tekrar gönder'
 												: 'Resend verification email'}
 									</Button>
@@ -1483,7 +1485,7 @@ const PaymentDialog = ({
 							)}
 							{verificationSent && (
 								<Typography color='success.main' sx={{ mt: 1 }}>
-									{fromHomePage
+									{isTrUi
 										? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.'
 										: 'Verification email sent. Please check your inbox.'}
 								</Typography>
@@ -1499,16 +1501,16 @@ const PaymentDialog = ({
 							setIsPaymentDialogOpen(false);
 						}
 					}}
-					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
+					cancelBtnText={isTrUi ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
 					}}
 					submitBtnText={
 						isProcessing
-							? fromHomePage
+							? isTrUi
 								? 'İşleniyor'
 								: 'Processing'
-							: fromHomePage && !isCourseFree
+							: isTrUi && !isCourseFree
 								? 'Ödeme Yap'
 								: isCourseFree
 									? 'Kayıt Ol'

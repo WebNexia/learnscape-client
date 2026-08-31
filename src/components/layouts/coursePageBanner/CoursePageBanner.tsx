@@ -12,6 +12,7 @@ import { dateFormatter } from '../../../utils/dateFormatter';
 import PaymentDialogWrapper from './PaymentDialogWrapper';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
@@ -90,6 +91,7 @@ const CoursePageBanner = ({
 	const { courseId } = useParams();
 	const { user, setUser } = useContext(UserAuthContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+	const isTrUi = Boolean(fromHomePage || user);
 
 	const enrollmentRecord = userCoursesData?.find((data) => data.courseId === courseId);
 	const isEnrollmentRemoved =
@@ -118,12 +120,12 @@ const CoursePageBanner = ({
 
 	const location = useGeoLocation();
 
-	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === 'Free' ||
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === '' ||
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0';
+		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
+		getPriceForCountry(course, resolvedCountryCode)?.amount === '' ||
+		getPriceForCountry(course, resolvedCountryCode)?.amount === '0';
 
 	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
 	const isCapacityFull = Boolean(course?.isCapacityFull);
@@ -302,15 +304,13 @@ const CoursePageBanner = ({
 						backgroundColor: theme.bgColor?.greenSecondary,
 						color: theme.textColor?.common.main,
 					}}>
-					{fromHomePage ? 'Kursa başarıyla kayıt oldunuz!' : 'You have successfully enrolled in the course!'}
+					{isTrUi ? 'Kursa başarıyla kayıt oldunuz!' : 'You have successfully enrolled in the course!'}
 					{fromHomePage && (
 						<>
 							<br />
-							{fromHomePage
-								? course.courseManagement.isExternal
-									? ' Detaylar email adresinize gönderildi.'
-									: 'Kurs detaylarını görmek için platforma giriş yapın.'
-								: 'To view course details, please log in.'}
+							{course.courseManagement.isExternal
+								? ' Detaylar email adresinize gönderildi.'
+								: 'Kurs detaylarını görmek için platforma giriş yapın.'}
 						</>
 					)}
 				</Alert>
@@ -457,14 +457,14 @@ const CoursePageBanner = ({
 									'fontFamily': theme.fontFamily?.main,
 									'pointerEvents': isProcessing ? 'none' : 'auto',
 								}}>
-								{isProcessing ? 'Processing...' : 'Register'}
+								{isProcessing ? (isTrUi ? 'İşleniyor...' : 'Processing...') : isTrUi ? 'Kursu Satın Al' : 'Register'}
 							</CustomSubmitButton>
 							<CustomSubmitButton
 								variant='outlined'
 								onClick={() => setIsIntroVideoOpen(true)}
 								startIcon={<PlayCircleOutlined />}
 								sx={introVideoButtonSx}>
-								Watch Intro
+								{isTrUi ? 'Tanıtımı İzle' : 'Watch Intro'}
 							</CustomSubmitButton>
 						</Box>
 					) : (
@@ -487,7 +487,13 @@ const CoursePageBanner = ({
 									backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
 								},
 							}}>
-							{fromHomePage ? 'Kursu Satın Al' : isProcessing ? 'Processing...' : 'Enroll'}
+							{isProcessing
+								? isTrUi
+									? 'İşleniyor...'
+									: 'Processing...'
+								: isTrUi
+									? 'Kursu Satın Al'
+									: 'Enroll'}
 						</CustomSubmitButton>
 					)
 				) : !isEnrolledStatus && !course.isExpired && (isManuallyClosed || isCapacityFull) ? (
@@ -502,7 +508,7 @@ const CoursePageBanner = ({
 							width: 'fit-content',
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{isCapacityFull ? (fromHomePage ? 'Kontenjan doldu' : 'No seats available') : fromHomePage ? 'Kayıtlar kapalı' : 'Registration is closed'}
+						{isCapacityFull ? (isTrUi ? 'Kontenjan doldu' : 'No seats available') : isTrUi ? 'Kayıtlar kapalı' : 'Registration is closed'}
 					</Alert>
 				) : !isEnrolledStatus && course.isExpired ? (
 					<Alert
@@ -516,7 +522,7 @@ const CoursePageBanner = ({
 							width: 'fit-content',
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 						}}>
-						{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
+						{isTrUi ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
 					</Alert>
 				) : isEnrolledStatus ? (
 					// See Course Materials + Analytics icon (side by side at bottom)
@@ -542,7 +548,7 @@ const CoursePageBanner = ({
 									textDecoration: 'underline',
 									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								}}>
-								{fromHomePage ? 'Kurs Materyalleri' : 'Materials'}
+								{isTrUi ? 'Kurs Materyalleri' : 'Materials'}
 							</Typography>
 						)}
 
@@ -556,7 +562,7 @@ const CoursePageBanner = ({
 									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : introVideoButtonSx.fontSize,
 									padding: isVerySmallScreen || isRotated ? '0.35rem 0.75rem' : introVideoButtonSx.padding,
 								}}>
-								{fromHomePage ? 'Tanıtımı İzle' : 'Watch Intro'}
+								{isTrUi ? 'Tanıtımı İzle' : 'Watch Intro'}
 							</CustomSubmitButton>
 						)}
 
@@ -614,8 +620,12 @@ const CoursePageBanner = ({
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
 							{isSubscriptionsProductEnabled
-								? 'Subscribe to platform or register for a paid course to enroll in free courses'
-								: 'Register for a paid course to enroll in free courses'}
+								? isTrUi
+									? 'Ücretsiz kurslara kayıt için platforma abone olun veya ücretli bir kursa kayıt olun'
+									: 'Subscribe to platform or register for a paid course to enroll in free courses'
+								: isTrUi
+									? 'Ücretsiz kurslara kayıt için ücretli bir kursa kayıt olun'
+									: 'Register for a paid course to enroll in free courses'}
 						</Typography>
 					)
 				)}
@@ -648,7 +658,7 @@ const CoursePageBanner = ({
 					}}>
 					<Box>
 						<CoursePageBannerDataCard
-							title={fromHomePage ? 'Başlangıç Tarihi' : 'Starting Date'}
+							title={isTrUi ? 'Başlangıç Tarihi' : 'Starting Date'}
 							content={dateFormatter(course.startingDate)}
 							fromHomePage={fromHomePage}
 							customSettings={{
@@ -658,28 +668,28 @@ const CoursePageBanner = ({
 						/>
 
 						<CoursePageBannerDataCard
-							title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'}
+							title={isTrUi ? 'Hafta(#)' : 'Weeks(#)'}
 							content={course.durationWeeks ?? ''}
 							fromHomePage={fromHomePage}
 						/>
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard
-							title={fromHomePage ? 'Saat(#)' : 'Hours(#)'}
+							title={isTrUi ? 'Saat(#)' : 'Hours(#)'}
 							content={course.durationHours ?? ''}
 							fromHomePage={fromHomePage}
 						/>
 						<CoursePageBannerDataCard
 							title={
 								showCourseProgress
-									? fromHomePage
+									? isTrUi
 										? 'İlerleme'
 										: 'Progress'
 									: isEnrolledStatus
-										? fromHomePage
+										? isTrUi
 											? 'Durum'
 											: 'Status'
-										: fromHomePage
+										: isTrUi
 											? 'Fiyat'
 											: 'Price'
 							}
@@ -690,8 +700,8 @@ const CoursePageBanner = ({
 										? fromHomePage
 											? 'Kayıtlı'
 											: 'Enrolled'
-										: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
-										}`
+										: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${isCourseFree ? (isTrUi ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode)?.amount
+}`
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
@@ -744,7 +754,7 @@ const CoursePageBanner = ({
 								<Box
 									component='iframe'
 									src={isIntroVideoOpen ? introEmbedSrc : undefined}
-									title={fromHomePage ? 'Kurs tanıtım videosu' : 'Course intro video'}
+									title={isTrUi ? 'Kurs tanıtım videosu' : 'Course intro video'}
 									allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 									allowFullScreen
 									sx={{
@@ -765,7 +775,7 @@ const CoursePageBanner = ({
 										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 										color: theme.textColor?.primary?.main,
 									}}>
-									{fromHomePage
+									{isTrUi
 										? 'Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.'
 										: 'This video cannot be embedded here; you can open it in a new tab.'}
 								</Typography>
@@ -781,13 +791,13 @@ const CoursePageBanner = ({
 										alignSelf: 'flex-start',
 										borderRadius: fromHomePage ? '0.75rem' : undefined,
 									}}>
-									{fromHomePage ? 'Videoyu aç' : 'Open video'}
+									{isTrUi ? 'Videoyu aç' : 'Open video'}
 								</Button>
 							</Box>
 						)}
 					</DialogContent>
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
-						<CustomCancelButton onClick={closeIntroVideoModal}>{fromHomePage ? 'Kapat' : 'Close'}</CustomCancelButton>
+						<CustomCancelButton onClick={closeIntroVideoModal}>{isTrUi ? 'Kapat' : 'Close'}</CustomCancelButton>
 					</Box>
 				</CustomDialog>
 			)}
@@ -796,14 +806,14 @@ const CoursePageBanner = ({
 			<CustomDialog
 				openModal={isGroupInfoDialogOpen}
 				closeModal={() => setIsGroupInfoDialogOpen(false)}
-				title='Group Information'
+				title={isTrUi ? 'Grup Bilgisi' : 'Group Information'}
 				maxWidth='xs'>
 				<DialogContent sx={{ p: '2rem' }}>
 					{userGroup && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 							<Box>
 								<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem', color: theme.textColor?.primary.main }}>
-									Group Name:
+									{isTrUi ? 'Grup Adı:' : 'Group Name:'}
 								</Typography>
 								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 									{userGroup.name}
@@ -812,7 +822,7 @@ const CoursePageBanner = ({
 							{userGroup.description && (
 								<Box>
 									<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem', color: theme.textColor?.primary.main }}>
-										Description:
+										{isTrUi ? 'Açıklama:' : 'Description:'}
 									</Typography>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', whiteSpace: 'pre-line' }}>
 										{userGroup.description}
@@ -823,7 +833,7 @@ const CoursePageBanner = ({
 					)}
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
-					<CustomCancelButton onClick={() => setIsGroupInfoDialogOpen(false)}>Close</CustomCancelButton>
+					<CustomCancelButton onClick={() => setIsGroupInfoDialogOpen(false)}>{isTrUi ? 'Kapat' : 'Close'}</CustomCancelButton>
 				</Box>
 			</CustomDialog>
 		</Paper>

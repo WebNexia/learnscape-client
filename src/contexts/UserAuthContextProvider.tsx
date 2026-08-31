@@ -92,6 +92,25 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
+				// Block unverified email/password sessions from becoming an app login.
+				// (Verification link flow uses oobCode and does not need a persisted session.)
+				try {
+					await currentUser.reload();
+				} catch {
+					/* reload optional; fall through to emailVerified check */
+				}
+				if (!currentUser.emailVerified) {
+					await signOut(auth);
+					localStorage.removeItem('sessionTimestamp');
+					clearLearnerSessionId();
+					resetWordAssistPreference();
+					setUser(undefined);
+					setUserId('');
+					setFirebaseUserId('');
+					setIsAuthReady(true);
+					return;
+				}
+
 				const now = Date.now();
 				if (
 					lastAuthHandlerUidRef.current === currentUser.uid &&

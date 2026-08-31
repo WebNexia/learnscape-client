@@ -8,22 +8,74 @@ interface GeoLocation {
 	query: string; // user's IP
 }
 
+/** Language-only locales (e.g. `tr`) have no region; map unambiguous ones to a country. */
+const LANGUAGE_TO_COUNTRY: Record<string, string> = {
+	tr: 'TR',
+	ja: 'JP',
+	ko: 'KR',
+	ar: 'SA',
+	he: 'IL',
+	th: 'TH',
+	vi: 'VN',
+	id: 'ID',
+	ms: 'MY',
+	hi: 'IN',
+	bn: 'BD',
+	uk: 'UA',
+	ru: 'RU',
+	pl: 'PL',
+	nl: 'NL',
+	sv: 'SE',
+	da: 'DK',
+	fi: 'FI',
+	nb: 'NO',
+	nn: 'NO',
+	no: 'NO',
+	cs: 'CZ',
+	hu: 'HU',
+	ro: 'RO',
+	bg: 'BG',
+	el: 'GR',
+	pt: 'PT',
+};
+
+function countryFromLocaleTag(tag: string): string | null {
+	const normalized = String(tag || '')
+		.trim()
+		.replace('_', '-');
+	if (!normalized) return null;
+
+	const parts = normalized.split('-');
+	const region = (parts[1] || '').toUpperCase();
+	if (region.length === 2 && /^[A-Z]{2}$/.test(region)) {
+		return region;
+	}
+
+	const lang = (parts[0] || '').toLowerCase();
+	return LANGUAGE_TO_COUNTRY[lang] || null;
+}
+
 function getBrowserFallbackLocation(): GeoLocation | null {
 	try {
-		const locale = Intl.DateTimeFormat().resolvedOptions().locale || '';
-		const localeParts = locale.split('-');
-		const countryCode = (localeParts[1] || '').toUpperCase();
+		const candidates = [
+			Intl.DateTimeFormat().resolvedOptions().locale,
+			typeof navigator !== 'undefined' ? navigator.language : '',
+			...(typeof navigator !== 'undefined' && Array.isArray(navigator.languages) ? navigator.languages : []),
+		];
 
-		if (!countryCode || countryCode.length !== 2) {
-			return null;
+		for (const tag of candidates) {
+			const countryCode = countryFromLocaleTag(tag || '');
+			if (countryCode) {
+				return {
+					countryCode,
+					country: '',
+					city: '',
+					query: '',
+				};
+			}
 		}
 
-		return {
-			countryCode,
-			country: '',
-			city: '',
-			query: '',
-		};
+		return null;
 	} catch {
 		return null;
 	}
