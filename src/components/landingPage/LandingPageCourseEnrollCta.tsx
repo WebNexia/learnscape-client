@@ -4,6 +4,7 @@ import { SingleCourse } from '../../interfaces/course';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
+import { resolvePricingCountryCode } from '../../utils/resolvePricingCountryCode';
 
 type Props = {
 	course: SingleCourse;
@@ -12,7 +13,7 @@ type Props = {
 const LandingPageCourseEnrollCta = ({ course }: Props) => {
 	const navigate = useNavigate();
 	const location = useGeoLocation();
-	const resolvedCountryCode = location?.countryCode || 'US';
+	const resolvedCountryCode = resolvePricingCountryCode(undefined, location?.countryCode);
 
 	const price = getPriceForCountry(course, resolvedCountryCode);
 	const isCourseFree = price?.amount === 'Free' || price?.amount === '' || price?.amount === '0';

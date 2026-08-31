@@ -4,6 +4,8 @@ import { useQuery } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { useLocation } from 'react-router-dom';
+import { useGeoLocation } from '../hooks/useGeoLocation';
+import { resolvePricingCountryCode } from '../utils/resolvePricingCountryCode';
 
 interface AllPublicCoursesContextTypes {
 	courses: SingleCourse[];
@@ -50,6 +52,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
+	const geoLocation = useGeoLocation();
 
 	// Only fetch the paginated list on the courses listing page (detail/payment use single-course queries)
 	const isLandingPageCoursesListRoute = location.pathname === '/landing-page-courses';
@@ -65,10 +68,10 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const [isSearching, setIsSearching] = useState(false);
 
 	const getUserCurrency = () => {
-		// Get user's country from URL or default to US
-		const country = new URLSearchParams(location.search).get('country') || 'US';
+		const countryFromUrl = new URLSearchParams(location.search).get('country');
+		const country = resolvePricingCountryCode(undefined, countryFromUrl || geoLocation?.countryCode);
 
-		switch (country.toUpperCase()) {
+		switch (country) {
 			case 'GB':
 				return 'gbp';
 			case 'TR':
@@ -116,7 +119,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 		isLoading,
 		isFetching,
 		isError,
-	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search], fetchCourses, {
+	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search, geoLocation?.countryCode], fetchCourses, {
 		enabled: !!orgId && isLandingPageCoursesListRoute,
 		staleTime: 60 * 60 * 1000, // 1 hour
 		cacheTime: 60 * 60 * 1000, // 1 hour

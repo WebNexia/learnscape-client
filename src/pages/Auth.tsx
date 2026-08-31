@@ -106,17 +106,19 @@ const Auth = () => {
 		e.preventDefault();
 		if (signingIn) return;
 		setSigningIn(true);
-		markNewLearnerLogin();
 		try {
 			const userCredential = await signInWithEmailAndPassword(auth, email, password);
 			const firebaseUser = userCredential.user;
 
 			if (!firebaseUser.emailVerified) {
+				await signOut(auth);
+				localStorage.removeItem('sessionTimestamp');
 				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_VERIFIED);
 				setSigningIn(false);
 				return;
 			}
 
+			markNewLearnerLogin();
 			await firebaseUser.getIdToken();
 
 			// Ensure user document exists in Firestore
@@ -300,7 +302,7 @@ const Auth = () => {
 				orgCode: organisationCode,
 				email: email.trim().toLowerCase(),
 				phone,
-				countryCode: location?.countryCode,
+				countryCode: location?.countryCode ? location.countryCode.toUpperCase() : undefined,
 				firebaseUserId: user.uid,
 				isEmailVerified: false,
 				recaptchaToken,
@@ -1009,7 +1011,7 @@ const Auth = () => {
 															},
 														}}>
 														<PhoneInput
-															country={location?.countryCode?.toLowerCase() || 'tr'}
+															country={location?.countryCode?.toLowerCase()}
 															enableSearch={true}
 															searchPlaceholder='Ülke arayın...'
 															searchNotFound='Ülke bulunamadı'

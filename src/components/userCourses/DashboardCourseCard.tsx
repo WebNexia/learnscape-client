@@ -6,6 +6,7 @@ import { truncateText } from '../../utils/utilText';
 import { useContext, useMemo } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
+import { resolvePricingCountryCode } from '../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { setCurrencySymbol } from '@utils/setCurrencySymbol';
@@ -27,16 +28,16 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 
 	const location = useGeoLocation();
 
-	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0' ||
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === 'Free' ||
-		getPriceForCountry(course, resolvedCountryCode!)?.amount === '';
+		getPriceForCountry(course, resolvedCountryCode)?.amount === '0' ||
+		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
+		getPriceForCountry(course, resolvedCountryCode)?.amount === '';
 
 	const topAccent = '#0052a3';
 	const progressGreen = theme.palette.success?.main || '#1EC28B';
@@ -367,7 +368,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 									}}>
 									{isCourseFree
 										? 'Ücretsiz'
-										: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
+										: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${getPriceForCountry(course, resolvedCountryCode)?.amount}`}
 								</Typography>
 							</Box>
 						)}
@@ -418,7 +419,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 											? 'Continue'
 											: isCourseFree
 												? 'Free'
-												: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
+												: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${getPriceForCountry(course, resolvedCountryCode)?.amount}`}
 								</Typography>
 							</Box>
 						)}

@@ -37,6 +37,7 @@ import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -81,7 +82,7 @@ export default function CoursePaymentForm({
 	const location = useGeoLocation();
 	const recaptchaRef = useRef<any>(null);
 
-	const resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 	const isCourseFree =
 		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
 		getPriceForCountry(course, resolvedCountryCode)?.amount === '' ||
