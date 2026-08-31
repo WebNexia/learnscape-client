@@ -41,58 +41,48 @@ function groupBlocksForLayout(blocks: DocumentDetailBlock[]): Array<
 }
 
 function renderImageBlock(block: ImageBlock, index: number, inRow: boolean) {
-	const rowHeight = { xs: 260, sm: 320, md: 380 };
+	/** Equal slots; images scale with contain (never cropped) and keep rounded corners. */
+	const rowHeight = { xs: 200, sm: 300, md: 360 };
 
 	return (
 		<Box
 			key={`image-${index}`}
 			sx={{
-				flex: inRow ? '1 1 0' : undefined,
-				minWidth: inRow ? 0 : undefined,
-				width: inRow ? undefined : '100%',
+				width: '100%',
+				minWidth: 0,
+				height: inRow ? rowHeight : 'auto',
 				display: 'flex',
-				flexDirection: 'column',
 				alignItems: 'center',
-				alignSelf: inRow ? 'stretch' : undefined,
+				justifyContent: 'center',
 			}}>
 			<Box
-				sx={{
-					width: '100%',
-					height: inRow ? rowHeight : 'auto',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					overflow: 'hidden',
-					borderRadius: '0.75rem',
-				}}>
-				<Box
-					component='img'
-					src={block.imageUrl}
-					alt={block.caption || `Görsel ${index + 1}`}
-					sx={{
-						maxWidth: '100%',
-						maxHeight: inRow ? '100%' : { xs: '55vh', md: '60vh' },
-						width: inRow ? 'auto' : '100%',
-						height: inRow ? '100%' : 'auto',
-						objectFit: 'contain',
-						objectPosition: 'center',
-						display: 'block',
-						borderRadius: '0.75rem',
-					}}
-				/>
-			</Box>
-			{block.caption ? (
-				<Typography
-					sx={{
-						mt: 1,
-						textAlign: 'center',
-						fontFamily: 'Varela Round',
-						fontSize: '0.85rem',
-						color: '#64748b',
-					}}>
-					{block.caption}
-				</Typography>
-			) : null}
+				component='img'
+				src={block.imageUrl}
+				alt={block.caption || `Görsel ${index + 1}`}
+				sx={
+					inRow
+						? {
+								maxWidth: '100%',
+								maxHeight: '100%',
+								width: 'auto',
+								height: 'auto',
+								objectFit: 'contain',
+								objectPosition: 'center',
+								display: 'block',
+								borderRadius: '0.75rem',
+							}
+						: {
+								maxWidth: '100%',
+								maxHeight: { xs: '55vh', md: '60vh' },
+								width: '100%',
+								height: 'auto',
+								objectFit: 'contain',
+								objectPosition: 'center',
+								display: 'block',
+								borderRadius: '0.75rem',
+							}
+				}
+			/>
 		</Box>
 	);
 }
@@ -111,19 +101,34 @@ const LandingPageDocumentDetailBlocks = ({ blocks }: Props) => {
 			{layoutGroups.map((group) => {
 				if (group.kind === 'images') {
 					const inRow = group.images.length > 1;
+					const count = group.images.length;
 					return (
 						<Box
 							key={`images-${group.images[0].index}`}
 							sx={{
 								width: '100%',
-								display: 'flex',
-								flexDirection: inRow ? 'row' : 'column',
-								flexWrap: 'nowrap',
-								alignItems: inRow ? 'stretch' : 'flex-start',
-								justifyContent: 'center',
-								gap: { xs: 1.5, md: 2 },
+								display: 'grid',
+								gridTemplateColumns: inRow ? `repeat(${count}, minmax(0, 1fr))` : '1fr',
+								alignItems: 'stretch',
+								gap: { xs: 1.25, md: 2 },
 							}}>
-							{group.images.map(({ block, index }) => renderImageBlock(block, index, inRow))}
+							{group.images.map(({ block, index }) => (
+								<Box key={`image-wrap-${index}`} sx={{ width: '100%', minWidth: 0 }}>
+									{renderImageBlock(block, index, inRow)}
+									{block.caption ? (
+										<Typography
+											sx={{
+												mt: 1,
+												textAlign: 'center',
+												fontFamily: 'Varela Round',
+												fontSize: '0.85rem',
+												color: '#64748b',
+											}}>
+											{block.caption}
+										</Typography>
+									) : null}
+								</Box>
+							))}
 						</Box>
 					);
 				}
