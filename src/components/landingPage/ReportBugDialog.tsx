@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DialogTitle, Box, Alert, Snackbar } from '@mui/material';
 import axios from '@utils/axiosInstance';
 import { CreateBugReportRequest } from '../../interfaces/bugReport';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../common/TurnstileWidget';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomDialog from '../layouts/dialog/CustomDialog';
@@ -291,7 +291,7 @@ const ReportBugDialog: React.FC<ReportBugDialogProps> = ({ open, onClose }) => {
 						}}
 					/>
 					<Box sx={{ mt: 2, mb: 1, display: 'flex', justifyContent: 'center' }}>
-						<ReCAPTCHA sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY} onChange={handleRecaptcha} theme='light' />
+						<TurnstileWidget action="bug-report" onChange={handleRecaptcha} />
 					</Box>
 					{error && <CustomErrorMessage sx={{ fontSize: '0.75rem', mt: '1rem', fontFamily: 'Varela Round' }}>{error}</CustomErrorMessage>}
 				</Box>

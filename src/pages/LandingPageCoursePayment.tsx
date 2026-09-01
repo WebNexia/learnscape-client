@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { CourseEnrollmentProof, SingleCourse } from '../interfaces/course';
-import ConditionalStripeProvider from '../components/common/ConditionalStripeProvider';
 import CoursePaymentForm from '../components/layouts/coursePageBanner/CoursePaymentForm';
 import axios from 'axios';
 import { useQuery, useQueryClient } from 'react-query';
@@ -72,11 +71,11 @@ export default function LandingPageCoursePayment() {
 	useEffect(() => {
 		if (success) {
 			const t = setTimeout(() => {
-				navigate(`/landing-page-course/${encodeURIComponent(title || '')}/${courseId}`, { replace: true });
+				navigate('/auth', { replace: true });
 			}, 2500);
 			return () => clearTimeout(t);
 		}
-	}, [success, navigate, courseId, title]);
+	}, [success, navigate]);
 
 	const courseUrl = course
 		? `/landing-page-course/${encodeURIComponent(course.title)}/${course._id}`
@@ -116,14 +115,12 @@ export default function LandingPageCoursePayment() {
 					px: { xs: 2, sm: 3 },
 				}}>
 
-				<ConditionalStripeProvider>
-					<CoursePaymentForm
-						course={course}
-						courseRegistration={courseRegistration}
-						onSuccess={() => setSuccess(true)}
-						onCancel={() => navigate(courseUrl)}
-					/>
-				</ConditionalStripeProvider>
+				<CoursePaymentForm
+					course={course}
+					courseRegistration={courseRegistration}
+					onSuccess={() => setSuccess(true)}
+					onCancel={() => navigate(courseUrl)}
+				/>
 			</Box>
 
 			<Snackbar
@@ -142,7 +139,7 @@ export default function LandingPageCoursePayment() {
 						color: theme.textColor?.common?.main ?? 'inherit',
 						'& .MuiAlert-icon': { color: 'white' },
 					}}>
-					Kursa başarıyla kayıt oldunuz! Kurs detaylarını görmek için platforma giriş yapın.
+					Kursa başarıyla kayıt oldunuz! Giriş sayfasına yönlendiriliyorsunuz.
 				</Alert>
 			</Snackbar>
 		</LandingPageLayout>

@@ -22,6 +22,11 @@ import { COUNTRY_LIST } from '../data/countries';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { getDocumentCheckoutCopy } from '../utils/documentCheckoutCopy';
+import {
+	redirectToHostedCheckout,
+	saveCheckoutReturnContext,
+	savePendingCartCheckout,
+} from '../utils/hostedCheckout';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 const documentCheckoutCopy = getDocumentCheckoutCopy('tr');
@@ -174,9 +179,32 @@ export default function LandingPageCart() {
 				firstName,
 				lastName,
 				email,
+				hostedCheckout: true,
+				cancelUrl: window.location.href,
 				...(user?._id ? { userId: user._id } : {}),
 			});
-			const { paymentIntents, consultationAppointmentIds: appointmentIds } = res.data;
+			const { paymentIntents, consultationAppointmentIds: appointmentIds, checkoutUrl, sessionId } = res.data;
+
+			if (checkoutUrl) {
+				const cartContext = {
+					kind: 'cart' as const,
+					sessionId,
+					appointmentIds: appointmentIds || [],
+					formLinks: consultationItems.map((item, i) => ({
+						formSubmissionId: item.formSubmissionId,
+						appointmentId: (appointmentIds || [])[i],
+					})),
+					firstName,
+					lastName,
+					email,
+					agreeMarketing,
+					orgId: documentItems[0]?.orgId || contextOrgId || import.meta.env.VITE_ORG_ID,
+				};
+				saveCheckoutReturnContext(cartContext);
+				savePendingCartCheckout(cartContext);
+				redirectToHostedCheckout(checkoutUrl);
+				return;
+			}
 
 			const queue: CartPaymentItem[] = (paymentIntents || []).map(
 				(pi: { clientSecret: string; paymentIntentId: string }) => ({
@@ -203,37 +231,66 @@ export default function LandingPageCart() {
 		}
 	};
 
-	const handleCartPaymentSuccess = async (result?: { documentDeliveryFailed?: boolean; documentDeliveryMessage?: string }) => {
-		// Link consultation form submissions to appointments (guest name/email + appointmentId)
-		const firstName = checkoutGuestFirstName.trim();
-		const lastName = checkoutGuestLastName.trim();
-		const email = checkoutGuestEmail.trim();
-		for (let i = 0; i < consultationItems.length; i++) {
-			const item = consultationItems[i];
-			const appointmentId = consultationAppointmentIds[i];
-			if (item.formSubmissionId && appointmentId) {
-				try {
-					await feedbackFormsService.linkSubmissionToAppointment(item.formSubmissionId, {
-						firstName,
-						lastName,
-						userEmail: email,
-						consultationAppointmentId: appointmentId,
-					});
-				} catch (_e) {
-					// Non-blocking: submission stays unlinked; admin can still see form responses
+	const handleCartPaymentSuccess = async (
+		result?: { documentDeliveryFailed?: boolean; documentDeliveryMessage?: string },
+		override?: {
+			appointmentIds?: string[];
+			formLinks?: Array<{ formSubmissionId?: string; appointmentId?: string }>;
+			firstName?: string;
+			lastName?: string;
+			email?: string;
+			agreeMarketing?: boolean;
+			orgId?: string;
+		}
+	) => {
+		const firstName = (override?.firstName ?? checkoutGuestFirstName).trim();
+		const lastName = (override?.lastName ?? checkoutGuestLastName).trim();
+		const email = (override?.email ?? checkoutGuestEmail).trim();
+		const formLinks = override?.formLinks;
+		if (formLinks?.length) {
+			for (const link of formLinks) {
+				if (link.formSubmissionId && link.appointmentId) {
+					try {
+						await feedbackFormsService.linkSubmissionToAppointment(link.formSubmissionId, {
+							firstName,
+							lastName,
+							userEmail: email,
+							consultationAppointmentId: link.appointmentId,
+						});
+					} catch (_e) {
+						// Non-blocking
+					}
+				}
+			}
+		} else {
+			const appointmentIds = override?.appointmentIds || consultationAppointmentIds;
+			for (let i = 0; i < consultationItems.length; i++) {
+				const item = consultationItems[i];
+				const appointmentId = appointmentIds[i];
+				if (item.formSubmissionId && appointmentId) {
+					try {
+						await feedbackFormsService.linkSubmissionToAppointment(item.formSubmissionId, {
+							firstName,
+							lastName,
+							userEmail: email,
+							consultationAppointmentId: appointmentId,
+						});
+					} catch (_e) {
+						// Non-blocking: submission stays unlinked; admin can still see form responses
+					}
 				}
 			}
 		}
-		// Record guest marketing consent if they opted in
-		if (agreeMarketing && email) {
-			const orgId = documentItems[0]?.orgId || contextOrgId || import.meta.env.VITE_ORG_ID;
+		const shouldRecordMarketing = override?.agreeMarketing ?? agreeMarketing;
+		if (shouldRecordMarketing && email) {
+			const orgId = override?.orgId || documentItems[0]?.orgId || contextOrgId || import.meta.env.VITE_ORG_ID;
 			if (orgId) {
 				try {
 					await axios.post(`${base_url}/marketing-consent/guest`, {
 						email,
 						orgId,
-						firstName: checkoutGuestFirstName.trim(),
-						lastName: checkoutGuestLastName.trim(),
+						firstName,
+						lastName,
 						source: 'cart',
 					});
 				} catch (_e) {

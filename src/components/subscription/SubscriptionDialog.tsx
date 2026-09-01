@@ -14,7 +14,7 @@ import { OrganisationContext } from '../../contexts/OrganisationContextProvider'
 import { SubscriptionFormData, SubscriptionPrice, SubscriptionPlans, SubscriptionResponse, PromoCodeResponse } from '../../interfaces/subscription';
 import theme from '../../themes';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../common/TurnstileWidget';
 import axiosInstance from '@utils/axiosInstance';
 
 interface SubscriptionDialogProps {
@@ -727,12 +727,12 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
 
 						{/* reCAPTCHA */}
 						<Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-							<ReCAPTCHA
+							<TurnstileWidget
 								ref={recaptchaRef}
-								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								action="subscription"
 								onChange={handleRecaptchaChange}
 								onExpired={() => setRecaptchaToken(null)}
-								key={open ? 'active' : 'inactive'}
+								resetKey={open ? 'active' : 'inactive'}
 							/>
 						</Box>
 					</Box>

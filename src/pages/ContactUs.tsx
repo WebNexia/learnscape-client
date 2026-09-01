@@ -8,7 +8,7 @@ import theme from '../themes';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useContext, useState, useRef } from 'react';
 import axios from 'axios';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../components/common/TurnstileWidget';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
@@ -425,10 +425,10 @@ const ContactUs = () => {
 											</Typography>
 										</Grid>
 										<Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-											<ReCAPTCHA
-												key={recaptchaKey}
+											<TurnstileWidget
+												resetKey={recaptchaKey}
 												ref={recaptchaRef}
-												sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+												action="contact"
 												onChange={handleRecaptchaChange}
 												onExpired={() => resetRecaptcha()}
 											/>
