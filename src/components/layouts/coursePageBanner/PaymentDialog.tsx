@@ -9,7 +9,13 @@ import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
 import { Link } from 'react-router-dom';
-import { redirectToHostedCheckout, saveCheckoutReturnContext } from '../../../utils/hostedCheckout';
+import {
+	CHECKOUT_LOOKUP_TIMEOUT_MS,
+	CHECKOUT_PAYMENT_TIMEOUT_MS,
+	redirectToHostedCheckout,
+	saveCheckoutReturnContext,
+	useSlowNetworkHint,
+} from '../../../utils/hostedCheckout';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -116,6 +122,7 @@ const PaymentDialog = ({
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [selectedGroupName, setSelectedGroupName] = useState<string>('');
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState<boolean>(true);
+	const showSlowNetworkHint = useSlowNetworkHint(isProcessing);
 
 	const syncEnrollmentAccessOnClient = () => {
 		const patch = getPostEnrollmentUserPatch(user, course);
@@ -179,6 +186,7 @@ const PaymentDialog = ({
 		if (!course) return;
 		setIsProcessing(true);
 		setIsSubmitted(true);
+		let redirecting = false;
 
 		// Lock the price during payment processing to prevent changes
 		const lockedAmount = discountedAmount;
@@ -235,7 +243,7 @@ const PaymentDialog = ({
 					const userExistsResponse = await axiosInstance.post(
 						`${base_url}/users/check-user-exists`,
 						{ email, courseId: course._id },
-						{ timeout: 10000 }
+						{ timeout: CHECKOUT_LOOKUP_TIMEOUT_MS }
 					);
 
 					setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
@@ -300,7 +308,7 @@ const PaymentDialog = ({
 				} catch (error) {
 					if (axios.isAxiosError(error)) {
 						if (error.code === 'ECONNABORTED') {
-							setErrorMessage(isTrUi ? 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'Connection timed out. Please try again.');
+							setErrorMessage(isTrUi ? 'Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'The connection timed out. Please try again.');
 							resetRecaptcha();
 						} else if (!error.response) {
 							setErrorMessage(
@@ -374,7 +382,7 @@ const PaymentDialog = ({
 					cancelUrl: window.location.href,
 					...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
-				});
+				}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
 
 				const checkoutUrl = response.data?.checkoutUrl;
 				if (!checkoutUrl) {
@@ -391,13 +399,25 @@ const PaymentDialog = ({
 					courseTitle: course.title,
 					fromHomePage,
 				});
-				redirectToHostedCheckout(checkoutUrl);
+				if (!redirectToHostedCheckout(checkoutUrl)) {
+					setErrorMessage(isTrUi ? 'Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.' : 'Could not start checkout. Please try again.');
+					resetRecaptcha();
+					return;
+				}
+				redirecting = true;
 				return;
 			} catch (err) {
 				console.log(err);
 				resetForm(true);
+				const timedOut = axios.isAxiosError(err) && err.code === 'ECONNABORTED';
 				const serverMsg = axios.isAxiosError(err) ? err.response?.data?.message || err.response?.data?.error : null;
-				setErrorMessage(serverMsg || (isTrUi ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.'));
+				setErrorMessage(
+					timedOut
+						? isTrUi
+							? 'Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.'
+							: 'The connection timed out. Please try again.'
+						: serverMsg || (isTrUi ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.')
+				);
 				resetRecaptcha();
 			}
 		} catch (error) {
@@ -406,7 +426,9 @@ const PaymentDialog = ({
 			setErrorMessage(isTrUi ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
 			resetRecaptcha();
 		} finally {
-			setIsProcessing(false);
+			if (!redirecting) {
+				setIsProcessing(false);
+			}
 		}
 	};
 
@@ -1114,9 +1136,13 @@ const PaymentDialog = ({
 					}}
 					submitBtnText={
 						isProcessing
-							? isTrUi
-								? 'İşleniyor'
-								: 'Processing'
+							? showSlowNetworkHint
+								? isTrUi
+									? 'Hâlâ bağlanıyor...'
+									: 'Still connecting...'
+								: isTrUi
+									? 'İşleniyor'
+									: 'Processing'
 							: isTrUi && !isCourseFree
 								? 'Ödeme Yap'
 								: isCourseFree

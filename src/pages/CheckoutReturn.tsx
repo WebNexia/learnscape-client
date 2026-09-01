@@ -8,10 +8,12 @@ import { useConsultationCart } from '../contexts/ConsultationCartContextProvider
 import { useDocumentCart } from '../contexts/DocumentCartContextProvider';
 import { feedbackFormsService } from '../services/feedbackFormsService';
 import {
+	CHECKOUT_PAYMENT_TIMEOUT_MS,
 	clearCheckoutReturnContext,
 	clearPendingCartCheckout,
 	readCheckoutReturnContext,
 	readPendingCartCheckout,
+	useSlowNetworkHint,
 	type CartCheckoutReturnContext,
 } from '../utils/hostedCheckout';
 
@@ -28,6 +30,7 @@ export default function CheckoutReturn() {
 	const [message, setMessage] = useState('Ödemeniz tamamlanıyor...');
 	const [backPath, setBackPath] = useState('/');
 	const ranRef = useRef(false);
+	const showSlowNetworkHint = useSlowNetworkHint(status === 'loading');
 
 	useEffect(() => {
 		if (ranRef.current) return;
@@ -56,7 +59,11 @@ export default function CheckoutReturn() {
 
 		(async () => {
 			try {
-				const res = await axios.post(`${base_url}/payments/checkout/fulfill`, { sessionId });
+				const res = await axios.post(
+					`${base_url}/payments/checkout/fulfill`,
+					{ sessionId },
+					{ timeout: CHECKOUT_PAYMENT_TIMEOUT_MS }
+				);
 				if (!res.data?.ok) {
 					throw new Error(res.data?.error || 'Ödeme tamamlanamadı.');
 				}
@@ -170,7 +177,9 @@ export default function CheckoutReturn() {
 					{status === 'loading' ? 'Ödeme işleniyor' : status === 'success' ? 'İşlem tamam' : 'Ödeme tamamlanamadı'}
 				</Typography>
 				<Typography sx={{ fontFamily: FONT, color: 'text.secondary', maxWidth: 520, mb: 3, lineHeight: 1.6 }}>
-					{message}
+					{status === 'loading' && showSlowNetworkHint
+						? 'Bağlantı yavaş olabilir, lütfen bekleyin. Sayfayı kapatmayın veya yenilemeyin.'
+						: message}
 				</Typography>
 				{status !== 'loading' && (
 					<Button

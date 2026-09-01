@@ -20,7 +20,13 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
-import { redirectToHostedCheckout, saveCheckoutReturnContext } from '../../../utils/hostedCheckout';
+import {
+	CHECKOUT_LOOKUP_TIMEOUT_MS,
+	CHECKOUT_PAYMENT_TIMEOUT_MS,
+	redirectToHostedCheckout,
+	saveCheckoutReturnContext,
+	useSlowNetworkHint,
+} from '../../../utils/hostedCheckout';
 import { Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import theme from '../../../themes';
@@ -105,6 +111,7 @@ export default function CoursePaymentForm({
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState(true);
 	const [isResendingVerification, setIsResendingVerification] = useState(false);
 	const [verificationSent, setVerificationSent] = useState(false);
+	const showSlowNetworkHint = useSlowNetworkHint(isProcessing);
 
 	useEffect(() => {
 		if (!course) return;
@@ -213,7 +220,7 @@ export default function CoursePaymentForm({
 			const userExistsResponse = await axiosInstance.post(
 				`${base_url}/users/check-user-exists`,
 				{ email, courseId: course._id },
-				{ timeout: 10000 }
+				{ timeout: CHECKOUT_LOOKUP_TIMEOUT_MS }
 			);
 			setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
 			if (!userExistsResponse.data.exists && !usingSessionUser) {
@@ -255,7 +262,7 @@ export default function CoursePaymentForm({
 			}
 		} catch (err: any) {
 			if (axios.isAxiosError(err)) {
-				if (err.code === 'ECONNABORTED') setErrorMessage('Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.');
+				if (err.code === 'ECONNABORTED') setErrorMessage('Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.');
 				else if (!err.response) setErrorMessage('İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
 				else if (err.response?.data?.message) {
 					const msg = err.response.data.message;
@@ -288,7 +295,7 @@ export default function CoursePaymentForm({
 				cancelUrl: window.location.href,
 				...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
-			});
+			}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
 			const checkoutUrl = response.data?.checkoutUrl;
 			if (!checkoutUrl) {
 				resetForm(true);
@@ -304,15 +311,24 @@ export default function CoursePaymentForm({
 				courseTitle: course.title,
 				fromHomePage: true,
 			});
-			redirectToHostedCheckout(checkoutUrl);
+			if (!redirectToHostedCheckout(checkoutUrl)) {
+				setErrorMessage('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.');
+				resetRecaptcha();
+				setIsProcessing(false);
+				return;
+			}
 			return;
 		} catch (err) {
 			console.error(err);
 			resetForm(true);
+			const timedOut = axios.isAxiosError(err) && err.code === 'ECONNABORTED';
 			const serverMsg = axios.isAxiosError(err) ? err.response?.data?.message || err.response?.data?.error : null;
-			setErrorMessage(serverMsg || 'Ödeme işlenirken bir hata oluştu.');
+			setErrorMessage(
+				timedOut
+					? 'Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.'
+					: serverMsg || 'Ödeme işlenirken bir hata oluştu.'
+			);
 			resetRecaptcha();
-		} finally {
 			setIsProcessing(false);
 		}
 	};
@@ -821,7 +837,7 @@ export default function CoursePaymentForm({
 								<CustomDialogActions
 									onCancel={handleClose}
 									showCancelBtn={false}
-									submitBtnText={isProcessing ? 'İşleniyor' : isCourseFree ? 'Kayıt Ol' : 'Ödemeyi Tamamla'}
+									submitBtnText={isProcessing ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'İşleniyor') : isCourseFree ? 'Kayıt Ol' : 'Ödemeyi Tamamla'}
 									submitBtnSx={{
 										background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
 										backgroundColor: 'transparent !important',
@@ -841,7 +857,9 @@ export default function CoursePaymentForm({
 										<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme (Stripe)
 									</Typography>
 									<Typography sx={{ fontFamily: FONT, fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
-										Kart bilgileriniz Stripe sayfasında girilir ve saklanmaz
+										{showSlowNetworkHint
+											? 'Bağlantı yavaş olabilir, lütfen bekleyin. Sayfayı kapatmayın.'
+											: 'Kart bilgileriniz Stripe sayfasında girilir ve saklanmaz'}
 									</Typography>
 								</Box>
 							</Box>

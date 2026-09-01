@@ -23,9 +23,11 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { getDocumentCheckoutCopy } from '../utils/documentCheckoutCopy';
 import {
+	CHECKOUT_PAYMENT_TIMEOUT_MS,
 	redirectToHostedCheckout,
 	saveCheckoutReturnContext,
 	savePendingCartCheckout,
+	useSlowNetworkHint,
 } from '../utils/hostedCheckout';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -92,6 +94,7 @@ export default function LandingPageCart() {
 	const [paymentQueue, setPaymentQueue] = useState<CartPaymentItem[]>([]);
 	const [consultationAppointmentIds, setConsultationAppointmentIds] = useState<string[]>([]);
 	const [payAllLoading, setPayAllLoading] = useState(false);
+	const showSlowNetworkHint = useSlowNetworkHint(payAllLoading);
 
 	const [error, setError] = useState<string | null>(null);
 	const [successSnack, setSuccessSnack] = useState(false);
@@ -145,6 +148,7 @@ export default function LandingPageCart() {
 			return;
 		}
 		setPayAllLoading(true);
+		let redirecting = false;
 		try {
 			const guestName = `${firstName} ${lastName}`.trim();
 			const items: Array<
@@ -182,7 +186,7 @@ export default function LandingPageCart() {
 				hostedCheckout: true,
 				cancelUrl: window.location.href,
 				...(user?._id ? { userId: user._id } : {}),
-			});
+			}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
 			const { paymentIntents, consultationAppointmentIds: appointmentIds, checkoutUrl, sessionId } = res.data;
 
 			if (checkoutUrl) {
@@ -202,7 +206,11 @@ export default function LandingPageCart() {
 				};
 				saveCheckoutReturnContext(cartContext);
 				savePendingCartCheckout(cartContext);
-				redirectToHostedCheckout(checkoutUrl);
+				if (!redirectToHostedCheckout(checkoutUrl)) {
+					setError('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.');
+					return;
+				}
+				redirecting = true;
 				return;
 			}
 
@@ -224,10 +232,17 @@ export default function LandingPageCart() {
 			setPaymentQueue(queue);
 			setCartPaymentOpen(true);
 		} catch (e: unknown) {
+			const timedOut = axios.isAxiosError(e) && e.code === 'ECONNABORTED';
 			const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-			setError(msg || 'Ödeme hazırlanırken bir hata oluştu.');
+			setError(
+				timedOut
+					? 'Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.'
+					: msg || 'Ödeme hazırlanırken bir hata oluştu.'
+			);
 		} finally {
-			setPayAllLoading(false);
+			if (!redirecting) {
+				setPayAllLoading(false);
+			}
 		}
 	};
 
@@ -924,7 +939,7 @@ export default function LandingPageCart() {
 														transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 													}}
 												>
-													{payAllLoading ? 'Hazırlanıyor...' : 'Ödemeyi Tamamla'}
+													{payAllLoading ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'Hazırlanıyor...') : 'Ödemeyi Tamamla'}
 												</Button>
 
 												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25, mt: '2rem' }}>
