@@ -1,5 +1,25 @@
+import { useEffect, useState } from 'react';
+
 export const CHECKOUT_RETURN_STORAGE_KEY = 'learnscape.checkoutReturn';
 export const PENDING_CART_CHECKOUT_KEY = 'learnscape.pendingCartCheckout';
+
+/** Timeouts sized for slow mobile networks (TR). */
+export const CHECKOUT_LOOKUP_TIMEOUT_MS = 30_000;
+export const CHECKOUT_PAYMENT_TIMEOUT_MS = 60_000;
+export const SLOW_NETWORK_HINT_MS = 8_000;
+
+export function useSlowNetworkHint(isWaiting: boolean, delayMs = SLOW_NETWORK_HINT_MS): boolean {
+	const [showHint, setShowHint] = useState(false);
+	useEffect(() => {
+		if (!isWaiting) {
+			setShowHint(false);
+			return;
+		}
+		const timer = window.setTimeout(() => setShowHint(true), delayMs);
+		return () => window.clearTimeout(timer);
+	}, [isWaiting, delayMs]);
+	return showHint;
+}
 
 export type CourseCheckoutReturnContext = {
 	kind: 'course';
@@ -75,6 +95,10 @@ export function clearPendingCartCheckout(): void {
 	}
 }
 
-export function redirectToHostedCheckout(url: string): void {
-	window.location.href = url;
+export function redirectToHostedCheckout(url: string): boolean {
+	if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
+		return false;
+	}
+	window.location.assign(url.trim());
+	return true;
 }

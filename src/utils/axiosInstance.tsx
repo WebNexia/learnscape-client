@@ -155,10 +155,13 @@ axiosInstance.interceptors.response.use(
 		const method = (config.method || 'get').toLowerCase();
 		const isPaymentMutation =
 			(method === 'post' || method === 'patch') && requestUrl.includes('/payments');
+		const isTimeout = error.code === 'ECONNABORTED' || error.code === 'ERR_CANCELED';
 
 		// Never retry payment POSTs/PATCHes: reCAPTCHA tokens are one-time and 5xx retries cause 400s.
+		// Never retry timeouts — a second wait on a slow TR connection makes checkout feel stuck.
 		if (
 			!isPaymentMutation &&
+			!isTimeout &&
 			typeof config.retryCount === 'number' &&
 			config.retryCount < 3 &&
 			(!error.response || (error.response.status >= 500 && error.response.status < 600))

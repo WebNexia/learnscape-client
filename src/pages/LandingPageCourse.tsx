@@ -176,13 +176,29 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 			</Card>
 
 			<Dialog open={bioModalOpen} onClose={() => setBioModalOpen(false)} fullWidth maxWidth='sm'>
-				<DialogTitle sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: theme.palette.primary.main }}>
-					{instructor.name}
-					{instructor.title ? (
-						<Typography component='span' sx={{ display: 'block', mt: 0.5, fontFamily: 'Varela Round', fontSize: '0.9rem', color: 'text.secondary', fontWeight: 400 }}>
-							{instructor.title}
-						</Typography>
-					) : null}
+				<DialogTitle sx={{ fontFamily: 'Varela Round', pb: 1.5 }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+						<Avatar
+							src={instructor.imageUrl}
+							alt={instructor.name}
+							sx={{
+								width: 64,
+								height: 64,
+								border: '3px solid',
+								borderColor: theme.palette.primary.main,
+							}}
+						/>
+						<Box>
+							<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '1.15rem', color: theme.palette.primary.main, lineHeight: 1.3 }}>
+								{instructor.name}
+							</Typography>
+							{instructor.title ? (
+								<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.9rem', color: 'text.secondary', fontWeight: 400, mt: 0.25 }}>
+									{instructor.title}
+								</Typography>
+							) : null}
+						</Box>
+					</Box>
 				</DialogTitle>
 				<DialogContent>
 					<Typography
