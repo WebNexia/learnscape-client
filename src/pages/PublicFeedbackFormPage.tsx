@@ -14,7 +14,7 @@ import { CheckCircle, Error as ErrorIcon, Check } from '@mui/icons-material';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { sanitizeTextInput, sanitizeEmailInput, validateInputLength } from '../utils/sanitizeHtml';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../components/common/TurnstileWidget';
 
 // Email validation regex (RFC 5322 compliant, simplified)
 const isValidEmail = (email: string): boolean => {
@@ -1299,9 +1299,9 @@ const PublicFeedbackFormPage = () => {
 								transform: 'scale(0.88)',
 								transformOrigin: 'top center',
 							}}>
-							<ReCAPTCHA
+							<TurnstileWidget
 								ref={recaptchaRef}
-								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								action="feedback"
 								onChange={(token) => {
 									setRecaptchaToken(token);
 									setSubmitError(null);
@@ -1311,7 +1311,7 @@ const PublicFeedbackFormPage = () => {
 								}}
 								onError={() => {
 									setRecaptchaToken(null);
-									setSubmitError('reCAPTCHA doğrulaması başarısız oldu. Lütfen tekrar deneyin.');
+									setSubmitError('Doğrulama başarısız oldu. Lütfen tekrar deneyin.');
 								}}
 							/>
 						</Box>

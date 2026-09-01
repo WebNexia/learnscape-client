@@ -151,8 +151,14 @@ axiosInstance.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// Retry mechanism for network errors or 5xx server errors only
+		const requestUrl = `${config.baseURL || ''}${config.url || ''}`;
+		const method = (config.method || 'get').toLowerCase();
+		const isPaymentMutation =
+			(method === 'post' || method === 'patch') && requestUrl.includes('/payments');
+
+		// Never retry payment POSTs/PATCHes: reCAPTCHA tokens are one-time and 5xx retries cause 400s.
 		if (
+			!isPaymentMutation &&
 			typeof config.retryCount === 'number' &&
 			config.retryCount < 3 &&
 			(!error.response || (error.response.status >= 500 && error.response.status < 600))

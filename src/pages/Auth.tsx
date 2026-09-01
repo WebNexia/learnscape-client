@@ -19,7 +19,7 @@ import PhoneInput from 'react-phone-input-2';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../components/common/TurnstileWidget';
 import { Link, useNavigate } from 'react-router-dom';
 import { resetWordAssistPreference } from '../utils/wordAssistPreference';
 import { getLearnerSessionId, markNewLearnerLogin } from '../utils/learnerSession';
@@ -1207,14 +1207,14 @@ const Auth = () => {
 												</Box>
 											</Box>
 											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: '1.5rem' }}>
-												<ReCAPTCHA
+												<TurnstileWidget
 													ref={recaptchaRef}
-													sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+													action="signup"
 													onChange={(token) => {
 														setRecaptchaToken(token);
 														setErrorMsg(undefined);
 													}}
-													key={activeForm === AuthForms.SIGN_UP ? 'signup' : 'other'}
+													resetKey={activeForm === AuthForms.SIGN_UP ? 'signup' : 'other'}
 												/>
 											</Box>
 											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
@@ -1283,12 +1283,12 @@ const Auth = () => {
 											}}
 										/>
 										<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: '1.5rem' }}>
-											<ReCAPTCHA
+											<TurnstileWidget
 												ref={resetRecaptchaRef}
-												sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+												action="password-reset"
 												onChange={handleResetRecaptchaChange}
 												onExpired={resetResetRecaptcha}
-												key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
+												resetKey={activeForm === AuthForms.RESET ? 'reset' : 'other'}
 											/>
 										</Box>
 										<Button

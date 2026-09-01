@@ -32,7 +32,7 @@ import { dateTimeFormatter } from '@utils/dateFormatter';
 import axios from 'axios';
 import CustomDialog from '../../components/layouts/dialog/CustomDialog';
 import CustomTextField from '../../components/forms/customFields/CustomTextField';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../common/TurnstileWidget';
 import CustomDialogActions from '../../components/layouts/dialog/CustomDialogActions';
 import CustomErrorMessage from '../../components/forms/customFields/CustomErrorMessage';
 import logo from '../../assets/logo.png';
@@ -783,13 +783,12 @@ export default function UpcomingEvents() {
 									margin: '0 auto',
 									overflow: 'hidden',
 								}}>
-								<ReCAPTCHA
-									sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								<TurnstileWidget
+									ref={recaptchaRef}
+									action="event-register"
 									onChange={handleRecaptchaChange}
 									onExpired={resetRecaptcha}
-									ref={recaptchaRef}
-									key={isRegisterForEventModalOpen ? 'active' : 'inactive'}
-									style={{ marginBottom: '1rem' }}
+									resetKey={isRegisterForEventModalOpen ? 'active' : 'inactive'}
 								/>
 							</div>
 							{registerErrorMsg && (

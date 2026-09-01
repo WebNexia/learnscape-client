@@ -4,7 +4,7 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import PhoneInput from 'react-phone-input-2';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import theme from '../../themes';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../common/TurnstileWidget';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
@@ -390,12 +390,12 @@ const ContactFormDialog = ({
 							{message.length}/500
 						</Typography>
 						<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-							<ReCAPTCHA
-								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+							<TurnstileWidget
+								ref={recaptchaRef}
+								action="contact"
 								onChange={handleRecaptchaChange}
 								onExpired={() => resetRecaptcha()}
-								ref={recaptchaRef}
-								key={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
+								resetKey={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
 							/>
 						</Box>
 					</Box>

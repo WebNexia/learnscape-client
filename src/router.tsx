@@ -51,6 +51,7 @@ const LandingPageConsultations = React.lazy(
   () => import("./pages/LandingPageConsultations"),
 );
 const LandingPageCart = React.lazy(() => import("./pages/LandingPageCart"));
+const CheckoutReturn = React.lazy(() => import("./pages/CheckoutReturn"));
 const AboutUs = React.lazy(() => import("./pages/AboutUs"));
 const ContactUs = React.lazy(() => import("./pages/ContactUs"));
 const CookiePolicy = React.lazy(() => import("./pages/CookiePolicy"));
@@ -235,6 +236,10 @@ export const router = createBrowserRouter([
       {
         path: "landing-page-cart",
         element: <LandingPageCart />,
+      },
+      {
+        path: "checkout/return",
+        element: <CheckoutReturn />,
       },
       { path: "auth", element: <AuthWrapper /> },
       { path: "reset-password", element: <PasswordResetPage /> },

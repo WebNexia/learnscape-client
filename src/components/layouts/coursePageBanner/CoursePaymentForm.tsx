@@ -17,20 +17,10 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import { useContext, useEffect, useState, useRef } from 'react';
-import { useQueryClient } from 'react-query';
-import {
-	CardCvcElement,
-	CardExpiryElement,
-	CardNumberElement,
-	useElements,
-	useStripe,
-} from '@stripe/react-stripe-js';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
-import visaIcon from '../../../assets/visa.png';
-import masterCardIcon from '../../../assets/mastercard.png';
-import defaultCardIcon from '../../../assets/credit-card.png';
 import { CourseEnrollmentProof, SingleCourse } from '../../../interfaces/course';
+import { redirectToHostedCheckout, saveCheckoutReturnContext } from '../../../utils/hostedCheckout';
 import { Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import theme from '../../../themes';
@@ -40,8 +30,7 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
-import ReCAPTCHA from 'react-google-recaptcha';
-import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
+import TurnstileWidget from '../../common/TurnstileWidget';
 import { getCourseAccessCheckoutCopy } from '../../../utils/courseAccessCheckoutCopy';
 
 const FONT = 'Varela Round';
@@ -75,8 +64,7 @@ export default function CoursePaymentForm({
 	onCancel,
 }: CoursePaymentFormProps) {
 	const { orgId } = useContext(OrganisationContext);
-	const { user, setUser } = useContext(UserAuthContext);
-	const queryClient = useQueryClient();
+	const { user } = useContext(UserAuthContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const location = useGeoLocation();
@@ -98,9 +86,8 @@ export default function CoursePaymentForm({
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [agreed, setAgreed] = useState(false);
 	const [agreedWithdrawalWaiver, setAgreedWithdrawalWaiver] = useState(false);
-	const [cardBrand, setCardBrand] = useState('unknown');
 	const [errorMessage, setErrorMessage] = useState('');
-	const [email, setEmail] = useState('');
+	const [email, setEmail] = useState(() => user?.email || '');
 	const [isUserAccountExist, setIsUserAccountExist] = useState(true);
 	const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
 	const [isEmailVerified, setIsEmailVerified] = useState(true);
@@ -113,17 +100,11 @@ export default function CoursePaymentForm({
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 	const [promoCodeId, setPromoCodeId] = useState('');
 	const [isSubmitted, setIsSubmitted] = useState(false);
-	const [cardNumberComplete, setCardNumberComplete] = useState(false);
-	const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
-	const [cardCvcComplete, setCardCvcComplete] = useState(false);
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [selectedGroupName, setSelectedGroupName] = useState('');
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState(true);
 	const [isResendingVerification, setIsResendingVerification] = useState(false);
 	const [verificationSent, setVerificationSent] = useState(false);
-
-	const stripe = useStripe();
-	const elements = useElements();
 
 	useEffect(() => {
 		if (!course) return;
@@ -132,10 +113,16 @@ export default function CoursePaymentForm({
 	}, [user, location, course, isPromoCodeApplied]);
 
 	useEffect(() => {
-		if (email || promoCode || cardNumberComplete || cardExpiryComplete || cardCvcComplete) {
+		if (user?.email) {
+			setEmail((prev) => prev || user.email || '');
+		}
+	}, [user?.email]);
+
+	useEffect(() => {
+		if (email || promoCode) {
 			setIsGroupSelectionExpanded(false);
 		}
-	}, [email, promoCode, cardNumberComplete, cardExpiryComplete, cardCvcComplete]);
+	}, [email, promoCode]);
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
@@ -152,19 +139,8 @@ export default function CoursePaymentForm({
 		}
 		return true;
 	};
-	const getCardIcon = (brand: string) => {
-		switch (brand) {
-			case 'visa':
-				return visaIcon;
-			case 'mastercard':
-				return masterCardIcon;
-			default:
-				return defaultCardIcon;
-		}
-	};
-
 	const resetForm = (preserveError = false) => {
-		setEmail('');
+		setEmail(user?.email || '');
 		setPromoCode('');
 		setSelectedGroupName('');
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
@@ -228,21 +204,26 @@ export default function CoursePaymentForm({
 			return;
 		}
 
+		const sessionEmail = (user?.email || '').trim();
+		const usingSessionUser = Boolean(
+			user?._id && sessionEmail && email.trim().toLowerCase() === sessionEmail.toLowerCase()
+		);
+
 		try {
-			const axiosWithTimeout = axios.create({ ...axiosInstance.defaults, timeout: 10000 });
-			const userExistsResponse = await axiosWithTimeout.post(`${base_url}/users/check-user-exists`, {
-				email,
-				courseId: course._id,
-			});
-			setIsUserAccountExist(userExistsResponse.data.exists);
-			if (!userExistsResponse.data.exists) {
+			const userExistsResponse = await axiosInstance.post(
+				`${base_url}/users/check-user-exists`,
+				{ email, courseId: course._id },
+				{ timeout: 10000 }
+			);
+			setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
+			if (!userExistsResponse.data.exists && !usingSessionUser) {
 				setErrorMessage('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
 				setIsUserAccountExist(false);
 				setIsProcessing(false);
 				resetRecaptcha();
 				return;
 			}
-			if (!userExistsResponse.data.isEmailVerified) {
+			if (!userExistsResponse.data.isEmailVerified && !usingSessionUser) {
 				setErrorMessage('Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.');
 				setIsEmailVerified(false);
 				setIsProcessing(false);
@@ -256,8 +237,8 @@ export default function CoursePaymentForm({
 				resetRecaptcha();
 				return;
 			}
-			resolvedUserId = userExistsResponse.data.userId;
-			resolvedOrgId = userExistsResponse.data.orgId;
+			resolvedUserId = userExistsResponse.data.userId || user?._id || '';
+			resolvedOrgId = userExistsResponse.data.orgId || user?.orgId || orgId;
 			if (!resolvedFirstName) {
 				resolvedFirstName = (email || '').split('@')[0] || 'Guest';
 			}
@@ -291,26 +272,6 @@ export default function CoursePaymentForm({
 			return;
 		}
 
-		if (!stripe || !elements) {
-			setErrorMessage('Ödeme sistemi yüklenemedi.');
-			resetRecaptcha();
-			setIsProcessing(false);
-			return;
-		}
-		const cardNumberElement = elements.getElement(CardNumberElement);
-		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
-			setErrorMessage('Lütfen tüm kart bilgilerini doldurun.');
-			setIsProcessing(false);
-			resetRecaptcha();
-			return;
-		}
-		if (!cardNumberElement) {
-			setErrorMessage('Kart bilgileri eksik.');
-			setIsProcessing(false);
-			resetRecaptcha();
-			return;
-		}
-
 		try {
 			const response = await axiosInstance.post(`${base_url}/payments`, {
 				amount: lockedAmount,
@@ -322,105 +283,34 @@ export default function CoursePaymentForm({
 				firstName: resolvedFirstName,
 				lastName: resolvedLastName,
 				paymentType: 'course',
-				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 				recaptchaToken,
+				hostedCheckout: true,
+				cancelUrl: window.location.href,
+				...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
+				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 			});
-			const { clientSecret, paymentIntentId } = response.data;
-
-			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
-				type: 'card',
-				card: cardNumberElement,
-				billing_details: { name: `${resolvedFirstName} ${resolvedLastName}` },
-			});
-			if (methodError) {
+			const checkoutUrl = response.data?.checkoutUrl;
+			if (!checkoutUrl) {
 				resetForm(true);
-				setErrorMessage(methodError.message || 'Ödeme yöntemi oluşturulamadı.');
+				setErrorMessage('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.');
 				resetRecaptcha();
 				setIsProcessing(false);
 				return;
 			}
-
-			const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-				payment_method: paymentMethod!.id,
+			saveCheckoutReturnContext({
+				kind: 'course',
+				source: 'landing',
+				courseId: course._id,
+				courseTitle: course.title,
+				fromHomePage: true,
 			});
-			if (error || paymentIntent?.status !== 'requires_capture') {
-				resetForm(true);
-				setErrorMessage(error?.message ? `Ödeme onayı başarısız: ${error.message}` : 'Ödeme onayı başarısız.');
-				resetRecaptcha();
-				setIsProcessing(false);
-				return;
-			}
-
-			try {
-				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email, paymentIntentId });
-			} catch (regErr) {
-				resetForm(true);
-				setErrorMessage('Kurs kaydı başarısız oldu. Ücretlendirilmediniz.');
-				resetRecaptcha();
-				setIsProcessing(false);
-				return;
-			}
-
-			try {
-				await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
-					userId: resolvedUserId,
-					orgId: resolvedOrgId,
-					courseId: course._id,
-					firstName: resolvedFirstName,
-					lastName: resolvedLastName,
-					email,
-					paymentType: 'course',
-					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
-				});
-
-				if (!user?.hasRegisteredCourse && !course?.courseManagement?.isExternal) {
-					await axiosInstance.post(`${base_url}/users/public-update-registration-status`, {
-						userId: resolvedUserId,
-						email,
-						courseId: course._id,
-						paymentIntentId,
-					});
-					setUser((prev) => (prev ? { ...prev, hasRegisteredCourse: true } : prev));
-				} else {
-					const patch = getPostEnrollmentUserPatch(user, course);
-					if (patch) {
-						setUser((prev) => (prev ? { ...prev, ...patch } : prev));
-					}
-				}
-
-				if (isPromoCodeApplied && promoCodeId) {
-					setUsersUsedPromoCode([...usersUsedPromoCode, resolvedUserId]);
-				}
-
-				resetForm();
-				setIsProcessing(false);
-				onSuccess();
-			} catch (captureError) {
-				resetForm(true);
-				console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
-
-				try {
-					await axiosInstance.post(`${base_url}/userCourses/public-rollback`, {
-						userId: resolvedUserId,
-						courseId: course._id,
-						email,
-						paymentIntentId,
-					});
-
-					await queryClient.invalidateQueries(['userCourseData']);
-					await queryClient.invalidateQueries(['userLessonsForCourse', course._id, resolvedUserId]);
-				} catch (cleanupErr) {
-					resetForm(true);
-					console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course._id}`, cleanupErr);
-				}
-
-				setErrorMessage('Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.');
-				resetRecaptcha();
-			}
+			redirectToHostedCheckout(checkoutUrl);
+			return;
 		} catch (err) {
 			console.error(err);
 			resetForm(true);
-			setErrorMessage('Ödeme işlenirken bir hata oluştu.');
+			const serverMsg = axios.isAxiosError(err) ? err.response?.data?.message || err.response?.data?.error : null;
+			setErrorMessage(serverMsg || 'Ödeme işlenirken bir hata oluştu.');
 			resetRecaptcha();
 		} finally {
 			setIsProcessing(false);
@@ -492,24 +382,6 @@ export default function CoursePaymentForm({
 			onCancel();
 		}
 	};
-
-	const cardBorder = (invalid: boolean) =>
-		invalid ? '1px solid red' : '1px solid #ccc';
-	const cardBoxSx = (invalid: boolean) => ({
-		border: cardBorder(invalid),
-		padding: '0.6rem',
-		borderRadius: '8px',
-		backgroundColor: '#fff',
-		fontFamily: FONT,
-	});
-	const showCardError = (cvc = false) =>
-		isSubmitted &&
-		!isCourseFree &&
-		isUserAccountExist &&
-		!isAlreadyEnrolled &&
-		isEmailVerified &&
-		recaptchaToken &&
-		(cvc ? !cardCvcComplete : !cardNumberComplete && !cardExpiryComplete);
 
 	return (
 		<form
@@ -911,68 +783,19 @@ export default function CoursePaymentForm({
 								</Box>
 							</Box>
 
-							{/* Sağ: Kart bilgileri */}
 							{!isCourseFree && (
-								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2, mt: 2 }}>
-									<Box>
-										<Typography variant="subtitle2" sx={{ fontFamily: FONT, fontWeight: 500, mb: 0.5, color: '#2C3E50', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>
-											Kart Numarası*
-										</Typography>
-										<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-											<Box sx={{ ...cardBoxSx(!!showCardError()), width: '100%' }}>
-												<CardNumberElement
-													options={{
-														style: {
-															base: { fontSize: isMobileSize ? '11px' : '14px', color: '#223354', fontFamily: 'Arial, sans-serif', '::placeholder': { color: '#aab7c4' } },
-															invalid: { color: '#9e2146' },
-														},
-													}}
-													onChange={(e) => { setCardNumberComplete(e.complete); setCardBrand(e.brand || 'unknown'); setErrorMessage(''); setIsGroupSelectionExpanded(false); }}
-												/>
-											</Box>
-											<img src={getCardIcon(cardBrand)} alt="" style={{ width: 40, height: 'auto' }} />
-										</Box>
-									</Box>
-									<Box sx={{ display: 'flex', gap: 2 }}>
-										<Box sx={{ flex: 1 }}>
-											<Typography variant="subtitle2" sx={{ fontFamily: FONT, fontWeight: 500, mb: 0.5, color: '#2C3E50', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>Son Kullanma Tarihi*</Typography>
-											<Box sx={cardBoxSx(!!(isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified && recaptchaToken))}>
-												<CardExpiryElement
-													options={{
-														style: {
-															base: { fontSize: isMobileSize ? '11px' : '14px', color: '#223354', fontFamily: 'Arial, sans-serif', '::placeholder': { color: '#aab7c4' } },
-															invalid: { color: '#9e2146' },
-														},
-													}}
-													onChange={(e) => { setCardExpiryComplete(e.complete); setErrorMessage(''); setIsGroupSelectionExpanded(false); }}
-												/>
-											</Box>
-										</Box>
-										<Box sx={{ flex: 1 }}>
-											<Typography variant="subtitle2" sx={{ fontFamily: FONT, fontWeight: 500, mb: 0.5, color: '#2C3E50', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>CVC*</Typography>
-											<Box sx={cardBoxSx(!!(isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified && recaptchaToken))}>
-												<CardCvcElement
-													options={{
-														style: {
-															base: { fontSize: isMobileSize ? '11px' : '14px', color: '#223354', fontFamily: 'Arial, sans-serif', '::placeholder': { color: '#aab7c4' } },
-															invalid: { color: '#9e2146' },
-														},
-													}}
-													onChange={(e) => { setCardCvcComplete(e.complete); setErrorMessage(''); setIsGroupSelectionExpanded(false); }}
-												/>
-											</Box>
-										</Box>
-									</Box>
-								</Box>
+								<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.72rem' : '0.8rem', color: 'text.secondary', lineHeight: 1.5, mt: 2, mb: 1 }}>
+									Kart bilgilerinizi Stripe’ın güvenli ödeme sayfasında gireceksiniz. Ödeme onaylanmadan kurs kaydı yapılmaz.
+								</Typography>
 							)}
 
 							<Box sx={{ my: '1rem', mx: 'auto', width: 'fit-content' }}>
-								<ReCAPTCHA
+								<TurnstileWidget
 									ref={recaptchaRef}
-									sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+									action="course-payment"
 									onChange={handleRecaptchaChange}
 									onExpired={() => setRecaptchaToken(null)}
-									key="course-payment"
+									resetKey="course-payment"
 								/>
 							</Box>
 
@@ -1018,7 +841,7 @@ export default function CoursePaymentForm({
 										<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme (Stripe)
 									</Typography>
 									<Typography sx={{ fontFamily: FONT, fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
-										Kart bilgileriniz saklanmaz
+										Kart bilgileriniz Stripe sayfasında girilir ve saklanmaz
 									</Typography>
 								</Box>
 							</Box>
