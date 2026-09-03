@@ -8,7 +8,7 @@ import { UserAuthContext } from './UserAuthContextProvider';
 import { Event } from '../interfaces/event';
 import { useAuth } from '../hooks/useAuth';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 
 interface AdminPublicEventsContextTypes {
 	publicEvents: Event[];
@@ -53,7 +53,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 		entityKey: 'allPublicEvents',
 		enabled: isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true,

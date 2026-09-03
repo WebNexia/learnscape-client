@@ -994,7 +994,14 @@ const CourseDetailsEditBox = ({
 							)}
 						</Box>
 
-						<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: isMobileSize ? 'flex-start' : 'center' }}>
+						<Box
+							sx={{
+								flex: 1,
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: isMobileSize ? 'flex-start' : 'flex-end',
+								gap: '0.25rem',
+							}}>
 							<FormControlLabel
 								control={
 									<Checkbox
@@ -1020,6 +1027,36 @@ const CourseDetailsEditBox = ({
 									},
 								}}
 							/>
+							<Tooltip
+								title='Hidden from the landing page and regular learners. Only test-learner accounts can see and take this course.'
+								placement='left'
+								arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={Boolean(singleCourseBeforeSave?.isTestCourse)}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev) return prev;
+													return { ...prev, isTestCourse: e.target.checked };
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Test course'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
 						</Box>
 					</Box>
 				</Box>

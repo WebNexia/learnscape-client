@@ -6,7 +6,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
 import { PromoCode } from '../interfaces/promoCode';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 
 interface PromoCodesContextTypes {
 	promoCodes: PromoCode[];
@@ -60,7 +60,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 		entityKey: 'promoCodes',
 		enabled: isEnabled && isAuthenticated && canAccessPayments && !isLandingPageRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true,

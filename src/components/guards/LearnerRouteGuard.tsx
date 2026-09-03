@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles } from '../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../interfaces/enums';
 import Loading from '../layouts/loading/Loading';
 
 interface LearnerRouteGuardProps {
@@ -23,7 +23,7 @@ const LearnerRouteGuard: React.FC<LearnerRouteGuardProps> = ({ children }) => {
 		return <Navigate to='/admin/dashboard' replace />;
 	}
 
-	if (user.role !== Roles.USER) {
+	if (!isLearnerRole(user.role)) {
 		return <Navigate to='/auth' replace />;
 	}
 

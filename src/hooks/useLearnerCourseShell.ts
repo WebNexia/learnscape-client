@@ -2,7 +2,7 @@ import { useQuery, useQueryClient, UseQueryResult } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { SingleCourse } from '../interfaces/course';
 import { useAuth } from './useAuth';
-import { Roles } from '../interfaces/enums';
+import { isLearnerRole } from '../interfaces/enums';
 
 /** Course outline changes infrequently once live; progress uses userLessons cache separately. */
 export const LEARNER_COURSE_SHELL_STALE_MS = 30 * 60 * 1000;
@@ -36,7 +36,7 @@ export const useLearnerCourseShell = (
 		learnerCourseShellQueryKey(courseId),
 		(): Promise<SingleCourse | null> => fetchLearnerCourseShell(courseId, baseUrl),
 		{
-			enabled: enabled && !!courseId && !!userId && user?.role === Roles.USER,
+			enabled: enabled && !!courseId && !!userId && isLearnerRole(user?.role),
 			staleTime: LEARNER_COURSE_SHELL_STALE_MS,
 			cacheTime: LEARNER_COURSE_SHELL_CACHE_MS,
 			retry: 2,

@@ -2,7 +2,7 @@ import { AppBar, Badge, Box, Button, DialogContent, IconButton, Switch, Toolbar,
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { Roles } from '../../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../../interfaces/enums';
 import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star, Settings } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -68,14 +68,14 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		};
 	}, []);
 
-	const isLearnerHeader = !hasAdminAccess && user?.role === Roles.USER;
+	const isLearnerHeader = !hasAdminAccess && isLearnerRole(user?.role);
 
 	const headerBackgroundColor = useMemo(() => {
 		return hasAdminAccess
 			? theme.bgColor?.adminHeader
 			: user?.role === Roles.INSTRUCTOR
 				? theme.bgColor?.instructorHeader
-				: user?.role === Roles.USER
+				: isLearnerRole(user?.role)
 					? theme.bgColor?.learnerHeader
 					: theme.bgColor?.adminHeader;
 	}, [hasAdminAccess, user?.role]);
@@ -278,7 +278,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					{/* Subscribe/Unsubscribe Button */}
-					{isSubscriptionsProductEnabled && user?.role === Roles.USER && !hasPlatformAccess && (
+					{isSubscriptionsProductEnabled && isLearnerRole(user?.role) && !hasPlatformAccess && (
 						<>
 							{!hasActiveSubscriptionMemo(user) ? (
 								<Tooltip

@@ -5,7 +5,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import { useAuth } from '../hooks/useAuth';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { UserAuthContext } from './UserAuthContextProvider';
 
 interface AdminQuizSubmissionsContextTypes {
@@ -75,7 +75,7 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 		entityKey: 'allAdminQuizSubmissions',
 		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isInstructor) && (isAdminRoute || isInstructorRoute),
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true,

@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { useAuth } from './useAuth';
-import { Roles } from '../interfaces/enums';
+import { isLearnerRole } from '../interfaces/enums';
 import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 
 // Backend response interface
@@ -22,7 +22,7 @@ export const useUserLessonsForCourse = (courseId: string, options?: { enabled?: 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useAuth();
 	const userId = user?._id;
-	const queryEnabled = (options?.enabled ?? true) && !!userId && !!courseId && user?.role === Roles.USER;
+	const queryEnabled = (options?.enabled ?? true) && !!userId && !!courseId && isLearnerRole(user?.role);
 
 	return useQuery<UserLessonDataStorage[]>(
 		['userLessonsForCourse', courseId, userId],

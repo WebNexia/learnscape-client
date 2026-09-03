@@ -4,7 +4,7 @@ import { FormEvent, useContext, useEffect, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import theme from '../themes';
-import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
+import { AuthFormErrorMessages, AuthForms, TextFieldTypes, isLearnerRole } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { AuthError, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -77,7 +77,7 @@ const Auth = () => {
 	useEffect(() => {
 		if (!signingIn || !user) return;
 		// Keep spinner until learner device session is registered (avoids false "signed in elsewhere").
-		if (user.role === 'learner' && !getLearnerSessionId()) return;
+		if (isLearnerRole(user.role) && !getLearnerSessionId()) return;
 		setSigningIn(false);
 	}, [signingIn, user]);
 	// Removed isSignupInProgress - no longer needed

@@ -20,7 +20,7 @@ import { UsersContext } from '../contexts/UsersContextProvider';
 import { User } from '../interfaces/user';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import theme from '../themes';
-import { Roles } from '../interfaces/enums';
+import { isLearnerRole, Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -434,6 +434,7 @@ const AdminUsers = () => {
 							{ value: 'admin users', label: 'Admin Users' },
 							{ value: 'instructors', label: 'Instructors' },
 							{ value: 'learners', label: 'Learners' },
+							{ value: 'test learners', label: 'Test Learners' },
 							{ value: 'active users', label: 'Active Users' },
 							{ value: 'inactive users', label: 'Inactive Users' },
 						]}
@@ -611,7 +612,15 @@ const AdminUsers = () => {
 												<CustomTableCell value={user.username} />
 												<CustomTableCell value={user.email} />
 												{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}
-												{!isVerySmallScreen && <CustomTableCell value={user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)} />}
+												{!isVerySmallScreen && (
+													<CustomTableCell
+														value={
+															user.role === Roles.TEST_LEARNER
+																? 'Test Learner'
+																: user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)
+														}
+													/>
+												)}
 
 												<TableCell
 													sx={{
@@ -630,7 +639,7 @@ const AdminUsers = () => {
 													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
 														<CustomActionBtn
 															title='User Courses'
-															disabled={user?.role !== Roles.USER}
+															disabled={!isLearnerRole(user?.role)}
 															onClick={() => {
 																openUserCoursesModal(index);
 															}}
@@ -667,8 +676,8 @@ const AdminUsers = () => {
 																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 																		textTransform: 'capitalize',
 																	}}>
-																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER]
-																		?.filter((type) => {
+																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER]
+																		.filter((type) => {
 																			// Only owner can see super-admin role
 																			if (type === Roles.SUPER_ADMIN) {
 																				return loggedInUser?.role === Roles.OWNER;
@@ -681,11 +690,11 @@ const AdminUsers = () => {
 																				key={type}
 																				sx={{
 																					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																					textTransform: 'capitalize',
+																					textTransform: type === Roles.TEST_LEARNER ? 'none' : 'capitalize',
 																					padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 																					minHeight: '2rem',
 																				}}>
-																				{type}
+																				{type === Roles.TEST_LEARNER ? 'Test Learner' : type}
 																			</MenuItem>
 																		))}
 																</Select>

@@ -1,13 +1,13 @@
 import { useContext } from 'react';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { Roles } from '../interfaces/enums';
+import { isLearnerRole, Roles } from '../interfaces/enums';
 
 export const useAuth = () => {
 	const { user } = useContext(UserAuthContext);
 
 	const isAuthenticated = !!user;
 	const isAdmin = user?.role === Roles.ADMIN;
-	const isLearner = user?.role === Roles.USER;
+	const isLearner = isLearnerRole(user?.role);
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
 	const isOwner = user?.role === Roles.OWNER;
 	const isSuperAdmin = user?.role === Roles.SUPER_ADMIN;

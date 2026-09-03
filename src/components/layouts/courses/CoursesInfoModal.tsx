@@ -202,6 +202,7 @@ const CoursesInfoModal = ({ courseId, courseTitle, isCourseInfoDialogOpen, setIs
 								<Grid item xs={9}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'}
+										{singleCourse?.isTestCourse ? ' — Test' : ''}
 									</Typography>
 								</Grid>
 							</>

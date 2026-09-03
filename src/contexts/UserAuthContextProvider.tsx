@@ -4,7 +4,7 @@ import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { User } from '../interfaces/user';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
 import { shouldFetchLearnerEnrollmentList } from '../utils/learnerEnrollmentDataRoutes';
@@ -82,7 +82,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const hasAdminAccess = user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN;
 		if (hasAdminAccess) {
 			navigate('/admin/dashboard', { replace: true });
-		} else if (user.role === Roles.USER) {
+		} else if (isLearnerRole(user.role)) {
 			navigate('/dashboard', { replace: true });
 		} else if (user.role === Roles.INSTRUCTOR) {
 			navigate('/instructor/dashboard', { replace: true });
@@ -181,7 +181,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	}, []); // Remove skipFetchDuringSignup from dependencies since we're using ref
 
 	const learnerNeedsEnrollmentList =
-		user?.role === Roles.USER && shouldFetchLearnerEnrollmentList(pathname);
+		isLearnerRole(user?.role) && shouldFetchLearnerEnrollmentList(pathname);
 
 	// React Query for userCourseData (learners: defer until routes that need enrollments — lighter sign-in)
 	const { data: userCourseDataFromQuery } = useQuery<UserCoursesIdsWithCourseIds[]>(
@@ -237,7 +237,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					const userData = responseUserData.data.data[0];
 
 					if (userData && userData._id) {
-						if (userData.role === Roles.USER && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
+						if (isLearnerRole(userData.role) && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
 							await registerLearnerSessionOnServer();
 						}
 

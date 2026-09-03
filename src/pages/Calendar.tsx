@@ -13,7 +13,7 @@ import { CalendarDisplayEvent, Event, isEventDetailLoaded } from '../interfaces/
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import CreateEventDialog from '../components/layouts/calendar/CreateEventDialog';
 import EventDetailsDialog from '../components/layouts/calendar/EventDetailsDialog';
 import EditEventDialog from '../components/layouts/calendar/EditEventDialog';
@@ -113,7 +113,7 @@ const EventCalendar = () => {
 			return;
 		}
 
-		if (user?.role === Roles.USER) {
+		if (isLearnerRole(user?.role)) {
 				if (selectedEvent.createdBy === user?._id && hasPlatformAccess) {
 					setEditEventModalOpen(true);
 				} else {

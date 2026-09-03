@@ -40,6 +40,8 @@ export interface BaseCourse {
 	capacity?: number | null;
 	isCapacityFull?: boolean;
 	isRegistrationClosedByAdmin?: boolean;
+	/** Hidden from LP and regular learners; only test-learner accounts can take the course. */
+	isTestCourse?: boolean;
 	activeEnrollmentCount?: number;
 	clonedFromId?: string;
 	clonedFromTitle?: string;

@@ -4,7 +4,7 @@ import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import { UserAuthContext } from './UserAuthContextProvider';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { ResourceFolder, ResourceItem, ResourceAccessInfo } from '../interfaces/resource';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import axios from '@utils/axiosInstance';
@@ -256,7 +256,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		isError: foldersError,
 	} = useQuery(['resourceFolders', orgId, foldersPageNumber], () => fetchFolders(foldersPageNumber), {
 		enabled: !!orgId && canFetchResourcesData && !isResourceFolderRoute,
-		staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
+		staleTime: !isLearnerRole(user?.role) ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 		cacheTime: 30 * 60 * 1000,
 		refetchOnMount: true,
 		refetchOnWindowFocus: false, // Consistent with other admin pages
@@ -272,7 +272,7 @@ const ResourcesContextProvider = ({ children }: ResourcesContextProviderProps) =
 		() => fetchItems(currentFolderId!, itemsPageNumber),
 		{
 			enabled: !!orgId && canFetchResourcesData && !!currentFolderId,
-			staleTime: user?.role !== Roles.USER ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
+			staleTime: !isLearnerRole(user?.role) ? 0 : 3 * 60 * 1000, // Real-time for admins/instructors, 3 min for learners
 			cacheTime: 30 * 60 * 1000,
 			refetchOnMount: true,
 			refetchOnWindowFocus: false, // Consistent with other admin pages

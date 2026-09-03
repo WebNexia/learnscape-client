@@ -3,7 +3,7 @@ import axios from '@utils/axiosInstance';
 import { Lesson } from '../interfaces/lessons';
 import { QuestionInterface } from '../interfaces/question';
 import { useAuth } from './useAuth';
-import { Roles } from '../interfaces/enums';
+import { isLearnerRole } from '../interfaces/enums';
 
 /** Lesson bodies change infrequently once published; invalidate on completion / progress mutations. */
 export const LEARNER_LESSON_STALE_MS = 30 * 60 * 1000;
@@ -44,7 +44,7 @@ export const useLearnerLesson = (
 		learnerLessonQueryKey(lessonId, courseId),
 		(): Promise<Lesson> => fetchLearnerLesson(lessonId, courseId, baseUrl),
 		{
-			enabled: enabled && !!lessonId && !!user?._id && user?.role === Roles.USER,
+			enabled: enabled && !!lessonId && !!user?._id && isLearnerRole(user?.role),
 			staleTime: LEARNER_LESSON_STALE_MS,
 			cacheTime: LEARNER_LESSON_CACHE_MS,
 			retry: 2,
