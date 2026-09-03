@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import { PageName, Roles } from '../../../interfaces/enums';
+import { PageName, Roles, isLearnerRole } from '../../../interfaces/enums';
 import {
 	AssignmentIndRounded,
 	Ballot,
@@ -91,10 +91,10 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 				<Box
 					sx={{
 						flexGrow: 1,
-						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'hidden' : 'auto',
+						overflowY: isMobilePortrait && isLearnerRole(user?.role) ? 'hidden' : 'auto',
 						width: '100%',
 						overflowX: 'hidden',
-						height: isMobilePortrait && user?.role === Roles.USER ? 'auto' : '50vh',
+						height: isMobilePortrait && isLearnerRole(user?.role) ? 'auto' : '50vh',
 					}}>
 					<Box
 						sx={{
@@ -283,7 +283,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 									)}
 								</>
 							)}
-							{user?.role === Roles.USER && (
+							{isLearnerRole(user?.role) && (
 								<>
 									<SidebarBtn
 										btnText='Dashboard'

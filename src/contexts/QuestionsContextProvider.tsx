@@ -5,7 +5,7 @@ import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { useAuth } from '../hooks/useAuth';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { QuestionInterface } from '../interfaces/question';
 import { QuestionType } from '../interfaces/questionTypes';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
@@ -69,7 +69,7 @@ const QuestionsContextProvider = ({ children, fetchOnMount = true }: QuestionsCo
 		entityKey: isInstructor ? 'instructorQuestions' : 'allQuestions',
 		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true,

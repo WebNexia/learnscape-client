@@ -3,7 +3,7 @@ import { Box, FormControl, Select, MenuItem, InputAdornment, Chip, Typography, u
 import { Search } from '@mui/icons-material';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles } from '../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../interfaces/enums';
 import { useAuth } from '../../hooks/useAuth';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
@@ -86,7 +86,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const themeUseTheme = useTheme();
-	const isLearner = !hasAdminAccess && user?.role === Roles.USER;
+	const isLearner = !hasAdminAccess && isLearnerRole(user?.role);
 	const pageBackground = isLearner ? theme.bgColor?.learnerContentBg : theme.palette.secondary.main || '#FFFF';
 
 	const stickyStyles = isSticky

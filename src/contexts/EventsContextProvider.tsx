@@ -36,7 +36,7 @@ const mergeUniqueCalendarEvents = (...eventLists: CalendarGridEvent[][]): Calend
 	return Array.from(eventById.values());
 };
 import { useAuth } from '../hooks/useAuth';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { UserAuthContext } from './UserAuthContextProvider';
 
 interface EventsContextTypes {
@@ -239,10 +239,10 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	// Use month-based fetching for calendar routes
 	const { data: eventsData, isLoading: isCalendarLoading } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
 		enabled: isEnabled && !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && isCalendarRoute,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: hasAdminAccess,
-		refetchOnMount: user?.role !== Roles.USER,
+		refetchOnMount: !isLearnerRole(user?.role),
 	});
 
 	// Get events data from React Query data

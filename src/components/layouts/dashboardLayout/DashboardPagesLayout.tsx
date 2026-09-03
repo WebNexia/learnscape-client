@@ -5,7 +5,7 @@ import theme from '../../../themes';
 import { CSSProperties, ReactNode, useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../../interfaces/enums';
 import { useAuth } from '../../../hooks/useAuth';
 
 interface DashboardPagesLayoutProps {
@@ -19,7 +19,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRigh
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess } = useAuth();
-	const isLearner = !hasAdminAccess && user?.role === Roles.USER;
+	const isLearner = !hasAdminAccess && isLearnerRole(user?.role);
 	const contentBackground = isLearner ? theme.bgColor?.learnerContentBg : theme.palette.secondary.main || '#FFFF';
 
 	return (

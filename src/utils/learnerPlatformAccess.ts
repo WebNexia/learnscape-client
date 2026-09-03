@@ -1,5 +1,5 @@
 import { User } from '../interfaces/user';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 import { isSubscriptionsProductEnabled } from '../config/features';
 
 /**
@@ -11,7 +11,7 @@ export function hasLearnerPlatformFeatureAccess(
 	options?: { hasActiveCourseEnrollment?: boolean }
 ): boolean {
 	if (!user) return false;
-	if (user.role !== Roles.USER) return true;
+	if (!isLearnerRole(user.role)) return true;
 
 	if (user.hasRegisteredCourse) return true;
 	if (user.accessLevel === 'full' || user.accessLevel === 'subscription') return true;

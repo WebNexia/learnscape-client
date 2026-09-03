@@ -1,3 +1,4 @@
+import { isLearnerRole } from '../../../interfaces/enums';
 import { Box, FormControl, IconButton, Input, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import React, { ChangeEvent, forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
@@ -178,7 +179,7 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 						{labelDescription && <span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{labelDescription}</span>}
 					</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						{user?.role !== 'learner' && (
+						{!isLearnerRole(user?.role) && (
 							<>
 								<Box>
 									<Typography
@@ -206,7 +207,7 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 						)}
 					</Box>
 				</Box>
-				{((!enterImageUrl && user?.role !== 'learner') || user?.role === 'learner') &&
+				{((!enterImageUrl && !isLearnerRole(user?.role)) || isLearnerRole(user?.role)) &&
 					!isImageUploadLimitReached &&
 					imageUploadAttempts < maxSessionAttempts && (
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -278,7 +279,7 @@ const HandleImageUploadURL = forwardRef<HandleImageUploadURLHandle, HandleImageU
 					</CustomErrorMessage>
 				)}
 
-				{enterImageUrl && user?.role !== 'learner' && (
+				{enterImageUrl && !isLearnerRole(user?.role) && (
 					<CustomTextField
 						disabled={disabled}
 						placeholder='Image URL'

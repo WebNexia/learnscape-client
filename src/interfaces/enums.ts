@@ -93,10 +93,13 @@ export const enum PageName {
 export const enum Roles {
 	ADMIN = 'admin',
 	USER = 'learner',
+	TEST_LEARNER = 'test-learner',
 	INSTRUCTOR = 'instructor',
 	SUPER_ADMIN = 'super-admin',
 	OWNER = 'owner',
 }
+
+export const isLearnerRole = (role?: string | null) => role === Roles.USER || role === Roles.TEST_LEARNER;
 
 export const enum QuestionType {
 	MULTIPLE_CHOICE = 'Multiple Choice',

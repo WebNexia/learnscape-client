@@ -10,7 +10,7 @@ import { FeedbackFormTemplate } from '../interfaces/feedbackFormTemplate';
 import { FeedbackFormSubmission } from '../interfaces/feedbackFormSubmission';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { usePaginatedEntity } from '../hooks/usePaginatedContextData';
-import { Roles } from '../interfaces/enums';
+import { Roles, isLearnerRole } from '../interfaces/enums';
 
 interface FeedbackFormsContextTypes {
 	// Forms
@@ -135,7 +135,7 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		entityKey: currentCourseId ? `feedbackForms-${currentCourseId}` : 'feedbackForms',
 		enabled: isFormsEnabled && !!orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute,
 		role: user?.role as Roles,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 		disableAutoGapFill: true,
@@ -153,7 +153,7 @@ const FeedbackFormsContextProvider = ({ children }: FeedbackFormsContextProvider
 		queryKey: ['feedbackFormTemplates', orgId],
 		queryFn: () => feedbackFormsService.getAllTemplates(),
 		enabled: isTemplatesEnabled && !!orgId && isAuthenticated && canFetchStaffForms && !isLandingPageRoute,
-		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		staleTime: !isLearnerRole(user?.role) ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		refetchOnMount: false,

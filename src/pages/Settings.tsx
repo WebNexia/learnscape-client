@@ -10,7 +10,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged } from 'firebase/auth';
 import theme from '../themes';
 import { Info, SupportAgent, Visibility, VisibilityOff } from '@mui/icons-material';
-import { PasswordUpdateErrorMessages, Roles, TextFieldTypes } from '../interfaces/enums';
+import { PasswordUpdateErrorMessages, Roles, TextFieldTypes, isLearnerRole } from '../interfaces/enums';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -799,7 +799,7 @@ const Settings = () => {
 						</Box>
 
 
-						{user?.role === Roles.USER && (
+						{isLearnerRole(user?.role) && (
 							<Box
 								sx={{
 									display: 'flex',

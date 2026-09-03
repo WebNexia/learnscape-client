@@ -139,7 +139,11 @@ export const extractVideoId = (url: string): string | null => {
 
 	// YouTube
 	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
-		const patterns = [/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/, /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/];
+		const patterns = [
+			/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/,
+			/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
+			/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/,
+		];
 
 		for (const pattern of patterns) {
 			const match = url.match(pattern);
@@ -180,3 +184,5 @@ export const getVideoThumbnailUrl = (url: string): string | null => {
 
 	return null;
 };
+
+export const isYouTubeUrl = (url: string): boolean => /youtube\.com|youtu\.be/i.test(url || '');

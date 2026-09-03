@@ -381,6 +381,7 @@ const AdminCourses = () => {
 						{ value: 'closed courses', label: 'Closed Courses' },
 						{ value: 'external courses', label: 'External Courses' },
 						{ value: 'platform courses', label: 'Platform Courses' },
+						{ value: 'test courses', label: 'Test Courses' },
 					]}
 					filterPlaceholder='Filter Courses'
 					searchValue={searchValue}
@@ -571,13 +572,13 @@ const AdminCourses = () => {
 											<CustomTableCell value={course?.title} />
 											<CustomTableCell
 												value={
-													course.isActive
+													(course.isActive
 														? course.isExpired
 															? 'Published - Closed'
 															: 'Published - Open'
 														: course.isExpired
 															? 'Unpublished - Closed'
-															: 'Unpublished - Open'
+															: 'Unpublished - Open') + (course.isTestCourse ? ' — Test' : '')
 												}
 											/>
 											{!isMobileSize && !isInstructor && <CustomTableCell value={course.instructor?.name || 'N/A'} />}

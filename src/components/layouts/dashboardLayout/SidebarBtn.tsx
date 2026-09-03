@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../../interfaces/enums';
 
 interface SidebarBtnProps {
 	btnText?: string;
@@ -19,7 +19,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: S
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
-	const isLearner = user?.role === Roles.USER;
+	const isLearner = isLearnerRole(user?.role);
 
 	// Get role-specific hover color
 	const getHoverColor = () => {

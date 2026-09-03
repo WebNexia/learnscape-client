@@ -1,3 +1,4 @@
+import { isLearnerRole } from '../../interfaces/enums';
 import { Badge, Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { Cancel, Search, AddBox, Chat, DoNotDisturbAlt } from '@mui/icons-material';
 import CustomTextField from '../forms/customFields/CustomTextField';
@@ -105,7 +106,7 @@ const ChatList = ({
 						<Box sx={{ flex: 1 }}>
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
-									disabled={!hasPlatformAccess && user?.role === 'learner'}
+									disabled={!hasPlatformAccess && isLearnerRole(user?.role)}
 									sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />

@@ -21,7 +21,7 @@ import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
-import { Roles } from '../../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../../interfaces/enums';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
@@ -244,7 +244,7 @@ const Sidebar = () => {
 							)}
 						</>
 					)}
-					{user?.role === Roles.USER && (
+					{isLearnerRole(user?.role) && (
 						<>
 							<SidebarBtn
 								btnText='Dashboard'

@@ -7,6 +7,7 @@ import { renderMessageWithEmojis } from '../../utils/renderMessageWithEmojis';
 import { useLearnerPlatformAccess } from '../../hooks/useLearnerPlatformAccess';
 import { isSubscriptionsProductEnabled } from '../../config/features';
 import { LEARNER_SAAS } from '../../constants/learnerSaasUi';
+import { isLearnerRole } from '../../interfaces/enums';
 
 interface MessageListProps {
 	messages: Message[];
@@ -80,7 +81,7 @@ const MessageList = ({
 					width: '100%',
 				}}>
 				<Box>
-					{hasPlatformAccess || user?.role !== 'learner' ? (
+					{hasPlatformAccess || !isLearnerRole(user?.role) ? (
 						<>
 							<Chat sx={{ fontSize: '5rem', color: LEARNER_SAAS.secondaryText, mb: '1rem' }} />
 							<Typography sx={{ color: LEARNER_SAAS.bodyText, fontSize: '0.95rem', maxWidth: '18rem' }}>

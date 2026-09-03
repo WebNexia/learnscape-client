@@ -4,7 +4,7 @@ import { formatMessageTime } from '../../../../utils/formatTime';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../../interfaces/enums';
+import { Roles, isLearnerRole } from '../../../../interfaces/enums';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { truncateText } from '../../../../utils/utilText';
 import CustomDialog from '../../dialog/CustomDialog';
@@ -63,9 +63,9 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								if (hasPlatformAccess || user?.role !== Roles.USER) {
+								if (hasPlatformAccess || !isLearnerRole(user?.role)) {
 									const basePath =
-										user?.role === Roles.USER
+										isLearnerRole(user?.role)
 											? 'community'
 											: isInstructor
 												? 'instructor/community'
