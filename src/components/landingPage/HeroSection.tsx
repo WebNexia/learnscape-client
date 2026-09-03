@@ -449,57 +449,78 @@ const HeroSection = () => {
 					// Mark that user has seen the intro video in this session
 					sessionStorage.setItem('hasSeenIntroVideo', 'true');
 				}}
-				maxWidth='md'
+				maxWidth='xs'
 				PaperProps={{
 					sx: {
 						background: 'transparent',
 						overflow: 'hidden',
+						width: { xs: 'min(92vw, 22rem)', sm: '22rem' },
+						maxWidth: '22rem',
+						boxShadow: 'none',
 					},
 				}}>
-				<DialogContent sx={{ height: '70vh', background: 'transparent', p: 0 }}>
-					{!videoError ? (
-						<UniversalVideoPlayer
-							url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
-							height='100%'
-							width='100%'
-							controls={true}
-							style={{
-								boxShadow: 'none',
-								background: 'transparent',
-								overflow: 'hidden',
-							}}
-							onError={(error) => {
-								console.error('UniversalVideoPlayer error:', error);
-								setVideoError(true);
-							}}
-						/>
-					) : (
-						<ReactPlayer
-							url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
-							height='100%'
-							width='100%'
-							controls={true}
-							config={{
-								youtube: {
-									playerVars: {
-										autoplay: 0,
-										controls: 1,
-										modestbranding: 1,
-										rel: 0,
-										showinfo: 0,
-									},
-								},
-							}}
-							style={{
-								boxShadow: 'none',
-								background: 'transparent',
-								overflow: 'hidden',
-							}}
-							onError={(error) => {
-								console.error('ReactPlayer fallback error:', error);
-							}}
-						/>
-					)}
+				<DialogContent
+					sx={{
+						background: 'transparent',
+						p: 0,
+						display: 'flex',
+						justifyContent: 'center',
+					}}>
+					<Box
+						sx={{
+							position: 'relative',
+							width: 'min(100%, calc(80vh * 9 / 16))',
+							aspectRatio: '9 / 16',
+							overflow: 'hidden',
+							borderRadius: 1,
+							bgcolor: '#000',
+						}}>
+						<Box sx={{ position: 'absolute', inset: 0 }}>
+							{!videoError ? (
+								<UniversalVideoPlayer
+									url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
+									height='100%'
+									width='100%'
+									controls={true}
+									style={{
+										boxShadow: 'none',
+										background: 'transparent',
+										overflow: 'hidden',
+									}}
+									onError={(error) => {
+										console.error('UniversalVideoPlayer error:', error);
+										setVideoError(true);
+									}}
+								/>
+							) : (
+								<ReactPlayer
+									url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
+									height='100%'
+									width='100%'
+									controls={true}
+									config={{
+										youtube: {
+											playerVars: {
+												autoplay: 0,
+												controls: 1,
+												modestbranding: 1,
+												rel: 0,
+												showinfo: 0,
+											},
+										},
+									}}
+									style={{
+										boxShadow: 'none',
+										background: 'transparent',
+										overflow: 'hidden',
+									}}
+									onError={(error) => {
+										console.error('ReactPlayer fallback error:', error);
+									}}
+								/>
+							)}
+						</Box>
+					</Box>
 				</DialogContent>
 			</CustomDialog>
 
