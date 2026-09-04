@@ -459,7 +459,7 @@ const HeroSection = () => {
 				<DialogContent sx={{ height: '70vh', background: 'transparent', p: 0 }}>
 					{!videoError ? (
 						<UniversalVideoPlayer
-							url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
+							url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
 							height='100%'
 							width='100%'
 							controls={true}
@@ -475,7 +475,7 @@ const HeroSection = () => {
 						/>
 					) : (
 						<ReactPlayer
-							url='https://www.youtube.com/watch?v=uXNicuvHJKw&list=PLZjtr7kGq5mw'
+							url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
 							height='100%'
 							width='100%'
 							controls={true}

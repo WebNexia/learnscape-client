@@ -23,7 +23,7 @@ const ChatWhatsApp = () => {
 					},
 				}}>
 				<IconButton
-					href='https://wa.me/447498163458'
+					href='https://wa.me/4478664813752'
 					target='_blank'
 					rel='noopener noreferrer'
 					sx={{
