@@ -24,7 +24,7 @@ import { getCourseProgress } from '../../../utils/courseProgress';
 import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
-import { extractVideoId, isYouTubeUrl } from '../../../utils/videoUrlUtils';
+import { extractVideoId } from '../../../utils/videoUrlUtils';
 
 const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
 
@@ -734,16 +734,10 @@ const CoursePageBanner = ({
 					openModal={isIntroVideoOpen}
 					closeModal={closeIntroVideoModal}
 					title={course.title}
-					maxWidth={isYouTubeUrl(introVideoUrl) ? 'xs' : 'md'}
+					maxWidth='md'
 					PaperProps={{
 						sx: {
 							backgroundColor: theme.palette.secondary.main,
-							...(isYouTubeUrl(introVideoUrl)
-								? {
-										width: { xs: 'min(92vw, 22rem)', sm: '22rem' },
-										maxWidth: '22rem',
-									}
-								: {}),
 						},
 					}}>
 					<DialogContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 0 }}>
@@ -751,9 +745,8 @@ const CoursePageBanner = ({
 							<Box
 								sx={{
 									position: 'relative',
-									width: isYouTubeUrl(introVideoUrl) ? 'min(100%, calc((82vh - 8rem) * 9 / 16))' : '100%',
-									mx: 'auto',
-									...(isYouTubeUrl(introVideoUrl) ? { aspectRatio: '9 / 16' } : { pt: '56.25%' }),
+									width: '100%',
+									pt: '56.25%',
 									borderRadius: 1,
 									overflow: 'hidden',
 									bgcolor: '#000',
