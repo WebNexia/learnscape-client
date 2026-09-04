@@ -454,52 +454,69 @@ const HeroSection = () => {
 					sx: {
 						background: 'transparent',
 						overflow: 'hidden',
+						boxShadow: 'none',
+						margin: { xs: '0.75rem', sm: '1.5rem' },
+						width: { xs: 'calc(100% - 1.5rem)', sm: '100%' },
+						maxWidth: { xs: 'calc(100% - 1.5rem)', md: '900px' },
 					},
 				}}>
-				<DialogContent sx={{ height: '70vh', background: 'transparent', p: 0 }}>
-					{!videoError ? (
-						<UniversalVideoPlayer
-							url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
-							height='100%'
-							width='100%'
-							controls={true}
-							style={{
-								boxShadow: 'none',
-								background: 'transparent',
-								overflow: 'hidden',
-							}}
-							onError={(error) => {
-								console.error('UniversalVideoPlayer error:', error);
-								setVideoError(true);
-							}}
-						/>
-					) : (
-						<ReactPlayer
-							url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
-							height='100%'
-							width='100%'
-							controls={true}
-							config={{
-								youtube: {
-									playerVars: {
-										autoplay: 0,
-										controls: 1,
-										modestbranding: 1,
-										rel: 0,
-										showinfo: 0,
-									},
-								},
-							}}
-							style={{
-								boxShadow: 'none',
-								background: 'transparent',
-								overflow: 'hidden',
-							}}
-							onError={(error) => {
-								console.error('ReactPlayer fallback error:', error);
-							}}
-						/>
-					)}
+				<DialogContent sx={{ background: 'transparent', p: 0, overflow: 'hidden' }}>
+					<Box
+						sx={{
+							position: 'relative',
+							width: 'min(100%, calc((100dvh - 2rem) * 16 / 9))',
+							aspectRatio: '16 / 9',
+							mx: 'auto',
+							overflow: 'hidden',
+							bgcolor: '#000',
+							borderRadius: { xs: '0.5rem', sm: '0.75rem' },
+						}}>
+						<Box sx={{ position: 'absolute', inset: 0 }}>
+							{!videoError ? (
+								<UniversalVideoPlayer
+									url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
+									height='100%'
+									width='100%'
+									controls={true}
+									style={{
+										boxShadow: 'none',
+										background: 'transparent',
+										overflow: 'hidden',
+									}}
+									onError={(error) => {
+										console.error('UniversalVideoPlayer error:', error);
+										setVideoError(true);
+									}}
+								/>
+							) : (
+								<ReactPlayer
+									url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
+									height='100%'
+									width='100%'
+									controls={true}
+									config={{
+										youtube: {
+											playerVars: {
+												autoplay: 0,
+												controls: 1,
+												modestbranding: 1,
+												rel: 0,
+												showinfo: 0,
+											},
+										},
+									}}
+									style={{
+										boxShadow: 'none',
+										background: 'transparent',
+										overflow: 'hidden',
+									}}
+									onError={(error) => {
+										console.error('ReactPlayer fallback error:', error);
+									}}
+								/>
+							)}
+						</Box>
+					</Box>
 				</DialogContent>
 			</CustomDialog>
 
