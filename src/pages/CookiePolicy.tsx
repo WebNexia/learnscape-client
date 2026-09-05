@@ -97,14 +97,19 @@ const CookiePolicy = () => {
 					description: 'YouTube, Vimeo ve Dailymotion gibi gömülü videolar kendi çerezlerini ayarlayabilir.',
 				},
 			],
-			section2_3Title: '2.3 Analitik Çerezler (İsteğe Bağlı)',
+			section2_3Title: '2.3 Analitik (Birinci Taraf)',
 			section2_3Content:
-				'Platformda Google Analytics, Meta Pixel veya benzeri reklam/pazarlama izleme araçları kullanılmamaktadır. Yalnızca aşağıdaki isteğe bağlı analitik çerezler söz konusu olabilir:',
+				'Platformda Google Analytics, Meta Pixel veya benzeri reklam/pazarlama izleme araçları kullanılmamaktadır. Trafik ölçümü birinci taraf olarak, kendi sunucumuzda yapılır:',
 			analyticsCookies: [
 				{
-					title: 'Site Analitiği (birinci taraf):',
+					title: 'Çerezsiz trafik ölçümü (isteğe bağlı çerez gerektirmez):',
 					description:
-						'İsteğe bağlı çerezleri kabul ettiğinizde, hangi sayfaları ziyaret ettiğinizi, nereden geldiğinizi ve yaklaşık konumunuzu (ülke/şehir) kaydederek hizmetlerimizi geliştirmemize yardımcı olur. Google Analytics veya reklam pikselleri kullanılmaz. Bu veriler en fazla 180 gün saklanır.',
+						'Sayfa yolu, yönlendiren site, cihaz türü ve yaklaşık konum (ülke/şehir) kaydedilir. Ham IP adresi saklanmaz; yalnızca hash’lenmiş bir değer kullanılır. Cihazınıza analitik çerezi veya kalıcı ziyaretçi kimliği yazılmaz. Ziyaretçi kimliği her gün yenilenen, sunucu tarafı bir tahmindir. Bu veriler en fazla 180 gün saklanır ve reklam amacıyla paylaşılmaz.',
+				},
+				{
+					title: 'Kalıcı ziyaretçi kimliği (isteğe bağlı):',
+					description:
+						'İsteğe bağlı çerezleri kabul ederseniz, aynı ziyaretçiyi oturumlar arasında daha doğru ayırt edebilmek için cihazınızda anonim bir kimlik saklanabilir. Reddetmeniz halinde çerezsiz ölçüm devam eder.',
 				},
 				{
 					title: 'Stripe Analitik:',
@@ -183,7 +188,7 @@ const CookiePolicy = () => {
 				'Tarayıcınızın çerez ayarlarını temizleyerek (not: bu web sitesi işlevselliğini etkileyebilir)',
 				'Tercihlerinizi güncellemek için bizimle iletişime geçerek',
 			],
-			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hâlâ kullanılacaktır. Reddetme; Zoom/TinyMCE tercihleri, form gönderim takibi, IP tabanlı konum önbelleği, analitik ziyaretçi kimliği ve tanıtım videosu tercihleri gibi isteğe bağlı verileri temizler. Gömülü video platformları ve ödeme güvenliği için gerekli üçüncü taraf çerezleri devam edebilir; ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
+			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hâlâ kullanılacaktır. Reddetme; Zoom/TinyMCE tercihleri, form gönderim takibi, IP tabanlı konum önbelleği, analitik ziyaretçi kimliği ve tanıtım videosu tercihleri gibi isteğe bağlı verileri temizler. Çerezsiz birinci taraf trafik ölçümü (cihaza analitik kimliği yazmadan) devam edebilir. Gömülü video platformları ve ödeme güvenliği için gerekli üçüncü taraf çerezleri devam edebilir; ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
 			section5Title: '5. Bu Çerez Politikasındaki Değişiklikler',
 			section5Content:
 				'Bu Çerez Politikasını zaman zaman güncelleyebiliriz. Yeni Çerez Politikasını bu sayfaya yayınlayarak ve "Son güncelleme" tarihini güncelleyerek size herhangi bir değişiklikten haberdar edeceğiz.',
@@ -250,14 +255,19 @@ const CookiePolicy = () => {
 					description: 'Embedded videos from YouTube, Vimeo, and Dailymotion may set their own cookies.',
 				},
 			],
-			section2_3Title: '2.3 Analytics Cookies (Optional)',
+			section2_3Title: '2.3 Analytics (First-Party)',
 			section2_3Content:
-				'The platform does not use Google Analytics, Meta Pixel, or similar advertising/marketing tracking tools. Only the following optional analytics cookies may apply:',
+				'The platform does not use Google Analytics, Meta Pixel, or similar advertising/marketing tracking tools. Traffic measurement is first-party and processed on our own servers:',
 			analyticsCookies: [
 				{
-					title: 'First-party site analytics:',
+					title: 'Cookieless traffic measurement (no optional cookie required):',
 					description:
-						'If you accept optional cookies, we record which pages you visit, where you arrived from, and an approximate location (country/city) to improve our services. We do not use Google Analytics or advertising pixels. This data is kept for up to 180 days.',
+						'We record the page path, referring site, device type, and approximate location (country/city). The raw IP address is not stored; only a hashed value is kept. We do not write an analytics cookie or a persistent visitor ID to your device. Visitor identity is an on-server estimate that rotates daily. This data is kept for up to 180 days and is not shared for advertising.',
+				},
+				{
+					title: 'Persistent visitor ID (optional):',
+					description:
+						'If you accept optional cookies, an anonymous identifier may be stored on your device so returning visitors can be distinguished more accurately across sessions. If you decline, cookieless measurement continues.',
 				},
 				{
 					title: 'Stripe Analytics:',
@@ -336,7 +346,7 @@ const CookiePolicy = () => {
 				"Clearing your browser's cookie settings (note: this may affect website functionality)",
 				'Contacting us to update your preferences',
 			],
-			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining clears optional data such as Zoom/TinyMCE preferences, form submission tracking, IP-based location cache, analytics visitor identifiers, and intro video preferences. Third-party cookies required for embedded video platforms and payment security may still apply; however, this will not prevent you from using our core services such as accessing courses, taking lessons, or making payments.',
+			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining clears optional data such as Zoom/TinyMCE preferences, form submission tracking, IP-based location cache, analytics visitor identifiers, and intro video preferences. First-party cookieless traffic measurement (without writing an analytics ID to your device) may continue. Third-party cookies required for embedded video platforms and payment security may still apply; however, this will not prevent you from using our core services such as accessing courses, taking lessons, or making payments.',
 			section5Title: '5. Changes to This Cookie Policy',
 			section5Content:
 				'We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last updated" date.',

@@ -111,7 +111,7 @@ const Footer = () => {
 						</Typography>
 						<Box
 							component='a'
-							href={`https://wa.me/447498163458?text=${encodeURIComponent('Feel free to ask us anything about our courses!')}`}
+							href={`https://wa.me/447864813752?text=${encodeURIComponent('Feel free to ask us anything about our courses!')}`}
 							target='_blank'
 							rel='noopener noreferrer'
 							sx={{
