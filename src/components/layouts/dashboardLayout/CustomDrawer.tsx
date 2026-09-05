@@ -22,6 +22,7 @@ import {
 	QuizOutlined,
 	Settings,
 	VideoCall,
+	Insights,
 } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../../hooks/useAuth';
@@ -35,7 +36,7 @@ interface CustomDrawerProps {
 const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: CustomDrawerProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
-	const { hasAdminAccess, canAccessPayments } = useAuth();
+	const { hasAdminAccess, canAccessPayments, canAccessAnalytics } = useAuth();
 	const { isMobilePortrait } = useContext(MediaQueryContext);
 
 	const currentPage = window.location.pathname?.includes('admin')
@@ -274,12 +275,39 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										active={selectedPage === PageName.ADMIN_CONSULTATIONS || window.location.pathname?.includes('/admin/consultations')}
 									/>
 									{canAccessPayments && (
-										<SidebarBtn
-											btnText='Payments'
-											IconName={CreditCard}
-											onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
-											active={selectedPage === PageName.ADMIN_PAYMENTS}
-										/>
+										canAccessAnalytics ? (
+											<SidebarGroupedMenu
+												mainBtnText='Payments'
+												mainIconName={CreditCard}
+												mainPath='/admin/payments'
+												mainIsActive={selectedPage === PageName.ADMIN_PAYMENTS || selectedPage === PageName.ADMIN_ANALYTICS || window.location.pathname?.includes('/admin/payments')}
+												subMenuItems={[
+													{
+														btnText: 'Payments',
+														IconName: CreditCard,
+														path: '/admin/payments',
+														isActive: selectedPage === PageName.ADMIN_PAYMENTS && !window.location.pathname?.includes('/analytics'),
+													},
+													{
+														btnText: 'Analytics',
+														IconName: Insights,
+														path: '/admin/payments/analytics',
+														isActive: selectedPage === PageName.ADMIN_ANALYTICS || window.location.pathname?.includes('/admin/payments/analytics'),
+													},
+												]}
+												onNavigate={(path) => {
+													const pageName = path.includes('analytics') ? PageName.ADMIN_ANALYTICS : PageName.ADMIN_PAYMENTS;
+													navigateWithPage(pageName, path);
+												}}
+											/>
+										) : (
+											<SidebarBtn
+												btnText='Payments'
+												IconName={CreditCard}
+												onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
+												active={selectedPage === PageName.ADMIN_PAYMENTS}
+											/>
+										)
 									)}
 								</>
 							)}

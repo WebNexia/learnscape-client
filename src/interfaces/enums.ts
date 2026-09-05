@@ -70,6 +70,7 @@ export const enum PageName {
 	ADMIN_SETTINGS = 'Settings',
 	ADMIN_QUIZ_SUBMISSIONS = 'Submissions',
 	ADMIN_PAYMENTS = 'Payments',
+	ADMIN_ANALYTICS = 'Analytics',
 	INSTRUCTOR_DASHBOARD = 'Dashboard',
 	INSTRUCTOR_COURSES = 'Courses',
 	INSTRUCTOR_LESSONS = 'Lessons',

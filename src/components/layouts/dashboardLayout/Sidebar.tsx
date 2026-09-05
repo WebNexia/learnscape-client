@@ -16,6 +16,7 @@ import {
 	QuizOutlined,
 	Settings,
 	VideoCall,
+	Insights,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
@@ -30,7 +31,7 @@ const Sidebar = () => {
 	const navigate = useNavigate();
 
 	const { user } = useContext(UserAuthContext);
-	const { hasAdminAccess } = useAuth();
+	const { hasAdminAccess, canAccessAnalytics } = useAuth();
 	const location = useLocation();
 
 	const hasUnreadMessages = useUnreadMessages();
@@ -235,12 +236,36 @@ const Sidebar = () => {
 								active={currentPath?.includes('/admin/consultations')}
 							/>
 							{(user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
-								<SidebarBtn
-									btnText='Payments'
-									IconName={CreditCard}
-									onClick={() => navigateWithPage(`/admin/payments`)}
-									active={currentPath?.includes('/admin/payments')}
-								/>
+								canAccessAnalytics ? (
+									<SidebarGroupedMenu
+										mainBtnText='Payments'
+										mainIconName={CreditCard}
+										mainPath='/admin/payments'
+										mainIsActive={currentPath?.includes('/admin/payments')}
+										subMenuItems={[
+											{
+												btnText: 'Payments',
+												IconName: CreditCard,
+												path: '/admin/payments',
+												isActive: currentPath?.includes('/admin/payments') && !currentPath?.includes('/analytics'),
+											},
+											{
+												btnText: 'Analytics',
+												IconName: Insights,
+												path: '/admin/payments/analytics',
+												isActive: currentPath?.includes('/admin/payments/analytics'),
+											},
+										]}
+										onNavigate={navigateWithPage}
+									/>
+								) : (
+									<SidebarBtn
+										btnText='Payments'
+										IconName={CreditCard}
+										onClick={() => navigateWithPage(`/admin/payments`)}
+										active={currentPath?.includes('/admin/payments')}
+									/>
+								)
 							)}
 						</>
 					)}
