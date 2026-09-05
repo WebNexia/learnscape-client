@@ -387,7 +387,7 @@ export default function CartPaymentDialog({
 
 					</Box>
 					<Typography sx={{ fontFamily: DIALOG_FONT, fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
-						Kart bilgileriniz saklanmaz
+						Kart bilgileriniz Stripe sayfasında girilir ve saklanmaz
 					</Typography>
 				</Box>
 			</Box>

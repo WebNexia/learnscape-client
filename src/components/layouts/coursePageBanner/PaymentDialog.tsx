@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Typography, Button, Card, CardActionArea, CardContent, Collapse, IconButton } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Typography, Button, Card, CardActionArea, CardContent, Collapse, IconButton, Alert } from '@mui/material';
 import { ExpandMore, } from '@mui/icons-material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
@@ -17,7 +17,6 @@ import {
 	useSlowNetworkHint,
 } from '../../../utils/hostedCheckout';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
@@ -139,7 +138,6 @@ const PaymentDialog = ({
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
-		setErrorMessage('');
 	};
 
 	const resetRecaptcha = () => {
@@ -544,14 +542,16 @@ const PaymentDialog = ({
 
 		if (!preserveError) {
 			setErrorMessage('');
-			resetRecaptcha();
 		}
 
 		setIsSubmitted(false);
 		setIsProcessing(false);
 		setIsAlreadyEnrolled(false);
 		setIsEmailVerified(true);
-		resetRecaptcha();
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
 	};
 
 	return (
@@ -1063,64 +1063,75 @@ const PaymentDialog = ({
 				</Box>
 
 				{errorMessage && (
-					<CustomErrorMessage
+					<Alert
+						severity='error'
 						sx={{
 							width: '100%',
-							padding: { xs: '1.5rem 0.75rem 0 0.75rem', sm: '1.5rem 1rem 0 1rem', md: '1.5rem 2rem 0 2rem', lg: '1.5rem 2rem 0 2rem' },
-							fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+							mx: { xs: 1, sm: 2 },
+							mt: 1.5,
+							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 							fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+							whiteSpace: 'pre-line',
 						}}>
-						<span style={{ whiteSpace: 'pre-line' }}>
-							{errorMessage}
-							{!isUserAccountExist && fromHomePage && (
-								<span
+						{errorMessage}
+						{!isUserAccountExist && fromHomePage && (
+							<>
+								<Box
+									component='span'
 									onClick={() => window.open('/auth', '_blank')}
-									style={{
-										color: theme.textColor?.greenSecondary.main,
+									sx={{
+										color: theme.textColor?.greenSecondary?.main,
 										textDecoration: 'underline',
 										cursor: 'pointer',
 										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+										ml: 0.5,
+										fontWeight: 600,
 									}}>
 									{isTrUi ? 'Buraya tıklayın' : 'Click here'}
-								</span>
-							)}
-							{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
-								<Box sx={{ mt: 1 }}>
-									<Button
-										onClick={handleResendVerification}
-										disabled={isResendingVerification}
-										sx={{
-											'color': theme.textColor?.greenSecondary.main,
-											'textDecoration': 'underline',
-											'cursor': 'pointer',
-											'fontSize': isMobileSize ? '0.65rem' : '0.75rem',
-											'fontFamily': fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-											'textTransform': 'none',
-											'&:hover': {
-												backgroundColor: 'transparent',
-												textDecoration: 'underline',
-											},
-										}}>
-										{isResendingVerification
-											? isTrUi
-												? 'Gönderiliyor...'
-												: 'Sending...'
-											: isTrUi
-												? 'Doğrulama e-postasını tekrar gönder'
-												: 'Resend verification email'}
-									</Button>
 								</Box>
-							)}
-							{verificationSent && (
-								<Typography color='success.main' sx={{ mt: 1 }}>
+								<Box component="span" sx={{ display: 'block', mt: 0.75 }}>
 									{isTrUi
-										? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.'
-										: 'Verification email sent. Please check your inbox.'}
-								</Typography>
-							)}
-						</span>
-					</CustomErrorMessage>
+										? 'Hesabınızda "Courses" sayfasından da kursu satın alabilirsiniz'
+										: 'You can also purchase the course from the "Courses" page in your account'}
+								</Box>
+							</>
+						)}
+						{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
+							<Box sx={{ mt: 1 }}>
+								<Button
+									onClick={handleResendVerification}
+									disabled={isResendingVerification}
+									sx={{
+										'color': theme.textColor?.greenSecondary?.main,
+										'textDecoration': 'underline',
+										'cursor': 'pointer',
+										'fontSize': isMobileSize ? '0.65rem' : '0.75rem',
+										'fontFamily': fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+										'textTransform': 'none',
+										'&:hover': {
+											backgroundColor: 'transparent',
+											textDecoration: 'underline',
+										},
+									}}>
+									{isResendingVerification
+										? isTrUi
+											? 'Gönderiliyor...'
+											: 'Sending...'
+										: isTrUi
+											? 'Doğrulama e-postasını tekrar gönder'
+											: 'Resend verification email'}
+								</Button>
+							</Box>
+						)}
+						{verificationSent && (
+							<Typography color='success.main' sx={{ mt: 1, fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+								{isTrUi
+									? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.'
+									: 'Verification email sent. Please check your inbox.'}
+							</Typography>
+						)}
+					</Alert>
 				)}
 
 				<CustomDialogActions
@@ -1181,8 +1192,26 @@ const PaymentDialog = ({
 						(course?.groups && course.groups.length > 0 && !selectedGroupName.trim())
 					}
 					disableCancelBtn={isProcessing}
-					actionSx={{ mr: '1rem', mb: '0.5rem' }}
+					actionSx={{ mr: '1rem', mb: 0, marginBottom: 0 }}
 				/>
+				{!!course?.groups?.length && !selectedGroupName.trim() && (
+					<Alert
+						severity="error"
+						sx={{
+							mx: 2,
+							mb: 1,
+							mt: 0.75,
+							fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+							fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+							backgroundColor: '#FFF1F2',
+							color: '#9F1239',
+							border: '1px solid #FDA4AF',
+							borderRadius: 2,
+							'& .MuiAlert-icon': { color: '#E11D48' },
+						}}>
+						{isTrUi ? 'Grup Seçin' : 'Select a group'}
+					</Alert>
+				)}
 			</form>
 		</CustomDialog>
 	);

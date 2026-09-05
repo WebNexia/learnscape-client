@@ -10,12 +10,12 @@ import {
 	Collapse,
 	IconButton,
 	Grid,
+	Alert,
 } from '@mui/material';
 import { ExpandMore, Person, ReceiptLong, MenuBook, Lock } from '@mui/icons-material';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import { useContext, useEffect, useState, useRef } from 'react';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
@@ -75,6 +75,7 @@ export default function CoursePaymentForm({
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const location = useGeoLocation();
 	const recaptchaRef = useRef<any>(null);
+	const errorAlertRef = useRef<HTMLDivElement | null>(null);
 
 	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 	const isCourseFree =
@@ -111,7 +112,26 @@ export default function CoursePaymentForm({
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState(true);
 	const [isResendingVerification, setIsResendingVerification] = useState(false);
 	const [verificationSent, setVerificationSent] = useState(false);
+	const paymentRequestIdRef = useRef(0);
 	const showSlowNetworkHint = useSlowNetworkHint(isProcessing);
+
+	const showCheckoutError = (message: string, opts?: { resetCaptcha?: boolean }) => {
+		const text = String(message || '').trim() || 'Bir hata oluştu. Lütfen tekrar deneyin.';
+		setErrorMessage(text);
+		setIsProcessing(false);
+		setIsSubmitted(false);
+		// Only reset Turnstile when the token may have been consumed (e.g. /payments).
+		if (opts?.resetCaptcha) {
+			resetRecaptcha();
+		}
+		window.setTimeout(() => {
+			errorAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		}, 50);
+	};
+
+	const clearCheckoutError = () => {
+		setErrorMessage('');
+	};
 
 	useEffect(() => {
 		if (!course) return;
@@ -133,15 +153,21 @@ export default function CoursePaymentForm({
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
-		setErrorMessage('');
+		if (token) {
+			setErrorMessage((prev) =>
+				prev.toLowerCase().includes('recaptcha') || prev.toLowerCase().includes('güvenlik doğrulamas')
+					? ''
+					: prev
+			);
+		}
 	};
 	const resetRecaptcha = () => {
 		setRecaptchaToken(null);
-		if (recaptchaRef.current) recaptchaRef.current.reset();
+		recaptchaRef.current?.reset();
 	};
 	const validateRecaptcha = () => {
 		if (!recaptchaToken) {
-			setErrorMessage('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
+			showCheckoutError('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
 			return false;
 		}
 		return true;
@@ -155,8 +181,7 @@ export default function CoursePaymentForm({
 		setIsPromoCodeApplied(false);
 		setAgreed(false);
 		if (!preserveError) {
-			setErrorMessage('');
-			resetRecaptcha();
+			clearCheckoutError();
 		}
 		setIsSubmitted(false);
 		setIsProcessing(false);
@@ -167,26 +192,24 @@ export default function CoursePaymentForm({
 
 	const handlePayment = async () => {
 		if (!course) return;
+		const requestId = ++paymentRequestIdRef.current;
 		setIsProcessing(true);
 		setIsSubmitted(true);
+		clearCheckoutError();
 		const lockedAmount = discountedAmount;
 
+		const stillCurrent = () => requestId === paymentRequestIdRef.current;
+
 		if (!email?.trim()) {
-			setErrorMessage('Lütfen e-posta adresinizi giriniz.');
-			setIsProcessing(false);
-			setIsSubmitted(false);
+			showCheckoutError('Lütfen e-posta adresinizi giriniz.');
 			return;
 		}
 		if (!agreed) {
-			setErrorMessage('Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.');
-			setIsProcessing(false);
-			setIsSubmitted(false);
+			showCheckoutError('Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası\'nı kabul edin.');
 			return;
 		}
 		if (checkoutCopy.needsWithdrawalWaiver && !agreedWithdrawalWaiver) {
-			setErrorMessage(checkoutCopy.waiverRequiredError);
-			setIsProcessing(false);
-			setIsSubmitted(false);
+			showCheckoutError(checkoutCopy.waiverRequiredError);
 			return;
 		}
 		if (!isCourseFree && !validateRecaptcha()) {
@@ -195,19 +218,15 @@ export default function CoursePaymentForm({
 			return;
 		}
 		if (course?.groups?.length && !selectedGroupName.trim()) {
-			setErrorMessage('Lütfen bir grup seçin.');
-			setIsProcessing(false);
-			setIsSubmitted(false);
+			showCheckoutError('Lütfen bir grup seçin.');
 			return;
 		}
 		const selectedGroup = selectedGroupName.trim()
 			? course?.groups?.find((g) => g.name === selectedGroupName)
 			: null;
 		if (selectedGroup?.isFull) {
-			setErrorMessage('Seçilen grup dolu. Lütfen başka bir grup seçin.');
 			setSelectedGroupName('');
-			setIsProcessing(false);
-			setIsSubmitted(false);
+			showCheckoutError('Seçilen grup dolu. Lütfen başka bir grup seçin.');
 			return;
 		}
 
@@ -222,26 +241,21 @@ export default function CoursePaymentForm({
 				{ email, courseId: course._id },
 				{ timeout: CHECKOUT_LOOKUP_TIMEOUT_MS }
 			);
+			if (!stillCurrent()) return;
 			setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
 			if (!userExistsResponse.data.exists && !usingSessionUser) {
-				setErrorMessage('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
 				setIsUserAccountExist(false);
-				setIsProcessing(false);
-				resetRecaptcha();
+				showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
 				return;
 			}
 			if (!userExistsResponse.data.isEmailVerified && !usingSessionUser) {
-				setErrorMessage('Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.');
 				setIsEmailVerified(false);
-				setIsProcessing(false);
-				resetRecaptcha();
+				showCheckoutError('Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.');
 				return;
 			}
 			if (userExistsResponse.data.isEnrolledInCourse) {
-				setErrorMessage('Bu kursa zaten kayıtlısınız!');
 				setIsAlreadyEnrolled(true);
-				setIsProcessing(false);
-				resetRecaptcha();
+				showCheckoutError('Bu kursa zaten kayıtlısınız!');
 				return;
 			}
 			resolvedUserId = userExistsResponse.data.userId || user?._id || '';
@@ -255,27 +269,26 @@ export default function CoursePaymentForm({
 
 			if (isCourseFree) {
 				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email });
+				if (!stillCurrent()) return;
 				resetForm();
 				setIsProcessing(false);
 				onSuccess();
 				return;
 			}
 		} catch (err: any) {
+			if (!stillCurrent()) return;
 			if (axios.isAxiosError(err)) {
-				if (err.code === 'ECONNABORTED') setErrorMessage('Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.');
-				else if (!err.response) setErrorMessage('İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
+				if (err.code === 'ECONNABORTED') showCheckoutError('Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.');
+				else if (!err.response) showCheckoutError('İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
 				else if (err.response?.data?.message) {
 					const msg = err.response.data.message;
 					if (msg?.toLowerCase?.()?.includes('recaptcha')) {
-						setErrorMessage("reCAPTCHA doğrulaması başarısız. Lütfen reCAPTCHA'yı tekrar tamamlayın.");
-						setIsProcessing(false);
+						showCheckoutError("reCAPTCHA doğrulaması başarısız. Lütfen reCAPTCHA'yı tekrar tamamlayın.", { resetCaptcha: true });
 						return;
 					}
-					setErrorMessage(msg);
-				} else setErrorMessage('Bir hata oluştu. Lütfen tekrar deneyin.');
-			} else setErrorMessage('Beklenmeyen bir hata oluştu.');
-			resetRecaptcha();
-			setIsProcessing(false);
+					showCheckoutError(msg);
+				} else showCheckoutError('Bir hata oluştu. Lütfen tekrar deneyin.');
+			} else showCheckoutError('Beklenmeyen bir hata oluştu.');
 			return;
 		}
 
@@ -296,12 +309,10 @@ export default function CoursePaymentForm({
 				...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 			}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
+			if (!stillCurrent()) return;
 			const checkoutUrl = response.data?.checkoutUrl;
 			if (!checkoutUrl) {
-				resetForm(true);
-				setErrorMessage('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.');
-				resetRecaptcha();
-				setIsProcessing(false);
+				showCheckoutError('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.', { resetCaptcha: true });
 				return;
 			}
 			saveCheckoutReturnContext({
@@ -312,37 +323,32 @@ export default function CoursePaymentForm({
 				fromHomePage: true,
 			});
 			if (!redirectToHostedCheckout(checkoutUrl)) {
-				setErrorMessage('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.');
-				resetRecaptcha();
-				setIsProcessing(false);
+				showCheckoutError('Ödeme sayfası oluşturulamadı. Lütfen tekrar deneyin.', { resetCaptcha: true });
 				return;
 			}
 			return;
 		} catch (err) {
+			if (!stillCurrent()) return;
 			console.error(err);
-			resetForm(true);
 			const timedOut = axios.isAxiosError(err) && err.code === 'ECONNABORTED';
 			const serverMsg = axios.isAxiosError(err) ? err.response?.data?.message || err.response?.data?.error : null;
-			setErrorMessage(
+			showCheckoutError(
 				timedOut
 					? 'Bağlantı yavaş veya zaman aşımına uğradı. Lütfen tekrar deneyin.'
-					: serverMsg || 'Ödeme işlenirken bir hata oluştu.'
+					: serverMsg || 'Ödeme işlenirken bir hata oluştu.',
+				{ resetCaptcha: true }
 			);
-			resetRecaptcha();
-			setIsProcessing(false);
 		}
 	};
 
 	const handleApplyPromoCode = async () => {
 		if (!course) return;
 		if (!email) {
-			setErrorMessage('Lütfen e-posta adresinizi giriniz.');
-			resetRecaptcha();
+			showCheckoutError('Lütfen e-posta adresinizi giriniz.');
 			return;
 		}
 		if (!promoCode) {
-			setErrorMessage('Promosyon kodu girin');
-			resetRecaptcha();
+			showCheckoutError('Promosyon kodu girin');
 			return;
 		}
 		try {
@@ -350,8 +356,8 @@ export default function CoursePaymentForm({
 			setIsUserAccountExist(userExistsResponse.data.exists);
 			resolvedUserId = userExistsResponse?.data?.userId;
 			if (!userExistsResponse.data.exists) {
-				setErrorMessage('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
 				setIsUserAccountExist(false);
+				showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
 				return;
 			}
 			const res = await axiosInstance.post(`${base_url}/promocodes/apply`, {
@@ -367,14 +373,13 @@ export default function CoursePaymentForm({
 			if (isNaN(newTotal)) newTotal = 0;
 			newTotal -= (newTotal * discountAmount) / 100;
 			setDiscountedAmount(Math.max(newTotal, 0));
-			setErrorMessage('');
+			clearCheckoutError();
 			setIsPromoCodeApplied(true);
 			setUsersUsedPromoCode(usersUsed);
 		} catch (err) {
-			setErrorMessage(axios.isAxiosError(err) && err.response?.data?.message ? 'Geçersiz promosyon kodu' : 'Geçersiz promosyon kodu');
+			showCheckoutError('Geçersiz promosyon kodu');
 			const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 			setDiscountedAmount(isNaN(amount) ? 0 : amount);
-			resetRecaptcha();
 		}
 	};
 
@@ -388,7 +393,6 @@ export default function CoursePaymentForm({
 		} catch (e) {
 			setErrorMessage(axios.isAxiosError(e) && e.response?.data?.isEmailVerified ? 'E-posta zaten doğrulanmış.' : 'Doğrulama e-postası gönderilemedi.');
 		}
-		resetRecaptcha();
 		setIsResendingVerification(false);
 	};
 
@@ -520,7 +524,7 @@ export default function CoursePaymentForm({
 														opacity: group.isFull ? 0.7 : 1,
 													}}>
 													<CardActionArea
-														onClick={() => { if (!group.isFull) { setSelectedGroupName(group.name); setErrorMessage(''); setIsGroupSelectionExpanded(false); } }}
+														onClick={() => { if (!group.isFull) { setSelectedGroupName(group.name); clearCheckoutError(); setIsGroupSelectionExpanded(false); } }}
 														disabled={group.isFull}>
 														<CardContent sx={{ p: '1rem !important', '&:last-child': { pb: '1rem' } }}>
 															<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
@@ -566,7 +570,7 @@ export default function CoursePaymentForm({
 										const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 										setDiscountedAmount(isNaN(amount) ? 0 : amount);
 										setUsersUsedPromoCode((prev) => prev?.filter((id) => id !== resolvedUserId) || []);
-										setErrorMessage('');
+										clearCheckoutError();
 										setIsUserAccountExist(true);
 									}}
 									sx={{
@@ -604,7 +608,7 @@ export default function CoursePaymentForm({
 										value={promoCode}
 										onChange={(e) => {
 											setPromoCode(e.target.value);
-											setErrorMessage('');
+											clearCheckoutError();
 											setIsGroupSelectionExpanded(false);
 											setIsPromoCodeApplied(false);
 											const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
@@ -646,7 +650,7 @@ export default function CoursePaymentForm({
 								control={
 									<Checkbox
 										checked={agreed}
-										onChange={(e) => { setAgreed(e.target.checked); setErrorMessage(''); resetRecaptcha(); }}
+										onChange={(e) => { setAgreed(e.target.checked); clearCheckoutError(); }}
 										size="small"
 										sx={{ color: 'rgba(0,0,0,0.6)', '&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' } }}
 									/>
@@ -674,7 +678,7 @@ export default function CoursePaymentForm({
 									control={
 										<Checkbox
 											checked={agreedWithdrawalWaiver}
-											onChange={(e) => { setAgreedWithdrawalWaiver(e.target.checked); setErrorMessage(''); resetRecaptcha(); }}
+											onChange={(e) => { setAgreedWithdrawalWaiver(e.target.checked); clearCheckoutError(); }}
 											size="small"
 											sx={{ color: 'rgba(0,0,0,0.6)', '&.Mui-checked': { color: theme.palette?.primary?.main ?? '#0052a3' } }}
 										/>
@@ -815,24 +819,6 @@ export default function CoursePaymentForm({
 								/>
 							</Box>
 
-							{errorMessage && (
-								<CustomErrorMessage sx={{ width: '100%', fontSize: isMobileSize ? '0.65rem' : '0.75rem', fontFamily: FONT, mb: 1.5 }}>
-									<span style={{ whiteSpace: 'pre-line' }}>
-										{errorMessage}
-										{!isUserAccountExist && (
-											<span onClick={() => window.open('/auth', '_blank')} style={{ color: theme.textColor?.greenSecondary?.main ?? '#2e7d32', textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT }}> Buraya tıklayın</span>
-										)}
-										{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
-											<Box sx={{ mt: 1 }}>
-												<Button onClick={handleResendVerification} disabled={isResendingVerification} sx={{ color: theme.textColor?.greenSecondary?.main ?? '#2e7d32', textDecoration: 'underline', fontFamily: FONT, textTransform: 'none', fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
-													{isResendingVerification ? 'Gönderiliyor...' : 'Doğrulama e-postasını tekrar gönder'}
-												</Button>
-											</Box>
-										)}
-									</span>
-								</CustomErrorMessage>
-							)}
-
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: 1 }}>
 								<CustomDialogActions
 									onCancel={handleClose}
@@ -845,14 +831,91 @@ export default function CoursePaymentForm({
 										color: 'white !important',
 										width: '100%',
 										py: '1.15rem',
+										margin: 0,
 										'&:hover': { background: 'white !important', color: '#FF6B3D !important', border: '1px solid #FF6B3D !important' },
 										'&.Mui-disabled': { background: 'rgba(0,0,0,0.12) !important', color: 'rgba(0,0,0,0.26) !important' },
 									}}
 									disableBtn={isProcessing || (!!course?.groups?.length && !selectedGroupName.trim())}
 									submitBtnType="submit"
-									actionSx={{ flexDirection: 'column', gap: 1, px: 0, width: '100%' }}
+									actionSx={{ flexDirection: 'column', gap: 0, px: 0, width: '100%', mb: 0, marginBottom: 0, pb: 0 }}
 								/>
-								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25 }}>
+								{!!course?.groups?.length && !selectedGroupName.trim() && (
+									<Alert
+										severity="error"
+										sx={{
+											width: '100%',
+											mt: 0.75,
+											fontFamily: FONT,
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											backgroundColor: '#FFF1F2',
+											color: '#9F1239',
+											border: '1px solid #FDA4AF',
+											borderRadius: 2,
+											'& .MuiAlert-icon': { color: '#E11D48' },
+										}}>
+										Grup Seçin
+									</Alert>
+								)}
+								{errorMessage && (
+									<Alert
+										ref={errorAlertRef}
+										severity="error"
+										onClose={() => clearCheckoutError()}
+										sx={{
+											width: '100%',
+											mt: 0.75,
+											fontFamily: FONT,
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											whiteSpace: 'pre-line',
+											backgroundColor: '#FFF1F2',
+											color: '#9F1239',
+											border: '1px solid #FDA4AF',
+											borderRadius: 2,
+											'& .MuiAlert-icon': { color: '#E11D48' },
+											'& .MuiAlert-action .MuiIconButton-root': { color: '#9F1239' },
+										}}>
+										{errorMessage}
+										{!isUserAccountExist && (
+											<>
+												<Box
+													component="span"
+													onClick={() => window.open('/auth', '_blank')}
+													sx={{
+														color: theme.textColor?.greenSecondary?.main ?? '#2e7d32',
+														textDecoration: 'underline',
+														cursor: 'pointer',
+														fontFamily: FONT,
+														ml: 0.5,
+														fontWeight: 600,
+													}}>
+													Buraya tıklayın
+												</Box>
+												<Box component="span" sx={{ display: 'block', mt: 0.75 }}>
+													Hesabınızda &quot;Courses&quot; sayfasından da kursu satın alabilirsiniz
+												</Box>
+											</>
+										)}
+										{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
+											<Box sx={{ mt: 1 }}>
+												<Button
+													onClick={handleResendVerification}
+													disabled={isResendingVerification}
+													sx={{
+														color: theme.textColor?.greenSecondary?.main ?? '#2e7d32',
+														textDecoration: 'underline',
+														fontFamily: FONT,
+														textTransform: 'none',
+														fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+														p: 0,
+														minWidth: 0,
+													}}>
+													{isResendingVerification ? 'Gönderiliyor...' : 'Doğrulama e-postasını tekrar gönder'}
+												</Button>
+											</Box>
+										)}
+									</Alert>
+								)}
+								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25, mt: 1 }}>
 									<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
 										<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme (Stripe)
 									</Typography>

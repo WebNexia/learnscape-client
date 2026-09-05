@@ -73,7 +73,8 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 			if (widgetIdRef.current && window.turnstile) {
 				window.turnstile.reset(widgetIdRef.current);
 			}
-			onChangeRef.current(null);
+			// Do not call onChange(null) here — parents set the token to null themselves.
+			// Calling onChange from reset races with error messages set in the same tick.
 		},
 	}));
 

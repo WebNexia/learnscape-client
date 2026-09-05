@@ -675,7 +675,7 @@ const CoursePageBanner = ({
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard
-							title={isTrUi ? 'Saat(#)' : 'Hours(#)'}
+							title={isTrUi ? 'Ders(#)' : 'Lessons(#)'}
 							content={course.durationHours ?? ''}
 							fromHomePage={fromHomePage}
 						/>
@@ -701,7 +701,7 @@ const CoursePageBanner = ({
 											? 'Kayıtlı'
 											: 'Enrolled'
 										: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${isCourseFree ? (isTrUi ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode)?.amount
-}`
+										}`
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
@@ -733,23 +733,34 @@ const CoursePageBanner = ({
 				<CustomDialog
 					openModal={isIntroVideoOpen}
 					closeModal={closeIntroVideoModal}
-					title={course.title}
 					maxWidth='md'
 					PaperProps={{
+						style: { backgroundColor: 'transparent' },
 						sx: {
-							backgroundColor: theme.palette.secondary.main,
+							backgroundColor: 'transparent',
+							backgroundImage: 'none',
+							overflow: 'hidden',
+							boxShadow: 'none',
+							borderRadius: { xs: '0.5rem', sm: '0.75rem' },
+							margin: { xs: '0.75rem', sm: '1.5rem' },
+							width: { xs: 'calc(100% - 1.5rem)', sm: '100%' },
+							maxWidth: { xs: 'calc(100% - 1.5rem)', md: '900px' },
 						},
 					}}>
-					<DialogContent sx={{ p: { xs: 1.5, sm: 2 }, pt: 0 }}>
+					<DialogContent sx={{ backgroundColor: 'transparent', p: 0, overflow: 'hidden' }}>
 						{introEmbedSrc ? (
 							<Box
 								sx={{
 									position: 'relative',
-									width: '100%',
-									pt: '56.25%',
-									borderRadius: 1,
+									width: 'min(100%, calc((100dvh - 2rem) * 16 / 9))',
+									aspectRatio: '16 / 9',
+									mx: 'auto',
 									overflow: 'hidden',
 									bgcolor: '#000',
+									borderRadius: { xs: '0.5rem', sm: '0.75rem' },
+									'& iframe, & video, & > div': {
+										backgroundColor: '#000',
+									},
 								}}>
 								<Box
 									component='iframe'
@@ -763,16 +774,17 @@ const CoursePageBanner = ({
 										width: '100%',
 										height: '100%',
 										border: 0,
+										backgroundColor: '#000',
 									}}
 								/>
 							</Box>
 						) : (
-							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
 								<Typography
 									variant='body2'
 									sx={{
 										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-										color: theme.textColor?.primary?.main,
+										color: '#fff',
 									}}>
 									{isTrUi
 										? 'Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.'
@@ -795,9 +807,6 @@ const CoursePageBanner = ({
 							</Box>
 						)}
 					</DialogContent>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '0 1.5rem 1rem 0' }}>
-						<CustomCancelButton onClick={closeIntroVideoModal}>{isTrUi ? 'Kapat' : 'Close'}</CustomCancelButton>
-					</Box>
 				</CustomDialog>
 			)}
 
