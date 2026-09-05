@@ -27,6 +27,8 @@ export interface BaseCourse {
 	title: string;
 	description: string;
 	prices: Price[];
+	/** Display-only list / "normal" prices. Checkout still uses `prices`. */
+	originalPrices?: Price[];
 	imageUrl: string;
 	/** Landing page course detail: optional intro/trailer video (YouTube / Vimeo URL). */
 	introVideoUrl?: string;

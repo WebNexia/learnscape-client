@@ -1,7 +1,9 @@
 import { Box, Typography } from '@mui/material';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
-import { CourseLandingPageSection } from '../../interfaces/course';
+import { CourseLandingPageSection, SingleCourse } from '../../interfaces/course';
 import { sanitizeLandingPageHtml } from '../../utils/sanitizeHtml';
+import { interpolateLandingPagePricePlaceholders } from '../../utils/interpolateLandingPagePrices';
+import { useGeoLocation } from '../../hooks/useGeoLocation';
 
 /** LP / Academy brand blues (chevron alternate) */
 const ACADEMY_BLUE_GRADIENT = 'linear-gradient(145deg, #0052a3 0%, #0066cc 55%, #0ea5e9 100%)';
@@ -388,9 +390,11 @@ const proseSx = {
 
 type Props = {
 	sections: CourseLandingPageSection[];
+	course?: Pick<SingleCourse, 'prices' | 'originalPrices'>;
 };
 
-const LandingPageCourseDetailSections = ({ sections }: Props) => {
+const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
+	const geoLocation = useGeoLocation();
 	if (!sections?.length) return null;
 
 	return (
@@ -452,6 +456,9 @@ const LandingPageCourseDetailSections = ({ sections }: Props) => {
 				}}>
 				{sections.map((s, i) => {
 					const n = String(i + 1).padStart(2, '0');
+					const interpolatedBody = course
+						? interpolateLandingPagePricePlaceholders(s.body, course, geoLocation?.countryCode, geoLocation?.country)
+						: s.body;
 					return (
 						<Box
 							key={`${s.title}-${i}`}
@@ -557,7 +564,7 @@ const LandingPageCourseDetailSections = ({ sections }: Props) => {
 									<Box
 										className={LP_SECTION_PROSE_CLASS}
 										sx={proseSx}
-										dangerouslySetInnerHTML={{ __html: sanitizeLandingPageHtml(s.body) }}
+										dangerouslySetInnerHTML={{ __html: sanitizeLandingPageHtml(interpolatedBody) }}
 									/>
 								</Box>
 							</Box>

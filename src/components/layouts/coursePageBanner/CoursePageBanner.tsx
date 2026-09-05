@@ -11,7 +11,7 @@ import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
 import PaymentDialogWrapper from './PaymentDialogWrapper';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { getListPriceIfDifferent, getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -122,10 +122,11 @@ const CoursePageBanner = ({
 
 	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
 
+	const sellingPrice = getPriceForCountry(course, resolvedCountryCode);
+	const originalPrice = getListPriceIfDifferent(course, resolvedCountryCode);
 	const isCourseFree: boolean =
-		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '0';
+		sellingPrice?.amount === 'Free' || sellingPrice?.amount === '' || sellingPrice?.amount === '0';
+	const hasListPrice = Boolean(originalPrice);
 
 	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
 	const isCapacityFull = Boolean(course?.isCapacityFull);
@@ -712,8 +713,33 @@ const CoursePageBanner = ({
 										? fromHomePage
 											? 'Kayıtlı'
 											: 'Enrolled'
-										: `${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${isCourseFree ? (isTrUi ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode)?.amount
-										}`
+										: isCourseFree
+											? isTrUi
+												? 'Ücretsiz'
+												: 'Free'
+											: (
+												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+													{hasListPrice ? (
+														<Box
+															component='span'
+															sx={{
+																fontSize: isMobileSize ? '0.62rem' : '0.78rem',
+																fontWeight: 700,
+																textDecoration: 'line-through',
+																textDecorationThickness: '2px',
+																color: '#334155',
+																lineHeight: 1.2,
+															}}>
+															{setCurrencySymbol(originalPrice?.currency)}
+															{originalPrice?.amount}
+														</Box>
+													) : null}
+													<Box component='span' sx={{ lineHeight: 1.15 }}>
+														{setCurrencySymbol(sellingPrice?.currency)}
+														{sellingPrice?.amount}
+													</Box>
+												</Box>
+											)
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
@@ -722,7 +748,9 @@ const CoursePageBanner = ({
 										bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
 										color: fromHomePage ? undefined : theme.textColor?.common.main,
 									}
-									: undefined
+									: hasListPrice
+										? { height: { xs: '4.6rem', sm: '4.6rem', md: '6rem' } }
+										: undefined
 							}
 						/>
 					</Box>

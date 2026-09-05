@@ -410,10 +410,30 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 
 					<Box sx={{ display: 'flex', mt: '0.5rem' }}>
 						{singleCourse?.prices?.map((price) => {
+							const original = singleCourse?.originalPrices?.find((p) => p.currency === price.currency);
+							const hasOriginal =
+								original &&
+								original.amount !== 'Free' &&
+								original.amount !== '0' &&
+								original.amount !== '' &&
+								original.amount !== price.amount;
 							return (
 								<Box
 									sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: isMobileSize ? '0.75rem' : '2rem' }}
 									key={price.currency}>
+									{original && hasOriginal ? (
+										<Typography
+											variant='body2'
+											sx={{
+												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+												color: 'text.secondary',
+												textDecoration: 'line-through',
+												lineHeight: 1.2,
+											}}>
+											{setCurrencySymbol(original.currency)}
+											{original.amount}
+										</Typography>
+									) : null}
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 										{price.amount !== 'Free' && price.amount !== '0' && price.amount !== '' ? setCurrencySymbol(price.currency) : ''}
 										{price.amount === 'Free' || price.amount === '0' || price.amount === '' ? 'Free' : price.amount}
