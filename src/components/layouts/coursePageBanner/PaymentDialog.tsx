@@ -20,7 +20,7 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { getListPriceIfDifferent, getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
@@ -74,11 +74,13 @@ const PaymentDialog = ({
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 
 	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
+	const sellingPrice = course ? getPriceForCountry(course, resolvedCountryCode) : undefined;
+	const listPrice = course ? getListPriceIfDifferent(course, resolvedCountryCode) : undefined;
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course!, resolvedCountryCode)?.amount === 'Free' ||
-		getPriceForCountry(course!, resolvedCountryCode)?.amount === '' ||
-		getPriceForCountry(course!, resolvedCountryCode)?.amount === '0';
+		sellingPrice?.amount === 'Free' ||
+		sellingPrice?.amount === '' ||
+		sellingPrice?.amount === '0';
 
 	useEffect(() => {
 		if (!course) return;
@@ -924,7 +926,22 @@ const PaymentDialog = ({
 										color: '#223354',
 									}}>
 									{isTrUi ? 'Toplam Tutar: ' : 'Total Amount: '}
-									{course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+									{listPrice && String(discountedAmount) !== String(listPrice.amount) ? (
+										<Box
+											component='span'
+											sx={{
+												fontWeight: 700,
+												color: '#475569',
+												textDecoration: 'line-through',
+												textDecorationThickness: '2px',
+												mr: 1,
+												fontSize: isMobileSize ? '0.85em' : '0.9em',
+											}}>
+											{setCurrencySymbol(listPrice.currency)}
+											{listPrice.amount}
+										</Box>
+									) : null}
+									{course && setCurrencySymbol(sellingPrice?.currency)}
 									{discountedAmount}
 								</Typography>
 								{isPromoCodeApplied && (

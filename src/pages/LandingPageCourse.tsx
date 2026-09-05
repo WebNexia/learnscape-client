@@ -405,7 +405,10 @@ const LandingPageCourse = () => {
 									<CoursePageBanner course={course} fromHomePage={true} />
 									<InstructorCard instructor={course.instructor} />
 								</Box>
-								<LandingPageCourseDetailSections sections={(course.landingPageSections || []).map(({ title, body }) => ({ title, body }))} />
+								<LandingPageCourseDetailSections
+									sections={(course.landingPageSections || []).map(({ title, body }) => ({ title, body }))}
+									course={course}
+								/>
 								<LandingPageCourseEnrollCta course={course} />
 							</>
 						)}

@@ -69,6 +69,10 @@ const CourseDetailsEditBox = ({
 	const [USD, setUSD] = useState<string>('');
 	const [EUR, setEUR] = useState<string>('');
 	const [TRY, setTRY] = useState<string>('');
+	const [originalGBP, setOriginalGBP] = useState<string>('');
+	const [originalUSD, setOriginalUSD] = useState<string>('');
+	const [originalEUR, setOriginalEUR] = useState<string>('');
+	const [originalTRY, setOriginalTRY] = useState<string>('');
 
 	// Group management state
 	const [isGroupDialogOpen, setIsGroupDialogOpen] = useState<boolean>(false);
@@ -94,12 +98,16 @@ const CourseDetailsEditBox = ({
 	};
 
 	useEffect(() => {
-		// Initialize price states from `singleCourse.prices`
+		// Initialize price states from `singleCourse.prices` / `originalPrices`
 		if (singleCourseBeforeSave) {
 			setGBP(singleCourseBeforeSave.prices?.find((price) => price.currency === 'gbp')?.amount || '');
 			setUSD(singleCourseBeforeSave.prices?.find((price) => price.currency === 'usd')?.amount || '');
 			setEUR(singleCourseBeforeSave.prices?.find((price) => price.currency === 'eur')?.amount || '');
 			setTRY(singleCourseBeforeSave.prices?.find((price) => price.currency === 'try')?.amount || '');
+			setOriginalGBP(singleCourseBeforeSave.originalPrices?.find((price) => price.currency === 'gbp')?.amount || '');
+			setOriginalUSD(singleCourseBeforeSave.originalPrices?.find((price) => price.currency === 'usd')?.amount || '');
+			setOriginalEUR(singleCourseBeforeSave.originalPrices?.find((price) => price.currency === 'eur')?.amount || '');
+			setOriginalTRY(singleCourseBeforeSave.originalPrices?.find((price) => price.currency === 'try')?.amount || '');
 		}
 	}, [singleCourseBeforeSave]);
 
@@ -113,18 +121,34 @@ const CourseDetailsEditBox = ({
 	const updatePriceInSingleCourse = (currency: 'gbp' | 'usd' | 'eur' | 'try', amount: string) => {
 		setSingleCourseBeforeSave((prevCourse) => {
 			if (prevCourse) {
-				const prices = [...prevCourse.prices];
+				const prices = [...(prevCourse.prices || [])];
 				const index = prices.findIndex((price) => price.currency === currency);
 
 				if (index > -1) {
-					// Update existing currency price
 					prices[index] = { ...prices[index], amount };
 				} else {
-					// Add new currency price
 					prices.push({ currency, amount });
 				}
 
 				return { ...prevCourse, prices };
+			}
+			return prevCourse;
+		});
+	};
+
+	const updateOriginalPriceInSingleCourse = (currency: 'gbp' | 'usd' | 'eur' | 'try', amount: string) => {
+		setSingleCourseBeforeSave((prevCourse) => {
+			if (prevCourse) {
+				const originalPrices = [...(prevCourse.originalPrices || [])];
+				const index = originalPrices.findIndex((price) => price.currency === currency);
+
+				if (index > -1) {
+					originalPrices[index] = { ...originalPrices[index], amount };
+				} else {
+					originalPrices.push({ currency, amount });
+				}
+
+				return { ...prevCourse, originalPrices };
 			}
 			return prevCourse;
 		});
@@ -449,6 +473,8 @@ const CourseDetailsEditBox = ({
 					<Typography variant='body2' color='text.secondary' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Shown below the banner on the public course page. Up to {MAX_LANDING_PAGE_SECTIONS} sections; title max{' '}
 						{MAX_LANDING_PAGE_SECTION_TITLE_LENGTH} characters; body max {MAX_LANDING_PAGE_SECTION_BODY_LENGTH} (HTML included).
+						Use {'{{price}}'}, {'{{originalPrice}}'}, and {'{{fromCountry}}'} for location-based fees (e.g. Normal fiyat:{' '}
+						{'{{originalPrice}}'}).
 					</Typography>
 					{(singleCourseBeforeSave?.landingPageSections || []).map((section, index) => (
 						<Box
@@ -652,7 +678,10 @@ const CourseDetailsEditBox = ({
 					}}>
 					<Box sx={{ flex: 1, zIndex: 1, display: hasAdminAccess ? undefined : 'none' }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-							Prices
+							Selling prices
+						</Typography>
+						<Typography variant='body2' color='text.secondary' sx={{ mb: '0.25rem', fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+							Charged at checkout (current / launch price)
 						</Typography>
 						<Box sx={{ display: 'flex', alignItems: 'center' }}>
 							<Box
@@ -735,11 +764,21 @@ const CourseDetailsEditBox = ({
 												setUSD('');
 												setEUR('');
 												setTRY('');
+												setOriginalGBP('');
+												setOriginalUSD('');
+												setOriginalEUR('');
+												setOriginalTRY('');
 												setSingleCourseBeforeSave((prevCourse) =>
 													prevCourse
 														? {
 															...prevCourse,
 															prices: [
+																{ amount: '', currency: 'gbp' },
+																{ amount: '', currency: 'usd' },
+																{ amount: '', currency: 'eur' },
+																{ amount: '', currency: 'try' },
+															],
+															originalPrices: [
 																{ amount: '', currency: 'gbp' },
 																{ amount: '', currency: 'usd' },
 																{ amount: '', currency: 'eur' },
@@ -770,6 +809,72 @@ const CourseDetailsEditBox = ({
 						{isMissingField && singleCourseBeforeSave?.prices?.some((price) => price.amount === '') && (
 							<CustomErrorMessage>Enter price amount</CustomErrorMessage>
 						)}
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', mt: '0.75rem' }}>
+							Normal / list prices
+						</Typography>
+						<Typography variant='body2' color='text.secondary' sx={{ mb: '0.25rem', fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+							Optional. Shown as "Normal fiyat" on the landing page via {'{{originalPrice}}'}
+						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									flex: 1,
+								}}>
+								<CustomTextField
+									label='GBP'
+									sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : originalGBP}
+									onChange={(e) => {
+										setOriginalGBP(e.target.value);
+										updateOriginalPriceInSingleCourse('gbp', e.target.value);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+								/>
+								<CustomTextField
+									label='USD'
+									sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : originalUSD}
+									onChange={(e) => {
+										setOriginalUSD(e.target.value);
+										updateOriginalPriceInSingleCourse('usd', e.target.value);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+								/>
+							</Box>
+							<Box sx={{ flex: 1, ml: '1rem' }}>
+								<CustomTextField
+									label='EUR'
+									sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : originalEUR}
+									onChange={(e) => {
+										setOriginalEUR(e.target.value);
+										updateOriginalPriceInSingleCourse('eur', e.target.value);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+								/>
+								<CustomTextField
+									label='TRY'
+									sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+									value={isFree ? '' : originalTRY}
+									onChange={(e) => {
+										setOriginalTRY(e.target.value);
+										updateOriginalPriceInSingleCourse('try', e.target.value);
+										setHasUnsavedChanges(true);
+									}}
+									type='number'
+									disabled={isFree}
+								/>
+							</Box>
+						</Box>
 					</Box>
 
 					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>

@@ -32,7 +32,7 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { getListPriceIfDifferent, getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
@@ -78,10 +78,12 @@ export default function CoursePaymentForm({
 	const errorAlertRef = useRef<HTMLDivElement | null>(null);
 
 	const resolvedCountryCode = resolvePricingCountryCode(user?.countryCode, location?.countryCode);
+	const sellingPrice = getPriceForCountry(course, resolvedCountryCode);
+	const listPrice = getListPriceIfDifferent(course, resolvedCountryCode);
 	const isCourseFree =
-		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '0';
+		sellingPrice?.amount === 'Free' ||
+		sellingPrice?.amount === '' ||
+		sellingPrice?.amount === '0';
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const checkoutCopy = getCourseAccessCheckoutCopy(course, 'tr');
 
@@ -778,9 +780,26 @@ export default function CoursePaymentForm({
 										flexWrap: 'wrap',
 									}}>
 									<Typography sx={{ fontFamily: FONT, fontSize: '0.9rem', color: 'text.secondary' }}>Toplam</Typography>
-									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+									<Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.25, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+										{listPrice && String(discountedAmount) !== String(listPrice.amount) ? (
+											<Typography
+												component='span'
+												sx={{
+													fontFamily: FONT,
+													fontWeight: 700,
+													fontSize: isMobileSize ? '0.9rem' : '1.05rem',
+													color: '#475569',
+													textDecoration: 'line-through',
+													textDecorationThickness: '2px',
+													letterSpacing: '-0.02em',
+													lineHeight: 1.2,
+												}}>
+												{setCurrencySymbol(listPrice.currency)}
+												{listPrice.amount}
+											</Typography>
+										) : null}
 										<Typography sx={{ fontFamily: FONT, fontWeight: 800, fontSize: isMobileSize ? '1.05rem' : '1.25rem', color: '#0A1A2F', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-											{setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+											{setCurrencySymbol(sellingPrice.currency)}
 											{discountedAmount}
 										</Typography>
 										{isPromoCodeApplied && (
@@ -823,7 +842,7 @@ export default function CoursePaymentForm({
 								<CustomDialogActions
 									onCancel={handleClose}
 									showCancelBtn={false}
-									submitBtnText={isProcessing ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'İşleniyor') : isCourseFree ? 'Kayıt Ol' : 'Ödemeyi Tamamla'}
+									submitBtnText={isProcessing ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'İşleniyor') : isCourseFree ? 'Kayıt Ol' : 'Ödemeye Git'}
 									submitBtnSx={{
 										background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
 										backgroundColor: 'transparent !important',
