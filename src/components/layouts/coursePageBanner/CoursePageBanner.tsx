@@ -719,7 +719,7 @@ const CoursePageBanner = ({
 												: 'Free'
 											: (
 												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-													{hasListPrice ? (
+													{originalPrice ? (
 														<Box
 															component='span'
 															sx={{
@@ -730,12 +730,12 @@ const CoursePageBanner = ({
 																color: '#334155',
 																lineHeight: 1.2,
 															}}>
-															{setCurrencySymbol(originalPrice?.currency)}
-															{originalPrice?.amount}
+															{setCurrencySymbol(originalPrice.currency)}
+															{originalPrice.amount}
 														</Box>
 													) : null}
 													<Box component='span' sx={{ lineHeight: 1.15 }}>
-														{setCurrencySymbol(sellingPrice?.currency)}
+														{setCurrencySymbol(sellingPrice?.currency ?? '')}
 														{sellingPrice?.amount}
 													</Box>
 												</Box>

@@ -941,7 +941,7 @@ const PaymentDialog = ({
 											{listPrice.amount}
 										</Box>
 									) : null}
-									{course && setCurrencySymbol(sellingPrice?.currency)}
+									{setCurrencySymbol(sellingPrice?.currency ?? '')}
 									{discountedAmount}
 								</Typography>
 								{isPromoCodeApplied && (
