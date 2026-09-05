@@ -18,7 +18,7 @@ import { Document } from '../../interfaces/document';
 import CloseIcon from '@mui/icons-material/Close';
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, AddShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
+import { Download, AddShoppingCart, ShoppingCart, ChevronLeft, ChevronRight, Check } from '@mui/icons-material';
 import { decodeHtmlEntities } from '../../utils/utilText';
 import { useDocumentCart } from '../../contexts/DocumentCartContextProvider';
 import { isAxiosError } from 'axios';
@@ -244,31 +244,33 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 								pb: 0.75,
 							}}
 							onClick={(e) => e.stopPropagation()}>
-							<Button
-								variant='outlined'
-								fullWidth
-								onClick={(e) => {
-									e.stopPropagation();
-									handleOpenSample();
-								}}
-								sx={{
-									borderColor: topAccent,
-									color: topAccent,
-									'&:hover': {
-										borderColor: '#004c99',
-										backgroundColor: 'rgba(0, 82, 163, 0.06)',
-									},
-									fontFamily: 'Varela Round',
-									fontSize: isMobileSize ? '0.68rem' : '0.82rem',
-									textTransform: 'none',
-									height: isMobileSize ? '2.15rem' : '1.85rem',
-									minWidth: 0,
-									px: isMobileSize ? 0.5 : 1,
-									whiteSpace: 'nowrap',
-									lineHeight: 1.2,
-								}}>
-								{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
-							</Button>
+							{hasSamplePages && (
+								<Button
+									variant='outlined'
+									fullWidth
+									onClick={(e) => {
+										e.stopPropagation();
+										handleOpenSample();
+									}}
+									sx={{
+										borderColor: topAccent,
+										color: topAccent,
+										'&:hover': {
+											borderColor: '#004c99',
+											backgroundColor: 'rgba(0, 82, 163, 0.06)',
+										},
+										fontFamily: 'Varela Round',
+										fontSize: isMobileSize ? '0.68rem' : '0.82rem',
+										textTransform: 'none',
+										height: isMobileSize ? '2.15rem' : '1.85rem',
+										minWidth: 0,
+										px: isMobileSize ? 0.5 : 1,
+										whiteSpace: 'nowrap',
+										lineHeight: 1.2,
+									}}>
+									{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
+								</Button>
+							)}
 							{isFree ? (
 								<Button
 									variant='text'
@@ -302,37 +304,72 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 									İndir
 								</Button>
 							) : (
-								<Button
-									variant='text'
-									fullWidth
-									disabled={isInCart}
-									onClick={(e) => {
-										e.stopPropagation();
-										handleAddToCart();
-									}}
-									sx={{
-										background: isInCart ? 'grey.300' : '#FF6B3D',
-										color: 'white',
-										'&:hover': !isInCart ? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' } : {},
-										fontFamily: 'Varela Round',
-										fontSize: isMobileSize ? '0.68rem' : '0.82rem',
-										textTransform: 'none',
-										height: isMobileSize ? '2.15rem' : '1.85rem',
-										minWidth: 0,
-										px: isMobileSize ? 0.5 : 1,
-										whiteSpace: 'nowrap',
-										lineHeight: 1.2,
-										'& .MuiButton-endIcon': { ml: 0.4, mr: 0 },
-									}}
-									endIcon={
-										isInCart ? (
-											<Check sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
-										) : (
-											<AddShoppingCart sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
-										)
-									}>
-									{isInCart ? 'Eklendi' : 'Sepete Ekle'}
-								</Button>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1, minWidth: 0 }}>
+									<Button
+										variant='text'
+										fullWidth
+										onClick={(e) => {
+											e.stopPropagation();
+											if (!isInCart) handleAddToCart();
+										}}
+										sx={{
+											background: isInCart
+												? 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+												: '#FF6B3D',
+											color: '#fff !important',
+											fontWeight: isInCart ? 700 : 600,
+											boxShadow: isInCart ? '0 2px 8px rgba(5, 150, 105, 0.35)' : 'none',
+											'&:hover': isInCart
+												? {
+														background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+														boxShadow: '0 3px 10px rgba(5, 150, 105, 0.4)',
+													}
+												: { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' },
+											fontFamily: 'Varela Round',
+											fontSize: isMobileSize ? '0.68rem' : '0.82rem',
+											textTransform: 'none',
+											height: isMobileSize ? '2.15rem' : '1.85rem',
+											minWidth: 0,
+											px: isMobileSize ? 0.5 : 1,
+											whiteSpace: 'nowrap',
+											lineHeight: 1.2,
+											cursor: isInCart ? 'default' : 'pointer',
+											'& .MuiButton-endIcon': { ml: 0.4, mr: 0, color: '#fff' },
+										}}
+										endIcon={
+											isInCart ? (
+												<Check sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
+											) : (
+												<AddShoppingCart sx={{ fontSize: isMobileSize ? '0.9rem !important' : '1rem !important' }} />
+											)
+										}>
+										{isInCart ? 'Eklendi' : 'Sepete Ekle'}
+									</Button>
+									{isInCart && (
+										<IconButton
+											aria-label='Sepete git'
+											onClick={(e) => {
+												e.stopPropagation();
+												navigate('/landing-page-cart');
+												window.scrollTo({ top: 0, behavior: 'smooth' });
+											}}
+											sx={{
+												'flexShrink': 0,
+												'width': isMobileSize ? '2.15rem' : '1.85rem',
+												'height': isMobileSize ? '2.15rem' : '1.85rem',
+												'borderRadius': '0.5rem',
+												'border': `1px solid ${topAccent}`,
+												'color': topAccent,
+												'backgroundColor': 'rgba(0, 82, 163, 0.04)',
+												'&:hover': {
+													backgroundColor: 'rgba(0, 82, 163, 0.1)',
+													borderColor: '#004c99',
+												},
+											}}>
+											<ShoppingCart sx={{ fontSize: isMobileSize ? '1rem' : '1.1rem' }} />
+										</IconButton>
+									)}
+								</Box>
 							)}
 						</Box>
 						<Box

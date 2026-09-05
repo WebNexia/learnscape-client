@@ -351,8 +351,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							...cardSx,
 							flex: 3,
 							position: 'relative',
+							overflow: 'hidden',
+							display: 'flex',
+							flexDirection: 'column',
 						}}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 								Description
 							</Typography>
@@ -373,8 +376,20 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 								</Tooltip>
 							)}
 						</Box>
-						<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-							{truncateText(singleCourse?.description || '', isMobileSize ? 85 : 200)}
+						<Typography
+							variant='body2'
+							sx={{
+								mt: '0.5rem',
+								fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+								overflow: 'hidden',
+								flex: 1,
+								minHeight: 0,
+								display: '-webkit-box',
+								WebkitBoxOrient: 'vertical',
+								WebkitLineClamp: 4,
+								wordBreak: 'break-word',
+							}}>
+							{truncateText((singleCourse?.description || '').replace(/\s+/g, ' ').trim(), isMobileSize ? 85 : 200)}
 						</Typography>
 					</Box>
 				</Box>
@@ -446,7 +461,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
 					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '1rem' }}>
-						Hours
+						Lessons
 					</Typography>
 					<Typography variant='body2' sx={{ mt: isMobileSize ? '1rem' : '1.5rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 						{singleCourse?.durationHours || 'N/A'}

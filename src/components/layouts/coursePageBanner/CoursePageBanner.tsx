@@ -288,7 +288,18 @@ const CoursePageBanner = ({
 				margin:
 					fromHomePage && !isSmallScreen && !isRotatedMedium ? '3rem 0 2rem 0' : isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '2rem 0',
 				backgroundColor: fromHomePage ? theme.bgColor?.primary : theme.palette.primary.main,
+				...(fromHomePage
+					? {
+							// Mobile only: slightly darker for white-text readability
+							backgroundImage: {
+								xs: 'linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.22))',
+								sm: 'none',
+							},
+						}
+					: null),
 				padding: '0.75rem',
+				borderRadius: fromHomePage ? '0.75rem' : undefined,
+				overflow: fromHomePage ? 'hidden' : undefined,
 			}}>
 			<Snackbar
 				open={displayEnrollmentMsg}
@@ -374,12 +385,13 @@ const CoursePageBanner = ({
 							variant='body2'
 							sx={{
 								color: theme.textColor?.common.main,
-								fontSize: { xs: '0.75rem', sm: '0.95rem', md: '1rem' },
-								lineHeight: isSmallScreen ? 1.6 : 1.7,
+								fontSize: { xs: '0.88rem', sm: '0.95rem', md: '1rem' },
+								fontWeight: fromHomePage ? { xs: 500, sm: 400 } : 400,
+								lineHeight: { xs: 1.75, sm: isSmallScreen ? 1.6 : 1.7 },
 								textAlign: 'left',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								mb: '3.5rem',
-								whiteSpace: 'pre-wrap',
+								whiteSpace: 'pre-line',
 							}}>
 							{course.description}
 						</Typography>

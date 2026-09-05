@@ -798,7 +798,7 @@ const CourseDetailsEditBox = ({
 								</Box>
 								<Box sx={{ ml: '0.5rem', flex: 3 }}>
 									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
-										Hours
+										Lessons
 									</Typography>
 									<CustomTextField
 										required={false}
@@ -814,7 +814,7 @@ const CourseDetailsEditBox = ({
 											}
 										}}
 										type='number'
-										placeholder='# of hours'
+										placeholder='# of lessons'
 									/>
 								</Box>
 							</Box>
