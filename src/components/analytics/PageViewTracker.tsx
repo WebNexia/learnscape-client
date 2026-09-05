@@ -13,13 +13,13 @@ const PageViewTracker = () => {
 
 	useEffect(() => {
 		const sendPageView = () => {
-			if (!orgId || !hasOptionalCookieConsent() || !shouldTrackPath(location.pathname)) {
+			if (!orgId || !shouldTrackPath(location.pathname)) {
 				return;
 			}
 
-			const sessionId = getAnalyticsSessionId();
-			const visitorId = getAnalyticsVisitorId();
-			if (!sessionId || !visitorId) return;
+			const consented = hasOptionalCookieConsent();
+			const sessionId = consented ? getAnalyticsSessionId() : '';
+			const visitorId = consented ? getAnalyticsVisitorId() : '';
 
 			const now = Date.now();
 			if (lastSentRef.current && lastSentRef.current.path === location.pathname && now - lastSentRef.current.at < 2000) {
@@ -30,11 +30,11 @@ const PageViewTracker = () => {
 			const utm = readUtmParams(location.search);
 			const payload = {
 				orgId,
-				sessionId,
-				visitorId,
 				path: location.pathname,
 				referrer: typeof document !== 'undefined' ? document.referrer : '',
 				language: typeof navigator !== 'undefined' ? navigator.language : '',
+				consent: Boolean(consented && sessionId && visitorId),
+				...(consented && sessionId && visitorId ? { sessionId, visitorId } : {}),
 				...utm,
 			};
 

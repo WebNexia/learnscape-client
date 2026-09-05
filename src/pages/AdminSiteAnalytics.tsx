@@ -487,7 +487,7 @@ const AdminSiteAnalytics = () => {
 									<Box sx={{ py: 5, textAlign: 'center' }}>
 										<Typography sx={{ fontWeight: 700, mb: 0.5 }}>No visits recorded yet</Typography>
 										<Typography sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-											Analytics starts after visitors accept optional cookies. New page views will appear here.
+											Analytics starts as soon as someone opens a page. Cookieless measurement does not require optional cookies.
 										</Typography>
 									</Box>
 								)}
