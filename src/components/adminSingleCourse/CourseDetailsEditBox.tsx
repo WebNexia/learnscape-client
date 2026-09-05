@@ -1177,12 +1177,12 @@ const CourseDetailsEditBox = ({
 											}
 										}}
 										placeholder='e.g., Group A'
-										InputProps={{ inputProps: { maxLength: 15 } }}
+										InputProps={{ inputProps: { maxLength: 35 } }}
 										fullWidth
 										error={!!groupNameError && !groupNameError.includes('Capacity')}
 									/>
 									<Typography sx={{ fontSize: '0.65rem', margin: '0.25rem 0 0 0', textAlign: 'right' }}>
-										{groupFormData.name.length}/15 Characters
+										{groupFormData.name.length}/35 Characters
 									</Typography>
 									{groupNameError && !groupNameError.includes('Capacity') && <CustomErrorMessage>{groupNameError}</CustomErrorMessage>}
 								</Box>

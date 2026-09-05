@@ -2,7 +2,7 @@ import { Box, Typography, Button, Card, CardContent, Alert, Snackbar, IconButton
 import { ShoppingCart, Close, Description, Assignment, ContactPhone, ReceiptLong, Lock, ExpandMore, ExpandLess } from '@mui/icons-material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useConsultationCart } from '../contexts/ConsultationCartContextProvider';
 import { useDocumentCart } from '../contexts/DocumentCartContextProvider';
@@ -101,10 +101,11 @@ export default function LandingPageCart() {
 	const [successMessage, setSuccessMessage] = useState('');
 	const [kaynaklarExpanded, setKaynaklarExpanded] = useState(true);
 	const [danismanliklarExpanded, setDanismanliklarExpanded] = useState(true);
+	const errorAlertRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
 		if (error) {
-			window.scrollTo({ top: 0, behavior: 'smooth' });
+			errorAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}
 	}, [error]);
 
@@ -473,13 +474,6 @@ export default function LandingPageCart() {
 						</Box>
 
 
-						{error && (
-							<Alert severity="error" sx={{ mb: 3, fontFamily: 'Varela Round', borderRadius: 2 }} onClose={() => setError(null)}>
-								{error}
-							</Alert>
-						)}
-
-
 						<Box
 							sx={{
 								display: 'grid',
@@ -649,6 +643,7 @@ export default function LandingPageCart() {
 												/>
 												{documentItems.length > 0 && documentCheckoutCopy.needsWithdrawalWaiver && (
 													<FormControlLabel
+														required
 														control={
 															<Checkbox
 																checked={agreeDocumentWithdrawalWaiver}
@@ -910,6 +905,15 @@ export default function LandingPageCart() {
 														Sepetinizde birden fazla para birimi var. Ödeme yapmak için yalnızca tek para biriminde ürün bırakın.
 													</Alert>
 												)}
+												{error && (
+													<Alert
+														ref={errorAlertRef}
+														severity="error"
+														sx={{ mb: 1.5, fontFamily: 'Varela Round', borderRadius: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+														onClose={() => setError(null)}>
+														{error}
+													</Alert>
+												)}
 												<Button
 													variant="outlined"
 													fullWidth
@@ -947,7 +951,7 @@ export default function LandingPageCart() {
 														<Lock sx={{ fontSize: 12, opacity: 0.8 }} /> Güvenli ödeme (Stripe)
 													</Typography>
 													<Typography sx={{ fontFamily: 'Varela Round', fontSize: '0.7rem', color: 'text.secondary', opacity: 0.9 }}>
-														Kart bilgileriniz saklanmaz
+														Kart bilgileriniz Stripe sayfasında girilir ve saklanmaz
 													</Typography>
 												</Box>
 											</CardContent>

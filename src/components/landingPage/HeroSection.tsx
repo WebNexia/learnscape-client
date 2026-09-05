@@ -451,16 +451,19 @@ const HeroSection = () => {
 				}}
 				maxWidth='md'
 				PaperProps={{
+					style: { backgroundColor: 'transparent' },
 					sx: {
-						background: 'transparent',
+						backgroundColor: 'transparent',
+						backgroundImage: 'none',
 						overflow: 'hidden',
 						boxShadow: 'none',
+						borderRadius: { xs: '0.5rem', sm: '0.75rem' },
 						margin: { xs: '0.75rem', sm: '1.5rem' },
 						width: { xs: 'calc(100% - 1.5rem)', sm: '100%' },
 						maxWidth: { xs: 'calc(100% - 1.5rem)', md: '900px' },
 					},
 				}}>
-				<DialogContent sx={{ background: 'transparent', p: 0, overflow: 'hidden' }}>
+				<DialogContent sx={{ backgroundColor: 'transparent', p: 0, overflow: 'hidden' }}>
 					<Box
 						sx={{
 							position: 'relative',
@@ -470,8 +473,11 @@ const HeroSection = () => {
 							overflow: 'hidden',
 							bgcolor: '#000',
 							borderRadius: { xs: '0.5rem', sm: '0.75rem' },
+							'& iframe, & video, & > div': {
+								backgroundColor: '#000',
+							},
 						}}>
-						<Box sx={{ position: 'absolute', inset: 0 }}>
+						<Box sx={{ position: 'absolute', inset: 0, bgcolor: '#000' }}>
 							{!videoError ? (
 								<UniversalVideoPlayer
 									url='https://www.youtube.com/watch?v=5Jy4pFii-G0&list=PLZjtr7kGq5mw&index=1'
@@ -480,7 +486,7 @@ const HeroSection = () => {
 									controls={true}
 									style={{
 										boxShadow: 'none',
-										background: 'transparent',
+										backgroundColor: '#000',
 										overflow: 'hidden',
 									}}
 									onError={(error) => {
@@ -507,7 +513,7 @@ const HeroSection = () => {
 									}}
 									style={{
 										boxShadow: 'none',
-										background: 'transparent',
+										backgroundColor: '#000',
 										overflow: 'hidden',
 									}}
 									onError={(error) => {
