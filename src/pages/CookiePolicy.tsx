@@ -102,6 +102,11 @@ const CookiePolicy = () => {
 				'Platformda Google Analytics, Meta Pixel veya benzeri reklam/pazarlama izleme araçları kullanılmamaktadır. Yalnızca aşağıdaki isteğe bağlı analitik çerezler söz konusu olabilir:',
 			analyticsCookies: [
 				{
+					title: 'Site Analitiği (birinci taraf):',
+					description:
+						'İsteğe bağlı çerezleri kabul ettiğinizde, hangi sayfaları ziyaret ettiğinizi, nereden geldiğinizi ve yaklaşık konumunuzu (ülke/şehir) kaydederek hizmetlerimizi geliştirmemize yardımcı olur. Google Analytics veya reklam pikselleri kullanılmaz. Bu veriler en fazla 180 gün saklanır.',
+				},
+				{
 					title: 'Stripe Analitik:',
 					description: 'Ödeme kalıplarını analiz etmek ve ödeme hizmetlerimizi iyileştirmek için kullanılır (etkinleştirilmişse).',
 				},
@@ -178,7 +183,7 @@ const CookiePolicy = () => {
 				'Tarayıcınızın çerez ayarlarını temizleyerek (not: bu web sitesi işlevselliğini etkileyebilir)',
 				'Tercihlerinizi güncellemek için bizimle iletişime geçerek',
 			],
-			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hâlâ kullanılacaktır. Reddetme; Zoom/TinyMCE tercihleri, form gönderim takibi, IP tabanlı konum önbelleği ve tanıtım videosu tercihleri gibi isteğe bağlı verileri temizler. Gömülü video platformları ve ödeme güvenliği için gerekli üçüncü taraf çerezleri devam edebilir; ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
+			note: 'İsteğe bağlı çerezleri reddederseniz, web sitesinin düzgün çalışmasını sağlamak için zorunlu çerezler hâlâ kullanılacaktır. Reddetme; Zoom/TinyMCE tercihleri, form gönderim takibi, IP tabanlı konum önbelleği, analitik ziyaretçi kimliği ve tanıtım videosu tercihleri gibi isteğe bağlı verileri temizler. Gömülü video platformları ve ödeme güvenliği için gerekli üçüncü taraf çerezleri devam edebilir; ancak kurslara erişme, ders alma veya ödeme yapma gibi temel hizmetlerimizi kullanmanızı engellemez.',
 			section5Title: '5. Bu Çerez Politikasındaki Değişiklikler',
 			section5Content:
 				'Bu Çerez Politikasını zaman zaman güncelleyebiliriz. Yeni Çerez Politikasını bu sayfaya yayınlayarak ve "Son güncelleme" tarihini güncelleyerek size herhangi bir değişiklikten haberdar edeceğiz.',
@@ -249,6 +254,11 @@ const CookiePolicy = () => {
 			section2_3Content:
 				'The platform does not use Google Analytics, Meta Pixel, or similar advertising/marketing tracking tools. Only the following optional analytics cookies may apply:',
 			analyticsCookies: [
+				{
+					title: 'First-party site analytics:',
+					description:
+						'If you accept optional cookies, we record which pages you visit, where you arrived from, and an approximate location (country/city) to improve our services. We do not use Google Analytics or advertising pixels. This data is kept for up to 180 days.',
+				},
 				{
 					title: 'Stripe Analytics:',
 					description: 'Used to analyze payment patterns and improve our payment services (if enabled).',
@@ -326,7 +336,7 @@ const CookiePolicy = () => {
 				"Clearing your browser's cookie settings (note: this may affect website functionality)",
 				'Contacting us to update your preferences',
 			],
-			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining clears optional data such as Zoom/TinyMCE preferences, form submission tracking, IP-based location cache, and intro video preferences. Third-party cookies required for embedded video platforms and payment security may still apply; however, this will not prevent you from using our core services such as accessing courses, taking lessons, or making payments.',
+			note: 'If you decline optional cookies, essential cookies will still be used to ensure the website functions properly. Declining clears optional data such as Zoom/TinyMCE preferences, form submission tracking, IP-based location cache, analytics visitor identifiers, and intro video preferences. Third-party cookies required for embedded video platforms and payment security may still apply; however, this will not prevent you from using our core services such as accessing courses, taking lessons, or making payments.',
 			section5Title: '5. Changes to This Cookie Policy',
 			section5Content:
 				'We may update this Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last updated" date.',

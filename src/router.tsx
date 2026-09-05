@@ -5,6 +5,7 @@ import AdminRouteGuard from "./components/guards/AdminRouteGuard";
 import LearnerRouteGuard from "./components/guards/LearnerRouteGuard";
 import InstructorRouteGuard from "./components/guards/InstructorRouteGuard";
 import PaymentsRouteGuard from "./components/guards/PaymentsRouteGuard";
+import OwnerRouteGuard from "./components/guards/OwnerRouteGuard";
 import AdminQuizSubmissionsContextProvider from "./contexts/AdminQuizSubmissionsContextProvider";
 import LearnerQuizSubmissionsContextProvider from "./contexts/LearnerQuizSubmissionsContextProvider";
 import LandingPageUpcomingPublicEventsContextProvider from "./contexts/LandingPageUpcomingPublicEventsContextProvider";
@@ -126,6 +127,7 @@ const AdminQuizSubmissionCheck = React.lazy(
   () => import("./pages/AdminQuizSubmissionCheck"),
 );
 const AdminPayments = React.lazy(() => import("./pages/AdminPayments"));
+const AdminSiteAnalytics = React.lazy(() => import("./pages/AdminSiteAnalytics"));
 const AdminInquiries = React.lazy(() => import("./pages/AdminInquiries"));
 const AdminRecycleBin = React.lazy(() => import("./pages/AdminRecycleBin"));
 const AdminPublicEvents = React.lazy(() => import("./pages/AdminPublicEvents"));
@@ -453,6 +455,14 @@ export const router = createBrowserRouter([
               <AdminQuizSubmissionCheck />
             </QuestionsContextProvider>
           </AdminRouteGuard>
+        ),
+      },
+      {
+        path: "admin/payments/analytics",
+        element: (
+          <OwnerRouteGuard>
+            <AdminSiteAnalytics />
+          </OwnerRouteGuard>
         ),
       },
       {

@@ -16,9 +16,12 @@ const OPTIONAL_LOCAL_STORAGE_PATTERNS = [
 	/^tinymce-/i,
 	/^TinyMCE-/,
 	/^form_submitted_/,
+	/^learnscape_vid$/,
 ];
 
 export const GEO_CACHE_SESSION_KEY = 'learnscape_geo_v1';
+export const ANALYTICS_VISITOR_KEY = 'learnscape_vid';
+export const ANALYTICS_SESSION_KEY = 'learnscape_sid';
 
 export function getCookieConsent(): CookieConsentValue | null {
 	if (typeof window === 'undefined') return null;
@@ -36,6 +39,9 @@ export function setCookieConsent(value: CookieConsentValue): void {
 	if (value === 'declined') {
 		clearOptionalStorageOnDecline();
 	}
+	if (typeof window !== 'undefined') {
+		window.dispatchEvent(new CustomEvent('learnscape-cookie-consent', { detail: value }));
+	}
 }
 
 export function clearOptionalStorageOnDecline(): void {
@@ -52,6 +58,8 @@ export function clearOptionalStorageOnDecline(): void {
 
 		sessionStorage.removeItem(GEO_CACHE_SESSION_KEY);
 		sessionStorage.removeItem('hasSeenIntroVideo');
+		sessionStorage.removeItem(ANALYTICS_SESSION_KEY);
+		localStorage.removeItem(ANALYTICS_VISITOR_KEY);
 	} catch (error) {
 		console.error('Error clearing optional storage on cookie decline:', error);
 	}

@@ -255,6 +255,7 @@ const PrivacyPolicy = () => {
 				'Oturum yönetimi ve kimlik doğrulama',
 				'Güvenlik (reCAPTCHA) ve ödeme işlemleri',
 				'Kullanıcı tercihlerinin hatırlanması',
+				'İsteğe bağlı çerez onayı verildiğinde birinci taraf site analitiği',
 				'Gömülü video platformları (YouTube, Vimeo, Dailymotion) tarafından ayarlanan çerezler',
 			],
 			section11Note:
@@ -498,6 +499,7 @@ const PrivacyPolicy = () => {
 				'Session management and authentication',
 				'Security (reCAPTCHA) and payment processing',
 				'Remembering user preferences',
+				'First-party website analytics when optional cookies are accepted',
 				'Cookies set by embedded video platforms (YouTube, Vimeo, Dailymotion)',
 			],
 			section11Note:

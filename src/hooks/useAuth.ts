@@ -15,6 +15,7 @@ export const useAuth = () => {
 	const hasAdminAccess = isAdmin || isOwner || isSuperAdmin;
 	// Payments access (only owner and super-admin, not admin)
 	const canAccessPayments = isOwner || isSuperAdmin;
+	const canAccessAnalytics = isOwner;
 
 	return {
 		isAuthenticated,
@@ -25,6 +26,7 @@ export const useAuth = () => {
 		isSuperAdmin,
 		hasAdminAccess,
 		canAccessPayments,
+		canAccessAnalytics,
 		user,
 	};
 };

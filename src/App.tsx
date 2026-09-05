@@ -8,6 +8,7 @@ import theme from './themes';
 import Loading from './components/layouts/loading/Loading';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import CookieConsent from './components/common/CookieConsent';
+import PageViewTracker from './components/analytics/PageViewTracker';
 
 // Import only essential context providers for initial dashboard load
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
@@ -55,6 +56,7 @@ function App() {
 													{/* Centralized context providers - only one instance of each */}
 													<CoursesContextProvider>
 														<ErrorBoundary context='Application'>
+															<PageViewTracker />
 															<Suspense fallback={<Loading />}>
 																<Outlet />
 															</Suspense>
