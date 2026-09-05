@@ -209,6 +209,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							width: '100%',
 							color: topAccent,
 							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							whiteSpace: 'pre-line',
 						}}>
 
 						{truncateText(course.description, isEnrolled && isMobileSize ? 100 : isEnrolled && isMobileSize && fromHomePage ? 125 : isMobileSize && fromHomePage ? 135 : 200)}

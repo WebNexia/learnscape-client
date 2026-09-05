@@ -56,7 +56,7 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 					minHeight: '15rem',
 					height: isMobile ? 'auto' : { xs: 'auto', sm: 'auto', md: 'auto', lg: '54vh' },
 					maxHeight: isMobile ? 'none' : { md: '480px' },
-					borderRadius: '0.5rem',
+					borderRadius: '0.75rem',
 					boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
 					background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
 					transition: 'transform 0.2s ease-in-out',
