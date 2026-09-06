@@ -557,7 +557,7 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 							{field.options?.map((option, index) => {
 								const isSelected = value === option;
 								return (
@@ -567,7 +567,7 @@ const PublicFeedbackFormPage = () => {
 										sx={{
 											'display': 'flex',
 											'alignItems': 'center',
-											'p': 2,
+											'p': 1.25,
 											'borderRadius': '12px',
 											'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.2)'}`,
 											'backgroundColor': isSelected ? 'rgba(102, 126, 234, 0.08)' : 'rgba(255, 255, 255, 0.6)',
@@ -601,12 +601,12 @@ const PublicFeedbackFormPage = () => {
 												'display': 'flex',
 												'alignItems': 'center',
 												'justifyContent': 'center',
-												'width': 24,
-												'height': 24,
+												'width': 20,
+												'height': 20,
 												'borderRadius': '50%',
 												'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.4)'}`,
 												'backgroundColor': isSelected ? '#667eea' : 'transparent',
-												'mr': 2,
+												'mr': 1.5,
 												// Removed transitions to prevent flashing
 												'position': 'relative',
 												'flexShrink': 0,
@@ -624,7 +624,8 @@ const PublicFeedbackFormPage = () => {
 										<Typography
 											sx={{
 												fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-												fontSize: '0.95rem',
+												fontSize: '0.8rem',
+												lineHeight: 1.45,
 												color: theme.textColor?.primary.main,
 												fontWeight: isSelected ? 600 : 400,
 												position: 'relative',
@@ -668,7 +669,7 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 							{field.options?.map((option, index) => {
 								const isSelected = (value as string[])?.includes(option) || false;
 								return (
@@ -681,8 +682,8 @@ const PublicFeedbackFormPage = () => {
 										}}
 										sx={{
 											'display': 'flex',
-											'alignItems': 'center',
-											'p': 2,
+											'alignItems': 'flex-start',
+											'p': 1.25,
 											'borderRadius': '12px',
 											'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.2)'}`,
 											'backgroundColor': isSelected ? 'rgba(102, 126, 234, 0.08)' : 'rgba(255, 255, 255, 0.6)',
@@ -714,12 +715,13 @@ const PublicFeedbackFormPage = () => {
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'center',
-												width: 24,
-												height: 24,
+												width: 20,
+												height: 20,
+												mt: '1px',
 												borderRadius: '6px',
 												border: `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.4)'}`,
 												backgroundColor: isSelected ? '#667eea' : 'transparent',
-												mr: 2,
+												mr: 1.5,
 												position: 'relative',
 												flexShrink: 0,
 												overflow: 'hidden',
@@ -728,7 +730,7 @@ const PublicFeedbackFormPage = () => {
 												<Check
 													sx={{
 														color: 'white',
-														fontSize: '18px',
+														fontSize: '14px',
 														position: 'absolute',
 														// Removed animation to prevent flashing
 													}}
@@ -738,7 +740,8 @@ const PublicFeedbackFormPage = () => {
 										<Typography
 											sx={{
 												fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-												fontSize: '0.95rem',
+												fontSize: '0.8rem',
+												lineHeight: 1.45,
 												color: theme.textColor?.primary.main,
 												fontWeight: isSelected ? 600 : 400,
 												position: 'relative',
@@ -755,17 +758,8 @@ const PublicFeedbackFormPage = () => {
 
 			case 'date':
 				return (
-					<Box sx={{ mb: '1.5rem' }}>
-						<FormLabel
-							required={isRequired}
-							sx={{
-								mb: '0.5rem',
-								display: 'block',
-								color: theme.textColor?.primary.main,
-								fontWeight: 600,
-								fontSize: '0.95rem',
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-							}}>
+					<Box sx={{ mb: '1rem' }}>
+						<FormLabel required={isRequired} sx={publicFormFieldLabelSx}>
 							{field.label}
 						</FormLabel>
 						<LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="tr">
@@ -779,15 +773,24 @@ const PublicFeedbackFormPage = () => {
 									textField: {
 										required: isRequired,
 										fullWidth: true,
+										size: 'small',
 										sx: {
 											fontFamily: 'Varela Round',
+											'& .MuiInputLabel-root:not(.MuiInputLabel-shrink)': {
+												transform: 'translate(12px, 8px) scale(1)',
+											},
 											'& .MuiOutlinedInput-root': {
 												backgroundColor: 'rgba(255, 255, 255, 0.95)',
-												borderRadius: '12px',
-												boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-												'& fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)', borderWidth: '2px' },
-												'&:hover fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)' },
-												'&.Mui-focused fieldset': { borderColor: 'rgba(102, 126, 234, 0.8)', borderWidth: '2px' },
+												borderRadius: '8px',
+												boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+												alignItems: 'center',
+												'& fieldset': { borderColor: 'rgba(102, 126, 234, 0.3)', borderWidth: '1px' },
+												'&:hover fieldset': { borderColor: 'rgba(102, 126, 234, 0.5)' },
+												'&.Mui-focused fieldset': { borderColor: 'rgba(102, 126, 234, 0.8)', borderWidth: '1px' },
+												'& .MuiInputBase-input': {
+													padding: '9px 12px !important',
+													lineHeight: '1.4 !important',
+												},
 											},
 										},
 									},
