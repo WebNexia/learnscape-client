@@ -1213,7 +1213,7 @@ const PublicFeedbackFormPage = () => {
 							sx={{
 								color: theme.textColor?.secondary.main,
 								mb: 1.5,
-								textAlign: 'center',
+								textAlign: 'left',
 								fontSize: '0.8125rem',
 								lineHeight: 1.5,
 								whiteSpace: 'pre-wrap',
