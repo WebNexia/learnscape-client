@@ -10,6 +10,7 @@ import AdminQuizSubmissionsContextProvider from "./contexts/AdminQuizSubmissions
 import LearnerQuizSubmissionsContextProvider from "./contexts/LearnerQuizSubmissionsContextProvider";
 import LandingPageUpcomingPublicEventsContextProvider from "./contexts/LandingPageUpcomingPublicEventsContextProvider";
 import LandingPageLatestCoursesContextProvider from "./contexts/LandingPageLatestCoursesContextProvider";
+import LandingPageLatestDocumentsContextProvider from "./contexts/LandingPageLatestDocumentsContextProvider";
 import AllPublicCoursesContextProvider from "./contexts/AllPublicCoursesContextProvider";
 import LandingPageResourcesContextProvider from "./contexts/LandingPageResourcesContextProvider";
 import LandingPageConsultationsContextProvider from "./contexts/LandingPageConsultationsContextProvider";
@@ -176,7 +177,9 @@ export const router = createBrowserRouter([
         element: (
           <LandingPageUpcomingPublicEventsContextProvider>
             <LandingPageLatestCoursesContextProvider>
-              <LandingPage />
+              <LandingPageLatestDocumentsContextProvider>
+                <LandingPage />
+              </LandingPageLatestDocumentsContextProvider>
             </LandingPageLatestCoursesContextProvider>
           </LandingPageUpcomingPublicEventsContextProvider>
         ),
