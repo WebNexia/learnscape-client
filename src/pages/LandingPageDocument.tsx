@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
 	Alert,
 	Box,
@@ -13,7 +13,7 @@ import {
 	IconButton,
 	Typography,
 } from '@mui/material';
-import { AddShoppingCart, ArrowBack, Check, ChevronLeft, ChevronRight, Close as CloseIcon, Download } from '@mui/icons-material';
+import { AddShoppingCart, ArrowBack, Check, ChevronLeft, ChevronRight, Close as CloseIcon, Download, ShoppingCart } from '@mui/icons-material';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 import { isAxiosError } from 'axios';
@@ -56,6 +56,7 @@ const getUserCurrency = (country?: string) => {
 
 const LandingPageDocument = () => {
 	const { documentId } = useParams();
+	const navigate = useNavigate();
 	const location = useLocation();
 	const { orgId } = useContext(OrganisationContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -98,7 +99,7 @@ const LandingPageDocument = () => {
 	const price = document?.prices?.find((p) => p.currency === userCurrency);
 	const isFree = !price || price.amount === '0' || price.amount === 'Free';
 	const isInCart = document ? documentCartItems.some((item) => item.documentId === document._id) : false;
-	const sampleUrls = document?.samplePageImageUrls ?? [];
+	const sampleUrls = (document?.samplePageImageUrls ?? []).filter((url) => typeof url === 'string' && url.trim());
 	const hasSamplePages = sampleUrls.length > 0;
 	const detailBlocks: DocumentDetailBlock[] = document ? resolvePublicDetailBlocks(document) : [];
 	const introPlainForSeo = detailBlocks
@@ -127,6 +128,41 @@ const LandingPageDocument = () => {
 			currency: price.currency,
 			imageUrl: document.imageUrl,
 		});
+	};
+
+	const goToCart = () => {
+		navigate('/landing-page-cart');
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	const addToCartButtonSx = {
+		textTransform: 'none' as const,
+		fontFamily: 'Varela Round',
+		fontWeight: isInCart ? 700 : 600,
+		color: '#fff !important',
+		background: isInCart ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#FF6B3D',
+		boxShadow: isInCart ? '0 2px 8px rgba(5, 150, 105, 0.35)' : 'none',
+		cursor: isInCart ? 'default' : 'pointer',
+		'&:hover': isInCart
+			? {
+					background: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+					boxShadow: '0 3px 10px rgba(5, 150, 105, 0.4)',
+				}
+			: { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' },
+		'& .MuiButton-endIcon': { color: '#fff' },
+	};
+
+	const goToCartButtonSx = {
+		textTransform: 'none' as const,
+		fontFamily: 'Varela Round',
+		fontWeight: 600,
+		borderColor: '#0052a3',
+		color: '#0052a3',
+		backgroundColor: 'rgba(0, 82, 163, 0.04)',
+		'&:hover': {
+			borderColor: '#004c99',
+			backgroundColor: 'rgba(0, 82, 163, 0.1)',
+		},
 	};
 
 	const openFreeDownloadDialog = () => {
@@ -380,25 +416,27 @@ const LandingPageDocument = () => {
 											</Typography>
 										</Box>
 
-										<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-											<Button
-												variant='outlined'
-												onClick={() => {
-													setSampleIndex(0);
-													setOpenSample(true);
-												}}
-												sx={{
-													borderColor: '#0052a3',
-													color: '#0052a3',
-													textTransform: 'none',
-													fontFamily: 'Varela Round',
-													'&:hover': {
-														borderColor: '#004c99',
-														backgroundColor: 'rgba(0, 82, 163, 0.06)',
-													},
-												}}>
-												{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
-											</Button>
+										<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+											{hasSamplePages && (
+												<Button
+													variant='outlined'
+													onClick={() => {
+														setSampleIndex(0);
+														setOpenSample(true);
+													}}
+													sx={{
+														borderColor: '#0052a3',
+														color: '#0052a3',
+														textTransform: 'none',
+														fontFamily: 'Varela Round',
+														'&:hover': {
+															borderColor: '#004c99',
+															backgroundColor: 'rgba(0, 82, 163, 0.06)',
+														},
+													}}>
+													{sampleUrls.length > 1 ? 'Örnek Sayfalar' : 'Örnek Sayfa'}
+												</Button>
+											)}
 											{isFree ? (
 												<Button
 													variant='contained'
@@ -417,22 +455,26 @@ const LandingPageDocument = () => {
 													İndir
 												</Button>
 											) : (
-												<Button
-													variant='contained'
-													disabled={isInCart}
-													onClick={handleAddToCart}
-													endIcon={isInCart ? <Check /> : <AddShoppingCart />}
-													sx={{
-														textTransform: 'none',
-														fontFamily: 'Varela Round',
-														background: isInCart ? 'grey.300' : '#FF6B3D',
-														boxShadow: 'none',
-														'&:hover': !isInCart
-															? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' }
-															: {},
-													}}>
-													{isInCart ? 'Eklendi' : 'Sepete Ekle'}
-												</Button>
+												<>
+													<Button
+														variant='contained'
+														onClick={() => {
+															if (!isInCart) handleAddToCart();
+														}}
+														endIcon={isInCart ? <Check /> : <AddShoppingCart />}
+														sx={addToCartButtonSx}>
+														{isInCart ? 'Eklendi' : 'Sepete Ekle'}
+													</Button>
+													{isInCart && (
+														<Button
+															variant='outlined'
+															onClick={goToCart}
+															endIcon={<ShoppingCart />}
+															sx={goToCartButtonSx}>
+															Sepete Git
+														</Button>
+													)}
+												</>
 											)}
 										</Box>
 									</Box>
@@ -493,24 +535,26 @@ const LandingPageDocument = () => {
 												İndir
 											</Button>
 										) : (
-											<Button
-												variant='contained'
-												disabled={isInCart}
-												onClick={handleAddToCart}
-												endIcon={isInCart ? <Check /> : <AddShoppingCart />}
-												sx={{
-													textTransform: 'none',
-													fontFamily: 'Varela Round',
-													px: 2.5,
-													py: 1,
-													background: isInCart ? 'grey.300' : '#FF6B3D',
-													boxShadow: 'none',
-													'&:hover': !isInCart
-														? { background: '#ff7d55', boxShadow: '0 4px 15px rgba(255, 107, 61, 0.4)' }
-														: {},
-												}}>
-												{isInCart ? 'Eklendi' : 'Sepete Ekle'}
-											</Button>
+											<>
+												<Button
+													variant='contained'
+													onClick={() => {
+														if (!isInCart) handleAddToCart();
+													}}
+													endIcon={isInCart ? <Check /> : <AddShoppingCart />}
+													sx={{ ...addToCartButtonSx, px: 2.5, py: 1 }}>
+													{isInCart ? 'Eklendi' : 'Sepete Ekle'}
+												</Button>
+												{isInCart && (
+													<Button
+														variant='outlined'
+														onClick={goToCart}
+														endIcon={<ShoppingCart />}
+														sx={{ ...goToCartButtonSx, px: 2.5, py: 1 }}>
+														Sepete Git
+													</Button>
+												)}
+											</>
 										)}
 									</Box>
 								</Box>
