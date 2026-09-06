@@ -83,8 +83,13 @@ const FieldEditorDialog = ({ isOpen, onClose, fieldToEdit, onSave }: FieldEditor
 			return;
 		}
 
-		if ((fieldType === 'multiple-choice' || fieldType === 'checkbox') && options.length < 2) {
+		if (fieldType === 'multiple-choice' && options.length < 2) {
 			setErrorMessage('At least 2 options are required');
+			return;
+		}
+
+		if (fieldType === 'checkbox' && options.filter((opt) => opt.trim()).length < 1) {
+			setErrorMessage('At least 1 option is required');
 			return;
 		}
 
@@ -172,6 +177,11 @@ const FieldEditorDialog = ({ isOpen, onClose, fieldToEdit, onSave }: FieldEditor
 						<Typography variant='body2' sx={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>
 							Options
 						</Typography>
+						{fieldType === 'checkbox' && (
+							<Typography variant='caption' sx={{ display: 'block', marginBottom: '0.5rem', color: 'text.secondary' }}>
+								A single option is allowed (e.g. consent / permission).
+							</Typography>
+						)}
 						{options.map((option, index) => (
 							<Box key={index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: 1 }}>
 								<CustomTextField
