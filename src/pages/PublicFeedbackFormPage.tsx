@@ -1216,6 +1216,7 @@ const PublicFeedbackFormPage = () => {
 								textAlign: 'center',
 								fontSize: '0.8125rem',
 								lineHeight: 1.5,
+								whiteSpace: 'pre-wrap',
 							}}>
 							{form.description}
 						</Typography>
