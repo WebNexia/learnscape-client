@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
 import { useContext, useMemo } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { getPriceForCountry } from '../../utils/getPriceForCountry';
+import { getPriceForCountry, getListPriceIfDifferent } from '../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../utils/resolvePricingCountryCode';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
@@ -34,10 +34,46 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
+	const sellingPrice = getPriceForCountry(course, resolvedCountryCode);
+	const originalPrice = getListPriceIfDifferent(course, resolvedCountryCode);
 	const isCourseFree: boolean =
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '0' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === 'Free' ||
-		getPriceForCountry(course, resolvedCountryCode)?.amount === '';
+		sellingPrice?.amount === '0' || sellingPrice?.amount === 'Free' || sellingPrice?.amount === '';
+
+	const paidPriceBlock = (fontFamily: string | undefined, sellingFontSize: string) => (
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+			{originalPrice ? (
+				<Box
+					component='span'
+					sx={{
+						fontFamily,
+						fontSize: isMobileSize ? '0.68rem' : '0.75rem',
+						fontWeight: 500,
+						textDecoration: 'line-through',
+						textDecorationThickness: '1px',
+						textDecorationColor: '#94a3b8',
+						color: '#64748b',
+						lineHeight: 1.2,
+					}}>
+					{setCurrencySymbol(originalPrice.currency)}
+					{originalPrice.amount}
+				</Box>
+			) : null}
+			<Typography
+				component='span'
+				sx={{
+					fontFamily,
+					fontWeight: 700,
+					fontSize: sellingFontSize,
+					fontVariantNumeric: 'tabular-nums',
+					letterSpacing: '-0.02em',
+					lineHeight: 1.2,
+					color: '#0f172a',
+				}}>
+				{setCurrencySymbol(sellingPrice?.currency ?? '')}
+				{sellingPrice?.amount}
+			</Typography>
+		</Box>
+	);
 
 	const topAccent = '#0052a3';
 	const progressGreen = theme.palette.success?.main || '#1EC28B';
@@ -356,21 +392,21 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 										Ücret
 									</Typography>
 								)}
-								<Typography
-									component='span'
-									sx={{
-										fontFamily: 'Varela Round',
-										fontWeight: 700,
-										fontSize: isMobileSize ? '0.8125rem' : '0.9375rem',
-										fontVariantNumeric: 'tabular-nums',
-										letterSpacing: isCourseFree ? 'normal' : '-0.02em',
-										lineHeight: 1.2,
-										color: isCourseFree ? '#047857' : '#0f172a',
-									}}>
-									{isCourseFree
-										? 'Ücretsiz'
-										: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${getPriceForCountry(course, resolvedCountryCode)?.amount}`}
-								</Typography>
+								{isCourseFree ? (
+									<Typography
+										component='span'
+										sx={{
+											fontFamily: 'Varela Round',
+											fontWeight: 700,
+											fontSize: isMobileSize ? '0.8125rem' : '0.9375rem',
+											lineHeight: 1.2,
+											color: '#047857',
+										}}>
+										Ücretsiz
+									</Typography>
+								) : (
+									paidPriceBlock('Varela Round', isMobileSize ? '0.8125rem' : '0.9375rem')
+								)}
 							</Box>
 						)}
 
@@ -403,25 +439,21 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 										Price
 									</Typography>
 								)}
-								<Typography
-									component='span'
-									sx={{
-										fontFamily: theme.fontFamily?.main,
-										fontWeight: isEnrolled ? 600 : 700,
-										fontSize: isMobileSize ? '0.75rem' : '0.875rem',
-										fontVariantNumeric: !isEnrolled && !isCourseFree ? 'tabular-nums' : undefined,
-										letterSpacing: !isEnrolled && !isCourseFree ? '-0.02em' : undefined,
-										lineHeight: 1.25,
-										color: isEnrolled ? theme.palette.primary.main : isCourseFree ? '#047857' : '#0f172a',
-									}}>
-									{isEnrolled && isCourseCompleted
-										? 'Review Course'
-										: isEnrolled && !isCourseCompleted
-											? 'Continue'
-											: isCourseFree
-												? 'Free'
-												: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode)?.currency)}${getPriceForCountry(course, resolvedCountryCode)?.amount}`}
-								</Typography>
+								{isEnrolled || isCourseFree ? (
+									<Typography
+										component='span'
+										sx={{
+											fontFamily: theme.fontFamily?.main,
+											fontWeight: isEnrolled ? 600 : 700,
+											fontSize: isMobileSize ? '0.75rem' : '0.875rem',
+											lineHeight: 1.25,
+											color: isEnrolled ? theme.palette.primary.main : '#047857',
+										}}>
+										{isEnrolled && isCourseCompleted ? 'Review Course' : isEnrolled ? 'Continue' : 'Free'}
+									</Typography>
+								) : (
+									paidPriceBlock(theme.fontFamily?.main, isMobileSize ? '0.75rem' : '0.875rem')
+								)}
 							</Box>
 						)}
 					</Box>

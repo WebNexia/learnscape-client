@@ -724,10 +724,11 @@ const CoursePageBanner = ({
 															component='span'
 															sx={{
 																fontSize: isMobileSize ? '0.62rem' : '0.78rem',
-																fontWeight: 700,
+																fontWeight: 500,
 																textDecoration: 'line-through',
-																textDecorationThickness: '2px',
-																color: '#334155',
+																textDecorationThickness: '1px',
+																textDecorationColor: '#94a3b8',
+																color: '#64748b',
 																lineHeight: 1.2,
 															}}>
 															{setCurrencySymbol(originalPrice.currency)}
