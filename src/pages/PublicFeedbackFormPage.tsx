@@ -1214,7 +1214,7 @@ const PublicFeedbackFormPage = () => {
 						<Typography
 							variant='body1'
 							sx={{
-								color: theme.textColor?.secondary.main,
+								color: '#000000',
 								mb: 1.5,
 								textAlign: 'left',
 								fontSize: '0.8125rem',
