@@ -13,6 +13,7 @@ import logo from '../assets/logo.png';
 import { CheckCircle, Error as ErrorIcon, Check } from '@mui/icons-material';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { sanitizeTextInput, sanitizeEmailInput, validateInputLength } from '../utils/sanitizeHtml';
+import { normalizePublicFormId } from '../utils/normalizePublicFormId';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import TurnstileWidget from '../components/common/TurnstileWidget';
 
@@ -81,7 +82,8 @@ const publicFormFieldSpacingSx = {
 };
 
 const PublicFeedbackFormPage = () => {
-	const { formId } = useParams<{ formId: string }>();
+	const { formId: formIdParam } = useParams<{ formId: string }>();
+	const formId = normalizePublicFormId(formIdParam);
 	const navigate = useNavigate();
 	const { isSmallScreen } = useContext(MediaQueryContext);
 	const [form, setForm] = useState<FeedbackForm | null>(null);

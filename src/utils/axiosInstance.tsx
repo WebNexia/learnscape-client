@@ -27,17 +27,25 @@ const axiosInstance = axios.create({
 
 // Add Firebase ID token before every request
 axiosInstance.interceptors.request.use(async (config) => {
-	const auth = getAuth();
-	const user = auth.currentUser;
+	try {
+		const auth = getAuth();
+		const user = auth.currentUser;
 
-	if (user) {
-		const token = await user.getIdToken();
-		config.headers.Authorization = `Bearer ${token}`;
+		if (user) {
+			const token = await user.getIdToken();
+			config.headers.Authorization = `Bearer ${token}`;
+		}
+	} catch {
+		// Instagram / in-app browsers can block Firebase storage; public pages must still load.
 	}
 
-	const learnerSessionId = getLearnerSessionId();
-	if (learnerSessionId) {
-		config.headers['X-Learner-Session-Id'] = learnerSessionId;
+	try {
+		const learnerSessionId = getLearnerSessionId();
+		if (learnerSessionId) {
+			config.headers['X-Learner-Session-Id'] = learnerSessionId;
+		}
+	} catch {
+		/* ignore */
 	}
 
 	return config;
