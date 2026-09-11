@@ -1,5 +1,7 @@
-import { Box, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Dialog, IconButton, Typography } from '@mui/material';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 import { CourseLandingPageSection, SingleCourse } from '../../interfaces/course';
 import { sanitizeLandingPageHtml } from '../../utils/sanitizeHtml';
 import { interpolateLandingPagePricePlaceholders } from '../../utils/interpolateLandingPagePrices';
@@ -130,6 +132,20 @@ const proseSx = {
 	},
 	'& p': { margin: '0 0 1.05em' },
 	'& p:last-child': { marginBottom: 0 },
+	'& img': {
+		display: 'block',
+		maxWidth: '100%',
+		width: '100%',
+		height: 'auto',
+		borderRadius: '0.85rem',
+		margin: '1rem 0',
+		objectFit: 'contain',
+		boxShadow: '0 12px 40px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+	},
+	'& p > img': {
+		marginTop: '0.35rem',
+		marginBottom: '0.35rem',
+	},
 	// Intro paragraph — exclude any inline vertical-bar block (alternating colors from `fakeListAlternateCss`)
 	[introFirstParagraphSelector]: {
 		fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
@@ -334,13 +350,6 @@ const proseSx = {
 			boxShadow: '0 2px 0 rgba(0, 82, 163, 0.15)',
 		},
 	},
-	'& img': {
-		maxWidth: '100%',
-		height: 'auto',
-		borderRadius: '0.85rem',
-		boxShadow: '0 12px 40px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.04)',
-		my: 1.75,
-	},
 	'& blockquote': {
 		borderLeft: '4px solid #0052a3',
 		pl: 2,
@@ -393,9 +402,129 @@ type Props = {
 	course?: Pick<SingleCourse, 'prices' | 'originalPrices'>;
 };
 
+type SectionMeta = {
+	section: CourseLandingPageSection;
+	index: number;
+	hasImage: boolean;
+	hasTitle: boolean;
+	hasBody: boolean;
+	hasTextContent: boolean;
+	bodyHtml: string;
+	imageOnly: boolean;
+};
+
+/** Doc-detail style: equal slots; images scale with contain (never cropped). */
+function renderGalleryImage(
+	imageUrl: string,
+	index: number,
+	inRow: boolean,
+	onOpen: (url: string) => void,
+) {
+	const rowHeight = { xs: 200, sm: 300, md: 360 };
+
+	return (
+		<Box
+			component='button'
+			type='button'
+			aria-label={`Görseli büyüt ${index + 1}`}
+			onClick={() => onOpen(imageUrl)}
+			sx={{
+				appearance: 'none',
+				WebkitAppearance: 'none',
+				border: 'none',
+				background: 'transparent',
+				padding: 0,
+				margin: 0,
+				font: 'inherit',
+				color: 'inherit',
+				boxSizing: 'border-box',
+				cursor: 'zoom-in',
+				width: '100%',
+				minWidth: 0,
+				height: inRow ? rowHeight : 'auto',
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				borderRadius: '0.75rem',
+				transition: 'opacity 0.2s ease',
+				'&:hover': { opacity: 0.92, cursor: 'zoom-in' },
+				'&:focus-visible': {
+					outline: '2px solid #0052a3',
+					outlineOffset: 3,
+				},
+				'& img': { cursor: 'zoom-in' },
+			}}>
+			<Box
+				component='img'
+				src={imageUrl}
+				alt={`Görsel ${index + 1}`}
+				loading='lazy'
+				sx={
+					inRow
+						? {
+								maxWidth: '100%',
+								maxHeight: '100%',
+								width: 'auto',
+								height: 'auto',
+								objectFit: 'contain',
+								objectPosition: 'center',
+								display: 'block',
+								mx: 'auto',
+								borderRadius: '0.75rem',
+								cursor: 'zoom-in',
+								pointerEvents: 'none',
+							}
+						: {
+								maxWidth: '100%',
+								maxHeight: { xs: '55vh', md: '60vh' },
+								width: 'auto',
+								height: 'auto',
+								objectFit: 'contain',
+								objectPosition: 'center',
+								display: 'block',
+								mx: 'auto',
+								borderRadius: '0.75rem',
+								cursor: 'zoom-in',
+								pointerEvents: 'none',
+							}
+				}
+			/>
+		</Box>
+	);
+}
+
 const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 	const geoLocation = useGeoLocation();
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 	if (!sections?.length) return null;
+
+	const metas: SectionMeta[] = sections.map((section, index) => {
+		const interpolatedBody = course
+			? interpolateLandingPagePricePlaceholders(section.body, course, geoLocation?.countryCode, geoLocation?.country)
+			: section.body;
+		const hasImage = Boolean(section.imageUrl?.trim());
+		const hasTitle = Boolean(section.title?.trim());
+		const bodyHtml = sanitizeLandingPageHtml(interpolatedBody || '');
+		const hasBody = Boolean(bodyHtml.replace(/<[^>]*>/g, '').trim()) || /<img[\s>]/i.test(bodyHtml);
+		const hasTextContent = hasTitle || hasBody;
+		return {
+			section,
+			index,
+			hasImage,
+			hasTitle,
+			hasBody,
+			hasTextContent,
+			bodyHtml,
+			imageOnly: hasImage && !hasTextContent,
+		};
+	});
+
+	// Image-only sections sit on top in a doc-style row; text cards number from 01.
+	const galleryImages = metas.filter((m) => m.imageOnly);
+	const cardSections = metas.filter((m) => !m.imageOnly);
+	const galleryCount = galleryImages.length;
+	const inRow = galleryCount > 1;
 
 	return (
 		<Box
@@ -443,135 +572,252 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 				/>
 			</Box>
 
-			<Box
-				sx={{
-					display: 'grid',
-					gridTemplateColumns: {
-						xs: '1fr',
-						md: 'repeat(2, minmax(0, 1fr))',
-						lg: 'repeat(3, minmax(0, 1fr))',
-					},
-					alignItems: 'stretch',
-					gap: { xs: 2, md: 2.5 },
-				}}>
-				{sections.map((s, i) => {
-					const n = String(i + 1).padStart(2, '0');
-					const interpolatedBody = course
-						? interpolateLandingPagePricePlaceholders(s.body, course, geoLocation?.countryCode, geoLocation?.country)
-						: s.body;
-					return (
-						<Box
-							key={`${s.title}-${i}`}
-							sx={{
-								position: 'relative',
-								height: '100%',
-								display: 'flex',
-								flexDirection: 'column',
-								overflow: 'hidden',
-								borderRadius: '20px',
-								bgcolor: '#ffffff',
-								border: '1px solid rgba(15, 23, 42, 0.06)',
-								boxShadow:
-									'0 0 0 1px rgba(255,255,255,0.8) inset, 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 40px -18px rgba(15, 23, 42, 0.12)',
-								// Light hover only (no transform — avoids extra layout/paint)
-								transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
-								'&:hover': {
-									borderColor: 'rgba(0, 82, 163, 0.12)',
-									boxShadow:
-										'0 0 0 1px rgba(255,255,255,0.9) inset, 0 2px 8px rgba(15, 23, 42, 0.05), 0 18px 36px -16px rgba(0, 82, 163, 0.14)',
-								},
-								'&::after': {
-									content: '""',
-									position: 'absolute',
-									left: 0,
-									top: 0,
-									bottom: 0,
-									width: 5,
-									borderRadius: '12px 0 0 12px',
-									background: 'linear-gradient(180deg, #0052a3 0%, #0066cc 50%, #38bdf8 100%)',
-									opacity: 0.95,
-								},
-							}}>
-							<Box
-								sx={{
-									position: 'relative',
-									zIndex: 1,
-									flex: 1,
-									display: 'flex',
-									flexDirection: 'column',
-									pl: { xs: 2.5, sm: 3 },
-									pr: { xs: 2.5, sm: 3.25 },
-									py: { xs: 2.5, sm: 3 },
-									pt: { xs: 2.75, sm: 3.25 },
-								}}>
-								<Box
-									sx={{
-										display: 'flex',
-										alignItems: 'flex-start',
-										gap: { xs: 1.5, sm: 1.75 },
-										pb: 2.25,
-										mb: 2.25,
-										borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
-									}}>
-									<Box
-										aria-hidden
-										sx={{
-											flexShrink: 0,
-											width: { xs: 40, sm: 44 },
-											height: { xs: 40, sm: 44 },
-											borderRadius: '12px',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											fontFamily: "'Varela Round', 'Segoe UI', sans-serif",
-											fontWeight: 700,
-											fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-											letterSpacing: '0.06em',
-											color: '#0c4a6e',
-											bgcolor: 'rgba(240, 249, 255, 0.9)',
-											border: '1px solid rgba(0, 82, 163, 0.12)',
-											boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px -4px rgba(0, 82, 163, 0.2)',
-										}}>
-										{n}
-									</Box>
-									<Typography
-										variant='h5'
-										component='h2'
-										sx={{
-											flex: 1,
-											fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-											fontWeight: 700,
-											fontSize: { xs: '1.05rem', sm: '1.125rem', md: '1.2rem' },
-											lineHeight: 1.3,
-											letterSpacing: '-0.03em',
-											color: '#0f172a',
-											pt: { xs: 0.35, sm: 0.4 },
-										}}>
-										{s.title}
-									</Typography>
+			<Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 3.5 } }}>
+				{galleryCount > 0 ? (
+					<Box
+						sx={{
+							width: '100%',
+							display: 'grid',
+							gridTemplateColumns: inRow
+								? `repeat(${galleryCount}, minmax(0, 420px))`
+								: 'minmax(0, 720px)',
+							justifyContent: 'center',
+							justifyItems: 'center',
+							alignItems: 'center',
+							gap: { xs: 1.25, md: 2 },
+						}}>
+						{galleryImages.map(({ section, index }) => {
+							const url = section.imageUrl!.trim();
+							return (
+								<Box key={`gallery-${url}-${index}`} sx={{ width: '100%', minWidth: 0 }}>
+									{renderGalleryImage(url, index, inRow, setPreviewUrl)}
 								</Box>
+							);
+						})}
+					</Box>
+				) : null}
 
+				{cardSections.length > 0 ? (
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: {
+								xs: '1fr',
+								md: 'repeat(2, minmax(0, 1fr))',
+								lg: 'repeat(3, minmax(0, 1fr))',
+							},
+							alignItems: 'stretch',
+							gap: { xs: 2, md: 2.5 },
+						}}>
+						{cardSections.map(({ section: s, index: i, hasImage, hasTitle, hasBody, hasTextContent, bodyHtml }, cardIndex) => {
+							const n = String(cardIndex + 1).padStart(2, '0');
+							return (
 								<Box
+									key={`${s.title || 'section'}-${s.imageUrl || i}-${i}`}
 									sx={{
-										flex: 1,
-										borderRadius: '14px',
-										bgcolor: 'rgba(248, 250, 252, 0.65)',
-										border: '1px solid rgba(15, 23, 42, 0.045)',
-										px: { xs: 2, sm: 2.25 },
-										py: { xs: 2, sm: 2.25 },
-										minHeight: 0,
+										position: 'relative',
+										width: '100%',
+										height: '100%',
+										display: 'flex',
+										flexDirection: 'column',
+										overflow: 'hidden',
+										borderRadius: '20px',
+										bgcolor: '#ffffff',
+										border: '1px solid rgba(15, 23, 42, 0.06)',
+										boxShadow:
+											'0 0 0 1px rgba(255,255,255,0.8) inset, 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 40px -18px rgba(15, 23, 42, 0.12)',
+										transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+										'&:hover': {
+											borderColor: 'rgba(0, 82, 163, 0.12)',
+											boxShadow:
+												'0 0 0 1px rgba(255,255,255,0.9) inset, 0 2px 8px rgba(15, 23, 42, 0.05), 0 18px 36px -16px rgba(0, 82, 163, 0.14)',
+											'& .lp-section-featured-img': {
+												transform: 'scale(1.03)',
+											},
+										},
+										'&::after': {
+											content: '""',
+											position: 'absolute',
+											left: 0,
+											top: 0,
+											bottom: 0,
+											width: 5,
+											borderRadius: '12px 0 0 12px',
+											background: 'linear-gradient(180deg, #0052a3 0%, #0066cc 50%, #38bdf8 100%)',
+											opacity: 0.95,
+											zIndex: 2,
+										},
 									}}>
-									<Box
-										className={LP_SECTION_PROSE_CLASS}
-										sx={proseSx}
-										dangerouslySetInnerHTML={{ __html: sanitizeLandingPageHtml(interpolatedBody) }}
-									/>
+									{hasImage ? (
+										<Box
+											sx={{
+												position: 'relative',
+												width: '100%',
+												lineHeight: 0,
+												overflow: 'hidden',
+												flex: '0 0 auto',
+												pl: '5px',
+											}}>
+											<Box
+												component='img'
+												className='lp-section-featured-img'
+												src={s.imageUrl}
+												alt={hasTitle ? s.title : ''}
+												loading='lazy'
+												sx={{
+													width: '100%',
+													height: 'auto',
+													maxHeight: { xs: 280, md: 320 },
+													objectFit: 'contain',
+													objectPosition: 'center',
+													display: 'block',
+													verticalAlign: 'top',
+													transition: 'transform 0.35s ease',
+												}}
+											/>
+										</Box>
+									) : null}
+									{hasTextContent ? (
+										<Box
+											sx={{
+												position: 'relative',
+												zIndex: 1,
+												flex: 1,
+												display: 'flex',
+												flexDirection: 'column',
+												pl: { xs: 2.5, sm: 3 },
+												pr: { xs: 2.5, sm: 3.25 },
+												py: { xs: 2.5, sm: 3 },
+												pt: { xs: hasImage ? 2.25 : 2.75, sm: hasImage ? 2.5 : 3.25 },
+											}}>
+											{hasTitle ? (
+												<Box
+													sx={{
+														display: 'flex',
+														alignItems: 'flex-start',
+														gap: { xs: 1.5, sm: 1.75 },
+														pb: hasBody ? 2.25 : 0,
+														mb: hasBody ? 2.25 : 0,
+														borderBottom: hasBody ? '1px solid rgba(15, 23, 42, 0.06)' : 'none',
+													}}>
+													<Box
+														aria-hidden
+														sx={{
+															flexShrink: 0,
+															width: { xs: 40, sm: 44 },
+															height: { xs: 40, sm: 44 },
+															borderRadius: '12px',
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															fontFamily: "'Varela Round', 'Segoe UI', sans-serif",
+															fontWeight: 700,
+															fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+															letterSpacing: '0.06em',
+															color: '#0c4a6e',
+															bgcolor: 'rgba(240, 249, 255, 0.9)',
+															border: '1px solid rgba(0, 82, 163, 0.12)',
+															boxShadow:
+																'0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px -4px rgba(0, 82, 163, 0.2)',
+														}}>
+														{n}
+													</Box>
+													<Typography
+														variant='h5'
+														component='h2'
+														sx={{
+															flex: 1,
+															fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+															fontWeight: 700,
+															fontSize: { xs: '1.05rem', sm: '1.125rem', md: '1.2rem' },
+															lineHeight: 1.3,
+															letterSpacing: '-0.03em',
+															color: '#0f172a',
+															pt: { xs: 0.35, sm: 0.4 },
+														}}>
+														{s.title}
+													</Typography>
+												</Box>
+											) : null}
+
+											{hasBody ? (
+												<Box
+													sx={{
+														flex: 1,
+														borderRadius: '14px',
+														bgcolor: 'rgba(248, 250, 252, 0.65)',
+														border: '1px solid rgba(15, 23, 42, 0.045)',
+														px: { xs: 2, sm: 2.25 },
+														py: { xs: 2, sm: 2.25 },
+														minHeight: 0,
+													}}>
+													<Box
+														className={LP_SECTION_PROSE_CLASS}
+														sx={proseSx}
+														dangerouslySetInnerHTML={{ __html: bodyHtml }}
+													/>
+												</Box>
+											) : null}
+										</Box>
+									) : null}
 								</Box>
-							</Box>
-						</Box>
-					);
-				})}
+							);
+						})}
+					</Box>
+				) : null}
 			</Box>
+
+			<Dialog
+				open={Boolean(previewUrl)}
+				onClose={() => setPreviewUrl(null)}
+				maxWidth={false}
+				aria-label='Görsel önizleme'
+				BackdropProps={{
+					sx: { backgroundColor: 'rgba(15, 23, 42, 0.78)' },
+				}}
+				PaperProps={{
+					sx: {
+						m: { xs: 1.5, sm: 2 },
+						maxWidth: 'min(96vw, 1100px)',
+						maxHeight: '92vh',
+						width: 'auto',
+						bgcolor: 'transparent',
+						boxShadow: 'none',
+						overflow: 'visible',
+					},
+				}}>
+				<IconButton
+					aria-label='Kapat'
+					onClick={() => setPreviewUrl(null)}
+					sx={{
+						position: 'absolute',
+						top: { xs: -8, sm: -12 },
+						right: { xs: -8, sm: -12 },
+						zIndex: 1,
+						color: '#fff',
+						bgcolor: 'rgba(15, 23, 42, 0.55)',
+						'&:hover': { bgcolor: 'rgba(15, 23, 42, 0.75)' },
+					}}>
+					<CloseIcon />
+				</IconButton>
+				{previewUrl ? (
+					<Box
+						component='img'
+						src={previewUrl}
+						alt='Büyütülmüş görsel'
+						sx={{
+							display: 'block',
+							maxWidth: '96vw',
+							maxHeight: '88vh',
+							width: 'auto',
+							height: 'auto',
+							objectFit: 'contain',
+							borderRadius: '12px',
+							boxShadow: '0 24px 64px rgba(0,0,0,0.45)',
+						}}
+					/>
+				) : null}
+			</Dialog>
 		</Box>
 	);
 };

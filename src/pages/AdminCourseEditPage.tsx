@@ -333,6 +333,7 @@ const AdminCourseEditPage = () => {
 						landingPageSections: (courseResponse.landingPageSections || []).map((s: CourseLandingPageSection) => ({
 							title: s.title || '',
 							body: s.body || '',
+							imageUrl: s.imageUrl || '',
 							rowKey: generateUniqueId('lpsec_'),
 						})),
 					};
@@ -578,9 +579,10 @@ const AdminCourseEditPage = () => {
 					isExpired: validUntil ? validUntil < new Date() : false,
 					groups: singleCourseBeforeSave.groups || [],
 					videoURLs: singleCourseBeforeSave.videoURLs || [],
-					landingPageSections: (singleCourseBeforeSave.landingPageSections || []).map(({ title, body }) => ({
+					landingPageSections: (singleCourseBeforeSave.landingPageSections || []).map(({ title, body, imageUrl }) => ({
 						title: title ?? '',
 						body: body ?? '',
+						imageUrl: imageUrl ?? '',
 					})),
 				};
 
@@ -591,9 +593,10 @@ const AdminCourseEditPage = () => {
 
 					const landingPageSectionsAfterSave: CourseLandingPageSection[] | undefined =
 						Array.isArray(responseUpdatedData.landingPageSections)
-							? responseUpdatedData.landingPageSections.map((s: { title?: string; body?: string }) => ({
+							? responseUpdatedData.landingPageSections.map((s: { title?: string; body?: string; imageUrl?: string }) => ({
 									title: s.title || '',
 									body: s.body || '',
+									imageUrl: s.imageUrl || '',
 									rowKey: generateUniqueId('lpsec_'),
 								}))
 							: updatedCourse.landingPageSections;
@@ -609,7 +612,7 @@ const AdminCourseEditPage = () => {
 
 					updateCourse({
 						...updatedCourse,
-						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) } : {}),
+						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -636,7 +639,7 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourse({
 						...updatedCourse,
-						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body }) => ({ title, body })) } : {}),
+						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,

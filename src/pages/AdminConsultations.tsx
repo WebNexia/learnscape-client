@@ -93,26 +93,26 @@ const AdminConsultations = () => {
 		let aValue: any;
 		let bValue: any;
 
-			const orderByStr = String(orderBy);
-			if (orderByStr === 'createdBy') {
-				// For createdBy sorting, use nested property
-				const aCreatedBy = typeof a.createdBy === 'object' ? `${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || ''}`.trim() : 'N/A';
-				const bCreatedBy = typeof b.createdBy === 'object' ? `${b.createdBy?.firstName || ''} ${b.createdBy?.lastName || ''}`.trim() : 'N/A';
-				aValue = aCreatedBy || 'N/A';
-				bValue = bCreatedBy || 'N/A';
-			} else if (orderByStr.includes('.')) {
-				aValue = getNestedValue(a, orderByStr);
-				bValue = getNestedValue(b, orderByStr);
-			} else {
-				aValue = (a as any)[orderByStr] ?? '';
-				bValue = (b as any)[orderByStr] ?? '';
-			}
+		const orderByStr = String(orderBy);
+		if (orderByStr === 'createdBy') {
+			// For createdBy sorting, use nested property
+			const aCreatedBy = typeof a.createdBy === 'object' ? `${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || ''}`.trim() : 'N/A';
+			const bCreatedBy = typeof b.createdBy === 'object' ? `${b.createdBy?.firstName || ''} ${b.createdBy?.lastName || ''}`.trim() : 'N/A';
+			aValue = aCreatedBy || 'N/A';
+			bValue = bCreatedBy || 'N/A';
+		} else if (orderByStr.includes('.')) {
+			aValue = getNestedValue(a, orderByStr);
+			bValue = getNestedValue(b, orderByStr);
+		} else {
+			aValue = (a as any)[orderByStr] ?? '';
+			bValue = (b as any)[orderByStr] ?? '';
+		}
 
-			if (order === 'asc') {
-				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			}
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}), [displayConsultations, orderBy, order]);
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		}
+		return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+	}), [displayConsultations, orderBy, order]);
 	const paginatedConsultations = sortedConsultations;
 
 	// Modal states
