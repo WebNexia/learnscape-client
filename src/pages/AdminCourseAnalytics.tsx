@@ -25,6 +25,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axiosInstance from '../utils/axiosInstance';
+import CourseWaitingListAdminPanel from '../components/adminSingleCourse/CourseWaitingListAdminPanel';
 
 const AdminCourseAnalytics = () => {
 	const { courseId } = useParams<{ courseId: string }>();
@@ -273,6 +274,12 @@ const AdminCourseAnalytics = () => {
 							</Paper>
 						</>
 					)}
+
+					{hasAdminAccess && courseId ? (
+						<Box sx={{ mb: '3rem' }}>
+							<CourseWaitingListAdminPanel courseId={courseId} />
+						</Box>
+					) : null}
 				</Box>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

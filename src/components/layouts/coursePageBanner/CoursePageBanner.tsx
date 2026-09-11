@@ -25,6 +25,7 @@ import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 import { extractVideoId } from '../../../utils/videoUrlUtils';
+import CourseWaitingListDialog from '../../landingPage/CourseWaitingListDialog';
 
 const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
 
@@ -86,6 +87,7 @@ const CoursePageBanner = ({
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [isGroupInfoDialogOpen, setIsGroupInfoDialogOpen] = useState<boolean>(false);
 	const [isIntroVideoOpen, setIsIntroVideoOpen] = useState<boolean>(false);
+	const [isWaitingListOpen, setIsWaitingListOpen] = useState<boolean>(false);
 	const [userGroup, setUserGroup] = useState<{ name: string; description: string } | null>(null);
 
 	const { courseId } = useParams();
@@ -291,12 +293,12 @@ const CoursePageBanner = ({
 				backgroundColor: fromHomePage ? theme.bgColor?.primary : theme.palette.primary.main,
 				...(fromHomePage
 					? {
-							// Mobile only: slightly darker for white-text readability
-							backgroundImage: {
-								xs: 'linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.22))',
-								sm: 'none',
-							},
-						}
+						// Mobile only: slightly darker for white-text readability
+						backgroundImage: {
+							xs: 'linear-gradient(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.22))',
+							sm: 'none',
+						},
+					}
 					: null),
 				padding: '0.75rem',
 				borderRadius: fromHomePage ? '0.75rem' : undefined,
@@ -509,20 +511,56 @@ const CoursePageBanner = ({
 									: 'Enroll'}
 						</CustomSubmitButton>
 					)
-				) : !isEnrolledStatus && !course.isExpired && (isManuallyClosed || isCapacityFull) ? (
-					<Alert
-						severity={isCapacityFull ? 'error' : 'warning'}
+				) : !isEnrolledStatus && !course.isExpired && (isCapacityFull || isManuallyClosed) ? (
+					<Box
 						sx={{
 							position: 'absolute',
 							bottom: isRotated ? 60 : '1.5rem',
-							fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
-							backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
-							color: theme.textColor?.common.main,
-							width: 'fit-content',
-							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							left: '1rem',
+							display: 'flex',
+							flexDirection: { xs: 'column', sm: 'row' },
+							alignItems: { xs: 'flex-start', sm: 'center' },
+							flexWrap: 'wrap',
+							gap: 1,
+							maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
 						}}>
-						{isCapacityFull ? (isTrUi ? 'Kontenjan doldu' : 'No seats available') : isTrUi ? 'Kayıtlar kapalı' : 'Registration is closed'}
-					</Alert>
+						<Alert
+							severity={isCapacityFull ? 'error' : 'warning'}
+							sx={{
+								fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
+								backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+								color: theme.textColor?.common.main,
+								width: 'fit-content',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
+							{isCapacityFull
+								? isTrUi
+									? 'Kontenjan doldu'
+									: 'No seats available'
+								: isTrUi
+									? 'Kayıtlar kapalı'
+									: 'Registration is closed'}
+						</Alert>
+						<CustomSubmitButton
+							variant='contained'
+							onClick={() => setIsWaitingListOpen(true)}
+							sx={{
+								width: 'fit-content',
+								padding: isMobileSize ? '0.5rem 1rem' : '0.75rem 1.25rem',
+								fontSize: isMobileSize ? '0.75rem' : '0.95rem',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								background: fromHomePage ? '#FF6F4E !important' : undefined,
+								borderRadius: fromHomePage ? '0.75rem' : undefined,
+								color: fromHomePage ? '#fff !important' : undefined,
+								textTransform: 'none',
+								'&:hover': {
+									color: fromHomePage ? '#fff !important' : undefined,
+									backgroundColor: fromHomePage ? '#ff7d55 !important' : undefined,
+								},
+							}}>
+							{isTrUi ? 'Bekleme Listesine Kaydol' : 'Join Waiting List'}
+						</CustomSubmitButton>
+					</Box>
 				) : !isEnrolledStatus && course.isExpired ? (
 					<Alert
 						severity='warning'
@@ -885,6 +923,13 @@ const CoursePageBanner = ({
 					<CustomCancelButton onClick={() => setIsGroupInfoDialogOpen(false)}>{isTrUi ? 'Kapat' : 'Close'}</CustomCancelButton>
 				</Box>
 			</CustomDialog>
+
+			<CourseWaitingListDialog
+				open={isWaitingListOpen}
+				onClose={() => setIsWaitingListOpen(false)}
+				courseId={course._id}
+				courseTitle={course.title}
+			/>
 		</Paper>
 	);
 };

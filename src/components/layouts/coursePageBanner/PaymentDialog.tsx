@@ -565,7 +565,7 @@ const PaymentDialog = ({
 					setIsPaymentDialogOpen(false);
 				}
 			}}
-			title={isCourseFree ? 'Kayıt Ol' : isTrUi ? 'Ödeme Yap' : 'Make Payment'}
+			title={isCourseFree ? 'Kayıt Ol' : isTrUi ? 'Kursu Satın Al' : 'Make Payment'}
 			maxWidth='sm'
 			{...(fromHomePage
 				? {
@@ -1172,7 +1172,7 @@ const PaymentDialog = ({
 									? 'İşleniyor'
 									: 'Processing'
 							: isTrUi && !isCourseFree
-								? 'Ödeme Yap'
+								? 'Ödemeye Git'
 								: isCourseFree
 									? 'Kayıt Ol'
 									: 'Make Payment'

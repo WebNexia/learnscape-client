@@ -1167,9 +1167,18 @@ const CourseDetailsEditBox = ({
 
 										setSingleCourseBeforeSave((prev) => {
 											if (!prev) return prev;
-											if (value === '') return { ...prev, capacity: null };
+											const enrolled =
+												typeof prev.activeEnrollmentCount === 'number' ? prev.activeEnrollmentCount : 0;
+											if (value === '') {
+												return { ...prev, capacity: null, isCapacityFull: false };
+											}
 											const num = parseInt(value, 10);
-											return { ...prev, capacity: Number.isFinite(num) ? num : null };
+											if (!Number.isFinite(num)) return { ...prev, capacity: null, isCapacityFull: false };
+											return {
+												...prev,
+												capacity: num,
+												isCapacityFull: enrolled >= num,
+											};
 										});
 
 										// Validate against existing group capacities (when capacity is set)
@@ -1212,11 +1221,24 @@ const CourseDetailsEditBox = ({
 								sx={{ backgroundColor: theme.bgColor?.common, width: isMobileSize ? '100%' : '50%' }}
 							/>
 							{courseCapacityError && <CustomErrorMessage>{courseCapacityError}</CustomErrorMessage>}
-							{singleCourseBeforeSave?.isCapacityFull && (
-								<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'error.main', fontWeight: 600 }}>
-									Course is currently full.
-								</Typography>
-							)}
+							{(() => {
+								const enrolled =
+									typeof singleCourseBeforeSave?.activeEnrollmentCount === 'number'
+										? singleCourseBeforeSave.activeEnrollmentCount
+										: 0;
+								const cap =
+									singleCourseBeforeSave?.capacity !== undefined && singleCourseBeforeSave?.capacity !== null
+										? Number(singleCourseBeforeSave.capacity)
+										: null;
+								const isFull = cap !== null && Number.isFinite(cap) && enrolled >= cap;
+								return isFull ? (
+									<Typography
+										variant='body2'
+										sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'error.main', fontWeight: 600 }}>
+										Course is currently full.
+									</Typography>
+								) : null;
+							})()}
 						</Box>
 
 						<Box
