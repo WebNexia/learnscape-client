@@ -5,6 +5,7 @@ import LondonBg from '../assets/london-bg.jpg';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import FeaturesSection from '../components/landingPage/FeaturesSection';
 import LandingPageLatestCourses from '../components/landingPage/LandingPageLatestCourses';
+import LandingPagePrivateLessons from '../components/landingPage/LandingPagePrivateLessons';
 import LandingPageLatestDocuments from '../components/landingPage/LandingPageLatestDocuments';
 import TestimonialsSection from '../components/landingPage/TestimonialsSection';
 import CTASection from '../components/landingPage/CTASection';
@@ -114,6 +115,7 @@ const LandingPage = () => {
 					<LandingPageLayout coursesRef={coursesRef}>
 						<HeroSection />
 						<LandingPageLatestCourses ref={coursesRef} />
+						<LandingPagePrivateLessons />
 						<LandingPageLatestDocuments />
 						<FeaturesSection />
 						{/* <StatisticsSection />

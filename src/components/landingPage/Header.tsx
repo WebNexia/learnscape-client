@@ -22,8 +22,10 @@ import {
   GroupsOutlined,
   MailOutline,
   InfoOutlined,
+  PersonOutlined,
 } from "@mui/icons-material";
 import LandingPageDrawer from "../landingPage/LandingPageDrawer";
+import { PRIVATE_LESSONS_SECTION_ID } from "./LandingPagePrivateLessons";
 
 /** Aden blues — same endpoints as `LandingPageDrawer` ADEN_BLUE_GRADIENT, plus a deeper anchor for hover */
 const ADEN_BLUE_DEEP = "#002952";
@@ -81,6 +83,26 @@ const Header = () => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           },
           isActive: location.pathname === "/landing-page-courses",
+        },
+        {
+          label: "Özel Ders",
+          NavIcon: PersonOutlined,
+          action: () => {
+            const scrollToSection = () => {
+              const el = document.getElementById(PRIVATE_LESSONS_SECTION_ID);
+              if (!el) return;
+              const offset = 100;
+              const top = el.getBoundingClientRect().top + window.scrollY - offset;
+              window.scrollTo({ top, behavior: "smooth" });
+            };
+            if (location.pathname === "/") {
+              scrollToSection();
+            } else {
+              navigate("/");
+              window.setTimeout(scrollToSection, 120);
+            }
+          },
+          isActive: location.pathname === "/" && location.hash === `#${PRIVATE_LESSONS_SECTION_ID}`,
         },
         {
           label: "Kitaplar",

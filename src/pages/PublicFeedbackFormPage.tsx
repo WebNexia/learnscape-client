@@ -1061,8 +1061,10 @@ const PublicFeedbackFormPage = () => {
 					<Typography variant='h4' sx={{ color: theme.textColor?.primary.main, fontWeight: 600, mb: 2 }}>
 						Teşekkürler!
 					</Typography>
-					<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main, mb: 3 }}>
-						Yanıtınız başarıyla gönderildi.
+					<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main, mb: 3, whiteSpace: 'pre-line' }}>
+						{!submitSuccessEmailHint && form?.successMessage?.trim()
+							? form.successMessage.trim()
+							: 'Yanıtınız başarıyla gönderildi.'}
 						{submitSuccessEmailHint && (
 							<>
 								<br />
