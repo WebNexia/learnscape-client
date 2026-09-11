@@ -8,11 +8,12 @@ import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageU
 import useImageUpload from '../../hooks/useImageUpload';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
-import { Add, Edit, Delete, PostAdd, ExpandMore } from '@mui/icons-material';
+import { Add, Edit, Delete, PostAdd, ExpandMore, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import LandingPageSectionBodyEditor from './LandingPageSectionBodyEditor';
+import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
 import {
 	MAX_LANDING_PAGE_SECTIONS,
 	MAX_LANDING_PAGE_SECTION_TITLE_LENGTH,
@@ -41,6 +42,7 @@ const CourseDetailsEditBox = ({
 	setHasUnsavedChanges,
 }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [sectionImageEnterUrlByKey, setSectionImageEnterUrlByKey] = useState<Record<string, boolean>>({});
 	const [isLandingPageSectionsExpanded, setIsLandingPageSectionsExpanded] = useState<boolean>(false);
 
 	const { hasAdminAccess } = useAuth();
@@ -48,6 +50,18 @@ const CourseDetailsEditBox = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const landingPageSectionCount = singleCourseBeforeSave?.landingPageSections?.length ?? 0;
+
+	const moveLandingPageSection = (index: number, dir: -1 | 1) => {
+		setSingleCourseBeforeSave((prev) => {
+			if (!prev?.landingPageSections) return prev;
+			const sections = [...prev.landingPageSections];
+			const target = index + dir;
+			if (target < 0 || target >= sections.length) return prev;
+			[sections[index], sections[target]] = [sections[target], sections[index]];
+			return { ...prev, landingPageSections: sections };
+		});
+		setHasUnsavedChanges(true);
+	};
 
 	useEffect(() => {
 		if (landingPageSectionCount > 0) {
@@ -460,7 +474,7 @@ const CourseDetailsEditBox = ({
 								if (!prev) return prev;
 								const next: CourseLandingPageSection[] = [
 									...(prev.landingPageSections || []),
-									{ title: '', body: '', rowKey: generateUniqueId('lpsec_') },
+									{ title: '', body: '', imageUrl: '', rowKey: generateUniqueId('lpsec_') },
 								];
 								return { ...prev, landingPageSections: next };
 							});
@@ -473,8 +487,8 @@ const CourseDetailsEditBox = ({
 					<Typography variant='body2' color='text.secondary' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Shown below the banner on the public course page. Up to {MAX_LANDING_PAGE_SECTIONS} sections; title max{' '}
 						{MAX_LANDING_PAGE_SECTION_TITLE_LENGTH} characters; body max {MAX_LANDING_PAGE_SECTION_BODY_LENGTH} (HTML included).
-						Use {'{{price}}'}, {'{{originalPrice}}'}, and {'{{fromCountry}}'} for location-based fees (e.g. Normal fiyat:{' '}
-						{'{{originalPrice}}'}).
+						Title and body are optional — a section can be image-only. Use {'{{price}}'}, {'{{originalPrice}}'}, and{' '}
+						{'{{fromCountry}}'} for location-based fees (e.g. Normal fiyat: {'{{originalPrice}}'}).
 					</Typography>
 					{(singleCourseBeforeSave?.landingPageSections || []).map((section, index) => (
 						<Box
@@ -489,25 +503,50 @@ const CourseDetailsEditBox = ({
 								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.875rem' }}>
 									Section {index + 1}
 								</Typography>
-								<Tooltip title='Remove section'>
-									<IconButton
-										size='small'
-										aria-label='Remove landing page section'
-										onClick={() => {
-											setSingleCourseBeforeSave((prev) => {
-												if (!prev?.landingPageSections) return prev;
-												const next = prev.landingPageSections.filter((_, i) => i !== index);
-												return { ...prev, landingPageSections: next };
-											});
-											setHasUnsavedChanges(true);
-										}}>
-										<Delete fontSize='small' />
-									</IconButton>
-								</Tooltip>
+								<Box sx={{ display: 'flex', alignItems: 'center' }}>
+									<Tooltip title='Move up'>
+										<span>
+											<IconButton
+												size='small'
+												disabled={index === 0}
+												onClick={() => moveLandingPageSection(index, -1)}
+												aria-label='Move landing page section up'>
+												<ArrowUpward fontSize='small' />
+											</IconButton>
+										</span>
+									</Tooltip>
+									<Tooltip title='Move down'>
+										<span>
+											<IconButton
+												size='small'
+												disabled={index === landingPageSectionCount - 1}
+												onClick={() => moveLandingPageSection(index, 1)}
+												aria-label='Move landing page section down'>
+												<ArrowDownward fontSize='small' />
+											</IconButton>
+										</span>
+									</Tooltip>
+									<Tooltip title='Remove section'>
+										<IconButton
+											size='small'
+											aria-label='Remove landing page section'
+											onClick={() => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev?.landingPageSections) return prev;
+													const next = prev.landingPageSections.filter((_, i) => i !== index);
+													return { ...prev, landingPageSections: next };
+												});
+												setHasUnsavedChanges(true);
+											}}>
+											<Delete fontSize='small' />
+										</IconButton>
+									</Tooltip>
+								</Box>
 							</Box>
 							<CustomTextField
 								fullWidth
-								label='Section title'
+								required={false}
+								label='Section title (optional)'
 								value={section.title}
 								onChange={(e) => {
 									const v = e.target.value.slice(0, MAX_LANDING_PAGE_SECTION_TITLE_LENGTH);
@@ -525,8 +564,89 @@ const CourseDetailsEditBox = ({
 							<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0 0 0.5rem 0', textAlign: 'right' }}>
 								{section.title.length}/{MAX_LANDING_PAGE_SECTION_TITLE_LENGTH}
 							</Typography>
+							{(() => {
+								const sectionKey = section.rowKey ?? `lp-${index}`;
+								const enterSectionImageUrl = sectionImageEnterUrlByKey[sectionKey] ?? true;
+								return (
+									<Box
+										sx={{
+											mb: '1rem',
+											p: isMobileSize ? '0.75rem' : '1rem',
+											borderRadius: '0.75rem',
+											border: `1px dashed ${theme.palette.divider}`,
+											backgroundColor: 'rgba(248, 250, 252, 0.8)',
+										}}>
+										<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.8rem', mb: '0.5rem' }}>
+											Section image (optional)
+										</Typography>
+										<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.75rem' }}>
+											You can save a section with only an image — title and body are optional.
+										</Typography>
+										<Box
+											sx={{
+												display: 'flex',
+												flexDirection: isMobileSize ? 'column' : 'row',
+												gap: 2,
+												alignItems: 'flex-start',
+											}}>
+											<Box sx={{ flex: 1, width: '100%' }}>
+												<HandleImageUploadURL
+													label=''
+													onImageUploadLogic={(url) => {
+														setSingleCourseBeforeSave((prev) => {
+															if (!prev?.landingPageSections) return prev;
+															const next = [...prev.landingPageSections];
+															next[index] = { ...next[index], imageUrl: url };
+															return { ...prev, landingPageSections: next };
+														});
+														setHasUnsavedChanges(true);
+													}}
+													onChangeImgUrl={(e) => {
+														setSingleCourseBeforeSave((prev) => {
+															if (!prev?.landingPageSections) return prev;
+															const next = [...prev.landingPageSections];
+															next[index] = { ...next[index], imageUrl: e.target.value };
+															return { ...prev, landingPageSections: next };
+														});
+														setHasUnsavedChanges(true);
+													}}
+													imageUrlValue={section.imageUrl || ''}
+													imageFolderName='CourseImages'
+													scopedEntityId={singleCourseBeforeSave?._id}
+													enterImageUrl={enterSectionImageUrl}
+													setEnterImageUrl={(val) =>
+														setSectionImageEnterUrlByKey((prev) => ({
+															...prev,
+															[sectionKey]: typeof val === 'function' ? val(prev[sectionKey] ?? true) : val,
+														}))
+													}
+												/>
+												{!singleCourseBeforeSave?._id && (
+													<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 0.5 }}>
+														Upload is available after the course is saved.
+													</Typography>
+												)}
+											</Box>
+											<ImageThumbnail
+												imgSource={section.imageUrl || 'https://placehold.co/400x240/e2e8f0/64748b?text=Section+Image'}
+												removeImage={() => {
+													setSingleCourseBeforeSave((prev) => {
+														if (!prev?.landingPageSections) return prev;
+														const next = [...prev.landingPageSections];
+														next[index] = { ...next[index], imageUrl: '' };
+														return { ...prev, landingPageSections: next };
+													});
+													setHasUnsavedChanges(true);
+												}}
+												boxStyle={{ width: isMobileSize ? '100%' : '9rem', height: isMobileSize ? '8rem' : '6.5rem' }}
+												imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%', borderRadius: '0.5rem' }}
+											/>
+										</Box>
+									</Box>
+								);
+							})()}
 							<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.5rem' }}>
-								Section body (rich text)
+								Section body (optional, rich text)
 							</Typography>
 							<LandingPageSectionBodyEditor
 								key={section.rowKey ?? `lp-body-${index}`}

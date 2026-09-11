@@ -14,10 +14,12 @@ export interface CourseEnrollmentProof {
 	paymentIntentId?: string;
 }
 
-/** Public LP detail: heading + rich HTML (limits in `landingPageCourseLimits`). */
+/** Public LP detail: optional heading, rich HTML body, and/or featured image. */
 export interface CourseLandingPageSection {
 	title: string;
 	body: string;
+	/** Optional featured image shown on the public LP (sections can be image-only). */
+	imageUrl?: string;
 	/** Client-only list key; not sent to the API. */
 	rowKey?: string;
 }
