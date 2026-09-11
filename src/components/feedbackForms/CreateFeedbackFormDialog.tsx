@@ -63,6 +63,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 	const [submissionDeadline, setSubmissionDeadline] = useState<string>('');
 	const [showResultsToSubmitters, setShowResultsToSubmitters] = useState<boolean>(false);
 	const [useForConsultation, setUseForConsultation] = useState<boolean>(false);
+	const [successMessage, setSuccessMessage] = useState<string>('');
 	const [postSubmitEmail, setPostSubmitEmail] = useState<FeedbackFormPostSubmitEmail>(defaultPostSubmitEmail());
 
 	// Template selection state
@@ -114,6 +115,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 		setSubmissionDeadline(isoToDateTimeLocal(source.submissionDeadline));
 		setShowResultsToSubmitters(source.showResultsToSubmitters ?? false);
 		setUseForConsultation(source.useForConsultation ?? false);
+		setSuccessMessage(source.successMessage || '');
 		setPostSubmitEmail({
 			...defaultPostSubmitEmail(),
 			...(source.postSubmitEmail || {}),
@@ -151,6 +153,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			setSubmissionDeadline('');
 			setShowResultsToSubmitters(false);
 			setUseForConsultation(false);
+			setSuccessMessage('');
 			setPostSubmitEmail(defaultPostSubmitEmail());
 			setSelectedCourse(null);
 			setSearchCourseValue('');
@@ -218,6 +221,11 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 			return;
 		}
 
+		if (!postSubmitEmail.enabled && successMessage.trim().length > 500) {
+			setErrorMessage('Success message must be less than 500 characters');
+			return;
+		}
+
 		// Validate fields
 		for (const field of fields) {
 			if (!field.label.trim()) {
@@ -278,6 +286,7 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 				submissionDeadline: submissionDeadline || undefined,
 				showResultsToSubmitters,
 				useForConsultation,
+				successMessage: postSubmitEmail.enabled ? '' : successMessage.trim(),
 				postSubmitEmail: {
 					...postSubmitEmail,
 					enabled: Boolean(postSubmitEmail.enabled),
@@ -685,6 +694,21 @@ const CreateFeedbackFormDialog = ({ isOpen, onClose, courseId, formToEdit, onSuc
 							}}
 						/>
 					</Box>
+
+					{!postSubmitEmail.enabled && (
+						<Box sx={{ mt: 1.5 }}>
+							<CustomTextField
+								label='Başarı mesajı (submit sonrası ekran)'
+								required={false}
+								multiline
+								rows={2}
+								value={successMessage}
+								onChange={(e) => setSuccessMessage(e.target.value.slice(0, 500))}
+								placeholder='Yanıtınız başarıyla gönderildi.'
+								helperText='E-posta gönderilmediğinde form tamamlandığında gösterilir. Boş bırakılırsa varsayılan metin kullanılır.'
+							/>
+						</Box>
+					)}
 				</Box>
 
 				{/* Post-submit email (lead magnet) */}

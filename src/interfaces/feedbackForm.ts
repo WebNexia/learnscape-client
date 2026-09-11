@@ -55,6 +55,8 @@ export interface FeedbackForm {
 	submissionDeadline?: string; // Optional deadline
 	showResultsToSubmitters?: boolean;
 	useForConsultation?: boolean; // If true, form appears in Consultation form (optional) dropdown
+	/** On-page success body when post-submit email is off; empty = default Turkish copy */
+	successMessage?: string;
 
 	// Post-submit email (admin only — not returned on public link API)
 	postSubmitEmail?: FeedbackFormPostSubmitEmail;
