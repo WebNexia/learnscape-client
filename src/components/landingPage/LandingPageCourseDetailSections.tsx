@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Box, Dialog, IconButton, Typography } from '@mui/material';
+import { Box, Collapse, Dialog, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CourseLandingPageSection, SingleCourse } from '../../interfaces/course';
 import { sanitizeLandingPageHtml } from '../../utils/sanitizeHtml';
 import { interpolateLandingPagePricePlaceholders } from '../../utils/interpolateLandingPagePrices';
@@ -121,7 +122,7 @@ const verticalBarFirstRowFallbackSelector =
 const proseSx = {
 	color: '#1e293b',
 	fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-	fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+	fontSize: { xs: '0.8rem', sm: '0.9rem', md: '0.95rem' },
 	lineHeight: 1.78,
 	letterSpacing: 'normal',
 	WebkitFontSmoothing: 'antialiased',
@@ -148,7 +149,7 @@ const proseSx = {
 	},
 	// Intro paragraph — exclude any inline vertical-bar block (alternating colors from `fakeListAlternateCss`)
 	[introFirstParagraphSelector]: {
-		fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+		fontSize: { xs: '0.8rem', sm: '0.9rem', md: '0.95rem' },
 		lineHeight: 1.82,
 		fontWeight: 500,
 		color: '#0f172a',
@@ -462,31 +463,31 @@ function renderGalleryImage(
 				sx={
 					inRow
 						? {
-								maxWidth: '100%',
-								maxHeight: '100%',
-								width: 'auto',
-								height: 'auto',
-								objectFit: 'contain',
-								objectPosition: 'center',
-								display: 'block',
-								mx: 'auto',
-								borderRadius: '0.75rem',
-								cursor: 'zoom-in',
-								pointerEvents: 'none',
-							}
+							maxWidth: '100%',
+							maxHeight: '100%',
+							width: 'auto',
+							height: 'auto',
+							objectFit: 'contain',
+							objectPosition: 'center',
+							display: 'block',
+							mx: 'auto',
+							borderRadius: '0.75rem',
+							cursor: 'zoom-in',
+							pointerEvents: 'none',
+						}
 						: {
-								maxWidth: '100%',
-								maxHeight: { xs: '55vh', md: '60vh' },
-								width: 'auto',
-								height: 'auto',
-								objectFit: 'contain',
-								objectPosition: 'center',
-								display: 'block',
-								mx: 'auto',
-								borderRadius: '0.75rem',
-								cursor: 'zoom-in',
-								pointerEvents: 'none',
-							}
+							maxWidth: '100%',
+							maxHeight: { xs: 'calc(55vh * 2 / 3)', md: '60vh' },
+							width: 'auto',
+							height: 'auto',
+							objectFit: 'contain',
+							objectPosition: 'center',
+							display: 'block',
+							mx: 'auto',
+							borderRadius: '0.75rem',
+							cursor: 'zoom-in',
+							pointerEvents: 'none',
+						}
 				}
 			/>
 		</Box>
@@ -495,7 +496,11 @@ function renderGalleryImage(
 
 const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 	const geoLocation = useGeoLocation();
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	/** Mobile only: which written section cards are open (default all closed). */
+	const [expandedByIndex, setExpandedByIndex] = useState<Record<number, boolean>>({});
 
 	if (!sections?.length) return null;
 
@@ -524,7 +529,8 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 	const galleryImages = metas.filter((m) => m.imageOnly);
 	const cardSections = metas.filter((m) => !m.imageOnly);
 	const galleryCount = galleryImages.length;
-	const inRow = galleryCount > 1;
+	const inRowDesktop = galleryCount > 1;
+	const galleryInRow = inRowDesktop && !isMobile;
 
 	return (
 		<Box
@@ -578,9 +584,12 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 						sx={{
 							width: '100%',
 							display: 'grid',
-							gridTemplateColumns: inRow
-								? `repeat(${galleryCount}, minmax(0, 420px))`
-								: 'minmax(0, 720px)',
+							gridTemplateColumns: {
+								xs: '1fr',
+								md: galleryInRow
+									? `repeat(${galleryCount}, minmax(0, 420px))`
+									: 'minmax(0, 720px)',
+							},
 							justifyContent: 'center',
 							justifyItems: 'center',
 							alignItems: 'center',
@@ -590,7 +599,7 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 							const url = section.imageUrl!.trim();
 							return (
 								<Box key={`gallery-${url}-${index}`} sx={{ width: '100%', minWidth: 0 }}>
-									{renderGalleryImage(url, index, inRow, setPreviewUrl)}
+									{renderGalleryImage(url, index, galleryInRow, setPreviewUrl)}
 								</Box>
 							);
 						})}
@@ -611,6 +620,10 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 						}}>
 						{cardSections.map(({ section: s, index: i, hasImage, hasTitle, hasBody, hasTextContent, bodyHtml }, cardIndex) => {
 							const n = String(cardIndex + 1).padStart(2, '0');
+							const isExpanded = !isMobile || Boolean(expandedByIndex[cardIndex]);
+							const toggleExpanded = () => {
+								setExpandedByIndex((prev) => ({ ...prev, [cardIndex]: !prev[cardIndex] }));
+							};
 							return (
 								<Box
 									key={`${s.title || 'section'}-${s.imageUrl || i}-${i}`}
@@ -632,7 +645,7 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 											boxShadow:
 												'0 0 0 1px rgba(255,255,255,0.9) inset, 0 2px 8px rgba(15, 23, 42, 0.05), 0 18px 36px -16px rgba(0, 82, 163, 0.14)',
 											'& .lp-section-featured-img': {
-												transform: 'scale(1.03)',
+												transform: isExpanded ? 'scale(1.03)' : 'none',
 											},
 										},
 										'&::after': {
@@ -648,118 +661,215 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 											zIndex: 2,
 										},
 									}}>
-									{hasImage ? (
+									{/* Mobile: always-visible header + expand control (top-right) */}
+									{isMobile ? (
 										<Box
 											sx={{
 												position: 'relative',
-												width: '100%',
-												lineHeight: 0,
-												overflow: 'hidden',
-												flex: '0 0 auto',
-												pl: '5px',
+												zIndex: 3,
+												display: 'flex',
+												alignItems: 'center',
+												gap: 1.5,
+												pl: 2.5,
+												pr: 6.5,
+												py: 1.75,
+												minHeight: 56,
+												cursor: 'pointer',
+											}}
+											onClick={toggleExpanded}
+											role='button'
+											tabIndex={0}
+											aria-expanded={isExpanded}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault();
+													toggleExpanded();
+												}
 											}}>
 											<Box
-												component='img'
-												className='lp-section-featured-img'
-												src={s.imageUrl}
-												alt={hasTitle ? s.title : ''}
-												loading='lazy'
+												aria-hidden
 												sx={{
-													width: '100%',
-													height: 'auto',
-													maxHeight: { xs: 280, md: 320 },
-													objectFit: 'contain',
-													objectPosition: 'center',
-													display: 'block',
-													verticalAlign: 'top',
-													transition: 'transform 0.35s ease',
+													flexShrink: 0,
+													width: 40,
+													height: 40,
+													borderRadius: '12px',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													fontFamily: "'Varela Round', 'Segoe UI', sans-serif",
+													fontWeight: 700,
+													fontSize: '0.8125rem',
+													letterSpacing: '0.06em',
+													color: '#0c4a6e',
+													bgcolor: 'rgba(240, 249, 255, 0.9)',
+													border: '1px solid rgba(0, 82, 163, 0.12)',
+													boxShadow:
+														'0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px -4px rgba(0, 82, 163, 0.2)',
+												}}>
+												{n}
+											</Box>
+											<Typography
+												component='h2'
+												sx={{
+													flex: 1,
+													fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+													fontWeight: 700,
+													fontSize: '0.9rem',
+													lineHeight: 1.3,
+													letterSpacing: '-0.03em',
+													color: '#0f172a',
+												}}>
+												{hasTitle ? s.title : `Bölüm ${n}`}
+											</Typography>
+											<IconButton
+												aria-label={isExpanded ? 'Section kapat' : 'Section aç'}
+												aria-expanded={isExpanded}
+												onClick={(e) => {
+													e.stopPropagation();
+													toggleExpanded();
 												}}
-											/>
+												sx={{
+													position: 'absolute',
+													top: 8,
+													right: 8,
+													zIndex: 4,
+													width: 36,
+													height: 36,
+													color: '#0c4a6e',
+													bgcolor: 'rgba(240, 249, 255, 0.95)',
+													border: '1px solid rgba(0, 82, 163, 0.14)',
+													boxShadow: '0 2px 8px -2px rgba(0, 82, 163, 0.2)',
+													'&:hover': { bgcolor: 'rgba(224, 242, 254, 1)' },
+												}}>
+												<ExpandMoreIcon
+													sx={{
+														fontSize: 22,
+														transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+														transition: 'transform 0.2s ease',
+													}}
+												/>
+											</IconButton>
 										</Box>
 									) : null}
-									{hasTextContent ? (
-										<Box
-											sx={{
-												position: 'relative',
-												zIndex: 1,
-												flex: 1,
-												display: 'flex',
-												flexDirection: 'column',
-												pl: { xs: 2.5, sm: 3 },
-												pr: { xs: 2.5, sm: 3.25 },
-												py: { xs: 2.5, sm: 3 },
-												pt: { xs: hasImage ? 2.25 : 2.75, sm: hasImage ? 2.5 : 3.25 },
-											}}>
-											{hasTitle ? (
+
+									<Collapse in={isExpanded} timeout='auto' unmountOnExit={isMobile}>
+										{hasImage ? (
+											<Box
+												sx={{
+													position: 'relative',
+													width: '100%',
+													lineHeight: 0,
+													overflow: 'hidden',
+													flex: '0 0 auto',
+													pl: '5px',
+												}}>
 												<Box
+													component='img'
+													className='lp-section-featured-img'
+													src={s.imageUrl}
+													alt={hasTitle ? s.title : ''}
+													loading='lazy'
 													sx={{
-														display: 'flex',
-														alignItems: 'flex-start',
-														gap: { xs: 1.5, sm: 1.75 },
-														pb: hasBody ? 2.25 : 0,
-														mb: hasBody ? 2.25 : 0,
-														borderBottom: hasBody ? '1px solid rgba(15, 23, 42, 0.06)' : 'none',
-													}}>
+														width: '100%',
+														height: 'auto',
+														maxHeight: { xs: 280, md: 320 },
+														objectFit: 'contain',
+														objectPosition: 'center',
+														display: 'block',
+														verticalAlign: 'top',
+														transition: 'transform 0.35s ease',
+													}}
+												/>
+											</Box>
+										) : null}
+										{hasTextContent ? (
+											<Box
+												sx={{
+													position: 'relative',
+													zIndex: 1,
+													flex: 1,
+													display: 'flex',
+													flexDirection: 'column',
+													pl: { xs: 2.5, sm: 3 },
+													pr: { xs: 2.5, sm: 3.25 },
+													py: { xs: 2.5, sm: 3 },
+													pt: {
+														xs: isMobile ? (hasImage ? 1.5 : 0.5) : hasImage ? 2.25 : 2.75,
+														sm: hasImage ? 2.5 : 3.25,
+													},
+												}}>
+												{hasTitle && !isMobile ? (
 													<Box
-														aria-hidden
 														sx={{
-															flexShrink: 0,
-															width: { xs: 40, sm: 44 },
-															height: { xs: 40, sm: 44 },
-															borderRadius: '12px',
 															display: 'flex',
-															alignItems: 'center',
-															justifyContent: 'center',
-															fontFamily: "'Varela Round', 'Segoe UI', sans-serif",
-															fontWeight: 700,
-															fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-															letterSpacing: '0.06em',
-															color: '#0c4a6e',
-															bgcolor: 'rgba(240, 249, 255, 0.9)',
-															border: '1px solid rgba(0, 82, 163, 0.12)',
-															boxShadow:
-																'0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px -4px rgba(0, 82, 163, 0.2)',
+															alignItems: 'flex-start',
+															gap: { xs: 1.5, sm: 1.75 },
+															pb: hasBody ? 2.25 : 0,
+															mb: hasBody ? 2.25 : 0,
+															borderBottom: hasBody ? '1px solid rgba(15, 23, 42, 0.06)' : 'none',
 														}}>
-														{n}
+														<Box
+															aria-hidden
+															sx={{
+																flexShrink: 0,
+																width: { xs: 40, sm: 44 },
+																height: { xs: 40, sm: 44 },
+																borderRadius: '12px',
+																display: 'flex',
+																alignItems: 'center',
+																justifyContent: 'center',
+																fontFamily: "'Varela Round', 'Segoe UI', sans-serif",
+																fontWeight: 700,
+																fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+																letterSpacing: '0.06em',
+																color: '#0c4a6e',
+																bgcolor: 'rgba(240, 249, 255, 0.9)',
+																border: '1px solid rgba(0, 82, 163, 0.12)',
+																boxShadow:
+																	'0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px -4px rgba(0, 82, 163, 0.2)',
+															}}>
+															{n}
+														</Box>
+														<Typography
+															variant='h5'
+															component='h2'
+															sx={{
+																flex: 1,
+																fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+																fontWeight: 700,
+																fontSize: { xs: '1.05rem', sm: '1.125rem', md: '1.2rem' },
+																lineHeight: 1.3,
+																letterSpacing: '-0.03em',
+																color: '#0f172a',
+																pt: { xs: 0.35, sm: 0.4 },
+															}}>
+															{s.title}
+														</Typography>
 													</Box>
-													<Typography
-														variant='h5'
-														component='h2'
+												) : null}
+
+												{hasBody ? (
+													<Box
 														sx={{
 															flex: 1,
-															fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-															fontWeight: 700,
-															fontSize: { xs: '1.05rem', sm: '1.125rem', md: '1.2rem' },
-															lineHeight: 1.3,
-															letterSpacing: '-0.03em',
-															color: '#0f172a',
-															pt: { xs: 0.35, sm: 0.4 },
+															borderRadius: '14px',
+															bgcolor: 'rgba(248, 250, 252, 0.65)',
+															border: '1px solid rgba(15, 23, 42, 0.045)',
+															px: { xs: 2, sm: 2.25 },
+															py: { xs: 2, sm: 2.25 },
+															minHeight: 0,
+															mt: isMobile && hasTitle && !hasImage ? 0.5 : 0,
 														}}>
-														{s.title}
-													</Typography>
-												</Box>
-											) : null}
-
-											{hasBody ? (
-												<Box
-													sx={{
-														flex: 1,
-														borderRadius: '14px',
-														bgcolor: 'rgba(248, 250, 252, 0.65)',
-														border: '1px solid rgba(15, 23, 42, 0.045)',
-														px: { xs: 2, sm: 2.25 },
-														py: { xs: 2, sm: 2.25 },
-														minHeight: 0,
-													}}>
-													<Box
-														className={LP_SECTION_PROSE_CLASS}
-														sx={proseSx}
-														dangerouslySetInnerHTML={{ __html: bodyHtml }}
-													/>
-												</Box>
-											) : null}
-										</Box>
-									) : null}
+														<Box
+															className={LP_SECTION_PROSE_CLASS}
+															sx={proseSx}
+															dangerouslySetInnerHTML={{ __html: bodyHtml }}
+														/>
+													</Box>
+												) : null}
+											</Box>
+										) : null}
+									</Collapse>
 								</Box>
 							);
 						})}
