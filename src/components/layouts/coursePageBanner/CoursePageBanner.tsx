@@ -26,6 +26,7 @@ import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
 import { extractVideoId } from '../../../utils/videoUrlUtils';
 import CourseWaitingListDialog from '../../landingPage/CourseWaitingListDialog';
+import { useIsLpQaPreview } from '../../../hooks/useIsLpQaPreview';
 
 const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
 
@@ -76,6 +77,7 @@ const CoursePageBanner = ({
 	const firstLessonId: string = course && course?.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
+	const isQaPreview = useIsLpQaPreview();
 
 	const { isRotated, isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const queryClient = useQueryClient();
@@ -215,6 +217,11 @@ const CoursePageBanner = ({
 
 	const handleEnroll = async () => {
 		if (isProcessing) return; // Prevent multiple clicks
+
+		// Manual `/qa-test` preview: visual only — no checkout
+		if (isQaPreview) {
+			return;
+		}
 
 		// From LP course page: go to dedicated payment page (Header & Footer visible)
 		if (fromHomePage) {
@@ -543,7 +550,10 @@ const CoursePageBanner = ({
 						</Alert>
 						<CustomSubmitButton
 							variant='contained'
-							onClick={() => setIsWaitingListOpen(true)}
+							onClick={() => {
+								if (isQaPreview) return;
+								setIsWaitingListOpen(true);
+							}}
 							sx={{
 								width: 'fit-content',
 								padding: isMobileSize ? '0.5rem 1rem' : '0.75rem 1.25rem',

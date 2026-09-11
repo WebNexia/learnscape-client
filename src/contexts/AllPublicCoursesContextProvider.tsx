@@ -6,6 +6,7 @@ import { SingleCourse } from '../interfaces/course';
 import { useLocation } from 'react-router-dom';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { resolvePricingCountryCode } from '../utils/resolvePricingCountryCode';
+import { isLpQaPreviewPath, withLpQaPreviewQuery } from '../utils/lpQaPreview';
 
 interface AllPublicCoursesContextTypes {
 	courses: SingleCourse[];
@@ -55,7 +56,9 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	const geoLocation = useGeoLocation();
 
 	// Only fetch the paginated list on the courses listing page (detail/payment use single-course queries)
-	const isLandingPageCoursesListRoute = location.pathname === '/landing-page-courses';
+	const isQaPreview = isLpQaPreviewPath(location.pathname);
+	const isLandingPageCoursesListRoute =
+		location.pathname === '/landing-page-courses' || location.pathname === '/landing-page-courses/qa-test';
 
 	// State for pagination
 	const [currentPage, setCurrentPage] = useState(1);
@@ -105,7 +108,8 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 				params.append('filters', activeFilter);
 			}
 
-			const finalUrl = `${base_url}/courses/public/${orgId}?${params.toString()}`;
+			const query = isQaPreview ? withLpQaPreviewQuery(params) : params.toString();
+			const finalUrl = `${base_url}/courses/public/${orgId}?${query}`;
 			const response = await axios.get(finalUrl);
 			return response.data;
 		} catch (error: any) {
@@ -119,7 +123,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 		isLoading,
 		isFetching,
 		isError,
-	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search, geoLocation?.countryCode], fetchCourses, {
+	} = useQuery(['landingPageCourses', orgId, currentPage, searchedValue, activeFilter, location.search, geoLocation?.countryCode, isQaPreview], fetchCourses, {
 		enabled: !!orgId && isLandingPageCoursesListRoute,
 		staleTime: 60 * 60 * 1000, // 1 hour
 		cacheTime: 60 * 60 * 1000, // 1 hour

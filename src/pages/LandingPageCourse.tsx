@@ -30,6 +30,8 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
+import { withLpQaPreviewQuery } from '../utils/lpQaPreview';
 
 const INSTRUCTOR_BIO_PREVIEW_LENGTH = 450;
 
@@ -227,6 +229,7 @@ const LandingPageCourse = () => {
 	const { courseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const isQaPreview = useIsLpQaPreview();
 
 	const {
 		data: course,
@@ -234,9 +237,10 @@ const LandingPageCourse = () => {
 		isFetching,
 		isError,
 	} = useQuery(
-		['lpPublicCourseDetail', orgId, courseId],
+		['lpPublicCourseDetail', orgId, courseId, isQaPreview],
 		async () => {
-			const res = await axios.get(`${base_url}/courses/public/${orgId}/course/${courseId}`);
+			const qs = isQaPreview ? `?${withLpQaPreviewQuery()}` : '';
+			const res = await axios.get(`${base_url}/courses/public/${orgId}/course/${courseId}${qs}`);
 			return res?.data?.data as SingleCourse;
 		},
 		{
@@ -306,43 +310,48 @@ const LandingPageCourse = () => {
 						author={course.instructor.name}
 						publishedTime={course.createdAt}
 						modifiedTime={course.updatedAt}
+						noIndex={isQaPreview}
 					/>
-					<StructuredData type='Organization' />
-					<StructuredData
-						type='Course'
-						data={{
-							title: course.title,
-							description: seoDescription,
-							image: course.imageUrl,
-							url: courseUrl,
-							// courseCode: course.courseCode, // Not available in current model
-							level: 'Beginner', // Default level since not in model (would use course.level if available)
-							isFree: isCourseFree,
-							createdAt: course.createdAt,
-							updatedAt: course.updatedAt,
-							instructor: course.instructor.name,
-						}}
-					/>
-					<StructuredData
-						type='BreadcrumbList'
-						data={{
-							breadcrumbs: [
-								{ name: 'Home', url: baseUrl },
-								{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
-								{ name: course.title, url: courseUrl },
-							],
-						}}
-					/>
-					<StructuredData
-						type='WebPage'
-						data={{
-							url: courseUrl,
-							name: course.title,
-							description: seoDescription,
-							datePublished: course.createdAt,
-							dateModified: course.updatedAt,
-						}}
-					/>
+					{!isQaPreview && (
+						<>
+							<StructuredData type='Organization' />
+							<StructuredData
+								type='Course'
+								data={{
+									title: course.title,
+									description: seoDescription,
+									image: course.imageUrl,
+									url: courseUrl,
+									// courseCode: course.courseCode, // Not available in current model
+									level: 'Beginner', // Default level since not in model (would use course.level if available)
+									isFree: isCourseFree,
+									createdAt: course.createdAt,
+									updatedAt: course.updatedAt,
+									instructor: course.instructor.name,
+								}}
+							/>
+							<StructuredData
+								type='BreadcrumbList'
+								data={{
+									breadcrumbs: [
+										{ name: 'Home', url: baseUrl },
+										{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
+										{ name: course.title, url: courseUrl },
+									],
+								}}
+							/>
+							<StructuredData
+								type='WebPage'
+								data={{
+									url: courseUrl,
+									name: course.title,
+									description: seoDescription,
+									datePublished: course.createdAt,
+									dateModified: course.updatedAt,
+								}}
+							/>
+						</>
+					)}
 				</>
 			)}
 			<Box

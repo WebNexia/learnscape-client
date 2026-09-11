@@ -11,11 +11,13 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import SearchFilter from '../components/landingPage/SearchFilter';
 import LandingPageSectionHeader from '../components/landingPage/LandingPageSectionHeader';
 import { SEO, StructuredData } from '../components/seo';
+import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 
 const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const location = useLocation();
+	const isQaPreview = useIsLpQaPreview();
 	const [isScrolled, setIsScrolled] = useState(false);
 
 	useEffect(() => {
@@ -79,27 +81,33 @@ const LandingPageCourses = () => {
 				description='Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.'
 				keywords='online courses, course catalog, programming courses, business courses, design courses, Aden Academy courses, educational content, skill development'
 				type='website'
+				url={`${baseUrl}/landing-page-courses`}
+				noIndex={isQaPreview}
 			/>
-			<StructuredData type='Organization' />
-			<StructuredData type='WebSite' />
-			<StructuredData
-				type='BreadcrumbList'
-				data={{
-					breadcrumbs: [
-						{ name: 'Home', url: baseUrl },
-						{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
-					],
-				}}
-			/>
-			<StructuredData
-				type='WebPage'
-				data={{
-					url: `${baseUrl}/landing-page-courses`,
-					name: 'Browse All Courses - Aden Academy',
-					description:
-						'Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.',
-				}}
-			/>
+			{!isQaPreview && (
+				<>
+					<StructuredData type='Organization' />
+					<StructuredData type='WebSite' />
+					<StructuredData
+						type='BreadcrumbList'
+						data={{
+							breadcrumbs: [
+								{ name: 'Home', url: baseUrl },
+								{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
+							],
+						}}
+					/>
+					<StructuredData
+						type='WebPage'
+						data={{
+							url: `${baseUrl}/landing-page-courses`,
+							name: 'Browse All Courses - Aden Academy',
+							description:
+								'Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.',
+						}}
+					/>
+				</>
+			)}
 			<Box
 				sx={{
 					'position': 'relative',

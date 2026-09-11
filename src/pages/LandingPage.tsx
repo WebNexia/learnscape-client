@@ -15,10 +15,12 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import UpcomingEvents from '../components/landingPage/UpcomingEvents';
 import LandingPageFAQ from '../components/landingPage/LandingPageFAQ';
 import { SEO, StructuredData } from '../components/seo';
+import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
 	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
+	const isQaPreview = useIsLpQaPreview();
 
 	return (
 		<>
@@ -27,19 +29,25 @@ const LandingPage = () => {
 				description='Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.'
 				keywords='online learning, e-learning, education platform, interactive learning, Aden Academy, online courses, educational content, learning management system, student portal, course platform'
 				type='website'
+				url={`${baseUrl}/`}
+				noIndex={isQaPreview}
 			/>
-			<StructuredData type='Organization' />
-			<StructuredData type='WebSite' />
-			<StructuredData type='BreadcrumbList' data={{ breadcrumbs: [{ name: 'Home', url: baseUrl }] }} />
-			<StructuredData
-				type='WebPage'
-				data={{
-					url: baseUrl,
-					name: 'Aden Academy - Online Learning Platform',
-					description:
-						'Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.',
-				}}
-			/>
+			{!isQaPreview && (
+				<>
+					<StructuredData type='Organization' />
+					<StructuredData type='WebSite' />
+					<StructuredData type='BreadcrumbList' data={{ breadcrumbs: [{ name: 'Home', url: baseUrl }] }} />
+					<StructuredData
+						type='WebPage'
+						data={{
+							url: baseUrl,
+							name: 'Aden Academy - Online Learning Platform',
+							description:
+								'Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.',
+						}}
+					/>
+				</>
+			)}
 			<Box
 				sx={{
 					'position': 'relative',
