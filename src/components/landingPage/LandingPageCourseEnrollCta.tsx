@@ -7,6 +7,7 @@ import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../utils/resolvePricingCountryCode';
 import CourseWaitingListDialog from './CourseWaitingListDialog';
+import { useIsLpQaPreview } from '../../hooks/useIsLpQaPreview';
 
 type Props = {
 	course: SingleCourse;
@@ -36,6 +37,7 @@ const enrollButtonSx = {
 const LandingPageCourseEnrollCta = ({ course }: Props) => {
 	const navigate = useNavigate();
 	const location = useGeoLocation();
+	const isQaPreview = useIsLpQaPreview();
 	const resolvedCountryCode = resolvePricingCountryCode(undefined, location?.countryCode);
 	const [waitlistOpen, setWaitlistOpen] = useState(false);
 
@@ -50,6 +52,7 @@ const LandingPageCourseEnrollCta = ({ course }: Props) => {
 	if (!canEnroll && !canJoinWaitlist) return null;
 
 	const handleEnroll = () => {
+		if (isQaPreview) return;
 		navigate(`/landing-page-course/${encodeURIComponent(course.title ?? '')}/${course._id}/payment`);
 	};
 
@@ -71,17 +74,25 @@ const LandingPageCourseEnrollCta = ({ course }: Props) => {
 						Kursu Satın Al
 					</CustomSubmitButton>
 				) : (
-					<CustomSubmitButton variant='contained' onClick={() => setWaitlistOpen(true)} sx={enrollButtonSx}>
+					<CustomSubmitButton
+						variant='contained'
+						onClick={() => {
+							if (isQaPreview) return;
+							setWaitlistOpen(true);
+						}}
+						sx={enrollButtonSx}>
 						Bekleme Listesine Kaydol
 					</CustomSubmitButton>
 				)}
 			</Box>
-			<CourseWaitingListDialog
-				open={waitlistOpen}
-				onClose={() => setWaitlistOpen(false)}
-				courseId={course._id}
-				courseTitle={course.title}
-			/>
+			{!isQaPreview && (
+				<CourseWaitingListDialog
+					open={waitlistOpen}
+					onClose={() => setWaitlistOpen(false)}
+					courseId={course._id}
+					courseTitle={course.title}
+				/>
+			)}
 		</>
 	);
 };

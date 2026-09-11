@@ -12,6 +12,8 @@ interface SEOProps {
 	modifiedTime?: string;
 	section?: string;
 	tags?: string[];
+	/** When true: noindex/nofollow and skip indexing signals (LP `/qa-test` preview). */
+	noIndex?: boolean;
 }
 
 // Helper function to get base URL from environment variable
@@ -43,6 +45,7 @@ const SEO = ({
 	modifiedTime,
 	section,
 	tags = [],
+	noIndex = false,
 }: SEOProps) => {
 	const baseUrl = getBaseUrl();
 	const fullTitle = title.includes('Aden Academy') ? title : `${title} | Aden Academy`;
@@ -62,15 +65,15 @@ const SEO = ({
 			<meta name='description' content={description} />
 			<meta name='keywords' content={fullKeywords} />
 			<meta name='author' content={author} />
-			<meta name='robots' content='index, follow' />
-			<link rel='canonical' href={canonicalUrl} />
+			<meta name='robots' content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
+			{!noIndex && <link rel='canonical' href={canonicalUrl} />}
 
 			{/* Open Graph / Facebook */}
 			<meta property='og:type' content={type} />
 			<meta property='og:title' content={fullTitle} />
 			<meta property='og:description' content={description} />
 			<meta property='og:image' content={absoluteImageUrl} />
-			<meta property='og:url' content={canonicalUrl} />
+			{!noIndex && <meta property='og:url' content={canonicalUrl} />}
 			<meta property='og:site_name' content='Aden Academy' />
 			<meta property='og:locale' content='en_US' />
 

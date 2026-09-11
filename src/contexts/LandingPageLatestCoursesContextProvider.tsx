@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { useLocation } from 'react-router-dom';
+import { isLpQaPreviewPath, withLpQaPreviewQuery } from '../utils/lpQaPreview';
 
 interface LandingPageLatestCoursesContextTypes {
 	latestCourses: SingleCourse[];
@@ -26,15 +27,16 @@ const LandingPageLatestCoursesContextProvider = (props: LandingPageLatestCourses
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
 
-	// Check if we're on the home page only (where latest courses are displayed)
-	const isHomePage = location.pathname === '/';
+	const isQaPreview = isLpQaPreviewPath(location.pathname);
+	// Home + manual QA home only (provider is only mounted on those routes)
+	const isHomePage = location.pathname === '/' || location.pathname === '/qa-test';
 
 	const fetchLatestCourses = async () => {
 		if (!orgId) return [];
 
 		try {
-			// Fetch only 3 latest published courses for landing page
-			const response = await axios.get(`${base_url}/courses/public/latest/${orgId}?limit=3`);
+			const qs = isQaPreview ? `?${withLpQaPreviewQuery({ limit: '3' })}` : '?limit=3';
+			const response = await axios.get(`${base_url}/courses/public/latest/${orgId}${qs}`);
 			return response.data.data || [];
 		} catch (error: any) {
 			console.error('Error fetching latest courses:', error);
@@ -46,7 +48,7 @@ const LandingPageLatestCoursesContextProvider = (props: LandingPageLatestCourses
 		data: latestCoursesData,
 		isLoading,
 		isError,
-	} = useQuery(['landingPageLatestCourses', orgId], fetchLatestCourses, {
+	} = useQuery(['landingPageLatestCourses', orgId, isQaPreview], fetchLatestCourses, {
 		enabled: !!orgId && isHomePage,
 		staleTime: 60 * 60 * 1000, // 1 hour - data stays fresh
 		cacheTime: 60 * 60 * 1000, // 1 hour - data stays in cache

@@ -16,7 +16,9 @@ export const useIsLandingPageRoute = (): boolean => {
 
 	return (
 		location.pathname === '/' ||
+		location.pathname === '/qa-test' ||
 		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/landing-page-courses/qa-test' ||
 		location.pathname === '/landing-page-resources' ||
 		location.pathname === '/landing-page-cart' ||
 		location.pathname === '/contact-us' ||

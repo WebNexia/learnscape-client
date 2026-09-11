@@ -185,6 +185,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "qa-test",
+        element: (
+          <LandingPageUpcomingPublicEventsContextProvider>
+            <LandingPageLatestCoursesContextProvider>
+              <LandingPageLatestDocumentsContextProvider>
+                <LandingPage />
+              </LandingPageLatestDocumentsContextProvider>
+            </LandingPageLatestCoursesContextProvider>
+          </LandingPageUpcomingPublicEventsContextProvider>
+        ),
+      },
+      {
         path: "landing-page-resources",
         element: (
           <LandingPageResourcesContextProvider>
@@ -205,10 +217,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "landing-page-course/:title/:courseId/qa-test",
+        element: (
+          <AllPublicCoursesContextProvider>
+            <LandingPageCourse />
+          </AllPublicCoursesContextProvider>
+        ),
+      },
+      {
         path: "landing-page-course/:title/:courseId",
         element: (
           <AllPublicCoursesContextProvider>
             <LandingPageCourse />
+          </AllPublicCoursesContextProvider>
+        ),
+      },
+      {
+        path: "landing-page-courses/qa-test",
+        element: (
+          <AllPublicCoursesContextProvider>
+            <LandingPageCourses />
           </AllPublicCoursesContextProvider>
         ),
       },

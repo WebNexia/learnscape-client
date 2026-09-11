@@ -12,6 +12,8 @@ import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 import { getCourseProgress } from '../../utils/courseProgress';
+import { useIsLpQaPreview } from '../../hooks/useIsLpQaPreview';
+import { LP_QA_PREVIEW_SEGMENT } from '../../utils/lpQaPreview';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -25,6 +27,7 @@ interface DashboardCourseCardProps {
 const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseId, isCourseCompleted, fromHomePage }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
+	const isQaPreview = useIsLpQaPreview();
 
 	const location = useGeoLocation();
 
@@ -136,8 +139,10 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 					// Logged-in user from home page - still go to course page
 					navigate(`/course/${course._id}/userCourseId/${!userCourseId ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
 				} else {
-					// Non-logged-in user - go to landing page
-					navigate(`/landing-page-course/${encodeURIComponent(course?.title)}/${course?._id}`);
+					// Non-logged-in user - go to landing page (test courses only via /qa-test)
+					const base = `/landing-page-course/${encodeURIComponent(course?.title)}/${course?._id}`;
+					const path = isQaPreview && course.isTestCourse ? `${base}/${LP_QA_PREVIEW_SEGMENT}` : base;
+					navigate(path);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>

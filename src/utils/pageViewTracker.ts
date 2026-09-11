@@ -49,5 +49,6 @@ export function readUtmParams(search: string) {
 const SKIP_PATHS = ['/admin/payments/analytics', '/rate-limit-error'];
 
 export function shouldTrackPath(pathname: string) {
+	if (pathname === '/qa-test' || pathname.endsWith('/qa-test')) return false;
 	return !SKIP_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
