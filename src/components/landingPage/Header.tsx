@@ -23,6 +23,7 @@ import {
   MailOutline,
   InfoOutlined,
   PersonOutlined,
+  AssessmentOutlined,
 } from "@mui/icons-material";
 import LandingPageDrawer from "../landingPage/LandingPageDrawer";
 import { PRIVATE_LESSONS_SECTION_ID } from "./LandingPagePrivateLessons";
@@ -103,6 +104,15 @@ const Header = () => {
             }
           },
           isActive: location.pathname === "/" && location.hash === `#${PRIVATE_LESSONS_SECTION_ID}`,
+        },
+        {
+          label: "Seviye Testi",
+          NavIcon: AssessmentOutlined,
+          action: () => {
+            navigate("/seviye-testi");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive: location.pathname === "/seviye-testi",
         },
         {
           label: "Kitaplar",

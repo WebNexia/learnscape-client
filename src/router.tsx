@@ -54,6 +54,7 @@ const LandingPageConsultations = React.lazy(
 );
 const LandingPageCart = React.lazy(() => import("./pages/LandingPageCart"));
 const CheckoutReturn = React.lazy(() => import("./pages/CheckoutReturn"));
+const LevelTest = React.lazy(() => import("./pages/LevelTest"));
 const AboutUs = React.lazy(() => import("./pages/AboutUs"));
 const ContactUs = React.lazy(() => import("./pages/ContactUs"));
 const CookiePolicy = React.lazy(() => import("./pages/CookiePolicy"));
@@ -204,6 +205,7 @@ export const router = createBrowserRouter([
           </LandingPageResourcesContextProvider>
         ),
       },
+      { path: "seviye-testi", element: <LevelTest /> },
       {
         path: "landing-page-document/:name/:documentId",
         element: <LandingPageDocument />,
