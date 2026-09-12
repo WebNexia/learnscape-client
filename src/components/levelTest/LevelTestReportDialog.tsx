@@ -78,10 +78,23 @@ const LevelTestReportDialog = ({ open, onClose, results, contentVersion }: Props
 					recaptchaToken: recaptchaToken ?? '',
 				}),
 			});
-			const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+			const payload = (await response.json().catch(() => null)) as {
+				ok?: boolean;
+				error?: string;
+				message?: string;
+				type?: string;
+			} | null;
 			if (!response.ok || payload?.ok === false) {
-				const code = payload?.error ?? 'send_failed';
-				throw new Error(errorCopy[code] ?? errorCopy.send_failed);
+				const code =
+					payload?.error ??
+					(response.status === 429
+						? 'rate_limited'
+						: response.status === 503
+							? 'service_unavailable'
+							: response.status === 400 && payload?.message?.toLowerCase().includes('turnstile')
+								? 'turnstile_failed'
+								: 'send_failed');
+				throw new Error(payload?.message || errorCopy[code] || errorCopy.send_failed);
 			}
 			setStatus('sent');
 		} catch (requestError) {
