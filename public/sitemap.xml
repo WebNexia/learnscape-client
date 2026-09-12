@@ -40,6 +40,13 @@
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <url>
+    <loc>https://adenacademy.co.uk/seviye-testi</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
   
   <!-- Note: Individual course pages should be dynamically generated -->
   <!-- Course pages follow pattern: /landing-page-course/:title/:courseId -->
