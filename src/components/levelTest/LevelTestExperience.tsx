@@ -64,6 +64,7 @@ const LevelTestExperience = () => {
 		setAssessment(createInitialAssessmentState());
 		setAnswers({});
 		setStepIndex(0);
+		setReportOpen(false);
 		setStage('questions');
 	};
 
@@ -251,7 +252,7 @@ const LevelTestExperience = () => {
 
 	return (
 		<Box component='section'>
-			<Box sx={{ ...levelTestCardSx, p: 2, mb: 2, position: 'sticky', top: 0, zIndex: 5 }}>
+			<Box sx={{ ...levelTestCardSx, p: 2, mb: 2, position: 'sticky', top: { xs: 58, md: 90 }, zIndex: 5 }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, alignItems: 'center', mb: 1 }}>
 					<Box>
 						<Typography sx={{ ...levelTestHeadingSx }}>{isListening ? 'Dinleme' : 'Okuma'} bölümü</Typography>
