@@ -45,18 +45,18 @@ const CustomSubmitButton = ({
 			disabled={disabled}
 			fullWidth={fullWidth}
 			sx={{
-				...sx,
-				'textTransform': capitalize ? 'capitalize' : 'none',
-				'backgroundColor': unsaved ? '#ff9800' : '#14B8A6',
-				'borderRadius': '10px',
-				'boxShadow': 'none',
+				textTransform: capitalize ? 'capitalize' : 'none',
+				backgroundColor: unsaved ? '#ff9800' : '#14B8A6',
+				borderRadius: '10px',
+				boxShadow: 'none',
 				':hover': {
 					backgroundColor: unsaved ? '#f57c00' : '#0D9488',
 					boxShadow: '0 2px 8px rgba(20, 184, 166, 0.25)',
 				},
-				'height': isMobileSize ? '1.5rem' : '1.75rem',
-				'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
-				'mt': '0.2rem',
+				height: isMobileSize ? '1.5rem' : '1.75rem',
+				fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+				mt: '0.2rem',
+				...sx,
 			}}
 			size={size}
 			onClick={handleClick}

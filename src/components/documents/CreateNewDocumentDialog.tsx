@@ -159,8 +159,9 @@ const CreateNewDocumentDialog = ({
 				</Box>
 				{singleDocument?.isOnLandingPage && (
 					<DocumentDetailBlocksEditor
-						document={singleDocument}
-						setDocument={setSingleDocument}
+						entityId={singleDocument._id}
+						blocks={singleDocument.detailBlocks || []}
+						onChange={(detailBlocks) => setSingleDocument({ ...singleDocument, detailBlocks })}
 						onDeleteImageFromStorage={onDeleteSamplePageImagesFromStorage}
 					/>
 				)}
