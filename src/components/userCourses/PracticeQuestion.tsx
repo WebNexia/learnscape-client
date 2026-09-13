@@ -1660,7 +1660,12 @@ const PracticeQuestion = ({
 										}
 									} catch (err) {
 										console.error('AI feedback error:', err);
-										setAiFeedbackError('AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.');
+										const msg = err instanceof Error && err.message ? err.message : '';
+										setAiFeedbackError(
+											msg.includes('rate limit') || msg.includes('Rate limit')
+												? 'AI şu an yoğun. Lütfen 1–2 dakika bekleyip tekrar deneyin.'
+												: msg || 'AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.',
+										);
 										setHasRequestedAiFeedback(false);
 									} finally {
 										setIsAiFeedbackLoading(false);
