@@ -105,6 +105,14 @@ axiosInstance.interceptors.response.use(
 				// Already on the error page, do not redirect or update localStorage
 				return Promise.reject(error);
 			}
+
+			const requestUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}`;
+			const isAiEndpoint = requestUrl.includes('/ai/');
+			// AI OpenAI/proxy limits should stay in-page (drawer/toast), not kick users to the global rate-limit screen.
+			if (isAiEndpoint && error.response?.status === 429) {
+				return Promise.reject(error);
+			}
+
 			const retryAfterHeader = error.response.headers['retry-after'];
 			const retryAfter = parseInt(retryAfterHeader, 10);
 			let finalRetryAfter = Number.isFinite(retryAfter) ? retryAfter : 900;

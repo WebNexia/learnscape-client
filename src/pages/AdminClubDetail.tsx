@@ -4,6 +4,7 @@ import {
 	Checkbox,
 	Collapse,
 	FormControlLabel,
+	FormGroup,
 	IconButton,
 	Snackbar,
 	Table,
@@ -37,7 +38,7 @@ import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/H
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import { clubEditorScope } from '../utils/editorImageScopes';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
-import { Delete, ExpandMore, OpenInNew } from '@mui/icons-material';
+import { Delete, Edit, ExpandMore, OpenInNew } from '@mui/icons-material';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import { useStickyPaper } from '../hooks/useStickyPaper';
@@ -62,6 +63,16 @@ const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) 
 const ensureBlockKeys = (blocks: DocumentDetailBlock[] | undefined): DocumentDetailBlock[] =>
 	(blocks || []).map((b) => (b.rowKey ? b : { ...b, rowKey: generateUniqueId('clubblk_') }));
 
+const DAY_LABELS = [
+	{ v: 0, l: 'Sun' },
+	{ v: 1, l: 'Mon' },
+	{ v: 2, l: 'Tue' },
+	{ v: 3, l: 'Wed' },
+	{ v: 4, l: 'Thu' },
+	{ v: 5, l: 'Fri' },
+	{ v: 6, l: 'Sat' },
+];
+
 const AdminClubDetail = () => {
 	const { id } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -78,6 +89,10 @@ const AdminClubDetail = () => {
 	const [editDescription, setEditDescription] = useState('');
 	const [editCoverUrl, setEditCoverUrl] = useState('');
 	const [editIsActive, setEditIsActive] = useState(true);
+	const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
+	const [editStartTime, setEditStartTime] = useState('19:00');
+	const [editDurationMinutes, setEditDurationMinutes] = useState(60);
+	const [editTimezone, setEditTimezone] = useState('Europe/Istanbul');
 	const [editDetailBlocks, setEditDetailBlocks] = useState<DocumentDetailBlock[]>([]);
 	const [enterCoverUrl, setEnterCoverUrl] = useState(true);
 	const [isSavingLanding, setIsSavingLanding] = useState(false);
@@ -86,9 +101,11 @@ const AdminClubDetail = () => {
 	const [isBulkCreating, setIsBulkCreating] = useState(false);
 
 	const [packDialogOpen, setPackDialogOpen] = useState(false);
+	const [packBeingEdited, setPackBeingEdited] = useState<ClubPack | null>(null);
 	const [isCreatingPack, setIsCreatingPack] = useState(false);
 	const [sessionCount, setSessionCount] = useState(1);
 	const [packLabel, setPackLabel] = useState('');
+	const [packIsActive, setPackIsActive] = useState(true);
 	const [GBP, setGBP] = useState<ClubPrice>(emptyPrices().GBP);
 	const [USD, setUSD] = useState<ClubPrice>(emptyPrices().USD);
 	const [EUR, setEUR] = useState<ClubPrice>(emptyPrices().EUR);
@@ -123,7 +140,17 @@ const AdminClubDetail = () => {
 		setEditDescription(found.description || '');
 		setEditCoverUrl(found.coverImageUrl || '');
 		setEditIsActive(found.isActive !== false);
+		setEditDaysOfWeek([...(found.schedule?.daysOfWeek || [])].sort());
+		setEditStartTime(found.schedule?.startTime || '19:00');
+		setEditDurationMinutes(found.schedule?.durationMinutes || 60);
+		setEditTimezone(found.schedule?.timezone || 'Europe/Istanbul');
 		setEditDetailBlocks(ensureBlockKeys(found.detailBlocks));
+	};
+
+	const toggleEditDay = (day: number) => {
+		setEditDaysOfWeek((prev) =>
+			prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort(),
+		);
 	};
 
 	const load = async () => {
@@ -153,6 +180,14 @@ const AdminClubDetail = () => {
 			showSnack('Title is required', 'error');
 			return;
 		}
+		if (editDaysOfWeek.length === 0) {
+			showSnack('Select at least one weekly day', 'error');
+			return;
+		}
+		if (!editStartTime.trim()) {
+			showSnack('Start time is required', 'error');
+			return;
+		}
 		setIsSavingLanding(true);
 		try {
 			const updated = await clubsService.updateClub(id, {
@@ -161,6 +196,12 @@ const AdminClubDetail = () => {
 				coverImageUrl: editCoverUrl.trim() || '',
 				isActive: editIsActive,
 				detailBlocks: serializeDetailBlocksForApi(editDetailBlocks),
+				schedule: {
+					daysOfWeek: editDaysOfWeek,
+					startTime: editStartTime.trim(),
+					durationMinutes: editDurationMinutes || 60,
+					timezone: editTimezone.trim() || 'Europe/Istanbul',
+				},
 			});
 			setClub((prev) => (prev ? { ...prev, ...updated, packs: prev.packs } : updated));
 			hydrateEditForm({ ...(club as Club), ...updated, packs: club?.packs });
@@ -175,20 +216,37 @@ const AdminClubDetail = () => {
 	const resetPackForm = () => {
 		setSessionCount(1);
 		setPackLabel('');
+		setPackIsActive(true);
 		const p = emptyPrices();
 		setGBP(p.GBP);
 		setUSD(p.USD);
 		setEUR(p.EUR);
 		setTRY(p.TRY);
 		setIsCreatingPack(false);
+		setPackBeingEdited(null);
 	};
+
+	const priceAmountFor = (prices: ClubPrice[] | undefined, currency: string) =>
+		prices?.find((p) => p.currency?.toLowerCase() === currency)?.amount ?? '';
 
 	const openPackDialog = () => {
 		resetPackForm();
 		setPackDialogOpen(true);
 	};
 
-	const handleCreatePack = async (e: React.FormEvent<HTMLFormElement>) => {
+	const openEditPackDialog = (pack: ClubPack) => {
+		setPackBeingEdited(pack);
+		setSessionCount(pack.sessionCount || 1);
+		setPackLabel(pack.label || '');
+		setPackIsActive(pack.isActive !== false);
+		setGBP({ currency: 'gbp', amount: String(priceAmountFor(pack.prices, 'gbp')) });
+		setUSD({ currency: 'usd', amount: String(priceAmountFor(pack.prices, 'usd')) });
+		setEUR({ currency: 'eur', amount: String(priceAmountFor(pack.prices, 'eur')) });
+		setTRY({ currency: 'try', amount: String(priceAmountFor(pack.prices, 'try')) });
+		setPackDialogOpen(true);
+	};
+
+	const handleSavePack = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!id) return;
 		const prices = [
@@ -205,17 +263,27 @@ const AdminClubDetail = () => {
 
 		setIsCreatingPack(true);
 		try {
-			await clubsService.createPack(id, {
+			const body = {
 				sessionCount,
-				label: packLabel.trim() || `${sessionCount} Session`,
+				label: packLabel.trim(),
 				prices,
-			});
-			showSnack('Pack created successfully');
+				...(packBeingEdited ? { isActive: packIsActive } : {}),
+			};
+			if (packBeingEdited) {
+				await clubsService.updatePack(id, packBeingEdited._id, body);
+				showSnack('Pack updated successfully');
+			} else {
+				await clubsService.createPack(id, body);
+				showSnack('Pack created successfully');
+			}
 			setPackDialogOpen(false);
 			resetPackForm();
 			await load();
 		} catch (err: any) {
-			showSnack(err?.response?.data?.error || 'Failed to create pack', 'error');
+			showSnack(
+				err?.response?.data?.error || (packBeingEdited ? 'Failed to update pack' : 'Failed to create pack'),
+				'error',
+			);
 		} finally {
 			setIsCreatingPack(false);
 		}
@@ -362,348 +430,455 @@ const AdminClubDetail = () => {
 							justifyContent: 'flex-start',
 							width: '95%',
 						}}>
-					<Box sx={{ ...sectionSx, mb: '2rem' }}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexWrap: 'wrap',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								gap: 1,
-								mb: landingExpanded ? '0.75rem' : 0,
-							}}>
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-								<Tooltip title={landingExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
-									<IconButton
-										size='small'
+						<Box sx={{ ...sectionSx, mb: '2rem' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									gap: 1,
+									mb: landingExpanded ? '0.75rem' : 0,
+								}}>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+									<Tooltip title={landingExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
+										<IconButton
+											size='small'
+											onClick={() => setLandingExpanded((prev) => !prev)}
+											aria-expanded={landingExpanded}
+											aria-label={`${landingExpanded ? 'Collapse' : 'Expand'} landing page`}
+											sx={{
+												transform: landingExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+												transition: 'transform 0.3s ease',
+											}}>
+											<ExpandMore fontSize='small' />
+										</IconButton>
+									</Tooltip>
+									<Typography
+										variant='h6'
 										onClick={() => setLandingExpanded((prev) => !prev)}
-										aria-expanded={landingExpanded}
-										aria-label={`${landingExpanded ? 'Collapse' : 'Expand'} landing page`}
 										sx={{
-											transform: landingExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-											transition: 'transform 0.3s ease',
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
+											cursor: 'pointer',
+											userSelect: 'none',
+											m: 0,
 										}}>
-										<ExpandMore fontSize='small' />
-									</IconButton>
-								</Tooltip>
-								<Typography
-									variant='h6'
-									onClick={() => setLandingExpanded((prev) => !prev)}
-									sx={{
-										fontSize: isMobileSize ? '0.9rem' : '1rem',
-										cursor: 'pointer',
-										userSelect: 'none',
-										m: 0,
-									}}>
-									Landing Page
-								</Typography>
-							</Box>
-						</Box>
-						<Collapse in={landingExpanded} timeout='auto' unmountOnExit>
-							<CustomTextField
-								fullWidth
-								label='Title'
-								value={editTitle}
-								onChange={(e) => setEditTitle(e.target.value)}
-								sx={{ mb: 2, backgroundColor: '#fff' }}
-							/>
-							<CustomTextField
-								fullWidth
-								label='Short description'
-								value={editDescription}
-								onChange={(e) => setEditDescription(e.target.value)}
-								multiline
-								rows={3}
-								sx={{ mb: 2, backgroundColor: '#fff' }}
-							/>
-							<FormControlLabel
-								control={<Checkbox checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} size='small' />}
-								label='Active on landing page'
-								sx={{ mb: 2 }}
-							/>
-							<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', gap: 2, mb: 2, alignItems: 'flex-start' }}>
-								<Box sx={{ flex: 1, width: '100%' }}>
-									<HandleImageUploadURL
-										label='Cover image'
-										onImageUploadLogic={(url) => setEditCoverUrl(url)}
-										onChangeImgUrl={(e) => setEditCoverUrl(e.target.value)}
-										imageUrlValue={editCoverUrl}
-										imageFolderName='ClubImages'
-										scopedEntityId={club._id}
-										enterImageUrl={enterCoverUrl}
-										setEnterImageUrl={setEnterCoverUrl}
-									/>
+										Landing Page
+									</Typography>
 								</Box>
-								<ImageThumbnail
-									imgSource={editCoverUrl || 'https://placehold.co/300x400/e2e8f0/64748b?text=Cover'}
-									removeImage={() => setEditCoverUrl('')}
-									boxStyle={{ width: '8rem', height: '10rem' }}
-									imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
-								/>
 							</Box>
-							<DocumentDetailBlocksEditor
-								entityId={club._id}
-								blocks={editDetailBlocks}
-								onChange={setEditDetailBlocks}
-								imageFolderName='ClubDetailImages'
-								imageScopedEntityId={clubEditorScope(club._id)}
-								heading='Club detail page content'
-								helpText='Build the public club detail page in order. Place images between text sections. Section body uses rich text.'
-								inlineImagesHint=''
-							/>
-						</Collapse>
-					</Box>
-
-					{/* Packs */}
-					<Box sx={{ ...sectionSx, mb: '2rem' }}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexWrap: 'wrap',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								gap: 1,
-								mb: packsExpanded ? '0.75rem' : 0,
-							}}>
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-								<Tooltip title={packsExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
-									<IconButton
-										size='small'
-										onClick={() => setPacksExpanded((prev) => !prev)}
-										aria-expanded={packsExpanded}
-										aria-label={`${packsExpanded ? 'Collapse' : 'Expand'} session packs`}
-										sx={{
-											transform: packsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-											transition: 'transform 0.3s ease',
-										}}>
-										<ExpandMore fontSize='small' />
-									</IconButton>
-								</Tooltip>
-								<Typography
-									variant='h6'
-									onClick={() => setPacksExpanded((prev) => !prev)}
-									sx={{
-										fontSize: isMobileSize ? '0.9rem' : '1rem',
-										cursor: 'pointer',
-										userSelect: 'none',
-										m: 0,
-									}}>
-									Session Packs
-									{(club.packs || []).length > 0 ? (
-										<Typography
-											component='span'
-											variant='body2'
-											color='text.secondary'
-											sx={{ ml: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											({(club.packs || []).length})
-										</Typography>
-									) : null}
-								</Typography>
-							</Box>
-							<CustomSubmitButton
-								onClick={() => {
-									setPacksExpanded(true);
-									openPackDialog();
-								}}
-								sx={{ mt: 0 }}>
-								New Pack
-							</CustomSubmitButton>
-						</Box>
-
-						<Collapse in={packsExpanded} timeout='auto' unmountOnExit>
-							<Table size='small' sx={{ tableLayout: 'fixed', width: '100%' }}>
-								<CustomTableHead<ClubPack>
-									orderBy='sessionCount'
-									order='asc'
-									handleSort={() => {}}
-									columns={[
-										{ label: 'Label', key: 'label' },
-										{ label: 'Sessions', key: 'sessionCount' },
-										{ label: 'Prices', key: 'prices' },
-										{ label: 'Status', key: 'isActive' },
-										{ label: 'Actions', key: 'actions' },
-									]}
+							<Collapse in={landingExpanded} timeout='auto' unmountOnExit>
+								<CustomTextField
+									fullWidth
+									label='Title'
+									value={editTitle}
+									onChange={(e) => setEditTitle(e.target.value)}
+									sx={{ mb: 0, backgroundColor: '#fff' }}
+									InputProps={{ inputProps: { maxLength: 120 } }}
 								/>
-								<TableBody>
-									{(club.packs || []).length === 0 ? (
-										<TableRow>
-											<TableCell colSpan={5} align='center'>
-												<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', py: 2 }}>
-													No packs yet. Create one to start selling sessions.
-												</Typography>
-											</TableCell>
-										</TableRow>
-									) : (
-										(club.packs || []).map((p) => (
-											<TableRow key={p._id} hover>
-												<CustomTableCell value={p.label || `${p.sessionCount} Session`} />
-												<CustomTableCell value={p.sessionCount} />
-												<CustomTableCell value={formatPackPrices(p.prices)} />
-												<CustomTableCell value={p.isActive ? 'Active' : 'Inactive'} />
-												<TableCell sx={{ textAlign: 'center' }}>
-													<CustomActionBtn
-														title='Delete Pack'
-														onClick={() => setPackToDelete(p)}
-														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-													/>
-												</TableCell>
-											</TableRow>
-										))
-									)}
-								</TableBody>
-							</Table>
-						</Collapse>
-					</Box>
-
-					{/* Sessions */}
-					<Box sx={{ ...sectionSx, mb: '2rem' }}>
-						<Box
-							sx={{
-								display: 'flex',
-								flexWrap: 'wrap',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								gap: 1,
-								mb: sessionsExpanded ? '0.75rem' : 0,
-							}}>
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, flexWrap: 'wrap' }}>
-								<Tooltip title={sessionsExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
-									<IconButton
-										size='small'
-										onClick={() => setSessionsExpanded((prev) => !prev)}
-										aria-expanded={sessionsExpanded}
-										aria-label={`${sessionsExpanded ? 'Collapse' : 'Expand'} sessions`}
-										sx={{
-											transform: sessionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-											transition: 'transform 0.3s ease',
-										}}>
-										<ExpandMore fontSize='small' />
-									</IconButton>
-								</Tooltip>
 								<Typography
-									variant='h6'
-									onClick={() => setSessionsExpanded((prev) => !prev)}
 									sx={{
-										fontSize: isMobileSize ? '0.9rem' : '1rem',
-										cursor: 'pointer',
-										userSelect: 'none',
-										m: 0,
-										mr: 1,
+										fontSize: isMobileSize ? '0.65rem' : '0.7rem',
+										mt: '0.25rem',
+										mb: 2,
+										textAlign: 'right',
 									}}>
-									Sessions
-									{sessions.length > 0 ? (
-										<Typography
-											component='span'
-											variant='body2'
-											color='text.secondary'
-											sx={{ ml: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											({sessions.length})
-										</Typography>
-									) : null}
+									{editTitle.length}/120 Characters
 								</Typography>
 								<CustomTextField
-									label='Weeks'
-									type='number'
-									value={bulkWeeks}
-									onChange={(e) => setBulkWeeks(Number(e.target.value) || 1)}
-									sx={{ width: 100, backgroundColor: '#fff', mb: 0 }}
-									InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
-									InputProps={{ inputProps: { min: 1, max: 12 } }}
+									fullWidth
+									label='Short description'
+									value={editDescription}
+									onChange={(e) => setEditDescription(e.target.value)}
+									multiline
+									rows={3}
+									sx={{ mb: 0, backgroundColor: '#fff' }}
+									InputProps={{ inputProps: { maxLength: 500 } }}
 								/>
-								<CustomSubmitButton
-									onClick={() => {
-										setSessionsExpanded(true);
-										handleBulk();
-									}}
-									disabled={isBulkCreating}
-									sx={{ mt: 0 }}>
-									{isBulkCreating ? 'Creating…' : 'Generate Zoom Sessions'}
-								</CustomSubmitButton>
-							</Box>
+								<Typography
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.7rem',
+										mt: '0.25rem',
+										mb: 2,
+										textAlign: 'right',
+									}}>
+									{editDescription.length}/500 Characters
+								</Typography>
+								<Box sx={{ mb: 2 }}>
+									<Typography
+										sx={{
+											fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											fontWeight: 600,
+											mb: 0.75,
+										}}>
+										Weekly Days
+									</Typography>
+									<FormGroup row>
+										{DAY_LABELS.map((d) => (
+											<FormControlLabel
+												key={d.v}
+												control={
+													<Checkbox
+														checked={editDaysOfWeek.includes(d.v)}
+														onChange={() => toggleEditDay(d.v)}
+														size='small'
+														sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '0.9rem' : '1rem' } }}
+													/>
+												}
+												label={d.l}
+												sx={{
+													'& .MuiFormControlLabel-label': {
+														fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+													},
+												}}
+											/>
+										))}
+									</FormGroup>
+								</Box>
+								<Box
+									sx={{
+										mb: 2,
+										display: 'grid',
+										gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' },
+										gap: 2,
+									}}>
+									<CustomTextField
+										label='Start Time (HH:mm)'
+										value={editStartTime}
+										onChange={(e) => setEditStartTime(e.target.value)}
+										sx={{ backgroundColor: '#fff' }}
+										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
+									/>
+									<CustomTextField
+										label='Duration (minutes)'
+										type='number'
+										value={editDurationMinutes}
+										onChange={(e) => setEditDurationMinutes(Number(e.target.value) || 60)}
+										sx={{ backgroundColor: '#fff' }}
+										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
+										InputProps={{ inputProps: { min: 15, max: 240 } }}
+									/>
+									<CustomTextField
+										label='Timezone'
+										value={editTimezone}
+										onChange={(e) => setEditTimezone(e.target.value)}
+										sx={{ backgroundColor: '#fff' }}
+										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
+									/>
+								</Box>
+								<FormControlLabel
+									control={<Checkbox checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} size='small' />}
+									label='Active on landing page'
+									sx={{ mb: 2 }}
+								/>
+								<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', gap: 2, mb: 2, alignItems: 'flex-start' }}>
+									<Box sx={{ flex: 1, width: '100%' }}>
+										<HandleImageUploadURL
+											label='Cover image'
+											onImageUploadLogic={(url) => setEditCoverUrl(url)}
+											onChangeImgUrl={(e) => setEditCoverUrl(e.target.value)}
+											imageUrlValue={editCoverUrl}
+											imageFolderName='ClubImages'
+											scopedEntityId={club._id}
+											enterImageUrl={enterCoverUrl}
+											setEnterImageUrl={setEnterCoverUrl}
+										/>
+									</Box>
+									<ImageThumbnail
+										imgSource={editCoverUrl || 'https://placehold.co/300x400/e2e8f0/64748b?text=Cover'}
+										removeImage={() => setEditCoverUrl('')}
+										boxStyle={{ width: '8rem', height: '10rem' }}
+										imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
+									/>
+								</Box>
+								<DocumentDetailBlocksEditor
+									entityId={club._id}
+									blocks={editDetailBlocks}
+									onChange={setEditDetailBlocks}
+									imageFolderName='ClubDetailImages'
+									imageScopedEntityId={clubEditorScope(club._id)}
+									heading='Club detail page content'
+									helpText='Build the public club detail page in order. Place images between text sections. Section body uses rich text.'
+									inlineImagesHint=''
+								/>
+							</Collapse>
 						</Box>
 
-						<Collapse in={sessionsExpanded} timeout='auto' unmountOnExit>
-							<Table size='small' sx={{ tableLayout: 'fixed', width: '100%' }}>
-								<CustomTableHead<ClubSession>
-									orderBy='startsAt'
-									order='asc'
-									handleSort={() => {}}
-									columns={[
-										{ label: 'Starts', key: 'startsAt' },
-										{ label: 'Seats', key: 'seats' },
-										{ label: 'Capacity', key: 'capacity' },
-										{ label: 'Status', key: 'status' },
-										{ label: 'Actions', key: 'actions' },
-									]}
-								/>
-								<TableBody>
-									{sessions.length === 0 ? (
-										<TableRow>
-											<TableCell colSpan={5} align='center'>
-												<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', py: 2 }}>
-													No sessions yet.
-												</Typography>
-											</TableCell>
-										</TableRow>
-									) : (
-										sessions.map((s) => (
-											<TableRow key={s._id} hover>
-												<CustomTableCell value={new Date(s.startsAt).toLocaleString('en-GB')} />
-												<CustomTableCell value={`${s.seatsTaken ?? 0} / ${s.capacity}`} />
-												<TableCell align='center'>
-													<CustomTextField
-														type='number'
-														required={false}
-														value={capacityEdits[s._id] ?? s.capacity}
-														onChange={(e) => {
-															const next = Number(e.target.value);
-															setCapacityEdits((prev) => ({
-																...prev,
-																[s._id]: Number.isFinite(next) ? next : s.capacity,
-															}));
-														}}
-														onBlur={(e) => {
-															const v = Number(e.target.value);
-															if (v !== s.capacity && v > 0) updateCapacity(s._id, v);
-														}}
-														sx={{ width: 90, backgroundColor: '#fff', mb: 0 }}
-														InputProps={{ inputProps: { min: 1 } }}
-													/>
-												</TableCell>
-												<CustomTableCell value={s.status} />
-												<TableCell sx={{ textAlign: 'center', display: 'flex', justifyContent: 'center', gap: 1 }}>
-													<CustomSubmitButton onClick={() => openRegs(s._id)}>Registrations</CustomSubmitButton>
-													{s.zoomStartUrl && (
-														<CustomActionBtn
-															title='Host Zoom'
-															onClick={() => window.open(s.zoomStartUrl, '_blank')}
-															icon={<OpenInNew fontSize='small' />}
-														/>
-													)}
-													<CustomActionBtn
-														title='Delete Session'
-														onClick={() => setSessionToDelete(s)}
-														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-													/>
+						{/* Packs */}
+						<Box sx={{ ...sectionSx, mb: '2rem' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									gap: 1,
+									mb: packsExpanded ? '0.75rem' : 0,
+								}}>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+									<Tooltip title={packsExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
+										<IconButton
+											size='small'
+											onClick={() => setPacksExpanded((prev) => !prev)}
+											aria-expanded={packsExpanded}
+											aria-label={`${packsExpanded ? 'Collapse' : 'Expand'} session packs`}
+											sx={{
+												transform: packsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+												transition: 'transform 0.3s ease',
+											}}>
+											<ExpandMore fontSize='small' />
+										</IconButton>
+									</Tooltip>
+									<Typography
+										variant='h6'
+										onClick={() => setPacksExpanded((prev) => !prev)}
+										sx={{
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
+											cursor: 'pointer',
+											userSelect: 'none',
+											m: 0,
+										}}>
+										Session Packs
+										{(club.packs || []).length > 0 ? (
+											<Typography
+												component='span'
+												variant='body2'
+												color='text.secondary'
+												sx={{ ml: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												({(club.packs || []).length})
+											</Typography>
+										) : null}
+									</Typography>
+								</Box>
+								<CustomSubmitButton
+									onClick={() => {
+										setPacksExpanded(true);
+										openPackDialog();
+									}}
+									sx={{ mt: 0 }}>
+									New Pack
+								</CustomSubmitButton>
+							</Box>
+
+							<Collapse in={packsExpanded} timeout='auto' unmountOnExit>
+								<Table size='small' sx={{ tableLayout: 'fixed', width: '100%' }}>
+									<CustomTableHead<ClubPack>
+										orderBy='sessionCount'
+										order='asc'
+										handleSort={() => { }}
+										columns={[
+											{ label: 'Label', key: 'label' },
+											{ label: 'Sessions', key: 'sessionCount' },
+											{ label: 'Prices', key: 'prices' },
+											{ label: 'Status', key: 'isActive' },
+											{ label: 'Actions', key: 'actions' },
+										]}
+									/>
+									<TableBody>
+										{(club.packs || []).length === 0 ? (
+											<TableRow>
+												<TableCell colSpan={5} align='center'>
+													<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', py: 2 }}>
+														No packs yet. Create one to start selling sessions.
+													</Typography>
 												</TableCell>
 											</TableRow>
-										))
-									)}
-								</TableBody>
-							</Table>
-						</Collapse>
-					</Box>
+										) : (
+											(club.packs || []).map((p) => (
+												<TableRow key={p._id} hover>
+													<CustomTableCell value={p.label || `${p.sessionCount} Session`} />
+													<CustomTableCell value={p.sessionCount} />
+													<CustomTableCell value={formatPackPrices(p.prices)} />
+													<CustomTableCell value={p.isActive ? 'Active' : 'Inactive'} />
+													<TableCell sx={{ textAlign: 'center' }}>
+														<CustomActionBtn
+															title='Edit Pack'
+															onClick={() => openEditPackDialog(p)}
+															icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+														<CustomActionBtn
+															title='Delete Pack'
+															onClick={() => setPackToDelete(p)}
+															icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													</TableCell>
+												</TableRow>
+											))
+										)}
+									</TableBody>
+								</Table>
+							</Collapse>
+						</Box>
+
+						{/* Sessions */}
+						<Box sx={{ ...sectionSx, mb: '2rem' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									gap: 1,
+									mb: sessionsExpanded ? '0.75rem' : 0,
+								}}>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+									<Tooltip title={sessionsExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
+										<IconButton
+											size='small'
+											onClick={() => setSessionsExpanded((prev) => !prev)}
+											aria-expanded={sessionsExpanded}
+											aria-label={`${sessionsExpanded ? 'Collapse' : 'Expand'} sessions`}
+											sx={{
+												transform: sessionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+												transition: 'transform 0.3s ease',
+											}}>
+											<ExpandMore fontSize='small' />
+										</IconButton>
+									</Tooltip>
+									<Typography
+										variant='h6'
+										onClick={() => setSessionsExpanded((prev) => !prev)}
+										sx={{
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
+											cursor: 'pointer',
+											userSelect: 'none',
+											m: 0,
+										}}>
+										Sessions
+										{sessions.length > 0 ? (
+											<Typography
+												component='span'
+												variant='body2'
+												color='text.secondary'
+												sx={{ ml: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												({sessions.length})
+											</Typography>
+										) : null}
+									</Typography>
+								</Box>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', ml: 'auto' }}>
+									<CustomTextField
+										label='Weeks'
+										type='number'
+										value={bulkWeeks}
+										onChange={(e) => setBulkWeeks(Number(e.target.value) || 1)}
+										sx={{ width: 100, backgroundColor: '#fff', mb: 0 }}
+										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
+										InputProps={{ inputProps: { min: 1, max: 12 } }}
+									/>
+									<CustomSubmitButton
+										onClick={() => {
+											setSessionsExpanded(true);
+											handleBulk();
+										}}
+										disabled={isBulkCreating}
+										sx={{ mt: 0 }}>
+										{isBulkCreating ? 'Creating…' : 'Generate Zoom Sessions'}
+									</CustomSubmitButton>
+								</Box>
+							</Box>
+
+							<Collapse in={sessionsExpanded} timeout='auto' unmountOnExit>
+								<Table size='small' sx={{ tableLayout: 'fixed', width: '100%' }}>
+									<CustomTableHead<ClubSession>
+										orderBy='startsAt'
+										order='asc'
+										handleSort={() => { }}
+										columns={[
+											{ label: 'Starts', key: 'startsAt', width: '38%' },
+											{ label: 'Seats', key: 'seats', width: '10%' },
+											{ label: 'Capacity', key: 'capacity', width: '10%' },
+											{ label: 'Status', key: 'status', width: '17%' },
+											{
+												label: 'Actions', key: 'actions', width: '25%',
+
+											},
+										]}
+									/>
+									<TableBody>
+										{sessions.length === 0 ? (
+											<TableRow>
+												<TableCell colSpan={5} align='center'>
+													<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', py: 2 }}>
+														No sessions yet.
+													</Typography>
+												</TableCell>
+											</TableRow>
+										) : (
+											sessions.map((s) => {
+												const tz = club?.schedule?.timezone || 'Europe/Istanbul';
+												const startsAt = new Date(s.startsAt);
+												const startsLabel = `${startsAt.toLocaleString('en-GB', {
+													weekday: 'short',
+													day: '2-digit',
+													month: '2-digit',
+													year: 'numeric',
+													hour: '2-digit',
+													minute: '2-digit',
+													timeZone: tz,
+												})} (${tz})`;
+												return (
+													<TableRow key={s._id} hover>
+														<CustomTableCell value={startsLabel} />
+														<CustomTableCell value={`${s.seatsTaken ?? 0} / ${s.capacity}`} />
+														<TableCell align='center'>
+															<CustomTextField
+																type='number'
+																required={false}
+																value={capacityEdits[s._id] ?? s.capacity}
+																onChange={(e) => {
+																	const next = Number(e.target.value);
+																	setCapacityEdits((prev) => ({
+																		...prev,
+																		[s._id]: Number.isFinite(next) ? next : s.capacity,
+																	}));
+																}}
+																onBlur={(e) => {
+																	const v = Number(e.target.value);
+																	if (v !== s.capacity && v > 0) updateCapacity(s._id, v);
+																}}
+																sx={{ width: 80, backgroundColor: '#fff', mb: 0 }}
+																InputProps={{ inputProps: { min: 1 } }}
+															/>
+														</TableCell>
+														<CustomTableCell value={s.status} />
+														<TableCell sx={{ textAlign: 'right' }}>
+															<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, flexWrap: 'nowrap' }}>
+																<CustomSubmitButton onClick={() => openRegs(s._id)}>Registrations</CustomSubmitButton>
+																{s.zoomStartUrl && (
+																	<CustomActionBtn
+																		title='Host Zoom'
+																		onClick={() => window.open(s.zoomStartUrl, '_blank')}
+																		icon={<OpenInNew fontSize='small' />}
+																	/>
+																)}
+																<CustomActionBtn
+																	title='Delete Session'
+																	onClick={() => setSessionToDelete(s)}
+																	icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+																/>
+															</Box>
+														</TableCell>
+													</TableRow>
+												);
+											})
+										)}
+									</TableBody>
+								</Table>
+							</Collapse>
+						</Box>
 					</Box>
 				</Box>
 
 				{packDialogOpen && (
 					<CreateClubPackDialog
 						isOpen={packDialogOpen}
+						mode={packBeingEdited ? 'edit' : 'create'}
 						onClose={() => {
 							setPackDialogOpen(false);
 							resetPackForm();
 						}}
-						onSubmit={handleCreatePack}
+						onSubmit={handleSavePack}
 						sessionCount={sessionCount}
 						setSessionCount={setSessionCount}
 						label={packLabel}
@@ -716,6 +891,8 @@ const AdminClubDetail = () => {
 						setEUR={setEUR}
 						TRY={TRY}
 						setTRY={setTRY}
+						isActive={packIsActive}
+						setIsActive={setPackIsActive}
 						isCreating={isCreatingPack}
 					/>
 				)}
@@ -726,7 +903,7 @@ const AdminClubDetail = () => {
 						closeModal={() => setPackToDelete(null)}
 						title='Delete Pack'
 						maxWidth='xs'>
-						<Box sx={{ px: 2 }}>
+						<Box sx={{ px: 3 }}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
 								Delete pack <strong>{packToDelete.label || `${packToDelete.sessionCount} Session`}</strong>?
 							</Typography>
@@ -748,7 +925,7 @@ const AdminClubDetail = () => {
 						closeModal={() => setSessionToDelete(null)}
 						title='Delete Session'
 						maxWidth='xs'>
-						<Box sx={{ px: 2 }}>
+						<Box sx={{ px: 3 }}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 1 }}>
 								Delete session on{' '}
 								<strong>{new Date(sessionToDelete.startsAt).toLocaleString('en-GB')}</strong>?

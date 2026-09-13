@@ -34,9 +34,17 @@ const useAiResponse = () => {
 			const responseText = response.data?.data ?? '';
 			setAiResponse(responseText);
 			return responseText;
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error fetching AI response:', error);
-			return '';
+			const status = (error as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
+			const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+			if (status === 429) {
+				throw new Error(message || 'AI rate limit exceeded. Please wait a minute and try again.');
+			}
+			if (status === 503) {
+				throw new Error(message || 'AI feedback service is not configured.');
+			}
+			throw new Error(message || 'Failed to get AI feedback');
 		} finally {
 			setIsLoadingAiResponse(false);
 		}

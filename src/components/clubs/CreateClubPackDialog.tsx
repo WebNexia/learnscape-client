@@ -1,4 +1,4 @@
-import { Box, Typography, Grid } from '@mui/material';
+import { Box, Typography, Grid, FormControlLabel, Checkbox } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomTextField from '../forms/customFields/CustomTextField';
@@ -22,7 +22,10 @@ interface CreateClubPackDialogProps {
 	setEUR: (p: ClubPrice) => void;
 	TRY: ClubPrice;
 	setTRY: (p: ClubPrice) => void;
+	isActive?: boolean;
+	setIsActive?: (v: boolean) => void;
 	isCreating?: boolean;
+	mode?: 'create' | 'edit';
 }
 
 const CreateClubPackDialog = ({
@@ -41,16 +44,20 @@ const CreateClubPackDialog = ({
 	setEUR,
 	TRY,
 	setTRY,
+	isActive = true,
+	setIsActive,
 	isCreating = false,
+	mode = 'create',
 }: CreateClubPackDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isEdit = mode === 'edit';
 
 	const hasAnyPrice = !!(GBP.amount || USD.amount || EUR.amount || TRY.amount);
 	const allPricesFilled = !!(GBP.amount && USD.amount && EUR.amount && TRY.amount);
 
 	return (
-		<CustomDialog title='Create Session Pack' openModal={isOpen} closeModal={onClose} maxWidth='sm'>
+		<CustomDialog title={isEdit ? 'Edit Session Pack' : 'Create Session Pack'} openModal={isOpen} closeModal={onClose} maxWidth='sm'>
 			<form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
 				<Box sx={{ margin: isMobileSize ? '0.75rem 0' : '0.75rem 1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
 					<CustomTextField
@@ -66,6 +73,7 @@ const CreateClubPackDialog = ({
 					<CustomTextField
 						label='Label (optional)'
 						value={label}
+						required={false}
 						onChange={(e) => setLabel(e.target.value)}
 						sx={{ backgroundColor: '#fff' }}
 						InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
@@ -112,10 +120,25 @@ const CreateClubPackDialog = ({
 					)}
 				</Box>
 
+				{isEdit && setIsActive && (
+					<Box sx={{ margin: isMobileSize ? '0 0 0.5rem' : '0 1rem 0.5rem' }}>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={isActive}
+									onChange={(e) => setIsActive(e.target.checked)}
+									size='small'
+								/>
+							}
+							label={<Typography sx={{ fontSize: '0.85rem' }}>Active</Typography>}
+						/>
+					</Box>
+				)}
+
 				<CustomDialogActions
 					onCancel={onClose}
 					submitBtnType='submit'
-					submitBtnText='Create'
+					submitBtnText={isEdit ? 'Save' : 'Create'}
 					isSubmitting={isCreating}
 					disableBtn={isCreating || sessionCount < 1 || !allPricesFilled}
 					actionSx={{ marginBottom: '0.5rem' }}

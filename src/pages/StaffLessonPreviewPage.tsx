@@ -404,7 +404,17 @@ const StaffLessonPreviewPage = () => {
 					mt: isSmallMobileLandscape || isMobileLandscape || isTabletPortrait ? '0.75rem' : '0.5rem',
 					boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
 				}}>
-				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+				<Box
+					sx={{
+						flex: 1,
+						display: 'flex',
+						justifyContent: 'flex-start',
+						alignItems: 'center',
+						pl: { xs: 1.5, sm: 2 },
+						gap: 0.5,
+						minWidth: 0,
+						zIndex: 1,
+					}}>
 					<Button
 						variant='text'
 						startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
@@ -416,6 +426,8 @@ const StaffLessonPreviewPage = () => {
 							'fontFamily': theme.fontFamily?.main,
 							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+							whiteSpace: 'nowrap',
+							flexShrink: 0,
 						}}
 						onClick={() => {
 							setIsQuestionsVisible(false);
@@ -433,6 +445,9 @@ const StaffLessonPreviewPage = () => {
 							'fontFamily': theme.fontFamily?.main,
 							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+							whiteSpace: 'nowrap',
+							flexShrink: 0,
+							ml: !isInstructionalLesson && isQuestionsVisible ? 0.5 : 0,
 						}}
 						onClick={() => {
 							navigate(coursesListPath);
@@ -445,10 +460,13 @@ const StaffLessonPreviewPage = () => {
 				{isQuestionsVisible && !lesson?.isGraded && (
 					<Box
 						sx={{
-							flex: 6,
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
+							zIndex: 2,
 						}}>
 						{lessonType === LessonType.PRACTICE_LESSON && (
 							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='top' arrow>
@@ -499,10 +517,17 @@ const StaffLessonPreviewPage = () => {
 
 				<Box
 					sx={{
-						display: 'flex',
+						display: isQuestionsVisible && !lesson?.isGraded ? 'none' : 'flex',
+						position: 'absolute',
+						left: '50%',
+						transform: 'translateX(-50%)',
+						zIndex: 2,
 						justifyContent: 'center',
 						textAlign: 'center',
 						alignItems: 'center',
+						minWidth: 0,
+						px: 1,
+						maxWidth: '46%',
 					}}>
 					{isQuestionsVisible && lesson?.isGraded && lesson?.type === LessonType.QUIZ ? (
 						(() => {

@@ -1,5 +1,5 @@
-import { useContext, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { useContext } from 'react';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, Chip, CircularProgress, Typography } from '@mui/material';
 import { ArrowBack, ConfirmationNumber } from '@mui/icons-material';
 import { useQuery } from 'react-query';
@@ -12,11 +12,11 @@ import { Club } from '../interfaces/club';
 import { DocumentDetailBlock } from '../interfaces/document';
 import { clubsService } from '../services/clubsService';
 import LandingPageDocumentDetailBlocks from '../components/landingPage/LandingPageDocumentDetailBlocks';
-import ClubPurchaseDialog, { pickPackPrice } from '../components/clubs/ClubPurchaseDialog';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 import { LP_QA_PREVIEW_SEGMENT, stripLpQaPreviewPath } from '../utils/lpQaPreview';
+import { clubPaymentPath, pickPackPrice } from '../utils/clubPurchasePricing';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
@@ -33,12 +33,11 @@ const ctaButtonSx = {
 
 const LandingPageClub = () => {
 	const { clubId } = useParams();
+	const navigate = useNavigate();
 	const { orgId } = useContext(OrganisationContext);
 	const geoLocation = useGeoLocation();
 	const isQaPreview = useIsLpQaPreview();
 	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
-
-	const [purchaseOpen, setPurchaseOpen] = useState(false);
 
 	const {
 		data: club,
@@ -86,6 +85,12 @@ const LandingPageClub = () => {
 		'Aden Academy Zoom kulübü. Oturum satın alın, bilet kodunuzla katılın.';
 
 	const canPurchase = Boolean(club?.packs?.length && (isQaPreview || club?.isActive !== false));
+
+	const goToPayment = () => {
+		if (!club || !canPurchase) return;
+		navigate(clubPaymentPath(club, isQaPreview));
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
 
 	return (
 		<>
@@ -311,7 +316,7 @@ const LandingPageClub = () => {
 											<Button
 												variant='contained'
 												disabled={!canPurchase}
-												onClick={() => setPurchaseOpen(true)}
+												onClick={goToPayment}
 												endIcon={<ConfirmationNumber />}
 												sx={ctaButtonSx}>
 												Oturum Satın Al
@@ -377,7 +382,7 @@ const LandingPageClub = () => {
 									<Button
 										variant='contained'
 										disabled={!canPurchase}
-										onClick={() => setPurchaseOpen(true)}
+										onClick={goToPayment}
 										endIcon={<ConfirmationNumber />}
 										sx={{ ...ctaButtonSx, px: 2.5, py: 1, alignSelf: { xs: 'stretch', sm: 'auto' } }}>
 										Oturum Satın Al
@@ -390,20 +395,6 @@ const LandingPageClub = () => {
 					<ScrollToTopButton />
 				</Box>
 			</Box>
-
-			<ClubPurchaseDialog
-				open={purchaseOpen}
-				club={club || null}
-				orgId={orgId}
-				cancelUrl={
-					club
-						? `${window.location.origin}/landing-page-clubs/${encodeURIComponent(club.title)}/${club._id}${
-								isQaPreview ? `/${LP_QA_PREVIEW_SEGMENT}` : ''
-							}`
-						: `${window.location.origin}${clubsListPath}`
-				}
-				onClose={() => setPurchaseOpen(false)}
-			/>
 		</>
 	);
 };

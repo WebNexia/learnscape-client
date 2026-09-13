@@ -283,17 +283,17 @@ const PracticeQuestion = ({
 		}
 	}, [practiceAgainMode]);
 	const practiceAgainAiLimitReached =
-		practiceAgainMode &&
+		(practiceAgainMode || staffPreviewMode) &&
 		isOpenEndedQuestion &&
-		(practiceAgainAiCount >= PRACTICE_AGAIN_AI_LIMIT || hasReachedTotalAiLimit);
+		(practiceAgainAiCount >= PRACTICE_AGAIN_AI_LIMIT || (!staffPreviewMode && hasReachedTotalAiLimit));
 	const practiceAgainAiRequestEnabled =
-		practiceAgainMode &&
+		(practiceAgainMode || staffPreviewMode) &&
 		isOpenEndedQuestion &&
 		hasOpenEndedUserQuestionId &&
 		practiceAgainSavedForAi &&
 		!openEndedInputEnabled &&
 		practiceAgainAiCount < PRACTICE_AGAIN_AI_LIMIT &&
-		!hasReachedTotalAiLimit;
+		(staffPreviewMode || !hasReachedTotalAiLimit);
 	const openEndedAiRequestEnabled =
 		(isOpenEndedFirstTime && !openEndedInputEnabled && hasOpenEndedUserQuestionId && !hasReachedAiLimit) ||
 		practiceAgainAiRequestEnabled;
@@ -367,19 +367,38 @@ const PracticeQuestion = ({
 				setTranslateAnswers({});
 			}
 
+			const answerForPrompt: string =
+				userAnswers?.find((data) => String(data.questionId) === String(question._id))?.userAnswer || '';
+			setQuestionPrompt({
+				question: stripHtml(question.question),
+				type: fetchQuestionTypeName(question),
+				options: isMultipleChoiceQuestion ? question.options : [],
+				userInput: answerForPrompt,
+				correctAnswer: question.correctAnswer,
+			});
+
 			// Reset AI feedback state when question changes
 			setHasRequestedAiFeedback(false);
-			setUnlockedForNextRound(false);
+			setUnlockedForNextRound(
+				staffPreviewMode
+					? !(userAnswers || []).some(
+							(data) => String(data.questionId) === String(question._id) && Boolean((data.userAnswer || '').trim()),
+					  )
+					: false,
+			);
 			setHasRequestedAiThisRound(false);
 			setAiFeedbackError('');
 			setPracticeAgainSavedForAi(false);
+			if (staffPreviewMode || practiceAgainMode) {
+				setPracticeAgainAiCount(0);
+			}
 			hasInitializedAiRoundRef.current = false;
 
 			// Reset sound tracking refs when question changes
 			prevIsAnswerCorrectRef.current = false;
 			prevErrorRef.current = false;
 		}
-	}, [displayedQuestionNumber, question._id, userAnswers, practiceAgainMode]);
+	}, [displayedQuestionNumber, question._id, userAnswers, practiceAgainMode, staffPreviewMode]);
 
 	// Keep open-ended answer populated after lesson completion when user answers load asynchronously.
 	useEffect(() => {
@@ -1524,8 +1543,7 @@ const PracticeQuestion = ({
 					width: 'fit-content',
 					zIndex: 9,
 				}}>
-				{!staffPreviewMode &&
-					displayedQuestionNumber === questionNumber &&
+				{displayedQuestionNumber === questionNumber &&
 					!isFlipCard &&
 					!isMatching &&
 					!isFITBDragDrop &&
@@ -1534,7 +1552,7 @@ const PracticeQuestion = ({
 					!isTrueFalseQuestion &&
 					!isMultipleChoiceQuestion ? (
 					// Review: show saved answer + last AI only; no new requests
-					isLessonCompleted && !practiceAgainMode ? (
+					isLessonCompleted && !practiceAgainMode && !staffPreviewMode ? (
 						<Tooltip title={savedLastAiFeedback ? 'View last AI feedback' : 'No AI feedback yet'} placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
@@ -1560,13 +1578,13 @@ const PracticeQuestion = ({
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
 							</IconButton>
 						</Tooltip>
-					) : hasReachedAiLimit && !practiceAgainMode ? (
+					) : hasReachedAiLimit && !practiceAgainMode && !staffPreviewMode ? (
 						<Tooltip title={`View last AI feedback (${AI_FEEDBACK_LIMIT}/${AI_FEEDBACK_LIMIT})`} placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
 							</IconButton>
 						</Tooltip>
-					) : openEndedAiRequestEnabled && (hasRequestedAiThisRound || (practiceAgainMode && practiceAgainAiCount >= 1)) ? (
+					) : openEndedAiRequestEnabled && (hasRequestedAiThisRound || ((practiceAgainMode || staffPreviewMode) && practiceAgainAiCount >= 1)) ? (
 						<Tooltip title='View AI feedback' placement='left' arrow>
 							<IconButton onClick={() => openAiResponseDrawer(index)} sx={{ color: '#4D7B8B' }}>
 								<AiIcon sx={{ fontSize: '2rem', width: isMobileSize ? '1.25rem' : '1.5rem', height: isMobileSize ? '1.25rem' : '1.5rem', border: 'none', ml: 0.8 }} />
@@ -1574,7 +1592,7 @@ const PracticeQuestion = ({
 						</Tooltip>
 					) : openEndedAiRequestEnabled ? (
 						<Tooltip
-							title={`Receive feedback from AI (${practiceAgainMode ? practiceAgainAiCount + 1 : aiFeedbackCount + 1}/${practiceAgainMode ? PRACTICE_AGAIN_AI_LIMIT : AI_FEEDBACK_LIMIT})`}
+							title={`Receive feedback from AI (${(practiceAgainMode || staffPreviewMode) ? practiceAgainAiCount + 1 : aiFeedbackCount + 1}/${(practiceAgainMode || staffPreviewMode) ? PRACTICE_AGAIN_AI_LIMIT : AI_FEEDBACK_LIMIT})`}
 							placement='left'
 							arrow>
 							<IconButton
@@ -1587,7 +1605,7 @@ const PracticeQuestion = ({
 									setAiFeedbackError('');
 									openAiResponseDrawer(index);
 
-									const currentAnswer = practiceAgainMode
+									const currentAnswer = (practiceAgainMode || staffPreviewMode)
 										? existingUserAnswerForAi?.userAnswer ?? ''
 										: typeof value === 'string' && value.trim()
 											? value
@@ -1601,25 +1619,40 @@ const PracticeQuestion = ({
 									try {
 										const responseText = await handleInitialSubmit(promptWithSavedAnswer);
 										if (responseText) {
-											if (practiceAgainMode) setPracticeAgainAiCount((c) => c + 1);
-											const res = await axios.patch(
-												`${base_url}/userQuestions/${existingUserAnswerForAi.userQuestionId}`,
-												{ aiFeedbackResponse: responseText }
-											);
-											const updated = res.data?.data;
-											if (updated) {
+											if (practiceAgainMode || staffPreviewMode) setPracticeAgainAiCount((c) => c + 1);
+											if (staffPreviewMode) {
 												setHasRequestedAiThisRound(true);
 												setUserAnswers((prev) =>
-													prev.map((data) =>
+													(prev || []).map((data) =>
 														String(data.questionId) === String(question._id)
 															? {
-																...data,
-																aiFeedbackRequestCount: updated.aiFeedbackRequestCount ?? aiFeedbackCount + 1,
-																lastAiFeedback: updated.lastAiFeedback ?? responseText,
-															}
+																	...data,
+																	aiFeedbackRequestCount: (data.aiFeedbackRequestCount ?? 0) + 1,
+																	lastAiFeedback: responseText,
+															  }
 															: data
 													)
 												);
+											} else {
+												const res = await axios.patch(
+													`${base_url}/userQuestions/${existingUserAnswerForAi.userQuestionId}`,
+													{ aiFeedbackResponse: responseText }
+												);
+												const updated = res.data?.data;
+												if (updated) {
+													setHasRequestedAiThisRound(true);
+													setUserAnswers((prev) =>
+														prev.map((data) =>
+															String(data.questionId) === String(question._id)
+																? {
+																		...data,
+																		aiFeedbackRequestCount: updated.aiFeedbackRequestCount ?? aiFeedbackCount + 1,
+																		lastAiFeedback: updated.lastAiFeedback ?? responseText,
+																  }
+																: data
+														)
+													);
+												}
 											}
 										} else {
 											setAiFeedbackError('AI geri bildirimi alınamadı. Cevabınız kaydedildi; daha sonra tekrar deneyebilirsiniz.');
@@ -1627,7 +1660,12 @@ const PracticeQuestion = ({
 										}
 									} catch (err) {
 										console.error('AI feedback error:', err);
-										setAiFeedbackError('AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.');
+										const msg = err instanceof Error && err.message ? err.message : '';
+										setAiFeedbackError(
+											msg.includes('rate limit') || msg.includes('Rate limit')
+												? 'AI şu an yoğun. Lütfen 1–2 dakika bekleyip tekrar deneyin.'
+												: msg || 'AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.',
+										);
 										setHasRequestedAiFeedback(false);
 									} finally {
 										setIsAiFeedbackLoading(false);

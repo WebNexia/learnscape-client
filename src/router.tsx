@@ -115,6 +115,9 @@ const LandingPageClub = React.lazy(() => import("./pages/LandingPageClub"));
 const LandingPageClubTicket = React.lazy(
   () => import("./pages/LandingPageClubTicket"),
 );
+const LandingPageClubPayment = React.lazy(
+  () => import("./pages/LandingPageClubPayment"),
+);
 const AdminConsultationEditPage = React.lazy(
   () => import("./pages/AdminConsultationEditPage"),
 );
@@ -289,6 +292,14 @@ export const router = createBrowserRouter([
       {
         path: "landing-page-clubs/ticket",
         element: <LandingPageClubTicket />,
+      },
+      {
+        path: "landing-page-clubs/:name/:clubId/payment/qa-test",
+        element: <LandingPageClubPayment />,
+      },
+      {
+        path: "landing-page-clubs/:name/:clubId/payment",
+        element: <LandingPageClubPayment />,
       },
       {
         path: "landing-page-clubs/:name/:clubId/qa-test",

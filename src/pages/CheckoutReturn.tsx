@@ -15,6 +15,7 @@ import {
 	readPendingCartCheckout,
 	useSlowNetworkHint,
 	type CartCheckoutReturnContext,
+	type ClubCheckoutReturnContext,
 } from '../utils/hostedCheckout';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -120,6 +121,21 @@ export default function CheckoutReturn() {
 				}
 
 				if (res.data.kind === 'club') {
+					const clubContext: ClubCheckoutReturnContext | null =
+						context?.kind === 'club' ? context : null;
+					if (clubContext?.agreeMarketing && clubContext.email && clubContext.orgId) {
+						try {
+							await axios.post(`${base_url}/marketing-consent/guest`, {
+								email: clubContext.email.trim(),
+								orgId: clubContext.orgId,
+								firstName: clubContext.firstName?.trim() || '',
+								lastName: clubContext.lastName?.trim() || '',
+								source: 'club',
+							});
+						} catch {
+							// Non-blocking
+						}
+					}
 					clearCheckoutReturnContext();
 					setBackPath('/landing-page-clubs/ticket');
 					setStatus('success');

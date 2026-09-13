@@ -99,7 +99,16 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.5 Eğitim, Quiz ve Geri Bildirim Verileri',
+					title: '3.5 Kulüp Oturumları Verileri',
+					items: [
+						'Kulüp satın alma, bilet kodu ve oturum hakları',
+						'Misafir ad, soyad, e-posta ve telefon (varsa)',
+						'Seçilen kulüp oturumu kayıtları',
+						'Zoom katılım / kayıt bilgileri (varsa)',
+					],
+				},
+				{
+					title: '3.6 Eğitim, Quiz ve Geri Bildirim Verileri',
 					items: [
 						'Kurs ilerleme, ders tamamlama ve platform etkileşim bilgileri',
 						'Quiz cevapları ve teslim kayıtları',
@@ -108,7 +117,7 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.6 Mesajlaşma, Topluluk ve Bildirimler',
+					title: '3.7 Mesajlaşma, Topluluk ve Bildirimler',
 					items: [
 						'Kullanıcılar arası mesajlaşma içerikleri (metin, görsel, ses)',
 						'Topluluk forumu gönderileri ve yorumları',
@@ -117,14 +126,14 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.7 Kullanıcı Tarafından Yüklenen İçerik',
+					title: '3.8 Kullanıcı Tarafından Yüklenen İçerik',
 					items: [
 						'Profil görselleri',
 						'Quiz, pratik ders veya topluluk bağlamında yüklenen ses, video ve görseller',
 					],
 				},
 				{
-					title: '3.8 Form, Etkinlik ve Destek Verileri',
+					title: '3.9 Form, Etkinlik ve Destek Verileri',
 					items: [
 						'İletişim, hakkımızda ve etkinlik kayıt formları',
 						'Geri bildirim formu yanıtları (IP adresi ve tarayıcı bilgisi dahil)',
@@ -133,7 +142,7 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.9 Teknik ve Kullanım Verileri',
+					title: '3.10 Teknik ve Kullanım Verileri',
 					items: [
 						'IP adresi (analitikte ham hali saklanmaz; hash’lenir)',
 						'Tarayıcı ve cihaz bilgileri',
@@ -152,6 +161,7 @@ const PrivacyPolicy = () => {
 						'Hesap oluşturma ve yönetimi',
 						'Kurs, döküman ve ürün erişimi',
 						'Danışmanlık hizmetlerinin sağlanması',
+						'Kulüp oturumu bilet ve kayıt işlemleri',
 						'Ödeme işlemleri ve Stripe Connect ödemeleri',
 						'Quiz değerlendirmesi ve eğitmen geri bildirimi',
 						'Mesajlaşma ve topluluk hizmetleri',
@@ -186,7 +196,7 @@ const PrivacyPolicy = () => {
 						'Stripe ve Stripe Connect (ödeme işlemleri ve organizasyon ödemeleri)',
 						'Firebase / Google Cloud (kimlik doğrulama, veritabanı, dosya depolama, bulut fonksiyonları)',
 						'Google reCAPTCHA (güvenlik ve spam önleme)',
-						'Zoom (canlı ders, danışmanlık ve görüşmeler)',
+						'Zoom (canlı ders, danışmanlık, kulüp oturumları ve görüşmeler)',
 						'YouTube, Vimeo ve Dailymotion (gömülü video içerikleri)',
 						'OpenAI (yalnızca pratik ders AI geri bildirimi ve yönetici içerik oluşturma araçları)',
 						'MongoDB (uygulama veritabanı)',
@@ -345,7 +355,16 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.5 Education, Quiz, and Feedback Data',
+					title: '3.5 Club Session Data',
+					items: [
+						'Club purchases, ticket codes, and session entitlements',
+						'Guest first name, last name, email, and phone (if provided)',
+						'Selected club session registrations',
+						'Zoom join / registration details (if applicable)',
+					],
+				},
+				{
+					title: '3.6 Education, Quiz, and Feedback Data',
 					items: [
 						'Course progress, lesson completion, and platform interaction information',
 						'Quiz answers and submission records',
@@ -354,7 +373,7 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.6 Messaging, Community, and Notifications',
+					title: '3.7 Messaging, Community, and Notifications',
 					items: [
 						'Direct messaging content between users (text, images, audio)',
 						'Community forum posts and comments',
@@ -363,14 +382,14 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.7 User-Uploaded Content',
+					title: '3.8 User-Uploaded Content',
 					items: [
 						'Profile images',
 						'Audio, video, and images uploaded in quiz, practice, or community contexts',
 					],
 				},
 				{
-					title: '3.8 Form, Event, and Support Data',
+					title: '3.9 Form, Event, and Support Data',
 					items: [
 						'Contact, about, and event registration forms',
 						'Feedback form responses (including IP address and browser information)',
@@ -379,7 +398,7 @@ const PrivacyPolicy = () => {
 					],
 				},
 				{
-					title: '3.9 Technical and Usage Data',
+					title: '3.10 Technical and Usage Data',
 					items: [
 						'IP address (raw IP is not stored for analytics; it is hashed)',
 						'Browser and device information',
@@ -398,6 +417,7 @@ const PrivacyPolicy = () => {
 						'Account creation and management',
 						'Access to courses, documents, and products',
 						'Provision of consultation services',
+						'Club session tickets and registrations',
 						'Payment processing and Stripe Connect payouts',
 						'Quiz assessment and instructor feedback',
 						'Messaging and community services',
@@ -432,7 +452,7 @@ const PrivacyPolicy = () => {
 						'Stripe and Stripe Connect (payments and organisation payouts)',
 						'Firebase / Google Cloud (authentication, database, file storage, cloud functions)',
 						'Google reCAPTCHA (security and spam prevention)',
-						'Zoom (live lessons, consultations, and meetings)',
+						'Zoom (live lessons, consultations, club sessions, and meetings)',
 						'YouTube, Vimeo, and Dailymotion (embedded video content)',
 						'OpenAI (practice lesson AI feedback and admin content creation tools only)',
 						'MongoDB (application database)',
