@@ -39,7 +39,7 @@ const useAiResponse = () => {
 			const status = (error as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
 			const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 			if (status === 429) {
-				throw new Error(message || 'AI rate limit exceeded. Please wait a minute and try again.');
+				throw new Error('AI şu an yoğun. Lütfen 1–2 dakika bekleyip tekrar deneyin.');
 			}
 			if (status === 503) {
 				throw new Error(message || 'AI feedback service is not configured.');

@@ -305,23 +305,24 @@ const PracticeQuestion = ({
 			prevQuestionKeyRef.current = questionKey;
 		}
 
-		if (isTranslate && isLessonCompleted) {
-			// Translate answers are not saved to database, so always start fresh for practice
-			setTranslateAnswers({});
-			// Don't mark pairs as checked - allow practice mode
-			setCheckedTranslatePairs(new Set());
-			// Clear stored answers when lesson is completed
-			translateAnswersStoreRef.current = {};
-		} else if (isTranslate && !isLessonCompleted) {
-			// Restore stored answers for this question if they exist
-			const stored = translateAnswersStoreRef.current[question._id];
-			if (stored) {
-				setTranslateAnswers(stored.answers);
-				setCheckedTranslatePairs(stored.checkedPairs);
-			} else {
-				// Initialize empty if no stored data
+		if (isQuestionChange && isTranslate) {
+			// Only reset/restore on question change — clearing on every effect run
+			// wiped Compare results (esp. completed / practice-again / staff preview).
+			if (isLessonCompleted || practiceAgainMode || staffPreviewMode) {
 				setTranslateAnswers({});
 				setCheckedTranslatePairs(new Set());
+				if (isLessonCompleted && !practiceAgainMode && !staffPreviewMode) {
+					translateAnswersStoreRef.current = {};
+				}
+			} else {
+				const stored = translateAnswersStoreRef.current[question._id];
+				if (stored) {
+					setTranslateAnswers(stored.answers);
+					setCheckedTranslatePairs(stored.checkedPairs);
+				} else {
+					setTranslateAnswers({});
+					setCheckedTranslatePairs(new Set());
+				}
 			}
 		} else if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion && !isTranslate && !practiceAgainMode) {
 			setValue(question.correctAnswer);
@@ -785,11 +786,11 @@ const PracticeQuestion = ({
 								<MatchingPreview
 									initialPairs={question.matchingPairs}
 									setAllPairsMatchedMatching={setAllPairsMatchedMatching}
-									fromPracticeQuestionUser={!staffPreviewMode}
-									displayedQuestionNumber={displayedQuestionNumber}
-									numberOfQuestions={numberOfQuestions}
-									setIsLessonCompleted={setIsLessonCompleted}
-									setShowQuestionSelector={setShowQuestionSelector}
+									fromPracticeQuestionUser
+									displayedQuestionNumber={staffPreviewMode ? undefined : displayedQuestionNumber}
+									numberOfQuestions={staffPreviewMode ? undefined : numberOfQuestions}
+									setIsLessonCompleted={staffPreviewMode ? undefined : setIsLessonCompleted}
+									setShowQuestionSelector={staffPreviewMode ? undefined : setShowQuestionSelector}
 									lessonType={lessonType}
 									isLessonCompleted={!staffPreviewMode && isLessonCompleted && !practiceAgainMode}
 									onCorrectMatch={playSuccessSound}
@@ -988,7 +989,10 @@ const PracticeQuestion = ({
 											{!isPairChecked && (
 												<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-1rem', mb: '-0.5rem' }}>
 													<CustomSubmitButton
-														onClick={async () => {
+														type='button'
+														onClick={async (event) => {
+															event?.preventDefault();
+															event?.stopPropagation?.();
 															playSubmitSound();
 
 															const answer = translateAnswers[pairId]?.trim() || '';
@@ -1015,9 +1019,8 @@ const PracticeQuestion = ({
 															setUserAnswer(userAnswerText);
 															setError(false);
 
-															// Only submit to server if lesson is not completed
-															if (!isLessonCompleted) {
-																// Check if all pairs are checked
+															// Persist only on first attempt (not practice-again / staff preview)
+															if (!isLessonCompleted && !practiceAgainMode && !staffPreviewMode) {
 																const allPairIds = new Set(question.translatePairs?.map((p, idx) => p.id || idx.toString()) || []);
 																const newCheckedPairs = new Set([...checkedTranslatePairs, pairId]);
 																const allChecked =
@@ -1242,12 +1245,12 @@ const PracticeQuestion = ({
 				<Box sx={{ mt: isMobileSize ? '6.5rem' : '9rem' }}>
 					<FlipCardPreview
 						question={question}
-						fromPracticeQuestionUser={!staffPreviewMode}
+						fromPracticeQuestionUser
 						setIsCardFlipped={setIsCardFlipped}
-						displayedQuestionNumber={displayedQuestionNumber}
-						numberOfQuestions={numberOfQuestions}
-						setIsLessonCompleted={setIsLessonCompleted}
-						setShowQuestionSelector={setShowQuestionSelector}
+						displayedQuestionNumber={staffPreviewMode ? undefined : displayedQuestionNumber}
+						numberOfQuestions={staffPreviewMode ? undefined : numberOfQuestions}
+						setIsLessonCompleted={staffPreviewMode ? undefined : setIsLessonCompleted}
+						setShowQuestionSelector={staffPreviewMode ? undefined : setShowQuestionSelector}
 						isSoundMuted={isSoundMuted}
 					/>
 				</Box>
@@ -1660,11 +1663,12 @@ const PracticeQuestion = ({
 										}
 									} catch (err) {
 										console.error('AI feedback error:', err);
-										const msg = err instanceof Error && err.message ? err.message : '';
+										const status = (err as { response?: { status?: number } })?.response?.status;
 										setAiFeedbackError(
-											msg.includes('rate limit') || msg.includes('Rate limit')
+											status === 429 || (err instanceof Error && /rate limit|credits remaining|quota|bakiyesi/i.test(err.message))
 												? 'AI şu an yoğun. Lütfen 1–2 dakika bekleyip tekrar deneyin.'
-												: msg || 'AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.',
+												: (err instanceof Error && err.message) ||
+														'AI şu an kullanılamıyor. Cevabınız kaydedildi; dersinize devam edebilirsiniz.',
 										);
 										setHasRequestedAiFeedback(false);
 									} finally {
