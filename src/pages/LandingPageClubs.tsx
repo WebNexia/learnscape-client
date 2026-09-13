@@ -20,10 +20,11 @@ import { SEO } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useNavigate } from 'react-router-dom';
-import { Groups } from '@mui/icons-material';
-import ClubPurchaseDialog, { pickPackPrice } from '../components/clubs/ClubPurchaseDialog';
+import { ForumOutlined } from '@mui/icons-material';
+import { pickPackPrice, clubPaymentPath } from '../utils/clubPurchasePricing';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 import { LP_QA_PREVIEW_SEGMENT } from '../utils/lpQaPreview';
+import ClubJoinHowItWorks from '../components/clubs/ClubJoinHowItWorks';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
@@ -38,7 +39,6 @@ const LandingPageClubs = () => {
 	const [clubs, setClubs] = useState<Club[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [purchaseClub, setPurchaseClub] = useState<Club | null>(null);
 
 	useEffect(() => {
 		if (!orgId) return;
@@ -59,15 +59,15 @@ const LandingPageClubs = () => {
 		};
 	}, [orgId, isQaPreview]);
 
-	const clubsBase = isQaPreview ? `/landing-page-clubs/${LP_QA_PREVIEW_SEGMENT}` : '/landing-page-clubs';
-	const ticketPath = isQaPreview
-		? `/landing-page-clubs/ticket/${LP_QA_PREVIEW_SEGMENT}`
-		: '/landing-page-clubs/ticket';
-
 	const goToDetail = (club: Club) => {
 		const path = `/landing-page-clubs/${encodeURIComponent(club.title || '')}/${club._id}${isQaPreview ? `/${LP_QA_PREVIEW_SEGMENT}` : ''
 			}`;
 		navigate(path);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	const goToPayment = (club: Club) => {
+		navigate(clubPaymentPath(club, isQaPreview));
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -76,7 +76,7 @@ const LandingPageClubs = () => {
 			<SEO
 				title='Kulüpler - Aden Academy'
 				description='Haftalık Zoom kulüp oturumları. Oturum hakkı alın, bilet kodunuzla katılın.'
-				keywords='kulüp, zoom kulüp, konuşma kulübü, oturum'
+				keywords='kulüp, zoom kulüp, oturum'
 				type='website'
 				noIndex={isQaPreview}
 			/>
@@ -88,12 +88,28 @@ const LandingPageClubs = () => {
 					background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 40%, rgba(0, 82, 163, 0.05) 100%)',
 				}}>
 				<LandingPageLayout>
-					<Box sx={{ width: '90%', maxWidth: 960, mx: 'auto', pt: isMobileSize ? '12vh' : '14vh', pb: 6 }}>
-						{clubs.length > 0 && (
+					<Box sx={{ width: '90%', maxWidth: 820, mx: 'auto', pt: isMobileSize ? '12vh' : '14vh', pb: 6 }}>
+						{isQaPreview && <ClubJoinHowItWorks />}
+
+						{clubs.length > 0 && !isQaPreview && (
 							<Box sx={{ textAlign: 'center', mb: 4 }}>
 								<Typography sx={{ fontFamily: 'Varela Round', color: '#475569', maxWidth: 640, mx: 'auto' }}>
 									Kulüp detayını inceleyin, istediğiniz oturum sayısını seçin ve bilet alın. Bilet kodunuz e-postanıza
 									gelir.
+								</Typography>
+							</Box>
+						)}
+
+						{clubs.length > 0 && isQaPreview && (
+							<Box sx={{ textAlign: 'center', mb: 3 }}>
+								<Typography
+									sx={{
+										fontFamily: 'Varela Round',
+										fontWeight: 700,
+										fontSize: isMobileSize ? '1rem' : '1.1rem',
+										color: '#0A1A2F',
+									}}>
+									Kulüpler (QA önizleme)
 								</Typography>
 							</Box>
 						)}
@@ -125,116 +141,191 @@ const LandingPageClubs = () => {
 								</Typography>
 							</Box>
 						) : (
-							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+							<Box
+								sx={{
+									display: 'grid',
+									gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 360px))' },
+									justifyContent: 'center',
+									gap: 3,
+									alignItems: 'stretch',
+								}}>
 								{clubs.map((club) => {
 									const unitPack = (club.packs || []).find((p) => p.sessionCount === 1) || (club.packs || [])[0];
 									const fromPrice = unitPack ? pickPackPrice(unitPack, geoLocation?.countryCode) : null;
 									const isInactive = club.isActive === false;
 									return (
-										<Card
+										<Box
 											key={club._id}
 											sx={{
+												maxWidth: 320,
+												width: '100%',
+												mx: 'auto',
+												height: '100%',
+												minHeight: { xs: 420, sm: 460 },
+												p: '4px',
 												borderRadius: '0.75rem',
-												border: '1px solid rgba(0, 82, 163, 0.15)',
+												boxSizing: 'border-box',
+												position: 'relative',
+												backgroundColor: 'transparent',
+												border: '1.5px solid transparent',
 												boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-												overflow: 'hidden',
 												opacity: isInactive ? 0.92 : 1,
+												transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+												'&::before': {
+													content: '""',
+													position: 'absolute',
+													inset: 0,
+													borderRadius: '0.75rem',
+													background: 'linear-gradient(90deg, #0052a3 0%, #0052a380 100%)',
+													opacity: 0,
+													transition: 'opacity 0.25s ease-out',
+													pointerEvents: 'none',
+													zIndex: 0,
+												},
+												'&:hover': {
+													transform: 'translate3d(0, -4px, 0)',
+													boxShadow: '0 8px 24px #0052a328',
+													'&::before': { opacity: 1 },
+												},
 											}}>
-											<CardActionArea onClick={() => goToDetail(club)} sx={{ alignItems: 'stretch' }}>
-												{club.coverImageUrl && (
-													<Box
-														component='img'
-														src={club.coverImageUrl}
-														alt={club.title}
-														sx={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
-													/>
-												)}
-												<CardContent sx={{ p: 3 }}>
-													<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-														<Groups sx={{ color: '#0052a3' }} />
-														<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '1.2rem' }}>
-															{club.title}
-														</Typography>
-														{isQaPreview && isInactive && (
-															<Chip
-																label='Inactive'
-																size='small'
-																sx={{
-																	fontFamily: 'Varela Round',
-																	height: 22,
-																	fontSize: '0.7rem',
-																	backgroundColor: 'rgba(100, 116, 139, 0.15)',
-																	color: '#475569',
-																}}
-															/>
-														)}
-													</Box>
-													{club.description && (
-														<Typography
-															sx={{
-																fontFamily: 'Varela Round',
-																color: '#64748b',
-																mb: 1.5,
-																fontSize: '0.95rem',
-																display: '-webkit-box',
-																WebkitLineClamp: 3,
-																WebkitBoxOrient: 'vertical',
-																overflow: 'hidden',
-															}}>
-															{club.description}
-														</Typography>
-													)}
-													<Typography sx={{ fontFamily: 'Varela Round', color: '#334155', mb: 0.5, fontSize: '0.9rem' }}>
-														Program: {(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')}{' '}
-														{club.schedule?.startTime}
-													</Typography>
-													{fromPrice && (
-														<Typography
-															sx={{
-																fontFamily: 'Varela Round',
-																fontWeight: 700,
-																color: '#0052a3',
-																fontSize: '0.95rem',
-																mt: 1,
-															}}>
-															{setCurrencySymbol(fromPrice.currency)}
-															{fromPrice.amount}
-															{unitPack?.sessionCount === 1 ? ' / oturum' : ''}
-														</Typography>
-													)}
-												</CardContent>
-											</CardActionArea>
-											<Box sx={{ px: 3, pb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-												<Button
-													variant='outlined'
+											<Card
+												sx={{
+													position: 'relative',
+													zIndex: 1,
+													display: 'flex',
+													flexDirection: 'column',
+													height: '100%',
+													width: '100%',
+													borderRadius: 'calc(0.75rem - 4px)',
+													overflow: 'hidden',
+													margin: 0,
+													backgroundColor: '#FFFFFF',
+													border: 'none',
+													boxShadow: 'none',
+												}}>
+												<CardActionArea
 													onClick={() => goToDetail(club)}
 													sx={{
-														fontFamily: 'Varela Round',
-														textTransform: 'none',
-														borderColor: '#0052a3',
-														color: '#0052a3',
-														'&:hover': { borderColor: '#004c99', backgroundColor: 'rgba(0, 82, 163, 0.06)' },
-													}}>
-													Detayları Gör
-												</Button>
-												<Button
-													variant='contained'
-													disabled={!club.packs?.length || (isInactive && !isQaPreview)}
-													onClick={() => setPurchaseClub(club)}
-													sx={{
-														fontFamily: 'Varela Round',
-														textTransform: 'none',
-														background: 'linear-gradient(135deg, #0052a3 0%, #0066cc 100%)',
-														boxShadow: 'none',
-														'&:hover': {
-															background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
-															boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
+														alignItems: 'stretch',
+														flex: 1,
+														display: 'flex',
+														flexDirection: 'column',
+														height: '100%',
+														backgroundColor: 'transparent',
+														'&:hover': { backgroundColor: 'transparent' },
+														'& .MuiCardActionArea-focusHighlight': {
+															backgroundColor: 'transparent',
+															opacity: '0 !important',
 														},
 													}}>
-													Oturum Satın Al
-												</Button>
-											</Box>
-										</Card>
+													{club.coverImageUrl && (
+														<Box
+															component='img'
+															src={club.coverImageUrl}
+															alt={club.title}
+															sx={{ width: '100%', height: 240, objectFit: 'cover', display: 'block', flexShrink: 0 }}
+														/>
+													)}
+													<CardContent sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+															<ForumOutlined sx={{ color: '#0052a3', fontSize: 22 }} />
+															<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '1.15rem' }}>
+																{club.title}
+															</Typography>
+															{isQaPreview && isInactive && (
+																<Chip
+																	label='Inactive'
+																	size='small'
+																	sx={{
+																		fontFamily: 'Varela Round',
+																		height: 22,
+																		fontSize: '0.7rem',
+																		backgroundColor: 'rgba(100, 116, 139, 0.15)',
+																		color: '#475569',
+																	}}
+																/>
+															)}
+														</Box>
+														{club.description && (
+															<Typography
+																sx={{
+																	fontFamily: 'Varela Round',
+																	color: '#64748b',
+																	mb: 1.5,
+																	fontSize: '0.9rem',
+																	display: '-webkit-box',
+																	WebkitLineClamp: 3,
+																	WebkitBoxOrient: 'vertical',
+																	overflow: 'hidden',
+																}}>
+																{club.description}
+															</Typography>
+														)}
+														<Typography sx={{ fontFamily: 'Varela Round', color: '#334155', mb: 0.5, fontSize: '0.88rem' }}>
+															Program: {(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')}{' '}
+															{club.schedule?.startTime}
+														</Typography>
+														{fromPrice && (
+															<Typography
+																sx={{
+																	fontFamily: 'Varela Round',
+																	fontWeight: 700,
+																	color: '#0052a3',
+																	fontSize: '0.95rem',
+																	mt: 1,
+																}}>
+																{setCurrencySymbol(fromPrice.currency)}
+																{fromPrice.amount}
+																{unitPack?.sessionCount === 1 ? ' / oturum' : ''}
+															</Typography>
+														)}
+													</CardContent>
+												</CardActionArea>
+												<Box
+													sx={{
+														px: 2.5,
+														pb: 2.5,
+														pt: 0.5,
+														mt: 'auto',
+														display: 'flex',
+														justifyContent: 'flex-end',
+														gap: 1,
+														flexWrap: 'wrap',
+														backgroundColor: '#FFFFFF',
+													}}>
+													<Button
+														variant='outlined'
+														size='small'
+														onClick={() => goToDetail(club)}
+														sx={{
+															fontFamily: 'Varela Round',
+															textTransform: 'none',
+															borderColor: '#0052a3',
+															color: '#0052a3',
+															'&:hover': { borderColor: '#004c99', backgroundColor: 'rgba(0, 82, 163, 0.06)' },
+														}}>
+														Detayları Gör
+													</Button>
+													<Button
+														variant='contained'
+														size='small'
+														disabled={!club.packs?.length || (isInactive && !isQaPreview)}
+														onClick={() => goToPayment(club)}
+														sx={{
+															fontFamily: 'Varela Round',
+															textTransform: 'none',
+															background: 'linear-gradient(135deg, #0052a3 0%, #0066cc 100%)',
+															boxShadow: 'none',
+															'&:hover': {
+																background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
+																boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
+															},
+														}}>
+														Oturum Satın Al
+													</Button>
+												</Box>
+											</Card>
+										</Box>
 									);
 								})}
 							</Box>
@@ -244,14 +335,6 @@ const LandingPageClubs = () => {
 				<ChatWhatsApp />
 				<ScrollToTopButton />
 			</Box>
-
-			<ClubPurchaseDialog
-				open={!!purchaseClub}
-				club={purchaseClub}
-				orgId={orgId}
-				cancelUrl={`${window.location.origin}${clubsBase}`}
-				onClose={() => setPurchaseClub(null)}
-			/>
 		</>
 	);
 };

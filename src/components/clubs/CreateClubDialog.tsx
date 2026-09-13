@@ -74,10 +74,10 @@ const CreateClubDialog = ({ isOpen, onClose, onSubmit, form, setForm, isCreating
 						rows={4}
 						sx={{ backgroundColor: '#fff' }}
 						InputLabelProps={{ sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } }}
-						InputProps={{ inputProps: { maxLength: 2000 } }}
+						InputProps={{ inputProps: { maxLength: 500 } }}
 					/>
 					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-						{form.description.length}/2000 Characters
+						{form.description.length}/500 Characters
 					</Typography>
 				</Box>
 

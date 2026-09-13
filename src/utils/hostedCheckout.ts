@@ -41,7 +41,16 @@ export type CartCheckoutReturnContext = {
 	orgId?: string;
 };
 
-export type CheckoutReturnContext = CourseCheckoutReturnContext | CartCheckoutReturnContext;
+export type ClubCheckoutReturnContext = {
+	kind: 'club';
+	firstName: string;
+	lastName: string;
+	email: string;
+	agreeMarketing: boolean;
+	orgId?: string;
+};
+
+export type CheckoutReturnContext = CourseCheckoutReturnContext | CartCheckoutReturnContext | ClubCheckoutReturnContext;
 
 export function saveCheckoutReturnContext(context: CheckoutReturnContext): void {
 	try {
