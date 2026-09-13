@@ -51,6 +51,14 @@ const CustomDialogActions = ({
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+	// Same height/radius as New Course (CustomSubmitButton); no forced extra width
+	const dialogBtnSx = {
+		margin: '0 0.5rem 0.5rem 0',
+		height: isMobileSize ? '1.5rem' : '1.75rem',
+		fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+		borderRadius: '10px',
+	};
+
 	return (
 		<DialogActions
 			sx={{
@@ -63,9 +71,7 @@ const CustomDialogActions = ({
 					onClick={onCancel}
 					disabled={disableCancelBtn || isSubmitting || isDeleting}
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.5rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...dialogBtnSx,
 						cursor: disableCancelBtn || isSubmitting || isDeleting ? 'not-allowed' : 'pointer',
 						pointerEvents: disableCancelBtn || isSubmitting || isDeleting ? 'none' : 'auto',
 						...cancelBtnSx,
@@ -80,10 +86,9 @@ const CustomDialogActions = ({
 					loading={true}
 					variant='contained'
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.5rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...dialogBtnSx,
 						backgroundColor: theme.bgColor?.greenPrimary,
+						boxShadow: 'none',
 						textTransform: 'capitalize',
 						...submitBtnSx,
 					}}
@@ -95,9 +100,7 @@ const CustomDialogActions = ({
 					type={submitBtnType}
 					disabled={disableBtn}
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.5rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...dialogBtnSx,
 						...submitBtnSx,
 					}}
 					onClick={onSubmit}>
@@ -110,9 +113,7 @@ const CustomDialogActions = ({
 					loading={true}
 					variant='contained'
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.5rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...dialogBtnSx,
 						backgroundColor: 'white !important',
 						textTransform: 'capitalize',
 						'&.Mui-disabled': {
@@ -126,9 +127,7 @@ const CustomDialogActions = ({
 				<CustomDeleteButton
 					disabled={disableBtn}
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.5rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						...dialogBtnSx,
 					}}
 					onClick={onDelete}>
 					{deleteBtnText}

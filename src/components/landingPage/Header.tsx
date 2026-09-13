@@ -20,6 +20,7 @@ import {
   SchoolOutlined,
   MenuBookOutlined,
   GroupsOutlined,
+  ForumOutlined,
   MailOutline,
   InfoOutlined,
   PersonOutlined,
@@ -124,6 +125,17 @@ const Header = () => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           },
           isActive: location.pathname === "/landing-page-consultations",
+        },
+        {
+          label: "Kulüpler",
+          NavIcon: ForumOutlined,
+          action: () => {
+            navigate("/landing-page-clubs");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive:
+            location.pathname === "/landing-page-clubs" ||
+            location.pathname.startsWith("/landing-page-clubs/"),
         },
 
       ];

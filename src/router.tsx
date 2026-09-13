@@ -107,6 +107,14 @@ const AdminDocuments = React.lazy(() => import("./pages/AdminDocuments"));
 const AdminConsultations = React.lazy(
   () => import("./pages/AdminConsultations"),
 );
+const AdminClubs = React.lazy(() => import("./pages/AdminClubs"));
+const AdminClubDetail = React.lazy(() => import("./pages/AdminClubDetail"));
+const AdminClubTickets = React.lazy(() => import("./pages/AdminClubTickets"));
+const LandingPageClubs = React.lazy(() => import("./pages/LandingPageClubs"));
+const LandingPageClub = React.lazy(() => import("./pages/LandingPageClub"));
+const LandingPageClubTicket = React.lazy(
+  () => import("./pages/LandingPageClubTicket"),
+);
 const AdminConsultationEditPage = React.lazy(
   () => import("./pages/AdminConsultationEditPage"),
 );
@@ -265,6 +273,30 @@ export const router = createBrowserRouter([
             element: <Navigate to="/landing-page-cart" replace />,
           },
         ],
+      },
+      {
+        path: "landing-page-clubs/qa-test",
+        element: <LandingPageClubs />,
+      },
+      {
+        path: "landing-page-clubs",
+        element: <LandingPageClubs />,
+      },
+      {
+        path: "landing-page-clubs/ticket/qa-test",
+        element: <LandingPageClubTicket />,
+      },
+      {
+        path: "landing-page-clubs/ticket",
+        element: <LandingPageClubTicket />,
+      },
+      {
+        path: "landing-page-clubs/:name/:clubId/qa-test",
+        element: <LandingPageClub />,
+      },
+      {
+        path: "landing-page-clubs/:name/:clubId",
+        element: <LandingPageClub />,
       },
       {
         path: "landing-page-cart",
@@ -427,6 +459,30 @@ export const router = createBrowserRouter([
             <ConsultationsContextProvider>
               <AdminConsultations />
             </ConsultationsContextProvider>
+          </AdminRouteGuard>
+        ),
+      },
+      {
+        path: "admin/clubs",
+        element: (
+          <AdminRouteGuard>
+            <AdminClubs />
+          </AdminRouteGuard>
+        ),
+      },
+      {
+        path: "admin/clubs/tickets",
+        element: (
+          <AdminRouteGuard>
+            <AdminClubTickets />
+          </AdminRouteGuard>
+        ),
+      },
+      {
+        path: "admin/clubs/:id",
+        element: (
+          <AdminRouteGuard>
+            <AdminClubDetail />
           </AdminRouteGuard>
         ),
       },

@@ -34,6 +34,7 @@ const AdminPaymentsTab = () => {
 		enablePaymentsFetch,
 		disablePaymentsFetch,
 		setPaymentsPageNumber,
+		fetchPayments,
 	} = useContext(PaymentsContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -371,13 +372,15 @@ const AdminPaymentsTab = () => {
 										<CustomTableCell value={payment.documentName} />
 										{!isMobileSize && <CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />}
 										<CustomTableCell
-											value={
-												isOwner && payment.ownerIncome !== undefined && payment.ownerIncome !== null
-													? `£${payment.ownerIncome.toFixed(2)}`
-													: isSuperAdmin && payment.superAdminIncome !== undefined && payment.superAdminIncome !== null
-														? `£${payment.superAdminIncome.toFixed(2)}`
-														: `£${payment.amountReceivedInGbp || '0.00'}`
-											}
+											value={(() => {
+												const received =
+													isOwner && payment.ownerIncome != null
+														? payment.ownerIncome
+														: isSuperAdmin && payment.superAdminIncome != null
+															? payment.superAdminIncome
+															: Number(payment.amountReceivedInGbp || 0);
+												return `£${Number(received).toFixed(2)}`;
+											})()}
 										/>
 
 										{!isMobileSize && (
@@ -417,6 +420,10 @@ const AdminPaymentsTab = () => {
 					open={true}
 					onClose={() => setSelectedPayment(null)}
 					payment={selectedPayment}
+					onDeleted={() => {
+						setSelectedPayment(null);
+						fetchPayments(1);
+					}}
 				/>
 			)}
 		</>

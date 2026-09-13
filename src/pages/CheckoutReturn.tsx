@@ -119,6 +119,17 @@ export default function CheckoutReturn() {
 					return;
 				}
 
+				if (res.data.kind === 'club') {
+					clearCheckoutReturnContext();
+					setBackPath('/landing-page-clubs/ticket');
+					setStatus('success');
+					setMessage(
+						'Ödemeniz alındı. Bilet kodunuz e-postanıza gönderildi. Oturum seçmek için bilet sayfasını kullanabilirsiniz.',
+					);
+					setTimeout(() => navigate('/landing-page-clubs/ticket', { replace: true }), 2800);
+					return;
+				}
+
 				if (user && (res.data.userId === user._id || !res.data.userId)) {
 					setUser((prev) => (prev ? { ...prev, hasRegisteredCourse: true } : prev));
 				}

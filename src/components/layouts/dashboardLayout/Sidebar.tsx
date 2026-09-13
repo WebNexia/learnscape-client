@@ -10,6 +10,7 @@ import {
 	FilePresent,
 	Folder,
 	Groups,
+	ForumOutlined,
 	LibraryAddCheck,
 	LibraryBooks,
 	PeopleAltOutlined,
@@ -234,6 +235,12 @@ const Sidebar = () => {
 								IconName={VideoCall}
 								onClick={() => navigateWithPage(`/admin/consultations`)}
 								active={currentPath?.includes('/admin/consultations')}
+							/>
+							<SidebarBtn
+								btnText='Clubs'
+								IconName={ForumOutlined}
+								onClick={() => navigateWithPage(`/admin/clubs`)}
+								active={currentPath?.includes('/admin/clubs')}
 							/>
 							{(user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
 								canAccessAnalytics ? (

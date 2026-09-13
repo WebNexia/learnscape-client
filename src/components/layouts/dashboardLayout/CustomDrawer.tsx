@@ -15,6 +15,7 @@ import {
 	Email,
 	FilePresent,
 	Folder,
+	ForumOutlined,
 	Groups,
 	LibraryAddCheck,
 	LibraryBooks,
@@ -273,6 +274,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={VideoCall}
 										onClick={() => navigateWithPage(PageName.ADMIN_CONSULTATIONS, `/admin/consultations`)}
 										active={selectedPage === PageName.ADMIN_CONSULTATIONS || window.location.pathname?.includes('/admin/consultations')}
+									/>
+									<SidebarBtn
+										btnText='Clubs'
+										IconName={ForumOutlined}
+										onClick={() => navigateWithPage('Clubs', `/admin/clubs`)}
+										active={selectedPage === 'Clubs' || window.location.pathname?.includes('/admin/clubs')}
 									/>
 									{canAccessPayments && (
 										canAccessAnalytics ? (
