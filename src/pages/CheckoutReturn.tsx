@@ -113,7 +113,7 @@ export default function CheckoutReturn() {
 					setMessage(
 						res.data.documentDeliveryFailed
 							? res.data.documentDeliveryMessage ||
-								'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin.'
+							'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin.'
 							: 'Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin.'
 					);
 					setTimeout(() => navigate('/landing-page-cart', { replace: true }), 2200);
@@ -142,7 +142,7 @@ export default function CheckoutReturn() {
 					setMessage(
 						'Ödemeniz alındı. Bilet kodunuz e-postanıza gönderildi. Oturum seçmek için bilet sayfasını kullanabilirsiniz.',
 					);
-					setTimeout(() => navigate('/landing-page-clubs/ticket', { replace: true }), 2800);
+					setTimeout(() => navigate('/landing-page-clubs/ticket', { replace: true }), 3500);
 					return;
 				}
 
@@ -177,9 +177,9 @@ export default function CheckoutReturn() {
 				setStatus('error');
 				setMessage(
 					e?.response?.data?.error ||
-						e?.response?.data?.message ||
-						e?.message ||
-						'Ödeme tamamlanamadı. Ücret alınmadıysa tekrar deneyebilirsiniz.'
+					e?.response?.data?.message ||
+					e?.message ||
+					'Ödeme tamamlanamadı. Ücret alınmadıysa tekrar deneyebilirsiniz.'
 				);
 			}
 		})();

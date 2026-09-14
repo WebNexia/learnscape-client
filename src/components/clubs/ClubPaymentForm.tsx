@@ -9,7 +9,7 @@ import {
 	Typography,
 } from '@mui/material';
 import { Add, Groups, Lock, MarkEmailReadOutlined, Person, ReceiptLong, Remove } from '@mui/icons-material';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Club } from '../../interfaces/club';
 import { clubsService } from '../../services/clubsService';
@@ -50,6 +50,13 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+	const maxSessionCount = Math.max(0, Math.floor(Number(club?.availableSessionCount) || 0));
+
+	useEffect(() => {
+		if (maxSessionCount < 1) return;
+		setSessionCount((n) => Math.min(Math.max(1, n), maxSessionCount));
+	}, [maxSessionCount]);
+
 	const quote = useMemo(
 		() => resolveClientPurchasePrice(club?.packs, sessionCount, geoLocation?.countryCode),
 		[club, sessionCount, geoLocation?.countryCode],
@@ -59,8 +66,9 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 		() =>
 			(club.packs || [])
 				.slice()
+				.filter((p) => maxSessionCount < 1 || p.sessionCount <= maxSessionCount)
 				.sort((a, b) => a.sessionCount - b.sessionCount),
-		[club.packs],
+		[club.packs, maxSessionCount],
 	);
 
 	const clearError = () => setErrorMessage(null);
@@ -74,6 +82,14 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 		}
 		if (!agreeTermsAndPrivacy) {
 			setErrorMessage("Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası'nı kabul edin.");
+			return;
+		}
+		if (maxSessionCount < 1) {
+			setErrorMessage('Bu kulüpte şu an açık oturum yok.');
+			return;
+		}
+		if (sessionCount > maxSessionCount) {
+			setErrorMessage(`En fazla ${maxSessionCount} bilet alabilirsiniz.`);
 			return;
 		}
 
@@ -169,7 +185,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 												<Box
 													key={pack._id}
 													onClick={() => {
-														if (isProcessing) return;
+														if (isProcessing || maxSessionCount < 1) return;
 														setSessionCount(pack.sessionCount);
 														clearError();
 													}}
@@ -233,7 +249,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 										<IconButton
 											size='small'
 											aria-label='Oturum azalt'
-											disabled={isProcessing || sessionCount <= 1}
+											disabled={isProcessing || sessionCount <= 1 || maxSessionCount < 1}
 											onClick={() => {
 												setSessionCount((n) => Math.max(1, n - 1));
 												clearError();
@@ -263,9 +279,9 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 										<IconButton
 											size='small'
 											aria-label='Oturum artır'
-											disabled={isProcessing || sessionCount >= 100}
+											disabled={isProcessing || maxSessionCount < 1 || sessionCount >= maxSessionCount}
 											onClick={() => {
-												setSessionCount((n) => Math.min(100, n + 1));
+												setSessionCount((n) => Math.min(maxSessionCount, n + 1));
 												clearError();
 											}}
 											sx={{
@@ -281,7 +297,9 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 									</Box>
 								</Box>
 								<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mt: 0.75 }}>
-									Özel paket yoksa (1 oturum fiyatı × adet) hesaplanır.
+									{maxSessionCount > 0
+										? `En fazla ${maxSessionCount} bilet (açık oturum sayısı). Özel paket yoksa (1 oturum fiyatı × adet) hesaplanır.`
+										: 'Şu an açık oturum olmadığı için bilet alınamaz.'}
 								</Typography>
 							</Box>
 
@@ -585,7 +603,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 											color: 'rgba(0,0,0,0.26) !important',
 										},
 									}}
-									disableBtn={isProcessing || !quote.ok || !agreeTermsAndPrivacy}
+									disableBtn={isProcessing || !quote.ok || !agreeTermsAndPrivacy || maxSessionCount < 1}
 									submitBtnType='submit'
 									actionSx={{ flexDirection: 'column', gap: 0, px: 0, width: '100%', mb: 0, marginBottom: 0, pb: 0 }}
 								/>
