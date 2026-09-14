@@ -108,6 +108,9 @@ export default function CoursePaymentForm({
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 	const [promoCodeId, setPromoCodeId] = useState('');
+	const isPromoFullyCovered =
+		isPromoCodeApplied && Boolean(promoCodeId) && Number(discountedAmount) <= 0;
+	const enrollWithoutPayment = isCourseFree || isPromoFullyCovered;
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [selectedGroupName, setSelectedGroupName] = useState('');
@@ -269,8 +272,11 @@ export default function CoursePaymentForm({
 				resolvedLastName = '-';
 			}
 
-			if (isCourseFree) {
-				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, { email });
+			if (enrollWithoutPayment) {
+				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
+					email,
+					...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
+				});
 				if (!stillCurrent()) return;
 				resetForm();
 				setIsProcessing(false);
@@ -842,7 +848,7 @@ export default function CoursePaymentForm({
 								<CustomDialogActions
 									onCancel={handleClose}
 									showCancelBtn={false}
-									submitBtnText={isProcessing ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'İşleniyor') : isCourseFree ? 'Kayıt Ol' : 'Ödemeye Git'}
+									submitBtnText={isProcessing ? (showSlowNetworkHint ? 'Hâlâ bağlanıyor...' : 'İşleniyor') : enrollWithoutPayment ? 'Kayıt Ol' : 'Ödemeye Git'}
 									submitBtnSx={{
 										background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
 										backgroundColor: 'transparent !important',

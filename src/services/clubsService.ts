@@ -31,23 +31,16 @@ export const clubsService = {
 		const res = await axios.post(`${base_url}/clubs/public/${orgId}/${clubId}/checkout`, body);
 		return res.data;
 	},
-	lookupTicket: async (code: string, email: string, options?: { qaPreview?: boolean }) => {
+	lookupTicket: async (code: string, options?: { qaPreview?: boolean }) => {
 		const res = await axios.post(`${base_url}/clubs/public/ticket/lookup`, {
 			code,
-			email,
 			...(options?.qaPreview ? { qaPreview: true } : {}),
 		});
 		return res.data.data;
 	},
-	redeemTicket: async (
-		code: string,
-		email: string,
-		clubSessionId: string,
-		options?: { qaPreview?: boolean },
-	) => {
+	redeemTicket: async (code: string, clubSessionId: string, options?: { qaPreview?: boolean }) => {
 		const res = await axios.post(`${base_url}/clubs/public/ticket/redeem`, {
 			code,
-			email,
 			clubSessionId,
 			...(options?.qaPreview ? { qaPreview: true } : {}),
 		});

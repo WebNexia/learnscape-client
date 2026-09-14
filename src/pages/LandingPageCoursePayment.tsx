@@ -58,6 +58,7 @@ export default function LandingPageCoursePayment() {
 			...(groupName && { groupName }),
 			...(proof?.email && { email: proof.email }),
 			...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
+			...(proof?.promoCodeId && { promoCodeId: proof.promoCodeId }),
 		});
 		if (!response.data?._id) throw new Error('User course creation failed: Missing ID');
 		const userCourseId = response.data._id;

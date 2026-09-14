@@ -8,7 +8,7 @@ import {
 	IconButton,
 	Typography,
 } from '@mui/material';
-import { Add, Groups, Lock, Person, ReceiptLong, Remove } from '@mui/icons-material';
+import { Add, Groups, Lock, MarkEmailReadOutlined, Person, ReceiptLong, Remove } from '@mui/icons-material';
 import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Club } from '../../interfaces/club';
@@ -69,7 +69,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 		if (!orgId || !quote.ok) return;
 		clearError();
 		if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-			setErrorMessage('Ad, soyad ve e-posta zorunludur.');
+			setErrorMessage('İsim, soyisim ve e-posta zorunludur.');
 			return;
 		}
 		if (!agreeTermsAndPrivacy) {
@@ -189,7 +189,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 															bgcolor: 'rgba(0,82,163,0.08)',
 														},
 													}}>
-													{pack.label || `${pack.sessionCount} Oturum`}
+													{pack.label || `${pack.sessionCount} Bilet`}
 													{price ? ` — ${setCurrencySymbol(price.currency)}${price.amount}` : ''}
 												</Box>
 											);
@@ -214,7 +214,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 											fontWeight: 700,
 											color: '#0A1A2F',
 										}}>
-										Oturum sayısı
+										Bilet sayısı
 									</Typography>
 									<Box
 										sx={{
@@ -286,7 +286,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 							</Box>
 
 							<CustomTextField
-								label='Ad'
+								label='İsim'
 								size='small'
 								value={firstName}
 								onChange={(e) => {
@@ -303,7 +303,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								disabled={isProcessing}
 							/>
 							<CustomTextField
-								label='Soyad'
+								label='Soyisim'
 								size='small'
 								value={lastName}
 								onChange={(e) => {
@@ -354,9 +354,30 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								disabled={isProcessing}
 							/>
 
-							<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mb: 2 }}>
-								Ödeme sonrası bilet kodunuz e-postanıza gelir. Hesap oluşturmanız gerekmez.
-							</Typography>
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'flex-start',
+									gap: 1.25,
+									mb: 2,
+									px: 1.5,
+									py: 1.25,
+									borderRadius: 1.5,
+									backgroundColor: 'rgba(0, 82, 163, 0.08)',
+									border: '1px solid rgba(0, 82, 163, 0.22)',
+								}}>
+								<MarkEmailReadOutlined sx={{ color: linkColor, fontSize: '1.35rem', mt: '1px', flexShrink: 0 }} />
+								<Typography
+									sx={{
+										fontFamily: FONT,
+										fontSize: isMobileSize ? '0.82rem' : '0.9rem',
+										fontWeight: 700,
+										color: '#0A1A2F',
+										lineHeight: 1.45,
+									}}>
+									Ödeme sonrası bilet kodunuz e-postanıza gelir.
+								</Typography>
+							</Box>
 
 							<FormControlLabel
 								required
@@ -513,7 +534,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								{quote.ok && (
 									<Box sx={{ px: 2, py: 1, borderTop: '1px solid rgba(0, 82, 163, 0.06)' }}>
 										<Typography sx={{ fontFamily: FONT, fontSize: '0.8rem', color: 'text.secondary' }}>
-											{sessionCount} oturum — {quote.label}
+											{sessionCount} bilet — {quote.label}
 										</Typography>
 									</Box>
 								)}
@@ -525,7 +546,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 									fontSize: isMobileSize ? '0.8rem' : '0.88rem',
 									fontWeight: 700,
 									color: '#0A1A2F',
-									lineHeight: 1.45,
+									lineHeight: 1.85,
 									mt: 1.5,
 									mb: 1,
 									px: 1.25,
@@ -534,19 +555,12 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 									backgroundColor: 'rgba(255, 107, 61, 0.1)',
 									border: '1px solid rgba(255, 107, 61, 0.28)',
 								}}>
-								Satın alınan oturum hakları sadece bu kulüpte kullanılabilir.
+								Satın alınan biletler sadece bu kulüpte kullanılabilir.
+								<br />
+								Bir biletle bir oturuma katılabilirsiniz.
 							</Typography>
 
-							<Typography
-								sx={{
-									fontFamily: FONT,
-									fontSize: isMobileSize ? '0.72rem' : '0.8rem',
-									color: 'text.secondary',
-									lineHeight: 1.5,
-									mb: 2,
-								}}>
-								Kart bilgilerinizi Stripe’ın güvenli ödeme sayfasında gireceksiniz. Ödeme onaylanmadan bilet oluşturulmaz.
-							</Typography>
+
 
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: 1, mt: 'auto' }}>
 								<CustomDialogActions

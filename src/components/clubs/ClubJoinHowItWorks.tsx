@@ -1,13 +1,14 @@
 import { Box, Collapse, IconButton, Typography } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
+import {
+	ChevronRight,
+	ConfirmationNumberOutlined,
+	EmailOutlined,
+	ExpandMore,
+	SvgIconComponent,
+	VideocamOutlined,
+} from '@mui/icons-material';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import heroImg from '../../assets/HeroSecImage.png';
-import writingImg from '../../assets/man-writing-notebook-with-giant-pen.png';
-import cardImg from '../../assets/credit-card.png';
-import logoImg from '../../assets/logo.png';
-import progressImg from '../../assets/ProgressIcon.png';
-import londonImg from '../../assets/london-bg.jpg';
 import visaImg from '../../assets/visa.png';
 import mastercardImg from '../../assets/mastercard.png';
 
@@ -19,71 +20,36 @@ type Step = {
 	n: number;
 	title: string;
 	blurb: string;
-	tip: string;
-	image: string;
-	imageAlt: string;
+	Icon: SvgIconComponent;
 	accent: string;
 };
 
 const STEPS: Step[] = [
 	{
 		n: 1,
-		title: 'Kulübünü seç',
-		blurb: 'Aşağıdaki kartlardan birine tıkla. Gün, saat ve fiyatı bir bakışta gör.',
-		tip: 'Merak etme — henüz ödeme yok!',
-		image: heroImg,
-		imageAlt: 'Aden Academy öğrenenler',
+		title: 'Kulüp sayfasından bilet alın',
+		blurb: '',
+		Icon: ConfirmationNumberOutlined,
 		accent: BLUE,
 	},
 	{
 		n: 2,
-		title: 'Oturum hakkını al',
-		blurb: 'Oturum Satın Al’a bas. Adını, e-postanı yaz; kaç oturum istediğini seç.',
-		tip: 'Hesap açmana gerek yok.',
-		image: writingImg,
-		imageAlt: 'Not defteri illüstrasyonu',
+		title: 'E-postadaki bilet koduyla oturum seçin',
+		blurb: '',
+		Icon: EmailOutlined,
 		accent: ORANGE,
 	},
 	{
 		n: 3,
-		title: 'Güvenli öde',
-		blurb: 'Sözleşmeyi onayla, Ödemeye Git. Kartını Stripe’ın sayfasında gir.',
-		tip: 'Aden kart bilgisi saklamaz.',
-		image: cardImg,
-		imageAlt: 'Kart ödeme',
+		title: 'Zoom linki e-postanıza gelir',
+		blurb: '',
+		Icon: VideocamOutlined,
 		accent: BLUE,
-	},
-	{
-		n: 4,
-		title: 'Bilet kodun gelsin',
-		blurb: 'Ödeme bitince bilet kodun e-postana düşer. O kod senin giriş anahtarın.',
-		tip: 'Gelen kutusunu (ve spam’i) kontrol et.',
-		image: logoImg,
-		imageAlt: 'Aden Academy logo',
-		accent: ORANGE,
-	},
-	{
-		n: 5,
-		title: 'Oturuma yazıl',
-		blurb: 'Bilet ile Katıl sayfasında kod + e-posta ile bak. Yaklaşan bir oturuma kaydol.',
-		tip: 'Hakların yalnızca bu kulüpte geçer.',
-		image: progressImg,
-		imageAlt: 'İlerleme',
-		accent: BLUE,
-	},
-	{
-		n: 6,
-		title: 'Zoom’a katıl',
-		blurb: 'Kayıt sonrası özel Zoom linkin gelir. Program saatinde linke tıkla — tamam!',
-		tip: 'Biraz erken gir, sesini test et.',
-		image: londonImg,
-		imageAlt: 'Aden Academy atmosfer',
-		accent: ORANGE,
 	},
 ];
 
 /**
- * QA preview only: playful first-time club join guide using site assets.
+ * QA preview only: short first-time club join roadmap.
  */
 const ClubJoinHowItWorks = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -130,7 +96,7 @@ const ClubJoinHowItWorks = () => {
 							color: '#0A1A2F',
 							mb: 0.35,
 						}}>
-						Kulübe ilk kez mi geliyorsun?
+						Kulübe ilk kez mi geliyorsunuz?
 					</Typography>
 					<Typography
 						sx={{
@@ -139,9 +105,7 @@ const ClubJoinHowItWorks = () => {
 							color: '#475569',
 							lineHeight: 1.45,
 						}}>
-						{open
-							? '6 kısa adım — Biletini al, oturuma katıl, Zoom’a gir. Hesap açmana gerek yok.'
-							: 'Adımları görmek için tıkla · hesap gerekmez'}
+						{open ? '3 kısa adım — Bilet alın, oturum seçin, Zoom’a girin.' : 'Adımları görmek için tıklayın'}
 					</Typography>
 				</Box>
 				<IconButton
@@ -162,131 +126,116 @@ const ClubJoinHowItWorks = () => {
 
 			<Collapse in={open} timeout='auto' unmountOnExit>
 				<Box sx={{ px: { xs: 2, sm: 2.5 }, pb: { xs: 2, sm: 2.5 }, pt: 0.5 }}>
-					<Box
-						sx={{
-							mb: 2,
-							display: 'flex',
-							justifyContent: 'center',
-						}}>
-						<Box
-							sx={{
-								display: 'inline-flex',
-								alignItems: 'center',
-								gap: 1,
-								px: 1.5,
-								py: 0.5,
-								borderRadius: 999,
-								backgroundColor: 'rgba(255, 255, 255, 0.85)',
-								border: '1px solid rgba(0, 82, 163, 0.12)',
-							}}>
-							<Box component='img' src={visaImg} alt='Visa' sx={{ height: 14, width: 'auto' }} />
-							<Box component='img' src={mastercardImg} alt='Mastercard' sx={{ height: 18, width: 'auto' }} />
-							<Typography sx={{ fontFamily: FONT, fontSize: '0.7rem', color: '#64748b' }}>
-								Ödeme Stripe ile güvenli
-							</Typography>
-						</Box>
-					</Box>
+
 
 					<Box
 						sx={{
-							display: 'grid',
-							gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-							gap: 2,
+							display: 'flex',
+							flexDirection: { xs: 'column', md: 'row' },
+							alignItems: { xs: 'stretch', md: 'flex-start' },
+							justifyContent: 'center',
+							gap: { xs: 1.5, md: 0 },
 						}}>
-						{STEPS.map((step) => (
-							<Box
-								key={step.n}
-								sx={{
-									display: 'flex',
-									gap: 1.5,
-									alignItems: 'flex-start',
-									p: 1.5,
-									borderRadius: '0.85rem',
-									backgroundColor: '#fff',
-									border: '1px solid rgba(0, 82, 163, 0.1)',
-									boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-									transition: 'transform 0.2s ease-out',
-									'&:hover': { transform: 'translateY(-2px)' },
-								}}>
+						{STEPS.map((step, index) => {
+							const StepIcon = step.Icon;
+							const isLast = index === STEPS.length - 1;
+							return (
 								<Box
+									key={step.n}
 									sx={{
-										position: 'relative',
-										flexShrink: 0,
-										width: isMobileSize ? 64 : 76,
-										height: isMobileSize ? 64 : 76,
-										borderRadius: '0.75rem',
-										overflow: 'hidden',
-										border: `2px solid ${step.accent}33`,
-										backgroundColor: '#f8fafc',
+										display: 'flex',
+										flexDirection: { xs: 'column', md: 'row' },
+										alignItems: { xs: 'stretch', md: 'center' },
+										flex: { md: 1 },
+										minWidth: 0,
 									}}>
 									<Box
-										component='img'
-										src={step.image}
-										alt={step.imageAlt}
 										sx={{
-											width: '100%',
-											height: '100%',
-											objectFit: step.n === 3 || step.n === 5 ? 'contain' : 'cover',
-											objectPosition: 'center',
-											p: step.n === 3 || step.n === 4 || step.n === 5 ? 0.75 : 0,
-											boxSizing: 'border-box',
-										}}
-									/>
-									<Box
-										sx={{
-											position: 'absolute',
-											top: 4,
-											left: 4,
-											width: 22,
-											height: 22,
-											borderRadius: '50%',
-											backgroundColor: step.accent,
-											color: '#fff',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											fontFamily: FONT,
-											fontSize: '0.7rem',
-											fontWeight: 700,
-											boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+											flex: 1,
+											textAlign: 'center',
+											px: { xs: 1.5, md: 1.25 },
+											py: 1.75,
+											borderRadius: '0.85rem',
+											backgroundColor: '#fff',
+											border: '1px solid rgba(0, 82, 163, 0.1)',
+											boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
 										}}>
-										{step.n}
+										<Box
+											sx={{
+												width: isMobileSize ? 52 : 58,
+												height: isMobileSize ? 52 : 58,
+												mx: 'auto',
+												mb: 1.25,
+												borderRadius: '0.85rem',
+												backgroundColor: `${step.accent}12`,
+												border: `2px solid ${step.accent}33`,
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												position: 'relative',
+											}}>
+											<StepIcon sx={{ fontSize: isMobileSize ? 26 : 28, color: step.accent }} />
+											<Box
+												sx={{
+													position: 'absolute',
+													top: -6,
+													left: -6,
+													width: 22,
+													height: 22,
+													borderRadius: '50%',
+													backgroundColor: step.accent,
+													color: '#fff',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													fontFamily: FONT,
+													fontSize: '0.7rem',
+													fontWeight: 700,
+												}}>
+												{step.n}
+											</Box>
+										</Box>
+										<Typography
+											sx={{
+												fontFamily: FONT,
+												fontWeight: 700,
+												fontSize: isMobileSize ? '0.88rem' : '0.95rem',
+												color: '#0A1A2F',
+												mb: 0.5,
+												lineHeight: 1.3,
+											}}>
+											{step.title}
+										</Typography>
+										<Typography
+											sx={{
+												fontFamily: FONT,
+												fontSize: isMobileSize ? '0.74rem' : '0.8rem',
+												color: '#64748b',
+												lineHeight: 1.45,
+											}}>
+											{step.blurb}
+										</Typography>
 									</Box>
+
+									{!isLast && (
+										<Box
+											sx={{
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												px: { md: 0.5 },
+												py: { xs: 0.25, md: 0 },
+												color: step.accent,
+												opacity: 0.7,
+												transform: { xs: 'rotate(90deg)', md: 'none' },
+											}}
+											aria-hidden>
+											<ChevronRight sx={{ fontSize: 28 }} />
+										</Box>
+									)}
 								</Box>
-								<Box sx={{ minWidth: 0, pt: 0.25 }}>
-									<Typography
-										sx={{
-											fontFamily: FONT,
-											fontWeight: 700,
-											fontSize: isMobileSize ? '0.88rem' : '0.95rem',
-											color: '#0A1A2F',
-											mb: 0.35,
-										}}>
-										{step.title}
-									</Typography>
-									<Typography
-										sx={{
-											fontFamily: FONT,
-											fontSize: isMobileSize ? '0.75rem' : '0.8rem',
-											color: '#475569',
-											lineHeight: 1.45,
-											mb: 0.5,
-										}}>
-										{step.blurb}
-									</Typography>
-									<Typography
-										sx={{
-											fontFamily: FONT,
-											fontSize: '0.7rem',
-											fontWeight: 600,
-											color: step.accent,
-											lineHeight: 1.35,
-										}}>
-										{step.tip}
-									</Typography>
-								</Box>
-							</Box>
-						))}
+							);
+						})}
 					</Box>
 
 					<Typography
@@ -297,7 +246,7 @@ const ClubJoinHowItWorks = () => {
 							fontSize: '0.78rem',
 							color: '#64748b',
 						}}>
-						Hazırsan aşağıdan bir kulüp seç — gerisini adımlar söyleyecek.
+						Hazırsanız aşağıdan bir kulüp seçin
 					</Typography>
 				</Box>
 			</Collapse>

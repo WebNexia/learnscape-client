@@ -1,12 +1,12 @@
 import {
 	Box,
 	Typography,
-	Button,
 	Card,
 	CardContent,
 	CardActionArea,
 	CircularProgress,
 	Chip,
+	Button,
 } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -20,8 +20,8 @@ import { SEO } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useNavigate } from 'react-router-dom';
-import { ForumOutlined } from '@mui/icons-material';
-import { pickPackPrice, clubPaymentPath } from '../utils/clubPurchasePricing';
+import { ArrowForward, ForumOutlined } from '@mui/icons-material';
+import { pickPackPrice } from '../utils/clubPurchasePricing';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 import { LP_QA_PREVIEW_SEGMENT } from '../utils/lpQaPreview';
 import ClubJoinHowItWorks from '../components/clubs/ClubJoinHowItWorks';
@@ -63,11 +63,6 @@ const LandingPageClubs = () => {
 		const path = `/landing-page-clubs/${encodeURIComponent(club.title || '')}/${club._id}${isQaPreview ? `/${LP_QA_PREVIEW_SEGMENT}` : ''
 			}`;
 		navigate(path);
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-	};
-
-	const goToPayment = (club: Club) => {
-		navigate(clubPaymentPath(club, isQaPreview));
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
@@ -279,51 +274,29 @@ const LandingPageClubs = () => {
 																{unitPack?.sessionCount === 1 ? ' / oturum' : ''}
 															</Typography>
 														)}
+														<Button
+															variant='outlined'
+															size='small'
+															endIcon={<ArrowForward sx={{ fontSize: '0.95rem !important' }} />}
+															sx={{
+																mt: 'auto',
+																alignSelf: 'flex-end',
+																textTransform: 'none',
+																fontFamily: 'Varela Round',
+																fontWeight: 600,
+																fontSize: '0.82rem',
+																borderColor: '#0052a3',
+																color: '#0052a3',
+																px: 1.25,
+																'&:hover': {
+																	borderColor: '#004c99',
+																	backgroundColor: 'rgba(0, 82, 163, 0.06)',
+																},
+															}}>
+															Detayları Gör
+														</Button>
 													</CardContent>
 												</CardActionArea>
-												<Box
-													sx={{
-														px: 2.5,
-														pb: 2.5,
-														pt: 0.5,
-														mt: 'auto',
-														display: 'flex',
-														justifyContent: 'flex-end',
-														gap: 1,
-														flexWrap: 'wrap',
-														backgroundColor: '#FFFFFF',
-													}}>
-													<Button
-														variant='outlined'
-														size='small'
-														onClick={() => goToDetail(club)}
-														sx={{
-															fontFamily: 'Varela Round',
-															textTransform: 'none',
-															borderColor: '#0052a3',
-															color: '#0052a3',
-															'&:hover': { borderColor: '#004c99', backgroundColor: 'rgba(0, 82, 163, 0.06)' },
-														}}>
-														Detayları Gör
-													</Button>
-													<Button
-														variant='contained'
-														size='small'
-														disabled={!club.packs?.length || (isInactive && !isQaPreview)}
-														onClick={() => goToPayment(club)}
-														sx={{
-															fontFamily: 'Varela Round',
-															textTransform: 'none',
-															background: 'linear-gradient(135deg, #0052a3 0%, #0066cc 100%)',
-															boxShadow: 'none',
-															'&:hover': {
-																background: 'linear-gradient(135deg, #004c99 0%, #0052a3 100%)',
-																boxShadow: '0 4px 15px rgba(0, 82, 163, 0.35)',
-															},
-														}}>
-														Oturum Satın Al
-													</Button>
-												</Box>
 											</Card>
 										</Box>
 									);
