@@ -114,6 +114,9 @@ const PaymentDialog = ({
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 
 	const [promoCodeId, setPromoCodeId] = useState<string>('');
+	const isPromoFullyCovered =
+		isPromoCodeApplied && Boolean(promoCodeId) && Number(discountedAmount) <= 0;
+	const enrollWithoutPayment = isCourseFree || isPromoFullyCovered;
 
 	const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
@@ -288,11 +291,12 @@ const PaymentDialog = ({
 						resolvedFirstName = (email || '').split('@')[0] || 'Guest';
 					}
 
-					// For free courses, proceed with registration
-					if (isCourseFree) {
+					// For free courses or 100% promo, proceed with registration
+					if (enrollWithoutPayment) {
 						try {
 							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 								email: email || user?.email,
+								...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
 							});
 							syncEnrollmentAccessOnClient();
 
@@ -303,6 +307,10 @@ const PaymentDialog = ({
 							return;
 						} catch (error) {
 							console.log(error);
+							setErrorMessage(isTrUi ? 'Kurs kaydı başarısız oldu.' : 'Course registration failed.');
+							resetRecaptcha();
+							setIsProcessing(false);
+							return;
 						}
 					}
 				} catch (error) {
@@ -343,11 +351,12 @@ const PaymentDialog = ({
 				}
 			}
 
-			// For free courses (logged-in users, not from homepage), skip payment and register directly
-			if (isCourseFree && !fromHomePage) {
+			// Free courses or 100% promo (logged-in users, not from homepage): skip payment
+			if (enrollWithoutPayment && !fromHomePage) {
 				try {
 					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 						email: email || user?.email,
+						...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
 					});
 					syncEnrollmentAccessOnClient();
 
@@ -565,7 +574,7 @@ const PaymentDialog = ({
 					setIsPaymentDialogOpen(false);
 				}
 			}}
-			title={isCourseFree ? 'Kayıt Ol' : isTrUi ? 'Kursu Satın Al' : 'Make Payment'}
+			title={enrollWithoutPayment ? 'Kayıt Ol' : isTrUi ? 'Kursu Satın Al' : 'Make Payment'}
 			maxWidth='sm'
 			{...(fromHomePage
 				? {
@@ -1171,10 +1180,10 @@ const PaymentDialog = ({
 								: isTrUi
 									? 'İşleniyor'
 									: 'Processing'
-							: isTrUi && !isCourseFree
-								? 'Ödemeye Git'
-								: isCourseFree
-									? 'Kayıt Ol'
+							: enrollWithoutPayment
+								? 'Kayıt Ol'
+								: isTrUi
+									? 'Ödemeye Git'
 									: 'Make Payment'
 					}
 					submitBtnSx={{

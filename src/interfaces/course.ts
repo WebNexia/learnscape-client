@@ -12,6 +12,8 @@ export type CourseAccessTiming = 'evergreen' | 'cohort';
 export interface CourseEnrollmentProof {
 	email?: string;
 	paymentIntentId?: string;
+	/** 100% promo — enrolls without Stripe like a free course */
+	promoCodeId?: string;
 }
 
 /** Public LP detail: optional heading, rich HTML body, and/or featured image. */

@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, Chip, CircularProgress, Typography } from '@mui/material';
-import { ArrowBack, ConfirmationNumber } from '@mui/icons-material';
+import { ArrowBack, ArrowForward, ConfirmationNumber, EventAvailable } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
@@ -312,6 +312,95 @@ const LandingPageClub = () => {
 											)}
 										</Box>
 
+										<Box
+											sx={{
+												mb: 1.75,
+												px: { xs: 1.4, sm: 1.75 },
+												py: { xs: 1.25, sm: 1.4 },
+												borderRadius: '0.7rem',
+												backgroundColor: 'rgba(0, 82, 163, 0.06)',
+												border: '1px solid rgba(0, 82, 163, 0.16)',
+											}}>
+											<Box
+												sx={{
+													display: 'flex',
+													alignItems: 'center',
+													flexWrap: 'wrap',
+													columnGap: 1.15,
+													rowGap: 0.85,
+													mb: 0.85,
+												}}>
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
+													<Box
+														sx={{
+															width: 26,
+															height: 26,
+															borderRadius: '50%',
+															backgroundColor: '#0052a3',
+															color: '#fff',
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															fontFamily: 'Varela Round',
+															fontSize: '0.78rem',
+															fontWeight: 700,
+															flexShrink: 0,
+														}}>
+														1
+													</Box>
+													<ConfirmationNumber sx={{ fontSize: '1.15rem', color: '#0052a3' }} />
+													<Typography
+														sx={{
+															fontFamily: 'Varela Round',
+															fontSize: { xs: '0.88rem', sm: '0.95rem' },
+															fontWeight: 700,
+															color: '#0f172a',
+														}}>
+														Bilet alın
+													</Typography>
+												</Box>
+												<ArrowForward sx={{ fontSize: '1.15rem', color: '#94a3b8', flexShrink: 0 }} />
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
+													<Box
+														sx={{
+															width: 26,
+															height: 26,
+															borderRadius: '50%',
+															backgroundColor: '#FF6B3D',
+															color: '#fff',
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															fontFamily: 'Varela Round',
+															fontSize: '0.78rem',
+															fontWeight: 700,
+															flexShrink: 0,
+														}}>
+														2
+													</Box>
+													<EventAvailable sx={{ fontSize: '1.15rem', color: '#FF6B3D' }} />
+													<Typography
+														sx={{
+															fontFamily: 'Varela Round',
+															fontSize: { xs: '0.88rem', sm: '0.95rem' },
+															fontWeight: 700,
+															color: '#0f172a',
+														}}>
+														Kodla oturum seçin
+													</Typography>
+												</Box>
+											</Box>
+											<Typography
+												sx={{
+													fontFamily: 'Varela Round',
+													fontSize: { xs: '0.8rem', sm: '0.88rem' },
+													color: '#475569',
+													lineHeight: 1.45,
+												}}>
+												Önce bilet(ler) satın alın; kod e-postanıza gelir. Ardından bu sayfadan kodunuzla oturum(lar) seçin.
+											</Typography>
+										</Box>
+
 										<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
 											<Button
 												variant='contained'
@@ -319,7 +408,7 @@ const LandingPageClub = () => {
 												onClick={goToPayment}
 												endIcon={<ConfirmationNumber />}
 												sx={ctaButtonSx}>
-												Oturum Satın Al
+												Bilet Satın Al
 											</Button>
 											<Button
 												variant='outlined'
@@ -335,7 +424,7 @@ const LandingPageClub = () => {
 														backgroundColor: 'rgba(0, 82, 163, 0.06)',
 													},
 												}}>
-												Bilet ile Katıl
+												Oturum Seç
 											</Button>
 										</Box>
 									</Box>
@@ -385,7 +474,7 @@ const LandingPageClub = () => {
 										onClick={goToPayment}
 										endIcon={<ConfirmationNumber />}
 										sx={{ ...ctaButtonSx, px: 2.5, py: 1, alignSelf: { xs: 'stretch', sm: 'auto' } }}>
-										Oturum Satın Al
+										Bilet Satın Al
 									</Button>
 								</Box>
 							</Box>
