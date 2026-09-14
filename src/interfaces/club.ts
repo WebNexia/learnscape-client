@@ -34,6 +34,8 @@ export interface Club {
 	defaultCapacity: number;
 	hostUserId?: string;
 	packs?: ClubPack[];
+	/** Upcoming scheduled sessions that still have open seats */
+	availableSessionCount?: number;
 	/** Ordered marketing blocks for the public club detail page */
 	detailBlocks?: DocumentDetailBlock[];
 	createdAt?: string;

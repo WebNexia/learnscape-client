@@ -3,7 +3,13 @@ import {
 	Box,
 	Button,
 	CircularProgress,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
 	InputAdornment,
+	Link,
+	Snackbar,
 	Typography,
 	Chip,
 } from '@mui/material';
@@ -14,12 +20,12 @@ import {
 	VideocamOutlined,
 } from '@mui/icons-material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { clubsService } from '../services/clubsService';
 import { ClubTicketLookupResult } from '../interfaces/club';
 import { SEO } from '../components/seo';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 import { LP_QA_PREVIEW_SEGMENT } from '../utils/lpQaPreview';
@@ -27,20 +33,49 @@ import { LP_QA_PREVIEW_SEGMENT } from '../utils/lpQaPreview';
 const FONT = "'Varela Round', sans-serif";
 const BLUE = '#0052a3';
 
+type PendingRedeem = {
+	sessionId: string;
+	label: string;
+};
+
 const LandingPageClubTicket = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const navigate = useNavigate();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const isQaPreview = useIsLpQaPreview();
 	const clubsListPath = isQaPreview ? `/landing-page-clubs/${LP_QA_PREVIEW_SEGMENT}` : '/landing-page-clubs';
+	const copyHandledRef = useRef(false);
 
-	const [code, setCode] = useState('');
+	const [code, setCode] = useState(() => (searchParams.get('code') || '').trim().toUpperCase());
 	const [loading, setLoading] = useState(false);
 	const [redeemingId, setRedeemingId] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 	const [result, setResult] = useState<ClubTicketLookupResult | null>(null);
 	const [joinUrl, setJoinUrl] = useState<string | null>(null);
+	const [copyToast, setCopyToast] = useState(false);
+	const [pendingRedeem, setPendingRedeem] = useState<PendingRedeem | null>(null);
+
+	useEffect(() => {
+		const qCode = (searchParams.get('code') || '').trim().toUpperCase();
+		const shouldCopy = searchParams.get('copy') === '1';
+		if (!qCode) return;
+		setCode(qCode);
+		if (!shouldCopy || copyHandledRef.current) return;
+		copyHandledRef.current = true;
+		(async () => {
+			try {
+				await navigator.clipboard.writeText(qCode);
+				setCopyToast(true);
+			} catch {
+				/* ignore clipboard failures; code is still prefilled */
+			}
+			const next = new URLSearchParams(searchParams);
+			next.delete('copy');
+			setSearchParams(next, { replace: true });
+		})();
+	}, [searchParams, setSearchParams]);
 
 	const handleLookup = async () => {
 		setError(null);
@@ -65,6 +100,7 @@ const LandingPageClubTicket = () => {
 	};
 
 	const handleRedeem = async (sessionId: string) => {
+		setPendingRedeem(null);
 		setError(null);
 		setSuccess(null);
 		setRedeemingId(sessionId);
@@ -242,23 +278,6 @@ const LandingPageClubTicket = () => {
 							</Button>
 						</Box>
 
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								alignItems: 'flex-start',
-								px: 0.5,
-								mb: 3,
-							}}>
-							<InfoOutlined sx={{ color: BLUE, fontSize: 18, mt: '2px', flexShrink: 0 }} />
-							<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
-								Oturum iptali için{' '}
-								<a href='/contact-us' style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
-									bizimle iletişime geçin
-								</a>
-								. Ekibimiz iptali yapar, hakkınız iade edilir.
-							</Typography>
-						</Box>
 
 						{error && (
 							<Alert severity='error' sx={{ mb: 2, borderRadius: '0.75rem', fontFamily: FONT }}>
@@ -385,13 +404,12 @@ const LandingPageClubTicket = () => {
 															{label}
 														</Typography>
 														<Typography sx={{ fontFamily: FONT, fontSize: '0.78rem', color: '#64748b', mt: 0.25 }}>
-															{s.seatsLeft ?? 0} / {s.capacity} yer · {s.durationMinutes} dk
+															{s.isFull && !s.alreadyRegistered
+																? `Dolu · ${s.durationMinutes} dk`
+																: `${s.durationMinutes} dk`}
 														</Typography>
 													</Box>
 													<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-														{s.isFull && !s.alreadyRegistered && (
-															<Chip label='Dolu' size='small' color='warning' sx={{ fontFamily: FONT }} />
-														)}
 														{s.alreadyRegistered ? (
 															s.zoomJoinUrl ? (
 																<Button
@@ -416,7 +434,12 @@ const LandingPageClubTicket = () => {
 																variant='contained'
 																size='small'
 																disabled={disabled}
-																onClick={() => handleRedeem(s._id)}
+																onClick={() =>
+																	setPendingRedeem({
+																		sessionId: s._id,
+																		label,
+																	})
+																}
 																sx={{
 																	textTransform: 'none',
 																	fontFamily: FONT,
@@ -444,8 +467,93 @@ const LandingPageClubTicket = () => {
 							</Box>
 						)}
 					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							gap: 1,
+							justifyContent: 'center',
+							alignItems: 'center',
+							px: 0.5,
+							mb: 3,
+						}}>
+						<InfoOutlined sx={{ color: BLUE, fontSize: 18, mt: '0.5px', flexShrink: 0 }} />
+						<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
+							Oturum iptali için{' '}
+							<a href='/contact-us' style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
+								bizimle iletişime geçin
+							</a>
+							. Ekibimiz iptali yapar, hakkınız iade edilir.
+						</Typography>
+					</Box>
 				</LandingPageLayout>
 			</Box>
+			<Snackbar
+				open={copyToast}
+				autoHideDuration={2500}
+				onClose={() => setCopyToast(false)}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+				<Alert onClose={() => setCopyToast(false)} severity='success' variant='filled' sx={{ fontFamily: FONT }}>
+					Bilet kodu kopyalandı
+				</Alert>
+			</Snackbar>
+
+			<Dialog
+				open={Boolean(pendingRedeem)}
+				onClose={() => {
+					if (!redeemingId) setPendingRedeem(null);
+				}}
+				fullWidth
+				maxWidth='xs'
+				PaperProps={{
+					sx: {
+						borderRadius: '1rem',
+						fontFamily: FONT,
+					},
+				}}>
+				<DialogTitle sx={{ fontFamily: FONT, fontWeight: 700, fontSize: '1.1rem', color: '#0A1A2F', pb: 1 }}>
+					Oturuma katılmayı onayla
+				</DialogTitle>
+				<DialogContent>
+					{pendingRedeem && (
+						<Typography sx={{ fontFamily: FONT, fontSize: '0.9rem', color: '#334155', mb: 1.5, textTransform: 'capitalize' }}>
+							{pendingRedeem.label}
+						</Typography>
+					)}
+					<Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.55 }}>
+						Bu işlem 1 oturum hakkınızı kullanır.
+					</Typography>
+					<Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.85, mt: '0.5rem' }}>
+						Oturum iptali için{' '}
+						<Link href='/contact-us' target='_blank' rel='noopener noreferrer' sx={{ color: BLUE, fontWeight: 700 }}>
+							bizimle iletişime geçin
+						</Link>
+						.
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+					<Button
+						onClick={() => setPendingRedeem(null)}
+						disabled={Boolean(redeemingId)}
+						sx={{ textTransform: 'none', fontFamily: FONT, color: '#64748b' }}>
+						Vazgeç
+					</Button>
+					<Button
+						variant='contained'
+						disabled={!pendingRedeem || Boolean(redeemingId)}
+						onClick={() => pendingRedeem && handleRedeem(pendingRedeem.sessionId)}
+						sx={{
+							textTransform: 'none',
+							fontFamily: FONT,
+							fontWeight: 700,
+							bgcolor: BLUE,
+							borderRadius: '0.6rem',
+							boxShadow: 'none',
+							minWidth: 100,
+						}}>
+						{redeemingId ? <CircularProgress size={18} color='inherit' /> : 'Onayla'}
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</>
 	);
 };
