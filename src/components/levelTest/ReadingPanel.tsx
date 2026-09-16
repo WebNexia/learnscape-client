@@ -12,7 +12,7 @@ const ReadingPanel = ({ paragraphs }: { paragraphs: string[] }) => (
       top: 150,
       maxHeight: { md: "calc(100vh - 130px)" },
       overflowY: "auto",
-      mt: { xs: 3.5, sm: 5 }
+      mt: { xs: 2, sm: 3 }
     }}
   >
     <Box

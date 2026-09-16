@@ -54,7 +54,7 @@ const ListeningPanel = ({ audioSrc }: Props) => {
         position: { md: "sticky" },
         top: 150,
         background: "linear-gradient(145deg, #f4faff, #fff)",
-        mt: { xs: 3.5, sm: 5 }
+        mt: { xs: 2, sm: 3 }
       }}
     >
       <Box

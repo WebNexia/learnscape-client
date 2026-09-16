@@ -126,7 +126,7 @@ const LevelTestExperience = () => {
             position: "relative",
             overflow: "hidden",
             p: { xs: 2, sm: 3, md: 4 },
-            mt: { xs: 4, sm: 4.5, md: 5 },
+            mt: { xs: 1.5, sm: 2, md: 3 },
             textAlign: "center",
             background:
               "radial-gradient(circle at 12% 10%, rgba(0,82,163,.15), transparent 34%), radial-gradient(circle at 90% 90%, rgba(255,107,61,.13), transparent 30%), #fff",
@@ -156,7 +156,7 @@ const LevelTestExperience = () => {
             }}
           >
             Kısa okuma metinleri ve tarayıcının seslendirdiği kısa dinleme
-            bölümleriyle seviyeni A1–C2 aralığında tahmin et.
+            bölümleriyle seviyeni A1–C2 aralığında belirle.
           </Typography>
           <Box
             sx={{
@@ -176,7 +176,7 @@ const LevelTestExperience = () => {
               <Chip
                 key={label}
                 label={label}
-                sx={{ bgcolor: "#eef6fc", color: "#01435A", fontWeight: 700 }}
+                sx={{ bgcolor: "#eef6fc", color: "#01435A", fontWeight: 700, fontSize: { xs: "0.85rem", sm: "0.9rem" } }}
               />
             ))}
           </Box>
@@ -190,7 +190,7 @@ const LevelTestExperience = () => {
           </Alert>
           <Button
             variant="contained"
-            size="small"
+            size="medium"
             onClick={start}
             startIcon={<PlayArrowRounded />}
             sx={{ ...primaryButtonSx, px: 4, py: 1.3 }}
