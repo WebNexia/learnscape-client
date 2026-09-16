@@ -66,9 +66,9 @@ const LevelTestExperience = () => {
   const currentPassage =
     assessment.currentLevel && assessment.currentPassageKind
       ? getPassageForLevel(
-          assessment.currentLevel,
-          assessment.currentPassageKind,
-        )
+        assessment.currentLevel,
+        assessment.currentPassageKind,
+      )
       : undefined;
 
   useEffect(() => {
@@ -125,21 +125,22 @@ const LevelTestExperience = () => {
             ...levelTestCardSx,
             position: "relative",
             overflow: "hidden",
-            p: { xs: 3, sm: 5, md: 6 },
+            p: { xs: 2, sm: 3, md: 4 },
+            mt: { xs: 4, sm: 4.5, md: 5 },
             textAlign: "center",
             background:
               "radial-gradient(circle at 12% 10%, rgba(0,82,163,.15), transparent 34%), radial-gradient(circle at 90% 90%, rgba(255,107,61,.13), transparent 30%), #fff",
           }}
         >
           <AssessmentOutlined
-            sx={{ color: "#FF6B3D", fontSize: { xs: 50, sm: 64 } }}
+            sx={{ color: "#FF6B3D", fontSize: { xs: 45, sm: 64 } }}
           />
           <Typography
             component="h1"
             sx={{
               ...levelTestHeadingSx,
               mt: 1,
-              fontSize: { xs: "2rem", sm: "3rem" },
+              fontSize: { xs: "1.25rem", sm: "1.85rem" },
             }}
           >
             Ücretsiz İngilizce Seviye Testi
@@ -150,7 +151,7 @@ const LevelTestExperience = () => {
               mx: "auto",
               mt: 1.5,
               color: "#526675",
-              fontSize: { xs: "1rem", sm: "1.12rem" },
+              fontSize: { xs: "0.9rem", sm: "1rem" },
               lineHeight: 1.7,
             }}
           >
@@ -189,7 +190,7 @@ const LevelTestExperience = () => {
           </Alert>
           <Button
             variant="contained"
-            size="large"
+            size="small"
             onClick={start}
             startIcon={<PlayArrowRounded />}
             sx={{ ...primaryButtonSx, px: 4, py: 1.3 }}
@@ -291,9 +292,9 @@ const LevelTestExperience = () => {
           <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
             <Chip
               label={copy.badgeLabel}
-              sx={{ bgcolor: "#fff0ea", color: "#b83f1b", fontWeight: 700 }}
+              sx={{ bgcolor: "#fff0ea", color: "#b83f1b", fontWeight: 700, fontSize: { xs: "0.9rem", sm: "1rem" } }}
             />
-            <Typography sx={{ color: "#6d7f87", mt: 1.5 }}>
+            <Typography sx={{ color: "#6d7f87", mt: 1.5, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               Tahmini İngilizce okuma seviyen
             </Typography>
             <Typography
@@ -301,14 +302,15 @@ const LevelTestExperience = () => {
               sx={{
                 ...levelTestHeadingSx,
                 color: "#0052a3",
-                fontSize: { xs: "4rem", sm: "5rem" },
+                fontSize: { xs: "3rem", sm: "4.5rem" },
                 lineHeight: 1,
+                m: { xs: 1, sm: 1 },
               }}
             >
               {copy.resultLabel}
             </Typography>
             <Typography
-              sx={{ color: "#01435A", fontSize: "1.3rem", fontWeight: 700 }}
+              sx={{ color: "#01435A", fontSize: { xs: "1.1rem", sm: "1.3rem" }, fontWeight: 700 }}
             >
               {copy.resultBandLabel}
             </Typography>
@@ -318,7 +320,7 @@ const LevelTestExperience = () => {
                 sx={{ mt: 1.5, bgcolor: "#eef6fc", color: "#0052a3" }}
               />
             ) : null}
-            <Typography sx={{ color: "#526675", mt: 2, lineHeight: 1.7 }}>
+            <Typography sx={{ color: "#526675", mt: 2, lineHeight: 1.7, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               {copy.lead}
             </Typography>
           </Box>
@@ -330,36 +332,38 @@ const LevelTestExperience = () => {
               bgcolor: "#f4f9fc",
             }}
           >
-            <Typography sx={{ color: "#6d7f87", fontWeight: 700 }}>
+            <Typography sx={{ color: "#6d7f87", fontWeight: 700, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               Genel anlama puanın
             </Typography>
             <Typography
               sx={{
                 ...levelTestHeadingSx,
                 color: "#FF6B3D",
-                fontSize: "3.5rem",
+                fontSize: { xs: "3rem", sm: "4.5rem" },
               }}
             >
               %{score}
             </Typography>
-            <Typography sx={{ color: "#2e7d51", fontWeight: 700 }}>
+            <Typography sx={{ color: "#2e7d51", fontWeight: 700, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               {getScoreEncouragement(score)}
             </Typography>
-            <Typography sx={{ color: "#6d7f87", mt: 1 }}>
+            <Typography sx={{ color: "#6d7f87", mt: 1, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               {totals.correct} doğru / {totals.total} soru · {durationMinutes}{" "}
               dakika
             </Typography>
           </Box>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<MailOutlineRounded />}
-          onClick={() => setReportOpen(true)}
-          sx={{ ...primaryButtonSx, py: 1.3 }}
-        >
-          Detaylı PDF raporunu e-postana gönder
-        </Button>
+        <Box sx={{ display: "flex", justifyContent: "center", m: { xs: 1, sm: 1.5 } }}>
+          <Button
+            variant="contained"
+            startIcon={<MailOutlineRounded />}
+            onClick={() => setReportOpen(true)}
+            sx={{ ...primaryButtonSx, py: { xs: 0.75, sm: 1 }, width: { xs: "100%", sm: "auto" } }}
+          >
+            Detaylı PDF raporunu e-postana gönder
+          </Button>
+        </Box>
 
         <Box
           sx={{
@@ -371,14 +375,14 @@ const LevelTestExperience = () => {
           <Box sx={{ ...levelTestCardSx, p: 3 }}>
             <Typography
               component="h2"
-              sx={{ ...levelTestHeadingSx, fontSize: "1.2rem" }}
+              sx={{ ...levelTestHeadingSx, fontSize: { xs: "1.1rem", sm: "1.2rem" } }}
             >
               Bu ne anlama geliyor?
             </Typography>
             {copy.meaningParagraphs.map((paragraph) => (
               <Typography
                 key={paragraph}
-                sx={{ color: "#526675", mt: 1.25, lineHeight: 1.7 }}
+                sx={{ color: "#526675", mt: 1.25, lineHeight: 1.7, fontSize: { xs: "0.9rem", sm: "1rem" } }}
               >
                 {paragraph}
               </Typography>
@@ -387,7 +391,7 @@ const LevelTestExperience = () => {
           <Box sx={{ ...levelTestCardSx, p: 3 }}>
             <Typography
               component="h2"
-              sx={{ ...levelTestHeadingSx, fontSize: "1.2rem" }}
+              sx={{ ...levelTestHeadingSx, fontSize: { xs: "1.1rem", sm: "1.2rem" } }}
             >
               Beceri özeti
             </Typography>
@@ -400,9 +404,10 @@ const LevelTestExperience = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 1,
+                    fontSize: { xs: "0.9rem", sm: "1rem" },
                   }}
                 >
-                  <Typography sx={{ color: "#263f49", fontWeight: 700 }}>
+                  <Typography sx={{ color: "#263f49", fontWeight: 700, fontSize: { xs: "0.85rem", sm: "0.9rem" } }}>
                     {skill.label}
                   </Typography>
                   <Chip
@@ -431,7 +436,7 @@ const LevelTestExperience = () => {
           <SchoolRounded sx={{ color: "#FF6B3D", fontSize: 36 }} />
           <Typography
             component="h2"
-            sx={{ ...levelTestHeadingSx, fontSize: "1.25rem" }}
+            sx={{ ...levelTestHeadingSx, fontSize: { xs: "1.1rem", sm: "1.25rem" } }}
           >
             {copy.nextGoalTitle}
           </Typography>
@@ -442,6 +447,7 @@ const LevelTestExperience = () => {
               color: "#526675",
               mt: 1,
               lineHeight: 1.7,
+              fontSize: { xs: "0.9rem", sm: "1rem" },
             }}
           >
             {copy.nextGoalLead}
@@ -454,6 +460,7 @@ const LevelTestExperience = () => {
               textAlign: "left",
               color: "#526675",
               lineHeight: 1.7,
+              fontSize: { xs: "0.9rem", sm: "1rem" },
             }}
           >
             {copy.nextGoalTips.map((tip) => (
@@ -464,7 +471,7 @@ const LevelTestExperience = () => {
             component={Link}
             to="/landing-page-courses"
             variant="contained"
-            sx={{ ...primaryButtonSx, mt: 1 }}
+            sx={{ ...primaryButtonSx, mt: 3.5 }}
           >
             Aden Academy kurslarını keşfet
           </Button>
@@ -567,11 +574,11 @@ const LevelTestExperience = () => {
           <ReadingPanel paragraphs={currentStep.paragraphs} />
         )}
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, mt: { xs: 1, sm: 3.5 } }}>
             <AutoAwesomeRounded sx={{ color: "#FF6B3D" }} />
             <Typography
               component="h2"
-              sx={{ ...levelTestHeadingSx, fontSize: "1.2rem" }}
+              sx={{ ...levelTestHeadingSx, fontSize: { xs: "1rem", sm: "1.2rem" } }}
             >
               Sorular
             </Typography>
@@ -583,15 +590,16 @@ const LevelTestExperience = () => {
               setAnswers((previous) => ({ ...previous, [questionId]: value }))
             }
           />
-          <Button
-            variant="contained"
-            fullWidth
-            size="large"
-            onClick={next}
-            sx={{ ...primaryButtonSx, mt: 2.5, py: 1.25 }}
-          >
-            {lastStep ? "Cevapları gönder" : "Devam et"}
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={next}
+              sx={{ ...primaryButtonSx, mt: 2.5, py: { xs: 0.75, sm: 1 }, px: { xs: '25%', sm: '25%' } }}
+            >
+              {lastStep ? "Cevapları gönder" : "Devam et"}
+            </Button>
+          </Box>
           <Typography
             sx={{
               color: "#82939a",

@@ -106,7 +106,7 @@ const LevelTestReportDialog = ({
             : response.status === 503
               ? "service_unavailable"
               : response.status === 400 &&
-                  payload?.message?.toLowerCase().includes("turnstile")
+                payload?.message?.toLowerCase().includes("turnstile")
                 ? "turnstile_failed"
                 : "send_failed");
         throw new Error(
@@ -148,7 +148,7 @@ const LevelTestReportDialog = ({
           <MailOutlineRounded />
           <Typography
             component="h2"
-            sx={{ ...levelTestHeadingSx, fontSize: "1.25rem" }}
+            sx={{ ...levelTestHeadingSx, fontSize: { xs: "1.1rem", sm: "1.25rem" } }}
           >
             PDF raporunu e-postana gönder
           </Typography>
@@ -167,7 +167,7 @@ const LevelTestReportDialog = ({
               void send();
             }}
           >
-            <Typography sx={{ color: "#526675", lineHeight: 1.6, mb: 2 }}>
+            <Typography sx={{ color: "#526675", lineHeight: 1.6, mb: 2, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
               Cevaplarını, puanını ve beceri değerlendirmelerini içeren
               ayrıntılı PDF raporu alabilirsin.
             </Typography>
@@ -207,15 +207,12 @@ const LevelTestReportDialog = ({
               }
               label={
                 <Box>
-                  <Typography sx={{ color: "#172b35", fontWeight: 700 }}>
+                  <Typography sx={{ color: "#172b35", fontWeight: 700, fontSize: { xs: "0.8rem", sm: "1rem" } }}>
                     Aden Academy içeriklerinden haberdar olmak istiyorum
-                  </Typography>
-                  <Typography sx={{ color: "#6d7f87", fontSize: ".78rem" }}>
-                    İsteğe bağlıdır; dilediğin zaman abonelikten çıkabilirsin.
                   </Typography>
                 </Box>
               }
-              sx={{ alignItems: "flex-start", mb: 1.5 }}
+              sx={{ alignItems: "center", mb: 1.5 }}
             />
             <TurnstileWidget
               ref={widgetRef}

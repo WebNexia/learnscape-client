@@ -22,7 +22,8 @@ const LevelTest = () => {
             background:
               "radial-gradient(circle at 20% 20%, rgba(0, 82, 163, 0.1), transparent 38%), linear-gradient(180deg, #ffffff 0%, #f5f9fc 100%)",
             px: 2,
-            py: { xs: 5, md: 8 },
+            pt: { xs: 9, sm: 10, md: 12 },
+            pb: { xs: 5, md: 8 },
           }}
         >
           <Container maxWidth="lg">

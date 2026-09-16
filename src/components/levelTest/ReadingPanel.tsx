@@ -9,9 +9,10 @@ const ReadingPanel = ({ paragraphs }: { paragraphs: string[] }) => (
       ...levelTestCardSx,
       p: { xs: 2.5, sm: 3 },
       position: { md: "sticky" },
-      top: 100,
+      top: 150,
       maxHeight: { md: "calc(100vh - 130px)" },
       overflowY: "auto",
+      mt: { xs: 3.5, sm: 5 }
     }}
   >
     <Box
@@ -26,7 +27,7 @@ const ReadingPanel = ({ paragraphs }: { paragraphs: string[] }) => (
       <MenuBookRounded />
       <Typography
         component="h3"
-        sx={{ ...levelTestHeadingSx, fontSize: "1.15rem" }}
+        sx={{ ...levelTestHeadingSx, fontSize: { xs: "1rem", sm: "1.15rem" } }}
       >
         Okuma metni
       </Typography>
@@ -38,8 +39,7 @@ const ReadingPanel = ({ paragraphs }: { paragraphs: string[] }) => (
           component="p"
           sx={{
             color: "#263f49",
-            fontFamily: "Georgia, serif",
-            fontSize: "1.05rem",
+            fontSize: { xs: "0.9rem", sm: "0.95rem" },
             lineHeight: 1.85,
             mb: 2,
           }}

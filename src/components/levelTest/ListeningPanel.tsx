@@ -52,8 +52,9 @@ const ListeningPanel = ({ audioSrc }: Props) => {
         ...levelTestCardSx,
         p: { xs: 2.5, sm: 3 },
         position: { md: "sticky" },
-        top: 100,
+        top: 150,
         background: "linear-gradient(145deg, #f4faff, #fff)",
+        mt: { xs: 3.5, sm: 5 }
       }}
     >
       <Box
@@ -68,12 +69,12 @@ const ListeningPanel = ({ audioSrc }: Props) => {
         <HeadphonesRounded />
         <Typography
           component="h3"
-          sx={{ ...levelTestHeadingSx, fontSize: "1.15rem" }}
+          sx={{ ...levelTestHeadingSx, fontSize: { xs: "1rem", sm: "1.15rem" } }}
         >
           Kısa dinleme
         </Typography>
       </Box>
-      <Typography sx={{ color: "#526675", lineHeight: 1.65, mb: 2 }}>
+      <Typography sx={{ color: "#526675", lineHeight: 1.65, mb: 2, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
         Metin ekranda gösterilmez. İngilizce kaydı dinle; istersen tekrar
         oynatabilirsin.
       </Typography>

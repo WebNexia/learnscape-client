@@ -66,6 +66,7 @@ const LevelTestQuestions = ({ questions, answers, onChange }: Props) => (
                   color: "#172b35",
                   fontWeight: 700,
                   lineHeight: 1.55,
+                  fontSize: { xs: "0.9rem", sm: "1rem" },
                 }}
               >
                 {question.prompt}
@@ -113,11 +114,11 @@ const LevelTestQuestions = ({ questions, answers, onChange }: Props) => (
                       <Typography
                         component="span"
                         lang="en"
-                        sx={{ color: "#263f49", lineHeight: 1.5 }}
+                        sx={{ color: "#263f49", lineHeight: 1.5, fontSize: { xs: "0.85rem", sm: "0.9rem" } }}
                       >
                         <Box
                           component="span"
-                          sx={{ fontWeight: 700, mr: 0.75 }}
+                          sx={{ fontWeight: 700, mr: 0.75, fontSize: { xs: "0.85rem", sm: "0.9rem" } }}
                         >
                           {option.id}.
                         </Box>
