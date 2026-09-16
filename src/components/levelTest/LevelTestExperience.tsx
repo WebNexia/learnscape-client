@@ -240,19 +240,19 @@ const LevelTestExperience = () => {
       >
         <Box>
           {transitionReady ? (
-            <CheckCircleRounded sx={{ color: "#2e9c5d", fontSize: 70 }} />
+            <CheckCircleRounded sx={{ color: "#2e9c5d", fontSize: { xs: 50, sm: 66 } }} />
           ) : (
-            <CircularProgress size={66} sx={{ color: "#0052a3" }} />
+            <CircularProgress sx={{ color: "#0052a3", fontSize: { xs: 40, sm: 66 } }} />
           )}
           <Typography
             component="h2"
-            sx={{ ...levelTestHeadingSx, mt: 2, fontSize: "1.7rem" }}
+            sx={{ ...levelTestHeadingSx, mt: 2, fontSize: { xs: "1.25rem", sm: "1.7rem" } }}
           >
             {transitionReady
               ? "Sıradaki bölüm hazır"
               : "Cevapların değerlendiriliyor"}
           </Typography>
-          <Typography sx={{ color: "#526675", mt: 1, mb: 2.5 }}>
+          <Typography sx={{ color: "#526675", mt: 1, mb: 2.5, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
             {transitionReady
               ? "Yanıtlarına göre bir sonraki seviye seçildi."
               : "Uyarlanabilir test sıradaki adımı belirliyor."}
