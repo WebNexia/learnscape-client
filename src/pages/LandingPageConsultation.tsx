@@ -248,33 +248,35 @@ const LandingPageConsultation = () => {
 											</Typography>
 										)}
 
-										<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2.5, alignItems: 'center' }}>
-											{consultation.duration ? (
-												<Typography
-													sx={{
-														fontFamily: 'Varela Round',
-														fontSize: '0.85rem',
-														color: '#64748b',
-														backgroundColor: 'rgba(0, 82, 163, 0.06)',
-														px: 1.25,
-														py: 0.5,
-														borderRadius: '0.35rem',
-													}}>
-													Süre: {consultation.duration} dakika
-												</Typography>
-											) : null}
-											{displayPrice && (
-												<Typography
-													sx={{
-														fontFamily: 'Varela Round',
-														fontSize: '0.95rem',
-														fontWeight: 700,
-														color: displayPrice.isFree ? '#059669' : '#0052a3',
-													}}>
-													{displayPrice.label}
-												</Typography>
-											)}
-										</Box>
+										{canBook ? (
+											<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2.5, alignItems: 'center' }}>
+												{consultation.duration ? (
+													<Typography
+														sx={{
+															fontFamily: 'Varela Round',
+															fontSize: '0.85rem',
+															color: '#64748b',
+															backgroundColor: 'rgba(0, 82, 163, 0.06)',
+															px: 1.25,
+															py: 0.5,
+															borderRadius: '0.35rem',
+														}}>
+														Süre: {consultation.duration} dakika
+													</Typography>
+												) : null}
+												{displayPrice && (
+													<Typography
+														sx={{
+															fontFamily: 'Varela Round',
+															fontSize: '0.95rem',
+															fontWeight: 700,
+															color: displayPrice.isFree ? '#059669' : '#0052a3',
+														}}>
+														{displayPrice.label}
+													</Typography>
+												)}
+											</Box>
+										) : null}
 
 										{canBook ? (
 											<Button variant='contained' onClick={openBooking} endIcon={<EventAvailable />} sx={ctaButtonSx}>
@@ -319,7 +321,7 @@ const LandingPageConsultation = () => {
 											}}>
 											{consultation.title}
 										</Typography>
-										{displayPrice && (
+										{canBook && displayPrice ? (
 											<Typography
 												sx={{
 													fontFamily: 'Varela Round',
@@ -329,7 +331,7 @@ const LandingPageConsultation = () => {
 												}}>
 												{displayPrice.label}
 											</Typography>
-										)}
+										) : null}
 									</Box>
 									{canBook && (
 										<Button
