@@ -17,6 +17,8 @@ export interface Payment {
 	documentName: string;
 	consultationId?: string;
 	consultationTitle?: string;
+	clubId?: string;
+	clubTitle?: string;
 	paymentType: string;
 	email: string;
 	transactionDetails?: TransactionDetails;
@@ -28,6 +30,10 @@ export interface Payment {
 	superAdminIncome?: number; // Super-admin's share income
 	commissionRate?: number; // Commission rate (0.15 for 15%)
 	commissionType?: string; // 'percentage' or 'fixed'
+	/** Stripe test-mode payment (livemode false). Only these can be hard-deleted. */
+	isTestPayment?: boolean;
+	/** Server-computed: safe to hard-delete (test payment / local sk_test_ legacy). */
+	canDelete?: boolean;
 }
 
 interface TransactionDetails {

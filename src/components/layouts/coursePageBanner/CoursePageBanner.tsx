@@ -190,6 +190,7 @@ const CoursePageBanner = ({
 				...(groupName && { groupName }),
 				...(proof?.email && { email: proof.email }),
 				...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
+				...(proof?.promoCodeId && { promoCodeId: proof.promoCodeId }),
 			});
 
 			if (!response.data?._id) {

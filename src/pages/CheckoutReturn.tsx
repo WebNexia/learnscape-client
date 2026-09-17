@@ -15,6 +15,7 @@ import {
 	readPendingCartCheckout,
 	useSlowNetworkHint,
 	type CartCheckoutReturnContext,
+	type ClubCheckoutReturnContext,
 } from '../utils/hostedCheckout';
 
 const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -112,10 +113,36 @@ export default function CheckoutReturn() {
 					setMessage(
 						res.data.documentDeliveryFailed
 							? res.data.documentDeliveryMessage ||
-								'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin.'
+							'Ödemeniz alındı ancak doküman e-postası gönderilemedi. Lütfen destek ile iletişime geçin.'
 							: 'Ödemeniz başarıyla tamamlandı. E-postanızı kontrol edin.'
 					);
 					setTimeout(() => navigate('/landing-page-cart', { replace: true }), 2200);
+					return;
+				}
+
+				if (res.data.kind === 'club') {
+					const clubContext: ClubCheckoutReturnContext | null =
+						context?.kind === 'club' ? context : null;
+					if (clubContext?.agreeMarketing && clubContext.email && clubContext.orgId) {
+						try {
+							await axios.post(`${base_url}/marketing-consent/guest`, {
+								email: clubContext.email.trim(),
+								orgId: clubContext.orgId,
+								firstName: clubContext.firstName?.trim() || '',
+								lastName: clubContext.lastName?.trim() || '',
+								source: 'club',
+							});
+						} catch {
+							// Non-blocking
+						}
+					}
+					clearCheckoutReturnContext();
+					setBackPath('/landing-page-clubs/ticket');
+					setStatus('success');
+					setMessage(
+						'Ödemeniz alındı. Bilet kodunuz e-postanıza gönderildi. Oturum seçmek için bilet sayfasını kullanabilirsiniz.',
+					);
+					setTimeout(() => navigate('/landing-page-clubs/ticket', { replace: true }), 3500);
 					return;
 				}
 
@@ -150,9 +177,9 @@ export default function CheckoutReturn() {
 				setStatus('error');
 				setMessage(
 					e?.response?.data?.error ||
-						e?.response?.data?.message ||
-						e?.message ||
-						'Ödeme tamamlanamadı. Ücret alınmadıysa tekrar deneyebilirsiniz.'
+					e?.response?.data?.message ||
+					e?.message ||
+					'Ödeme tamamlanamadı. Ücret alınmadıysa tekrar deneyebilirsiniz.'
 				);
 			}
 		})();

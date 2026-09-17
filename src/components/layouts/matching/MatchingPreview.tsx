@@ -161,13 +161,15 @@ const MatchingPreview = ({
 		if (previousQuestionIdRef.current !== questionId) {
 			previousQuestionIdRef.current = questionId;
 			setSelectedResponseIndex(null);
+			setHasInteracted(false);
 		}
 	}, [questionId]);
 
 	useEffect(() => {
-		// For admin preview mode, always initialize with initialPairs
+		// Admin preview: init once; do not re-shuffle after the user starts matching
+		// (re-init on hasInteracted caused a first-match "bounce").
 		if (!fromPracticeQuestionUser && !fromQuizQuestionUser) {
-			if (initialPairs && initialPairs.length > 0) {
+			if (initialPairs && initialPairs.length > 0 && !hasInteracted) {
 				setPairs(initialPairs?.map((pair) => ({ ...pair, answer: '' })) || []);
 				setResponses(
 					initialPairs?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }))?.sort(() => Math.random() - 0.5) || []

@@ -1,5 +1,5 @@
-import { Box, Button, IconButton, Typography, Tooltip } from '@mui/material';
-import { ArrowDownward, ArrowUpward, Delete, PostAdd, Image as ImageIcon, FormatListBulleted, Campaign } from '@mui/icons-material';
+import { Box, Button, IconButton, Typography, Tooltip, Collapse } from '@mui/material';
+import { ArrowDownward, ArrowUpward, Delete, PostAdd, Image as ImageIcon, FormatListBulleted, Campaign, ExpandMore } from '@mui/icons-material';
 import { Document, DocumentDetailBlock } from '../../interfaces/document';
 import {
 	MAX_DOCUMENT_DETAIL_BLOCKS,
@@ -21,9 +21,16 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
 
 type Props = {
-	document: Document;
-	setDocument: (doc: Document | null) => void;
+	entityId?: string;
+	blocks: DocumentDetailBlock[];
+	onChange: (blocks: DocumentDetailBlock[]) => void;
 	onDeleteImageFromStorage?: (urls: string[]) => void | Promise<void>;
+	imageFolderName?: string;
+	/** Scope key for TinyMCE inline images; defaults to documentEditorScope(entityId) */
+	imageScopedEntityId?: string;
+	heading?: string;
+	helpText?: string;
+	inlineImagesHint?: string;
 };
 
 const emptySection = (): DocumentDetailBlock => ({
@@ -85,14 +92,26 @@ export function hydrateDetailBlocksFromLegacy(doc: Document): DocumentDetailBloc
 	return blocks;
 }
 
-const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromStorage }: Props) => {
+const DocumentDetailBlocksEditor = ({
+	entityId,
+	blocks: rawBlocks,
+	onChange,
+	onDeleteImageFromStorage,
+	imageFolderName = 'DocumentDetailImages',
+	imageScopedEntityId,
+	heading = 'Detail page content',
+	helpText = 'Build the book intro page in order. Place images between text sections. Section body uses rich text (TinyMCE).',
+	inlineImagesHint = 'Inline images in the editor are available after the document is saved (edit mode).',
+}: Props) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const blocks = ensureRowKeys(document.detailBlocks || []);
+	const blocks = ensureRowKeys(rawBlocks || []);
 	const [enterImageUrlByKey, setEnterImageUrlByKey] = useState<Record<string, boolean>>({});
+	const [isExpanded, setIsExpanded] = useState(false);
+	const scopedId = imageScopedEntityId || (entityId ? documentEditorScope(entityId) : undefined);
 
 	const updateBlocks = (next: DocumentDetailBlock[]) => {
-		setDocument({ ...document, detailBlocks: next });
+		onChange(next);
 	};
 
 	const moveBlock = (index: number, dir: -1 | 1) => {
@@ -117,6 +136,7 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 
 	const addBlock = (factory: () => DocumentDetailBlock) => {
 		if (blocks.length >= MAX_DOCUMENT_DETAIL_BLOCKS) return;
+		setIsExpanded(true);
 		updateBlocks([...blocks, factory()]);
 	};
 
@@ -128,10 +148,47 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 
 	return (
 		<Box sx={{ width: '100%', margin: isMobileSize ? '1rem 0' : '1rem' }}>
-			<Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
-				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-					Detail page content ({blocks.length}/{MAX_DOCUMENT_DETAIL_BLOCKS})
-				</Typography>
+			<Box
+				sx={{
+					display: 'flex',
+					flexWrap: 'wrap',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: 1,
+					mb: isExpanded ? '0.75rem' : 0,
+				}}>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+					<Tooltip title={isExpanded ? 'Collapse' : 'Expand'} placement='top' arrow>
+						<IconButton
+							size='small'
+							onClick={() => setIsExpanded((prev) => !prev)}
+							aria-expanded={isExpanded}
+							aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${heading}`}
+							sx={{
+								transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+								transition: 'transform 0.3s ease',
+							}}>
+							<ExpandMore fontSize='small' />
+						</IconButton>
+					</Tooltip>
+					<Typography
+						variant='h6'
+						onClick={() => setIsExpanded((prev) => !prev)}
+						sx={{
+							fontSize: isMobileSize ? '0.9rem' : '1rem',
+							cursor: 'pointer',
+							userSelect: 'none',
+						}}>
+						{heading}
+						<Typography
+							component='span'
+							variant='body2'
+							color='text.secondary'
+							sx={{ ml: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							({blocks.length}/{MAX_DOCUMENT_DETAIL_BLOCKS})
+						</Typography>
+					</Typography>
+				</Box>
 				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
 					<Button
 						size='small'
@@ -167,50 +224,52 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 					</Button>
 				</Box>
 			</Box>
-			<Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-				Build the book intro page in order. Place images between text sections. Section body uses rich text (TinyMCE).
-			</Typography>
 
-			{blocks.map((block, index) => {
-				const key = block.rowKey || `blk-${index}`;
-				return (
-					<Box
-						key={key}
-						sx={{
-							mb: '1.25rem',
-							pb: '1.25rem',
-							borderBottom: index < blocks.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
-						}}>
-						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1 }}>
-							<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.875rem', textTransform: 'capitalize' }}>
-								{index + 1}. {block.type}
-							</Typography>
-							<Box sx={{ display: 'flex', alignItems: 'center' }}>
-								<Tooltip title='Move up'>
-									<span>
-										<IconButton size='small' disabled={index === 0} onClick={() => moveBlock(index, -1)} aria-label='Move block up'>
-											<ArrowUpward fontSize='small' />
+			<Collapse in={isExpanded} timeout='auto' unmountOnExit>
+				<Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+					{helpText}
+				</Typography>
+
+				{blocks.map((block, index) => {
+					const key = block.rowKey || `blk-${index}`;
+					return (
+						<Box
+							key={key}
+							sx={{
+								mb: '1.25rem',
+								pb: '1.25rem',
+								borderBottom: index < blocks.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+							}}>
+							<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1 }}>
+								<Typography variant='subtitle2' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.875rem', textTransform: 'capitalize' }}>
+									{index + 1}. {block.type}
+								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center' }}>
+									<Tooltip title='Move up'>
+										<span>
+											<IconButton size='small' disabled={index === 0} onClick={() => moveBlock(index, -1)} aria-label='Move block up'>
+												<ArrowUpward fontSize='small' />
+											</IconButton>
+										</span>
+									</Tooltip>
+									<Tooltip title='Move down'>
+										<span>
+											<IconButton
+												size='small'
+												disabled={index === blocks.length - 1}
+												onClick={() => moveBlock(index, 1)}
+												aria-label='Move block down'>
+												<ArrowDownward fontSize='small' />
+											</IconButton>
+										</span>
+									</Tooltip>
+									<Tooltip title='Remove block'>
+										<IconButton size='small' onClick={() => removeBlock(index)} aria-label='Remove block'>
+											<Delete fontSize='small' />
 										</IconButton>
-									</span>
-								</Tooltip>
-								<Tooltip title='Move down'>
-									<span>
-										<IconButton
-											size='small'
-											disabled={index === blocks.length - 1}
-											onClick={() => moveBlock(index, 1)}
-											aria-label='Move block down'>
-											<ArrowDownward fontSize='small' />
-										</IconButton>
-									</span>
-								</Tooltip>
-								<Tooltip title='Remove block'>
-									<IconButton size='small' onClick={() => removeBlock(index)} aria-label='Remove block'>
-										<Delete fontSize='small' />
-									</IconButton>
-								</Tooltip>
+									</Tooltip>
+								</Box>
 							</Box>
-						</Box>
 
 						{block.type === 'section' && (
 							<>
@@ -233,15 +292,15 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 								</Typography>
 								<LandingPageSectionBodyEditor
 									key={key}
-									editorId={`doc-detail-section-${key}`}
+									editorId={`detail-section-${key}`}
 									maxLength={MAX_DOCUMENT_DETAIL_SECTION_BODY_LENGTH}
-									imageScopedEntityId={document._id ? documentEditorScope(document._id) : undefined}
+									imageScopedEntityId={scopedId}
 									seedHtml={block.body ?? ''}
 									onHtmlChange={(trimmed) => patchBlock(index, { ...block, body: trimmed })}
 								/>
-								{!document._id && (
+								{!entityId && inlineImagesHint && (
 									<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 0.5 }}>
-										Inline images in the editor are available after the document is saved (edit mode).
+										{inlineImagesHint}
 									</Typography>
 								)}
 							</>
@@ -255,8 +314,8 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 										onImageUploadLogic={(url) => patchBlock(index, { ...block, imageUrl: url })}
 										onChangeImgUrl={(e) => patchBlock(index, { ...block, imageUrl: e.target.value })}
 										imageUrlValue={block.imageUrl || ''}
-										imageFolderName='DocumentDetailImages'
-										scopedEntityId={document._id}
+										imageFolderName={imageFolderName}
+										scopedEntityId={entityId}
 										enterImageUrl={enterImageUrlByKey[key] ?? true}
 										setEnterImageUrl={(val) =>
 											setEnterImageUrlByKey((prev) => ({
@@ -372,6 +431,7 @@ const DocumentDetailBlocksEditor = ({ document, setDocument, onDeleteImageFromSt
 					</Box>
 				);
 			})}
+			</Collapse>
 		</Box>
 	);
 };

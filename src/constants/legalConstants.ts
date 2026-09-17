@@ -1,4 +1,4 @@
-export const LEGAL_LAST_UPDATED = '2026-07-01';
+export const LEGAL_LAST_UPDATED = '2026-09-13';
 
 export const COMPANY_NAME = 'NEXTEDU LTD';
 export const COMPANY_NUMBER = '16823566';

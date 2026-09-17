@@ -20,6 +20,7 @@ import {
   SchoolOutlined,
   MenuBookOutlined,
   GroupsOutlined,
+  ForumOutlined,
   MailOutline,
   InfoOutlined,
   PersonOutlined,
@@ -85,6 +86,18 @@ const Header = () => {
           },
           isActive: location.pathname === "/landing-page-courses",
         },
+
+        {
+          label: "Kitaplar",
+          NavIcon: MenuBookOutlined,
+          action: () => {
+            navigate("/landing-page-resources");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive:
+            location.pathname === "/landing-page-resources" ||
+            location.pathname.startsWith("/landing-page-document/"),
+        },
         {
           label: "Özel Ders",
           NavIcon: PersonOutlined,
@@ -115,17 +128,6 @@ const Header = () => {
         //   isActive: location.pathname === "/level-test",
         // },
         {
-          label: "Kitaplar",
-          NavIcon: MenuBookOutlined,
-          action: () => {
-            navigate("/landing-page-resources");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          },
-          isActive:
-            location.pathname === "/landing-page-resources" ||
-            location.pathname.startsWith("/landing-page-document/"),
-        },
-        {
           label: "Danışmanlık",
           NavIcon: GroupsOutlined,
           action: () => {
@@ -134,6 +136,18 @@ const Header = () => {
           },
           isActive: location.pathname === "/landing-page-consultations",
         },
+        {
+          label: "Kulüpler",
+          NavIcon: ForumOutlined,
+          action: () => {
+            navigate("/landing-page-clubs");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          },
+          isActive:
+            location.pathname === "/landing-page-clubs" ||
+            location.pathname.startsWith("/landing-page-clubs/"),
+        },
+
       ];
 
     items.push(

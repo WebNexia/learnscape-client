@@ -160,8 +160,9 @@ const EditDocumentDialog = ({
 				</Box>
 				{document?.isOnLandingPage && (
 					<DocumentDetailBlocksEditor
-						document={document}
-						setDocument={setDocument}
+						entityId={document._id}
+						blocks={document.detailBlocks || []}
+						onChange={(detailBlocks) => setDocument({ ...document, detailBlocks })}
 						onDeleteImageFromStorage={onDeleteSamplePageImagesFromStorage}
 					/>
 				)}

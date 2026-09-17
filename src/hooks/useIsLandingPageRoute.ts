@@ -33,4 +33,19 @@ export const useIsLandingPageRoute = (): boolean => {
     (location.pathname.startsWith("/course/") &&
       !location.pathname.includes("/userCourseId/"))
   );
+	return (
+		location.pathname === '/' ||
+		location.pathname === '/qa-test' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/landing-page-courses/qa-test' ||
+		location.pathname === '/landing-page-resources' ||
+		location.pathname === '/landing-page-cart' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		(location.pathname.startsWith('/landing-page-course/') && !location.pathname.includes('/userCourseId/')) ||
+		location.pathname.startsWith('/landing-page-document/') ||
+		location.pathname.startsWith('/landing-page-clubs') ||
+		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'))
+	);
 };
