@@ -205,7 +205,8 @@ export const router = createBrowserRouter([
           </LandingPageResourcesContextProvider>
         ),
       },
-      { path: "seviye-testi", element: <LevelTest /> },
+      { path: "level-test", element: <LevelTest /> },
+      { path: "seviye-testi", element: <Navigate to="/level-test" replace /> },
       {
         path: "landing-page-document/:name/:documentId",
         element: <LandingPageDocument />,

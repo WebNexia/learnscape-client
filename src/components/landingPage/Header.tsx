@@ -105,15 +105,15 @@ const Header = () => {
           },
           isActive: location.pathname === "/" && location.hash === `#${PRIVATE_LESSONS_SECTION_ID}`,
         },
-        {
-          label: "Seviye Testi",
-          NavIcon: AssessmentOutlined,
-          action: () => {
-            navigate("/seviye-testi");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          },
-          isActive: location.pathname === "/seviye-testi",
-        },
+        // {
+        //   label: "Seviye Testi",
+        //   NavIcon: AssessmentOutlined,
+        //   action: () => {
+        //     navigate("/level-test");
+        //     window.scrollTo({ top: 0, behavior: "smooth" });
+        //   },
+        //   isActive: location.pathname === "/level-test",
+        // },
         {
           label: "Kitaplar",
           NavIcon: MenuBookOutlined,

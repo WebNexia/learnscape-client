@@ -12,7 +12,7 @@ const LevelTest = () => {
         title="Ücretsiz İngilizce Seviye Testi (A1–C2)"
         description="Kısa okuma ve dinleme bölümlerinden oluşan ücretsiz uyarlanabilir İngilizce seviye testiyle tahmini CEFR seviyeni öğren."
         keywords="İngilizce seviye testi, online seviye testi, CEFR, A1 C2, okuma testi, dinleme testi, Aden Academy"
-        url={`${baseUrl}/seviye-testi`}
+        url={`${baseUrl}/level-test`}
       />
       <LandingPageLayout>
         <Box
