@@ -8,6 +8,7 @@ import UKFlag from '../../assets/uk_flag_icon_round.svg.png';
 import USFlag from '../../assets/usa_flag_united_states_america_icon_228698.png';
 import EUFlag from '../../assets/european_flag_icon_228671.png';
 import TRFlag from '../../assets/tr-flag-round-500.png';
+import LandingPageDocumentDetailBlocks from '../landingPage/LandingPageDocumentDetailBlocks';
 
 interface ConsultationDetailsNonEditBoxProps {
 	singleConsultation?: Consultation;
@@ -209,6 +210,20 @@ const ConsultationDetailsNonEditBox = ({ singleConsultation }: ConsultationDetai
 					</Box>
 				</Box>
 			</Box>
+
+			{(singleConsultation?.detailBlocks || []).length > 0 && (
+				<Box
+					sx={{
+						padding: isMobileSize ? '0.75rem' : '1rem',
+						...cardSx,
+						mb: '2rem',
+					}}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem', mb: '0.5rem' }}>
+						Detail Page Content
+					</Typography>
+					<LandingPageDocumentDetailBlocks blocks={singleConsultation?.detailBlocks || []} />
+				</Box>
+			)}
 
 		</Box>
 	);

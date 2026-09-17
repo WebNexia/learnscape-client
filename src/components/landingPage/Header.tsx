@@ -134,7 +134,9 @@ const Header = () => {
             navigate("/landing-page-consultations");
             window.scrollTo({ top: 0, behavior: "smooth" });
           },
-          isActive: location.pathname === "/landing-page-consultations",
+          isActive:
+            location.pathname === "/landing-page-consultations" ||
+            location.pathname.startsWith("/landing-page-consultations/"),
         },
         {
           label: "Kulüpler",

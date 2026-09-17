@@ -30,6 +30,7 @@ type ClubTicketRow = {
 	clubId?: { title?: string } | string;
 	sessionsRemaining?: number;
 	sessionsTotal?: number;
+	expiresAt?: string | null;
 	status?: string;
 };
 
@@ -295,6 +296,7 @@ const AdminClubTickets = () => {
 									{ label: 'Guest', key: 'guest' },
 									{ label: 'Club', key: 'club' },
 									{ label: 'Remaining', key: 'remaining' },
+									{ label: 'Expires', key: 'expiresAt' },
 									{ label: 'Status', key: 'status' },
 									{ label: 'Actions', key: 'actions' },
 								]}
@@ -302,7 +304,7 @@ const AdminClubTickets = () => {
 							<TableBody>
 								{tickets.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={6} align='center' sx={{ py: 3 }}>
+										<TableCell colSpan={7} align='center' sx={{ py: 3 }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>
 												No tickets found.
 											</Typography>
@@ -341,6 +343,19 @@ const AdminClubTickets = () => {
 												value={typeof t.clubId === 'object' ? t.clubId?.title || '—' : t.clubId || '—'}
 											/>
 											<CustomTableCell value={`${t.sessionsRemaining ?? 0} / ${t.sessionsTotal ?? 0}`} />
+											<CustomTableCell
+												value={
+													t.expiresAt
+														? new Date(t.expiresAt).toLocaleString('en-GB', {
+																day: '2-digit',
+																month: 'short',
+																year: 'numeric',
+																hour: '2-digit',
+																minute: '2-digit',
+															})
+														: '—'
+												}
+											/>
 											<CustomTableCell value={formatStatus(t.status)} />
 											<TableCell align='center'>
 												<CustomActionBtn

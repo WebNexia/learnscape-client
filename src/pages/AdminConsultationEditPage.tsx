@@ -20,8 +20,18 @@ import useImageUpload from '../hooks/useImageUpload';
 import ConsultationDetailsNonEditBox from '../components/adminSingleConsultation/ConsultationDetailsNonEditBox';
 import { feedbackFormsService } from '../services/feedbackFormsService';
 import { FeedbackForm } from '../interfaces/feedbackForm';
+import DocumentDetailBlocksEditor from '../components/documents/DocumentDetailBlocksEditor';
+import { DocumentDetailBlock } from '../interfaces/document';
+import { generateUniqueId } from '../utils/uniqueIdGenerator';
+import { consultationEditorScope } from '../utils/editorImageScopes';
 
 const CONSULTATION_FORM_NONE = '__NONE__';
+
+const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) =>
+	(blocks || []).map(({ rowKey: _rowKey, ...rest }) => rest);
+
+const ensureBlockKeys = (blocks: DocumentDetailBlock[] | undefined): DocumentDetailBlock[] =>
+	(blocks || []).map((b) => (b.rowKey ? b : { ...b, rowKey: generateUniqueId('consultblk_') }));
 
 const AdminConsultationEditPage = () => {
 	const { consultationId } = useParams();
@@ -129,8 +139,12 @@ const AdminConsultationEditPage = () => {
 					const response = await axios.get(`${base_url}/consultations/${consultationId}`);
 
 					const consultationResponse = response?.data?.data;
-					setSingleConsultation(consultationResponse);
-					setSingleConsultationBeforeSave(consultationResponse);
+					const withKeys = {
+						...consultationResponse,
+						detailBlocks: ensureBlockKeys(consultationResponse?.detailBlocks),
+					};
+					setSingleConsultation(withKeys);
+					setSingleConsultationBeforeSave(withKeys);
 
 					// Check if consultation is free
 					if (consultationResponse?.prices?.some((price: ConsultationPrice) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
@@ -276,6 +290,7 @@ const AdminConsultationEditPage = () => {
 				tags,
 				feedbackFormId: feedbackFormIdString ?? null,
 				requireFormSubmission: Boolean(singleConsultationBeforeSave.requireFormSubmission),
+				detailBlocks: serializeDetailBlocksForApi(singleConsultationBeforeSave.detailBlocks),
 			};
 
 			const response = await axios.patch(`${base_url}/consultations/${consultationId}`, updatedConsultation);
@@ -292,6 +307,7 @@ const AdminConsultationEditPage = () => {
 				tags: updatedConsultation.tags,
 				feedbackFormId: responseUpdatedData.feedbackFormId ?? singleConsultationBeforeSave.feedbackFormId,
 				requireFormSubmission: responseUpdatedData.requireFormSubmission ?? singleConsultationBeforeSave.requireFormSubmission,
+				detailBlocks: ensureBlockKeys(responseUpdatedData.detailBlocks ?? updatedConsultation.detailBlocks),
 				updatedAt: responseUpdatedData.updatedAt,
 				updatedBy: responseUpdatedData.updatedBy,
 			};
@@ -483,7 +499,7 @@ const AdminConsultationEditPage = () => {
 									</Box>
 									<Box sx={{ flex: 1 }}>
 										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', marginBottom: '0.5rem' }}>
-											Description*
+											Short Description*
 										</Typography>
 										<CustomTextField
 											fullWidth
@@ -512,6 +528,22 @@ const AdminConsultationEditPage = () => {
 									</Box>
 
 								</Box>
+							</Box>
+
+							<Box sx={{ ...sectionSx, mt: '1.5rem' }}>
+								<DocumentDetailBlocksEditor
+									entityId={consultationId}
+									blocks={singleConsultationBeforeSave?.detailBlocks || []}
+									onChange={(detailBlocks) => {
+										setHasUnsavedChanges(true);
+										setSingleConsultationBeforeSave((prev) => (prev ? { ...prev, detailBlocks } : prev));
+									}}
+									imageFolderName='ConsultationDetailImages'
+									imageScopedEntityId={consultationId ? consultationEditorScope(consultationId) : undefined}
+									heading='Consultation detail page content'
+									helpText='Build the public consultation detail page in order. Place images between text sections. Section body uses rich text. Short description above appears on the listing and at the top of the detail page.'
+									inlineImagesHint=''
+								/>
 							</Box>
 
 							{/* Consultation form (optional – survey shown during booking) */}

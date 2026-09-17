@@ -23,3 +23,7 @@ export function getConsultationPriceForCountry(
 		consultation.prices[0]
 	);
 }
+
+export function consultationDetailPath(consultation: { title?: string; _id: string }) {
+	return `/landing-page-consultations/${encodeURIComponent(consultation.title || '')}/${consultation._id}`;
+}

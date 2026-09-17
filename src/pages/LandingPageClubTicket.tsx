@@ -355,11 +355,30 @@ const LandingPageClubTicket = () => {
 										}}>
 										Kalan hak: {result.ticket.sessionsRemaining} / {result.ticket.sessionsTotal}
 									</Typography>
+									{result.ticket.expiresAt && (
+										<Typography
+											sx={{
+												mt: 1,
+												fontFamily: FONT,
+												fontSize: '0.78rem',
+												color: '#64748b',
+												lineHeight: 1.45,
+											}}>
+											Son geçerlilik:{' '}
+											{new Date(result.ticket.expiresAt).toLocaleString('tr-TR', {
+												weekday: 'short',
+												day: 'numeric',
+												month: 'long',
+												hour: '2-digit',
+												minute: '2-digit',
+											})}
+										</Typography>
+									)}
 								</Box>
 
 								{result.sessions.length === 0 ? (
 									<Typography sx={{ fontFamily: FONT, color: '#94a3b8', textAlign: 'center' }}>
-										Yaklaşan oturum yok.
+										Bu bilet için seçilebilir yaklaşan oturum yok.
 									</Typography>
 								) : (
 									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
