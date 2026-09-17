@@ -1,5 +1,8 @@
 # Permanent redirect Netlify subdomain → production domain
 https://learnscape-qa.netlify.app/*  https://adenacademy.co.uk/:splat  301!
 
+# Legacy Turkish slug → English
+/seviye-testi  /level-test  301
+
 # SPA fallback (custom domain + local Netlify dev)
 /*  /index.html  200
