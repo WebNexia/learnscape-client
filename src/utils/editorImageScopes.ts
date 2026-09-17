@@ -4,6 +4,7 @@ export const questionEditorScope = (questionId: string) => `questions/${question
 export const courseEditorScope = (courseId: string) => `courses/${courseId}`;
 export const documentEditorScope = (documentId: string) => `documents/${documentId}`;
 export const clubEditorScope = (clubId: string) => `clubs/${clubId}`;
+export const consultationEditorScope = (consultationId: string) => `consultations/${consultationId}`;
 export const emailEditorScope = (sessionId: string) => `emails/${sessionId}`;
 
 /** Client-side MongoDB ObjectId for uploads before create API returns. */

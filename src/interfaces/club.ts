@@ -34,8 +34,8 @@ export interface Club {
 	defaultCapacity: number;
 	hostUserId?: string;
 	packs?: ClubPack[];
-	/** Upcoming scheduled sessions that still have open seats */
-	availableSessionCount?: number;
+	/** Remaining sellable session rights (open-session seats minus unredeemed tickets) */
+	availableTicketCount?: number;
 	/** Ordered marketing blocks for the public club detail page */
 	detailBlocks?: DocumentDetailBlock[];
 	createdAt?: string;
@@ -63,6 +63,7 @@ export interface ClubTicketPublic {
 	guestEmail: string;
 	sessionsTotal: number;
 	sessionsRemaining: number;
+	expiresAt?: string | null;
 	status: string;
 	clubId: string;
 }

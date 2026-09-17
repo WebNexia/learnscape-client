@@ -119,6 +119,9 @@ const LandingPageClubTicket = React.lazy(
 const LandingPageClubPayment = React.lazy(
   () => import("./pages/LandingPageClubPayment"),
 );
+const LandingPageConsultation = React.lazy(
+  () => import("./pages/LandingPageConsultation"),
+);
 const AdminConsultationEditPage = React.lazy(
   () => import("./pages/AdminConsultationEditPage"),
 );
@@ -279,6 +282,10 @@ export const router = createBrowserRouter([
             element: <Navigate to="/landing-page-cart" replace />,
           },
         ],
+      },
+      {
+        path: "landing-page-consultations/:name/:consultationId",
+        element: <LandingPageConsultation />,
       },
       {
         path: "landing-page-clubs/qa-test",

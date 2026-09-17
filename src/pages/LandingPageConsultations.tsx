@@ -1,18 +1,18 @@
-import { Box, Typography, Button, Card, CardContent, CardMedia, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, CardMedia, CardActionArea, CircularProgress } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import React, { useContext, useState, Suspense } from 'react';
+import { useContext } from 'react';
 import { LandingPageConsultationsContext } from '../contexts/LandingPageConsultationsContextProvider';
 import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
-const ConsultationBookingModal = React.lazy(() => import('../components/landingPage/ConsultationBookingModal'));
 import { SEO, StructuredData } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { decodeHtmlEntities } from '../utils/utilText';
 import { useNavigate } from 'react-router-dom';
 import { useGeoLocation } from '../hooks/useGeoLocation';
-import { getConsultationPriceForCountry } from '../utils/getConsultationPriceForCountry';
+import { getConsultationPriceForCountry, consultationDetailPath } from '../utils/getConsultationPriceForCountry';
+import { ArrowForward } from '@mui/icons-material';
 const DEFAULT_COVER_PLACEHOLDER = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop';
 const CONSULTATION_CARD_DESCRIPTION_PREVIEW = 200;
 
@@ -33,13 +33,10 @@ const LandingPageConsultations = () => {
 	const { consultations, loading, error, hasMore, loadMore } = useContext(LandingPageConsultationsContext);
 	const geoLocation = useGeoLocation();
 	const navigate = useNavigate();
-	const [bookingModalOpen, setBookingModalOpen] = useState(false);
-	const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
-	const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
 
-	const openBookingModal = (c: Consultation) => {
-		setSelectedConsultation(c);
-		setBookingModalOpen(true);
+	const goToDetail = (c: Consultation) => {
+		navigate(consultationDetailPath(c));
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
@@ -162,6 +159,11 @@ const LandingPageConsultations = () => {
 									{consultations.map((c: Consultation) => {
 										const displayPrice = getDisplayPrice(getConsultationPriceForCountry(c, geoLocation?.countryCode));
 										const hasAvailableSlots = c.hasAvailableSlots !== false;
+										const fullDescription = c.description ? decodeHtmlEntities(c.description) : '';
+										const isLong = fullDescription.length > CONSULTATION_CARD_DESCRIPTION_PREVIEW;
+										const preview = isLong
+											? `${fullDescription.slice(0, CONSULTATION_CARD_DESCRIPTION_PREVIEW).trim()}…`
+											: fullDescription;
 										return (
 											<Card
 												key={c._id}
@@ -197,6 +199,20 @@ const LandingPageConsultations = () => {
 														'&::before': { transform: 'scaleX(1)' },
 													},
 												}}>
+												<CardActionArea
+													onClick={() => goToDetail(c)}
+													sx={{
+														display: 'flex',
+														flexDirection: isMobileSize ? 'column' : 'row',
+														alignItems: 'stretch',
+														height: '100%',
+														width: '100%',
+														'&:hover': { backgroundColor: 'transparent' },
+														'& .MuiCardActionArea-focusHighlight': {
+															backgroundColor: 'transparent',
+															opacity: '0 !important',
+														},
+													}}>
 												<Box
 													sx={{
 														width: isMobileSize ? '100%' : 220,
@@ -248,51 +264,19 @@ const LandingPageConsultations = () => {
 															}}>
 															{c.title}
 														</Typography>
-														{c.description && (() => {
-															const fullDescription = decodeHtmlEntities(c.description);
-															const isLong = fullDescription.length > CONSULTATION_CARD_DESCRIPTION_PREVIEW;
-															const preview = isLong
-																? `${fullDescription.slice(0, CONSULTATION_CARD_DESCRIPTION_PREVIEW).trim()}…`
-																: fullDescription;
-															return (
-																<Typography
-																	component='div'
-																	sx={{
-																		fontFamily: 'Varela Round',
-																		color: '#64748b',
-																		fontSize: { xs: '0.75rem', sm: '0.8rem' },
-																		lineHeight: 1.55,
-																		wordBreak: 'break-word',
-																	}}>
-																	{preview}
-																	{isLong && (
-																		<Box
-																			component='span'
-																			role='button'
-																			tabIndex={0}
-																			onClick={() =>
-																				setDescriptionModal({ title: c.title, description: fullDescription })
-																			}
-																			onKeyDown={(e) => {
-																				if (e.key === 'Enter' || e.key === ' ') {
-																					e.preventDefault();
-																					setDescriptionModal({ title: c.title, description: fullDescription });
-																				}
-																			}}
-																			sx={{
-																				color: '#0052a3',
-																				cursor: 'pointer',
-																				fontWeight: 600,
-																				ml: 0.5,
-																				whiteSpace: 'nowrap',
-																				'&:hover': { textDecoration: 'underline' },
-																			}}>
-																			fazlası için tıkla
-																		</Box>
-																	)}
-																</Typography>
-															);
-														})()}
+														{fullDescription && (
+															<Typography
+																component='div'
+																sx={{
+																	fontFamily: 'Varela Round',
+																	color: '#64748b',
+																	fontSize: { xs: '0.75rem', sm: '0.8rem' },
+																	lineHeight: 1.55,
+																	wordBreak: 'break-word',
+																}}>
+																{preview}
+															</Typography>
+														)}
 													</Box>
 													<Box
 														sx={{
@@ -330,30 +314,6 @@ const LandingPageConsultations = () => {
 																		Ücretsiz
 																	</Typography>
 																)}
-																<Button
-																	variant='contained'
-																	size='small'
-																	onClick={() => openBookingModal(c)}
-																	sx={{
-																		ml: 'auto',
-																		fontFamily: 'Varela Round',
-																		fontWeight: 600,
-																		textTransform: 'capitalize',
-																		fontSize: '0.8rem',
-																		py: 0.5,
-																		px: 1.5,
-																		borderRadius: '0.75rem',
-																		background: 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
-																		boxShadow: '0 4px 14px rgba(255, 107, 61, 0.35)',
-																		'&:hover': {
-																			background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
-																			boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
-																			transform: 'translateY(-2px)',
-																		},
-																		transition: 'all 0.25s ease',
-																	}}>
-																	Randevu Al
-																</Button>
 															</>
 														) : (
 															<Typography
@@ -363,14 +323,35 @@ const LandingPageConsultations = () => {
 																	color: '#64748b',
 																	fontSize: '0.85rem',
 																	fontStyle: 'italic',
-																	width: '100%',
-																	textAlign: { xs: 'center', md: 'left' },
 																}}>
 																Yeni oturumlar yakında başlayacak
 															</Typography>
 														)}
+														<Button
+															variant='outlined'
+															size='small'
+															endIcon={<ArrowForward sx={{ fontSize: '0.95rem !important' }} />}
+															sx={{
+																ml: 'auto',
+																fontFamily: 'Varela Round',
+																fontWeight: 600,
+																textTransform: 'none',
+																fontSize: '0.8rem',
+																py: 0.5,
+																px: 1.5,
+																borderRadius: '0.75rem',
+																borderColor: '#0052a3',
+																color: '#0052a3',
+																'&:hover': {
+																	borderColor: '#004c99',
+																	backgroundColor: 'rgba(0, 82, 163, 0.06)',
+																},
+															}}>
+															Detayları Gör
+														</Button>
 													</Box>
 												</CardContent>
+												</CardActionArea>
 											</Card>
 										);
 									})}
@@ -424,54 +405,6 @@ const LandingPageConsultations = () => {
 					</LandingPageLayout>
 				</Box>
 			</Box>
-
-			{bookingModalOpen && (
-				<Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>}>
-					<ConsultationBookingModal
-						open={bookingModalOpen}
-						onClose={() => { setBookingModalOpen(false); setSelectedConsultation(null); }}
-						consultation={selectedConsultation}
-						consultationId={selectedConsultation?._id}
-						onAddedToCart={() => navigate('/landing-page-cart')}
-					/>
-				</Suspense>
-			)}
-
-			<Dialog
-				open={Boolean(descriptionModal)}
-				onClose={() => setDescriptionModal(null)}
-				maxWidth='sm'
-				fullWidth
-				PaperProps={{ sx: { borderRadius: '0.75rem', mx: 2 } }}>
-				<DialogTitle sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0f172a', pb: 1 }}>
-					{descriptionModal?.title}
-				</DialogTitle>
-				<DialogContent>
-					<Typography
-						sx={{
-							fontFamily: 'Varela Round',
-							color: '#64748b',
-							fontSize: '0.875rem',
-							lineHeight: 1.6,
-							whiteSpace: 'pre-wrap',
-							wordBreak: 'break-word',
-						}}>
-						{descriptionModal?.description}
-					</Typography>
-				</DialogContent>
-				<DialogActions sx={{ px: 3, pb: 2 }}>
-					<Button
-						onClick={() => setDescriptionModal(null)}
-						sx={{
-							fontFamily: 'Varela Round',
-							fontWeight: 600,
-							textTransform: 'capitalize',
-							color: '#0052a3',
-						}}>
-						Kapat
-					</Button>
-				</DialogActions>
-			</Dialog>
 		</>
 	);
 };

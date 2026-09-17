@@ -1,3 +1,5 @@
+import type { DocumentDetailBlock } from './document';
+
 export interface ConsultationPrice {
 	currency: string;
 	amount: string;
@@ -32,6 +34,8 @@ export interface Consultation {
 	requireFormSubmission?: boolean; // When true, booking flow requires form submission
 	meetingType?: 'video';
 	hasAvailableSlots?: boolean;
+	/** Ordered marketing blocks for the public consultation detail page */
+	detailBlocks?: DocumentDetailBlock[];
 	createdAt: string;
 	updatedAt: string;
 }

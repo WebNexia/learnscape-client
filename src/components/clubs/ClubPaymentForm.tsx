@@ -50,7 +50,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	const maxSessionCount = Math.max(0, Math.floor(Number(club?.availableSessionCount) || 0));
+	const maxSessionCount = Math.max(0, Math.floor(Number(club?.availableTicketCount) || 0));
 
 	useEffect(() => {
 		if (maxSessionCount < 1) return;
@@ -76,8 +76,8 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 	const handlePayment = async () => {
 		if (!orgId || !quote.ok) return;
 		clearError();
-		if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-			setErrorMessage('İsim, soyisim ve e-posta zorunludur.');
+		if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim()) {
+			setErrorMessage('İsim, soyisim, e-posta ve telefon zorunludur.');
 			return;
 		}
 		if (!agreeTermsAndPrivacy) {
@@ -85,7 +85,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 			return;
 		}
 		if (maxSessionCount < 1) {
-			setErrorMessage('Bu kulüpte şu an açık oturum yok.');
+			setErrorMessage('Bu kulüpte şu an satılabilir bilet kalmadı.');
 			return;
 		}
 		if (sessionCount > maxSessionCount) {
@@ -113,7 +113,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				email: email.trim(),
-				guestPhone: phone.trim() || undefined,
+				guestPhone: phone.trim(),
 				cancelUrl: `${window.location.origin}${cancelPath}`,
 				...(isQaPreview ? { qaPreview: true } : {}),
 			});
@@ -217,7 +217,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 							<Box sx={{ mb: 2 }}>
 								<Box
 									sx={{
-										display: 'flex',
+										display: maxSessionCount > 0 ? 'flex' : 'none',
 										alignItems: 'center',
 										justifyContent: 'space-between',
 										gap: 1.5,
@@ -296,10 +296,17 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 										</IconButton>
 									</Box>
 								</Box>
-								<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mt: 0.75 }}>
+								<Typography
+									sx={{
+										fontFamily: FONT,
+										fontSize: '0.75rem',
+										color: maxSessionCount > 0 ? 'text.secondary' : '#E11D48',
+										mt: 0.75,
+										fontWeight: maxSessionCount > 0 ? 400 : 600,
+									}}>
 									{maxSessionCount > 0
-										? `En fazla ${maxSessionCount} bilet (açık oturum sayısı). Özel paket yoksa (1 oturum fiyatı × adet) hesaplanır.`
-										: 'Şu an açık oturum olmadığı için bilet alınamaz.'}
+										? `En fazla ${maxSessionCount} bilet (açık oturum kapasitesi). Bilet, satın alma anındaki açık oturumlar bitince geçersiz olur. Özel paket yoksa 1 oturum fiyatı × adet hesaplanır.`
+										: 'Şu an satılabilir bilet kalmadığı için satın alma yapılamaz.'}
 								</Typography>
 							</Box>
 
@@ -357,12 +364,15 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								InputProps={{ inputProps: { maxLength: 254 } }}
 							/>
 							<CustomTextField
-								label='Telefon (opsiyonel)'
+								label='Telefon'
 								size='small'
 								value={phone}
-								onChange={(e) => setPhone(e.target.value)}
+								onChange={(e) => {
+									setPhone(e.target.value);
+									clearError();
+								}}
 								fullWidth
-								required={false}
+								required
 								sx={{
 									mb: 2,
 									'& .MuiOutlinedInput-root': { fontFamily: FONT, borderRadius: INPUT_RADIUS },
@@ -370,6 +380,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 									'& .MuiInputLabel-root': { fontFamily: FONT, fontSize: '0.85rem' },
 								}}
 								disabled={isProcessing}
+								InputProps={{ inputProps: { maxLength: 40 } }}
 							/>
 
 							<Box
