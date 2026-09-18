@@ -1304,6 +1304,36 @@ const CourseDetailsEditBox = ({
 									}}
 								/>
 							</Tooltip>
+							<Tooltip
+								title='Hidden from the landing page lists and the courses page. The detail page stays available by direct link.'
+								placement='left'
+								arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={Boolean(singleCourseBeforeSave?.isDetailPageOnly)}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev) return prev;
+													return { ...prev, isDetailPageOnly: e.target.checked };
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Sadece detay sayfasını göster'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
 						</Box>
 					</Box>
 				</Box>

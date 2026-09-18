@@ -48,6 +48,8 @@ export interface BaseCourse {
 	isRegistrationClosedByAdmin?: boolean;
 	/** Hidden from LP and regular learners; only test-learner accounts can take the course. */
 	isTestCourse?: boolean;
+	/** Listed nowhere on the landing site; the detail URL still works when published. */
+	isDetailPageOnly?: boolean;
 	activeEnrollmentCount?: number;
 	clonedFromId?: string;
 	clonedFromTitle?: string;

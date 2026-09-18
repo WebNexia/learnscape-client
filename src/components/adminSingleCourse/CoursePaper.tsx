@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview, Insights, Person } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview, Insights, Person, ContentCopy } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -95,6 +95,20 @@ const CoursePaper = ({
 	const [isCloneCourseDialogOpen, setIsCloneCourseDialogOpen] = useState<boolean>(false);
 	const [isCourseInfoDialogOpen, setIsCourseInfoDialogOpen] = useState<boolean>(false);
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+	const [detailLinkCopied, setDetailLinkCopied] = useState(false);
+
+	const copyDetailPageLink = async () => {
+		const id = singleCourseBeforeSave?._id || courseId;
+		const title = singleCourseBeforeSave?.title?.trim();
+		if (!id || !title) return;
+		const url = `${window.location.origin}/landing-page-course/${encodeURIComponent(title)}/${id}`;
+		try {
+			await navigator.clipboard.writeText(url);
+			setDetailLinkCopied(true);
+		} catch {
+			setDetailLinkCopied(false);
+		}
+	};
 
 	const cloneCourse = async () => {
 		setIsCloning(true);
@@ -355,6 +369,23 @@ const CoursePaper = ({
 								</Snackbar>
 
 								<Snackbar
+									open={detailLinkCopied}
+									autoHideDuration={2000}
+									anchorOrigin={{ vertical, horizontal }}
+									sx={{ mt: '5rem' }}
+									onClose={() => setDetailLinkCopied(false)}>
+									<Alert
+										severity='success'
+										variant='filled'
+										sx={{
+											width: isMobileSize ? '60%' : '100%',
+											fontSize: isMobileSize ? '0.75rem' : undefined,
+										}}>
+										Kurs detay linki kopyalandı
+									</Alert>
+								</Snackbar>
+
+								<Snackbar
 									open={isMissingFieldMsgOpen}
 									autoHideDuration={3000}
 									anchorOrigin={{ vertical, horizontal }}
@@ -496,6 +527,13 @@ const CoursePaper = ({
 										</Tooltip>
 									</Box>
 								)}
+								<Tooltip title='Kurs detay sayfası linkini kopyala' placement='top' arrow>
+									<IconButton
+										sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.35rem' : '0.15rem' }}
+										onClick={copyDetailPageLink}>
+										<ContentCopy sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
+									</IconButton>
+								</Tooltip>
 							</Box>
 
 							<CloneCourseDialog

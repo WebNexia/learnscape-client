@@ -132,7 +132,7 @@ const ClubJoinHowItWorks = () => {
 						sx={{
 							display: 'flex',
 							flexDirection: { xs: 'column', md: 'row' },
-							alignItems: { xs: 'stretch', md: 'flex-start' },
+							alignItems: 'stretch',
 							justifyContent: 'center',
 							gap: { xs: 1.5, md: 0 },
 						}}>
@@ -145,13 +145,16 @@ const ClubJoinHowItWorks = () => {
 									sx={{
 										display: 'flex',
 										flexDirection: { xs: 'column', md: 'row' },
-										alignItems: { xs: 'stretch', md: 'center' },
+										alignItems: 'stretch',
 										flex: { md: 1 },
 										minWidth: 0,
 									}}>
 									<Box
 										sx={{
 											flex: 1,
+											alignSelf: 'stretch',
+											display: 'flex',
+											flexDirection: 'column',
 											textAlign: 'center',
 											px: { xs: 1.5, md: 1.25 },
 											py: 1.75,
@@ -222,6 +225,7 @@ const ClubJoinHowItWorks = () => {
 											sx={{
 												display: 'flex',
 												alignItems: 'center',
+												alignSelf: 'center',
 												justifyContent: 'center',
 												px: { md: 0.5 },
 												py: { xs: 0.25, md: 0 },
