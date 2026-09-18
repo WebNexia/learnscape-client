@@ -56,6 +56,25 @@ export function resolveClientPurchasePrice(packs: ClubPack[] | undefined, sessio
 	};
 }
 
+export function resolveSeatPurchasePrice(
+	packs: ClubPack[] | undefined,
+	sessionCount: number,
+	personCount: number,
+	countryCode?: string | null,
+) {
+	const people = Math.floor(Number(personCount));
+	if (!Number.isFinite(people) || people < 1) {
+		return { ok: false as const, message: 'En az 1 kişi seçin.' };
+	}
+	const perPerson = resolveClientPurchasePrice(packs, sessionCount, countryCode);
+	if (!perPerson.ok) return perPerson;
+	return {
+		...perPerson,
+		amount: Math.round(perPerson.amount * people * 100) / 100,
+		label: `${people} kişi × ${sessionCount} oturum`,
+	};
+}
+
 export function clubPaymentPath(club: { title?: string; _id: string }, isQaPreview?: boolean) {
 	const base = `/landing-page-clubs/${encodeURIComponent(club.title || '')}/${club._id}/payment`;
 	return isQaPreview ? `${base}/${LP_QA_PREVIEW_SEGMENT}` : base;

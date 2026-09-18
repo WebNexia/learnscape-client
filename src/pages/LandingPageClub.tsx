@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, Chip, CircularProgress, Typography } from '@mui/material';
-import { ArrowBack, ArrowForward, ConfirmationNumber, EventAvailable } from '@mui/icons-material';
+import { ArrowBack, ConfirmationNumber, Search } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
@@ -82,9 +82,10 @@ const LandingPageClub = () => {
 	const seoDescription =
 		introPlainForSeo ||
 		club?.description ||
-		'Aden Academy Zoom kulübü. Oturum satın alın, bilet kodunuzla katılın.';
+		'Aden Academy Zoom kulübü. Kişi sayısını ve oturumları seçip satın alın.';
 
-	const canPurchase = Boolean(club?.packs?.length && (isQaPreview || club?.isActive !== false));
+	const hasOpenSeat = (club?.purchaseSessions || []).some((session) => session.seatsLeft > 0 && !session.isFull);
+	const canPurchase = Boolean(club?.packs?.length && hasOpenSeat && (isQaPreview || club?.isActive !== false));
 
 	const goToPayment = () => {
 		if (!club || !canPurchase) return;
@@ -321,74 +322,17 @@ const LandingPageClub = () => {
 												backgroundColor: 'rgba(0, 82, 163, 0.06)',
 												border: '1px solid rgba(0, 82, 163, 0.16)',
 											}}>
-											<Box
-												sx={{
-													display: 'flex',
-													alignItems: 'center',
-													flexWrap: 'wrap',
-													columnGap: 1.15,
-													rowGap: 0.85,
-													mb: 0.85,
-												}}>
-												<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-													<Box
-														sx={{
-															width: 26,
-															height: 26,
-															borderRadius: '50%',
-															backgroundColor: '#0052a3',
-															color: '#fff',
-															display: 'flex',
-															alignItems: 'center',
-															justifyContent: 'center',
-															fontFamily: 'Varela Round',
-															fontSize: '0.78rem',
-															fontWeight: 700,
-															flexShrink: 0,
-														}}>
-														1
-													</Box>
-													<ConfirmationNumber sx={{ fontSize: '1.15rem', color: '#0052a3' }} />
-													<Typography
-														sx={{
-															fontFamily: 'Varela Round',
-															fontSize: { xs: '0.88rem', sm: '0.95rem' },
-															fontWeight: 700,
-															color: '#0f172a',
-														}}>
-														Bilet alın
-													</Typography>
-												</Box>
-												<ArrowForward sx={{ fontSize: '1.15rem', color: '#94a3b8', flexShrink: 0 }} />
-												<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-													<Box
-														sx={{
-															width: 26,
-															height: 26,
-															borderRadius: '50%',
-															backgroundColor: '#FF6B3D',
-															color: '#fff',
-															display: 'flex',
-															alignItems: 'center',
-															justifyContent: 'center',
-															fontFamily: 'Varela Round',
-															fontSize: '0.78rem',
-															fontWeight: 700,
-															flexShrink: 0,
-														}}>
-														2
-													</Box>
-													<EventAvailable sx={{ fontSize: '1.15rem', color: '#FF6B3D' }} />
-													<Typography
-														sx={{
-															fontFamily: 'Varela Round',
-															fontSize: { xs: '0.88rem', sm: '0.95rem' },
-															fontWeight: 700,
-															color: '#0f172a',
-														}}>
-														Kodla oturum seçin
-													</Typography>
-												</Box>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7, mb: 0.85 }}>
+												<ConfirmationNumber sx={{ fontSize: '1.15rem', color: '#0052a3' }} />
+												<Typography
+													sx={{
+														fontFamily: 'Varela Round',
+														fontSize: { xs: '0.88rem', sm: '0.95rem' },
+														fontWeight: 700,
+														color: '#0f172a',
+													}}>
+													Kişi ve oturum seçip satın alın
+												</Typography>
 											</Box>
 											<Typography
 												sx={{
@@ -397,7 +341,7 @@ const LandingPageClub = () => {
 													color: '#475569',
 													lineHeight: 1.45,
 												}}>
-												Önce bilet(ler) satın alın; kod e-postanıza gelir. Ardından bu sayfadan kodunuzla oturum(lar) seçin.
+												Ödeme sırasında kişi sayısını ve katılacağınız oturumları seçersiniz. Zoom linkleri e-postanıza gelir.
 											</Typography>
 										</Box>
 
@@ -414,6 +358,7 @@ const LandingPageClub = () => {
 												variant='outlined'
 												component={RouterLink}
 												to={ticketPath}
+												startIcon={<Search />}
 												sx={{
 													borderColor: '#0052a3',
 													color: '#0052a3',
@@ -424,7 +369,7 @@ const LandingPageClub = () => {
 														backgroundColor: 'rgba(0, 82, 163, 0.06)',
 													},
 												}}>
-												Oturum Seç
+												Oturum Sorgula
 											</Button>
 										</Box>
 									</Box>
@@ -468,14 +413,36 @@ const LandingPageClub = () => {
 											</Typography>
 										)}
 									</Box>
-									<Button
-										variant='contained'
-										disabled={!canPurchase}
-										onClick={goToPayment}
-										endIcon={<ConfirmationNumber />}
-										sx={{ ...ctaButtonSx, px: 2.5, py: 1, alignSelf: { xs: 'stretch', sm: 'auto' } }}>
-										Bilet Satın Al
-									</Button>
+									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: { xs: 'stretch', sm: 'center' } }}>
+										<Button
+											variant='contained'
+											disabled={!canPurchase}
+											onClick={goToPayment}
+											endIcon={<ConfirmationNumber />}
+											sx={{ ...ctaButtonSx, px: 2.5, py: 1, alignSelf: { xs: 'stretch', sm: 'auto' } }}>
+											Bilet Satın Al
+										</Button>
+										<Button
+											variant='outlined'
+											component={RouterLink}
+											to={ticketPath}
+											startIcon={<Search />}
+											sx={{
+												borderColor: '#0052a3',
+												color: '#0052a3',
+												textTransform: 'none',
+												fontFamily: 'Varela Round',
+												px: 2.5,
+												py: 1,
+												alignSelf: { xs: 'stretch', sm: 'auto' },
+												'&:hover': {
+													borderColor: '#004c99',
+													backgroundColor: 'rgba(0, 82, 163, 0.06)',
+												},
+											}}>
+											Oturum Sorgula
+										</Button>
+									</Box>
 								</Box>
 							</Box>
 						)}

@@ -34,12 +34,26 @@ export interface Club {
 	defaultCapacity: number;
 	hostUserId?: string;
 	packs?: ClubPack[];
-	/** Remaining sellable session rights (open-session seats minus unredeemed tickets) */
+	/** Remaining sellable session rights in the current purchase window */
 	availableTicketCount?: number;
+	seatPool?: number;
+	purchaseSessions?: ClubPurchaseSession[];
 	/** Ordered marketing blocks for the public club detail page */
 	detailBlocks?: DocumentDetailBlock[];
 	createdAt?: string;
 	updatedAt?: string;
+}
+
+export interface ClubPurchaseSession {
+	_id: string;
+	startsAt: string;
+	durationMinutes: number;
+	capacity: number;
+	seatsLeft: number;
+	seatsTaken?: number;
+	isFull?: boolean;
+	monthKey: string;
+	monthLabel: string;
 }
 
 export interface ClubSession {
@@ -62,7 +76,6 @@ export interface ClubTicketPublic {
 	guestName: string;
 	guestEmail: string;
 	sessionsTotal: number;
-	sessionsRemaining: number;
 	expiresAt?: string | null;
 	status: string;
 	clubId: string;

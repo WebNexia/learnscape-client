@@ -1,13 +1,16 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import DashboardCourseCard from '../userCourses/DashboardCourseCard';
 import { forwardRef, useContext, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LandingPageLatestCoursesContext } from '../../contexts/LandingPageLatestCoursesContextProvider';
 import { SingleCourse } from '../../interfaces/course';
 import LandingPageCoursesInfoDialog from './LandingPageCoursesInfoDialog';
 import LandingPageSectionHeader from './LandingPageSectionHeader';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import { mulberry32, scatterNonOverlapping } from '../../utils/lpDecorScatter';
-import { SchoolOutlined, MenuBookOutlined } from '@mui/icons-material';
+import { ArrowForward, SchoolOutlined, MenuBookOutlined } from '@mui/icons-material';
+import { useIsLpQaPreview } from '../../hooks/useIsLpQaPreview';
+import { LP_QA_PREVIEW_SEGMENT } from '../../utils/lpQaPreview';
 
 const DIALOG_FONT = 'Varela Round';
 
@@ -20,8 +23,15 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 	const { latestCourses } = useContext(LandingPageLatestCoursesContext);
 
 	const { orgId } = useContext(OrganisationContext);
+	const navigate = useNavigate();
+	const isQaPreview = useIsLpQaPreview();
 
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
+
+	const goToAllCourses = () => {
+		navigate(isQaPreview ? `/landing-page-courses/${LP_QA_PREVIEW_SEGMENT}` : '/landing-page-courses');
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
 
 	const backgroundDecor = useMemo(() => {
 		const positions = scatterNonOverlapping(0x4c415445, LATEST_COURSES_DECOR_COUNT, {
@@ -114,6 +124,33 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 							Yeni kurslarımız çok yakında burada olacak. Programlar hakkında bilgi almak için bizimle iletişime geçebilirsiniz.
 						</Typography>
 					)}
+				</Box>
+
+				<Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 3, sm: 4 }, px: { xs: 1.5, sm: 2 } }}>
+					<Button
+						variant='contained'
+						endIcon={<ArrowForward />}
+						onClick={goToAllCourses}
+						sx={{
+							fontFamily: DIALOG_FONT,
+							fontWeight: 600,
+							textTransform: 'none',
+							background: '#FF6B3D',
+							color: '#FFFFFF',
+							borderRadius: { xs: '0.75rem', sm: '1rem' },
+							px: { xs: 2, sm: 2.75 },
+							py: { xs: 0.85, sm: 1 },
+							fontSize: { xs: '0.9rem', sm: '1rem' },
+							boxShadow: '0 4px 15px rgba(255, 107, 61, 0.35)',
+							'&:hover': {
+								background: '#ff7d55',
+								transform: 'translateY(-2px)',
+								boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+							},
+							transition: 'all 0.25s ease',
+						}}>
+						Tüm Kurslar
+					</Button>
 				</Box>
 
 				<LandingPageCoursesInfoDialog isInfoDialogOpen={isInfoDialogOpen} setIsInfoDialogOpen={setIsInfoDialogOpen} />

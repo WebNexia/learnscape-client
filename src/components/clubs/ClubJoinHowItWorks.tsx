@@ -2,7 +2,7 @@ import { Box, Collapse, IconButton, Typography } from '@mui/material';
 import {
 	ChevronRight,
 	ConfirmationNumberOutlined,
-	EmailOutlined,
+	CreditCardOutlined,
 	ExpandMore,
 	SvgIconComponent,
 	VideocamOutlined,
@@ -27,22 +27,22 @@ type Step = {
 const STEPS: Step[] = [
 	{
 		n: 1,
-		title: 'Kulüp sayfasından bilet alın',
+		title: 'Kişi sayısını ve oturumları seçin',
 		blurb: '',
 		Icon: ConfirmationNumberOutlined,
 		accent: BLUE,
 	},
 	{
 		n: 2,
-		title: 'E-postadaki bilet koduyla oturum seçin',
+		title: 'Ödemeyi tamamlayın',
 		blurb: '',
-		Icon: EmailOutlined,
+		Icon: CreditCardOutlined,
 		accent: ORANGE,
 	},
 	{
 		n: 3,
-		title: 'Zoom linki e-postanıza gelir',
-		blurb: '',
+		title: 'Zoom linkleri e-postanıza gelir',
+		blurb: 'Her kişi kendi linkiyle katılır.',
 		Icon: VideocamOutlined,
 		accent: BLUE,
 	},
@@ -105,7 +105,7 @@ const ClubJoinHowItWorks = () => {
 							color: '#475569',
 							lineHeight: 1.45,
 						}}>
-						{open ? '3 kısa adım — Bilet alın, oturum seçin, Zoom’a girin.' : 'Adımları görmek için tıklayın'}
+						{open ? '3 kısa adım — Kişi ve oturum seçin, ödeyin, Zoom linki gelsin.' : 'Adımları görmek için tıklayın'}
 					</Typography>
 				</Box>
 				<IconButton

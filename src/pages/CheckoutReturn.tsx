@@ -137,12 +137,10 @@ export default function CheckoutReturn() {
 						}
 					}
 					clearCheckoutReturnContext();
-					setBackPath('/landing-page-clubs/ticket');
+					setBackPath('/landing-page-clubs');
 					setStatus('success');
-					setMessage(
-						'Ödemeniz alındı. Bilet kodunuz e-postanıza gönderildi. Oturum seçmek için bilet sayfasını kullanabilirsiniz.',
-					);
-					setTimeout(() => navigate('/landing-page-clubs/ticket', { replace: true }), 3500);
+					setMessage('Ödemeniz alındı. Seçtiğiniz oturumların Zoom linkleri e-postanıza gönderildi.');
+					setTimeout(() => navigate('/landing-page-clubs', { replace: true }), 3500);
 					return;
 				}
 
