@@ -286,6 +286,7 @@ const AdminCourses = () => {
 			addNewCourse({
 				_id: response.data.cohortCourse._id,
 				title: response.data.cohortCourse.title,
+				imageUrl: response.data.cohortCourse.imageUrl,
 				startingDate: response.data.cohortCourse.startingDate,
 				courseAccessTiming: response.data.cohortCourse.courseAccessTiming ?? 'cohort',
 				instructor: response.data.cohortCourse.instructor,
