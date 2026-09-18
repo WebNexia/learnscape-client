@@ -578,7 +578,9 @@ const AdminCourses = () => {
 															: 'Published - Open'
 														: course.isExpired
 															? 'Unpublished - Closed'
-															: 'Unpublished - Open') + (course.isTestCourse ? ' — Test' : '')
+															: 'Unpublished - Open') +
+													(course.isTestCourse ? ' — Test' : '') +
+													(course.isDetailPageOnly ? ' — Detail only' : '')
 												}
 											/>
 											{!isMobileSize && !isInstructor && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
