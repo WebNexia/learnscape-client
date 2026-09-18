@@ -18,6 +18,8 @@ export const clubsService = {
 		clubId: string,
 		body: {
 			sessionCount: number;
+			personCount: number;
+			sessionIds: string[];
 			currency: string;
 			amount: number;
 			firstName: string;
@@ -123,6 +125,10 @@ export const clubsService = {
 	},
 	cancelRegistration: async (registrationId: string) => {
 		const res = await axios.patch(`${base_url}/clubs/registrations/${registrationId}/cancel`);
+		return res.data;
+	},
+	moveRegistration: async (registrationId: string, sessionId: string) => {
+		const res = await axios.patch(`${base_url}/clubs/registrations/${registrationId}/move`, { sessionId });
 		return res.data;
 	},
 };

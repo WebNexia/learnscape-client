@@ -295,7 +295,7 @@ const AdminClubTickets = () => {
 									{ label: 'Code', key: 'code' },
 									{ label: 'Guest', key: 'guest' },
 									{ label: 'Club', key: 'club' },
-									{ label: 'Remaining', key: 'remaining' },
+									{ label: 'Sessions', key: 'sessions' },
 									{ label: 'Expires', key: 'expiresAt' },
 									{ label: 'Status', key: 'status' },
 									{ label: 'Actions', key: 'actions' },
@@ -342,7 +342,7 @@ const AdminClubTickets = () => {
 											<CustomTableCell
 												value={typeof t.clubId === 'object' ? t.clubId?.title || '—' : t.clubId || '—'}
 											/>
-											<CustomTableCell value={`${t.sessionsRemaining ?? 0} / ${t.sessionsTotal ?? 0}`} />
+											<CustomTableCell value={t.sessionsTotal ?? 0} />
 											<CustomTableCell
 												value={
 													t.expiresAt

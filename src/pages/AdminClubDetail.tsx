@@ -3,9 +3,13 @@ import {
 	Box,
 	Checkbox,
 	Collapse,
+	FormControl,
 	FormControlLabel,
 	FormGroup,
 	IconButton,
+	InputLabel,
+	MenuItem,
+	Select,
 	Snackbar,
 	Table,
 	TableBody,
@@ -119,6 +123,9 @@ const AdminClubDetail = () => {
 
 	const [regsOpen, setRegsOpen] = useState(false);
 	const [regs, setRegs] = useState<any[]>([]);
+	const [moveReg, setMoveReg] = useState<any | null>(null);
+	const [moveSessionId, setMoveSessionId] = useState('');
+	const [isMoving, setIsMoving] = useState(false);
 	const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
 	const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -308,13 +315,8 @@ const AdminClubDetail = () => {
 		if (!id || !sessionToDelete) return;
 		setIsDeletingSession(true);
 		try {
-			const res = await clubsService.deleteSession(id, sessionToDelete._id);
-			const restored = res?.restoredTickets ?? 0;
-			showSnack(
-				restored > 0
-					? `Session deleted. ${restored} ticket entitlement(s) restored.`
-					: 'Session deleted',
-			);
+			await clubsService.deleteSession(id, sessionToDelete._id);
+			showSnack('Session deleted');
 			setSessionToDelete(null);
 			if (selectedSessionId === sessionToDelete._id) {
 				setRegsOpen(false);
@@ -362,6 +364,45 @@ const AdminClubDetail = () => {
 			await load();
 		} catch {
 			showSnack('Cancel failed', 'error');
+		}
+	};
+
+	const formatSessionOption = (session: ClubSession) => {
+		const tz = club?.schedule?.timezone || 'Europe/Istanbul';
+		const when = new Date(session.startsAt).toLocaleString('en-GB', {
+			weekday: 'short',
+			day: '2-digit',
+			month: 'short',
+			hour: '2-digit',
+			minute: '2-digit',
+			timeZone: tz,
+		});
+		const left = Math.max(0, session.capacity - (session.seatsTaken ?? 0));
+		return `${when} · ${left} seat${left === 1 ? '' : 's'} left`;
+	};
+
+	const moveTargets = sessions.filter((session) => {
+		if (!moveReg || session._id === selectedSessionId || session.status !== 'scheduled') return false;
+		const endsAt = new Date(session.startsAt).getTime() + (session.durationMinutes || 60) * 60 * 1000;
+		if (endsAt <= Date.now()) return false;
+		return (session.seatsTaken ?? 0) < session.capacity;
+	});
+
+	const handleMove = async () => {
+		if (!id || !moveReg || !moveSessionId) return;
+		setIsMoving(true);
+		try {
+			const res = await clubsService.moveRegistration(moveReg._id, moveSessionId);
+			showSnack(res?.warning || 'Moved to the other session', res?.warning ? 'error' : 'success');
+			setMoveReg(null);
+			setMoveSessionId('');
+			if (selectedSessionId) await openRegs(selectedSessionId);
+			const sess = await clubsService.getSessions(id);
+			setSessions(sess || []);
+		} catch (err: any) {
+			showSnack(err?.response?.data?.error || 'Move failed', 'error');
+		} finally {
+			setIsMoving(false);
 		}
 	};
 
@@ -966,7 +1007,17 @@ const AdminClubDetail = () => {
 										<Typography sx={{ fontSize: '0.85rem' }}>
 											{r.guestName} — {r.guestEmail}
 										</Typography>
-										<CustomCancelButton onClick={() => cancelReg(r._id)}>Cancel / Restore</CustomCancelButton>
+										<Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+											<CustomSubmitButton
+												type='button'
+												onClick={() => {
+													setMoveReg(r);
+													setMoveSessionId('');
+												}}>
+												Move
+											</CustomSubmitButton>
+											<CustomCancelButton onClick={() => cancelReg(r._id)}>Cancel</CustomCancelButton>
+										</Box>
 									</Box>
 								))
 							)}
@@ -975,6 +1026,52 @@ const AdminClubDetail = () => {
 							onCancel={() => setRegsOpen(false)}
 							cancelBtnText='Close'
 							hideSubmit
+							actionSx={{ marginBottom: '0.5rem' }}
+						/>
+					</CustomDialog>
+				)}
+
+				{moveReg && (
+					<CustomDialog
+						openModal={Boolean(moveReg)}
+						closeModal={() => {
+							if (!isMoving) setMoveReg(null);
+						}}
+						title='Move to another session'
+						maxWidth='sm'>
+						<Box sx={{ px: 2, pb: 1 }}>
+							<Typography sx={{ fontSize: '0.85rem', mb: 1.5 }}>
+								{moveReg.guestName} — {moveReg.guestEmail}
+							</Typography>
+							{moveTargets.length === 0 ? (
+								<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+									No other session has an open seat.
+								</Typography>
+							) : (
+								<FormControl fullWidth size='small'>
+									<InputLabel>Session</InputLabel>
+									<Select
+										label='Session'
+										value={moveSessionId}
+										onChange={(e) => setMoveSessionId(e.target.value)}>
+										{moveTargets.map((session) => (
+											<MenuItem key={session._id} value={session._id}>
+												{formatSessionOption(session)}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							)}
+						</Box>
+						<CustomDialogActions
+							onCancel={() => setMoveReg(null)}
+							onSubmit={handleMove}
+							cancelBtnText='Close'
+							submitBtnText={isMoving ? 'Moving' : 'Move'}
+							submitBtnType='button'
+							disableBtn={!moveSessionId || moveTargets.length === 0}
+							disableCancelBtn={isMoving}
+							isSubmitting={isMoving}
 							actionSx={{ marginBottom: '0.5rem' }}
 						/>
 					</CustomDialog>

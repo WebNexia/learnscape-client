@@ -16,6 +16,7 @@ import {
 import {
 	ArrowBack,
 	ConfirmationNumberOutlined,
+	ContentCopyOutlined,
 	InfoOutlined,
 	VideocamOutlined,
 } from '@mui/icons-material';
@@ -38,6 +39,27 @@ type PendingRedeem = {
 	label: string;
 };
 
+function buildTicketShareText(result: ClubTicketLookupResult) {
+	const lines = ['Aden Academy kulüp bileti', `Kod: ${result.ticket.code}`];
+	if (result.ticket.guestName) lines.push(`Ad: ${result.ticket.guestName}`);
+	if (result.club?.title) lines.push(`Kulüp: ${result.club.title}`);
+	lines.push('');
+	result.sessions.forEach((session) => {
+		const when = new Date(session.startsAt).toLocaleString('tr-TR', {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+		lines.push(when);
+		if (session.zoomJoinUrl) lines.push(session.zoomJoinUrl);
+		lines.push('');
+	});
+	lines.push(`Oturum iptali veya değişikliği için iletişime geçin: ${window.location.origin}/contact-us`);
+	return lines.join('\n').trim();
+}
+
 const LandingPageClubTicket = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -46,6 +68,7 @@ const LandingPageClubTicket = () => {
 	const isQaPreview = useIsLpQaPreview();
 	const clubsListPath = isQaPreview ? `/landing-page-clubs/${LP_QA_PREVIEW_SEGMENT}` : '/landing-page-clubs';
 	const copyHandledRef = useRef(false);
+	const shareHandledRef = useRef(false);
 
 	const [code, setCode] = useState(() => (searchParams.get('code') || '').trim().toUpperCase());
 	const [loading, setLoading] = useState(false);
@@ -55,6 +78,7 @@ const LandingPageClubTicket = () => {
 	const [result, setResult] = useState<ClubTicketLookupResult | null>(null);
 	const [joinUrl, setJoinUrl] = useState<string | null>(null);
 	const [copyToast, setCopyToast] = useState(false);
+	const [copyToastMessage, setCopyToastMessage] = useState('Bilet kodu kopyalandı');
 	const [pendingRedeem, setPendingRedeem] = useState<PendingRedeem | null>(null);
 
 	useEffect(() => {
@@ -67,6 +91,7 @@ const LandingPageClubTicket = () => {
 		(async () => {
 			try {
 				await navigator.clipboard.writeText(qCode);
+				setCopyToastMessage('Bilet kodu kopyalandı');
 				setCopyToast(true);
 			} catch {
 				/* ignore clipboard failures; code is still prefilled */
@@ -76,6 +101,32 @@ const LandingPageClubTicket = () => {
 			setSearchParams(next, { replace: true });
 		})();
 	}, [searchParams, setSearchParams]);
+
+	useEffect(() => {
+		const qCode = (searchParams.get('code') || '').trim().toUpperCase();
+		if (searchParams.get('share') !== '1' || !qCode || shareHandledRef.current) return;
+		shareHandledRef.current = true;
+		setCode(qCode);
+		(async () => {
+			try {
+				const data = await clubsService.lookupTicket(qCode, { qaPreview: isQaPreview });
+				setResult(data);
+				try {
+					await navigator.clipboard.writeText(buildTicketShareText(data));
+					setCopyToastMessage('Bilet bilgileri kopyalandı. Başkasına gönderebilirsiniz.');
+					setCopyToast(true);
+				} catch {
+					setError('Otomatik kopyalanamadı. Aşağıdaki butonu kullanın.');
+				}
+			} catch {
+				setError('Bilet bulunamadı.');
+			} finally {
+				const next = new URLSearchParams(searchParams);
+				next.delete('share');
+				setSearchParams(next, { replace: true });
+			}
+		})();
+	}, [isQaPreview, searchParams, setSearchParams]);
 
 	const handleLookup = async () => {
 		setError(null);
@@ -109,11 +160,7 @@ const LandingPageClubTicket = () => {
 				qaPreview: isQaPreview,
 			});
 			setJoinUrl(data.zoomJoinUrl || null);
-			setSuccess(
-				data.alreadyRegistered
-					? 'Bu oturum için zaten kayıtlısınız.'
-					: `Kayıt tamam! Kalan hak: ${data.sessionsRemaining}`,
-			);
+				setSuccess(data.alreadyRegistered ? 'Bu oturum için zaten kayıtlısınız.' : 'Kayıt tamam.');
 			const refreshed = await clubsService.lookupTicket(code.trim(), {
 				qaPreview: isQaPreview,
 			});
@@ -141,8 +188,8 @@ const LandingPageClubTicket = () => {
 	return (
 		<>
 			<SEO
-				title='Kulüp Bileti - Aden Academy'
-				description='Bilet kodunuz ile Zoom kulüp oturumu seçin.'
+				title='Oturum Sorgula - Aden Academy'
+				description='Bilet kodunuzla kayıtlı oturumlarınızı ve Zoom linklerinizi görün.'
 				noIndex={isQaPreview}
 			/>
 			<Box
@@ -193,7 +240,7 @@ const LandingPageClubTicket = () => {
 									color: '#0A1A2F',
 									mb: 1,
 								}}>
-								Oturum Seç
+								Oturum Sorgula
 							</Typography>
 							<Typography
 								sx={{
@@ -204,7 +251,7 @@ const LandingPageClubTicket = () => {
 									maxWidth: 360,
 									mx: 'auto',
 								}}>
-								Bilet kodunuzla yaklaşan oturumları görün. Kayıt sonrası Zoom linkiniz mailinize gelir.
+								Bilet kodunuzla kayıtlı olduğunuz oturumları ve Zoom linklerini görün.
 							</Typography>
 						</Box>
 
@@ -340,21 +387,31 @@ const LandingPageClubTicket = () => {
 									<Typography sx={{ fontFamily: FONT, color: '#475569', fontSize: '0.88rem' }}>
 										{result.ticket.guestName}
 									</Typography>
-									<Typography
+									<Button
+										type='button'
+										variant='outlined'
+										size='small'
+										startIcon={<ContentCopyOutlined />}
+										onClick={async () => {
+											try {
+												await navigator.clipboard.writeText(buildTicketShareText(result));
+												setCopyToastMessage('Bilet bilgileri kopyalandı. Başkasına gönderebilirsiniz.');
+												setCopyToast(true);
+											} catch {
+												setError('Kopyalama başarısız. Metni seçip kopyalayın.');
+											}
+										}}
 										sx={{
-											mt: 0.75,
-											display: 'inline-block',
+											mt: 1.25,
+											textTransform: 'none',
 											fontFamily: FONT,
-											fontSize: '0.8rem',
-											fontWeight: 600,
+											fontWeight: 700,
+											borderColor: BLUE,
 											color: BLUE,
-											px: 1.25,
-											py: 0.35,
-											borderRadius: '0.5rem',
-											backgroundColor: 'rgba(0, 82, 163, 0.08)',
+											borderRadius: '999px',
 										}}>
-										Kalan hak: {result.ticket.sessionsRemaining} / {result.ticket.sessionsTotal}
-									</Typography>
+										Bilet bilgilerini kopyala
+									</Button>
 									{result.ticket.expiresAt && (
 										<Typography
 											sx={{
@@ -378,7 +435,7 @@ const LandingPageClubTicket = () => {
 
 								{result.sessions.length === 0 ? (
 									<Typography sx={{ fontFamily: FONT, color: '#94a3b8', textAlign: 'center' }}>
-										Bu bilet için seçilebilir yaklaşan oturum yok.
+										Bu bilete kayıtlı oturum yok.
 									</Typography>
 								) : (
 									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
@@ -391,11 +448,7 @@ const LandingPageClubTicket = () => {
 												hour: '2-digit',
 												minute: '2-digit',
 											});
-											const disabled =
-												s.isFull ||
-												s.alreadyRegistered ||
-												result.ticket.sessionsRemaining < 1 ||
-												!!redeemingId;
+											const disabled = s.isFull || s.alreadyRegistered || !!redeemingId;
 											return (
 												<Box
 													key={s._id}
@@ -497,11 +550,11 @@ const LandingPageClubTicket = () => {
 						}}>
 						<InfoOutlined sx={{ color: BLUE, fontSize: 18, mt: '0.5px', flexShrink: 0 }} />
 						<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
-							Oturum iptali için{' '}
+							Oturum iptali veya değişikliği için{' '}
 							<a href='/contact-us' style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
 								bizimle iletişime geçin
 							</a>
-							. Ekibimiz iptali yapar, hakkınız iade edilir.
+							.
 						</Typography>
 					</Box>
 				</LandingPageLayout>
@@ -512,7 +565,7 @@ const LandingPageClubTicket = () => {
 				onClose={() => setCopyToast(false)}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
 				<Alert onClose={() => setCopyToast(false)} severity='success' variant='filled' sx={{ fontFamily: FONT }}>
-					Bilet kodu kopyalandı
+					{copyToastMessage}
 				</Alert>
 			</Snackbar>
 
@@ -542,7 +595,7 @@ const LandingPageClubTicket = () => {
 						Bu işlem 1 oturum hakkınızı kullanır.
 					</Typography>
 					<Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.85, mt: '0.5rem' }}>
-						Oturum iptali için{' '}
+						Oturum iptali veya değişikliği için{' '}
 						<Link href='/contact-us' target='_blank' rel='noopener noreferrer' sx={{ color: BLUE, fontWeight: 700 }}>
 							bizimle iletişime geçin
 						</Link>

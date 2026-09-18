@@ -70,7 +70,7 @@ const LandingPageClubs = () => {
 		<>
 			<SEO
 				title='Kulüpler - Aden Academy'
-				description='Haftalık Zoom kulüp oturumları. Oturum hakkı alın, bilet kodunuzla katılın.'
+				description='Haftalık Zoom kulüp oturumları. Kişi sayısını ve oturumları seçip satın alın.'
 				keywords='kulüp, zoom kulüp, oturum'
 				type='website'
 				noIndex={isQaPreview}
@@ -89,8 +89,8 @@ const LandingPageClubs = () => {
 						{clubs.length > 0 && !isQaPreview && (
 							<Box sx={{ textAlign: 'center', mb: 4 }}>
 								<Typography sx={{ fontFamily: 'Varela Round', color: '#475569', maxWidth: 640, mx: 'auto' }}>
-									Kulüp detayını inceleyin, istediğiniz oturum sayısını seçin ve bilet alın. Bilet kodunuz e-postanıza
-									gelir.
+									Kulüp detayını inceleyin, kişi sayısını ve katılacağınız oturumları seçip satın alın. Zoom linkleri
+									e-postanıza gelir.
 								</Typography>
 							</Box>
 						)}

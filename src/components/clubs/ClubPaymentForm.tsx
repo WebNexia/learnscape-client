@@ -11,7 +11,7 @@ import {
 import { Add, Groups, Lock, MarkEmailReadOutlined, Person, ReceiptLong, Remove } from '@mui/icons-material';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Club } from '../../interfaces/club';
+import { Club, ClubPurchaseSession } from '../../interfaces/club';
 import { clubsService } from '../../services/clubsService';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
@@ -21,7 +21,7 @@ import { OrganisationContext } from '../../contexts/OrganisationContextProvider'
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { saveCheckoutReturnContext, type ClubCheckoutReturnContext } from '../../utils/hostedCheckout';
-import { clubDetailPath, pickPackPrice, resolveClientPurchasePrice } from '../../utils/clubPurchasePricing';
+import { clubDetailPath, resolveSeatPurchasePrice } from '../../utils/clubPurchasePricing';
 import theme from '../../themes';
 
 const FONT = 'Varela Round';
@@ -40,7 +40,8 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 	const geoLocation = useGeoLocation();
 	const isQaPreview = useIsLpQaPreview();
 
-	const [sessionCount, setSessionCount] = useState(1);
+	const [personCount, setPersonCount] = useState(1);
+	const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
 	const [firstName, setFirstName] = useState('');
 	const [lastName, setLastName] = useState('');
 	const [email, setEmail] = useState('');
@@ -50,26 +51,36 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	const maxSessionCount = Math.max(0, Math.floor(Number(club?.availableTicketCount) || 0));
+	const purchaseSessions = club.purchaseSessions || [];
+	const selectedSessions = purchaseSessions.filter((s) => selectedSessionIds.includes(s._id));
+	const seatCeiling = selectedSessions.length
+		? Math.min(...selectedSessions.map((s) => s.seatsLeft), Math.floor((club.seatPool || 0) / selectedSessions.length) || 0)
+		: Math.max(0, ...purchaseSessions.map((s) => s.seatsLeft), 0);
 
 	useEffect(() => {
-		if (maxSessionCount < 1) return;
-		setSessionCount((n) => Math.min(Math.max(1, n), maxSessionCount));
-	}, [maxSessionCount]);
+		setPersonCount((n) => Math.min(Math.max(1, n), Math.max(1, seatCeiling || 1)));
+		setSelectedSessionIds((ids) =>
+			ids.filter((id) => {
+				const session = purchaseSessions.find((s) => s._id === id);
+				return Boolean(session && session.seatsLeft >= 1 && !session.isFull);
+			}),
+		);
+	}, [club._id, club.seatPool, purchaseSessions.length]);
 
 	const quote = useMemo(
-		() => resolveClientPurchasePrice(club?.packs, sessionCount, geoLocation?.countryCode),
-		[club, sessionCount, geoLocation?.countryCode],
+		() => resolveSeatPurchasePrice(club?.packs, selectedSessions.length, personCount, geoLocation?.countryCode),
+		[club, selectedSessions.length, personCount, geoLocation?.countryCode],
 	);
 
-	const sortedPacks = useMemo(
-		() =>
-			(club.packs || [])
-				.slice()
-				.filter((p) => maxSessionCount < 1 || p.sessionCount <= maxSessionCount)
-				.sort((a, b) => a.sessionCount - b.sessionCount),
-		[club.packs, maxSessionCount],
-	);
+	const sessionsByMonth = useMemo(() => {
+		const groups: { monthKey: string; monthLabel: string; sessions: ClubPurchaseSession[] }[] = [];
+		purchaseSessions.forEach((session) => {
+			const existing = groups.find((g) => g.monthKey === session.monthKey);
+			if (existing) existing.sessions.push(session);
+			else groups.push({ monthKey: session.monthKey, monthLabel: session.monthLabel, sessions: [session] });
+		});
+		return groups;
+	}, [purchaseSessions]);
 
 	const clearError = () => setErrorMessage(null);
 
@@ -84,12 +95,12 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 			setErrorMessage("Lütfen Kullanıcı Sözleşmesi ve Gizlilik Politikası'nı kabul edin.");
 			return;
 		}
-		if (maxSessionCount < 1) {
-			setErrorMessage('Bu kulüpte şu an satılabilir bilet kalmadı.');
+		if (!selectedSessions.length) {
+			setErrorMessage('Katılacağınız oturumları seçin.');
 			return;
 		}
-		if (sessionCount > maxSessionCount) {
-			setErrorMessage(`En fazla ${maxSessionCount} bilet alabilirsiniz.`);
+		if (personCount > seatCeiling) {
+			setErrorMessage(`Bu oturumlar için en fazla ${seatCeiling} kişi seçebilirsiniz.`);
 			return;
 		}
 
@@ -107,7 +118,9 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 
 			const cancelPath = clubDetailPath(club, isQaPreview);
 			const result = await clubsService.checkout(orgId, club._id, {
-				sessionCount: Math.floor(sessionCount),
+				sessionCount: selectedSessions.length,
+				personCount,
+				sessionIds: selectedSessions.map((s) => s._id),
 				currency: quote.currency,
 				amount: quote.amount,
 				firstName: firstName.trim(),
@@ -172,142 +185,82 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 							</Typography>
 						</Box>
 						<Box sx={{ p: 2.5, flex: 1 }}>
-							{sortedPacks.length > 0 && (
-								<Box sx={{ mb: 2 }}>
-									<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.95rem' : '1.05rem', fontWeight: 700, color: '#0A1A2F', mb: 1 }}>
-										Paketler
-									</Typography>
-									<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-										{sortedPacks.map((pack) => {
-											const price = pickPackPrice(pack, geoLocation?.countryCode);
-											const selected = sessionCount === pack.sessionCount;
-											return (
-												<Box
-													key={pack._id}
-													onClick={() => {
-														if (isProcessing || maxSessionCount < 1) return;
-														setSessionCount(pack.sessionCount);
-														clearError();
-													}}
-													sx={{
-														px: 1.25,
-														py: 0.75,
-														borderRadius: 1.5,
-														cursor: isProcessing ? 'default' : 'pointer',
-														border: selected ? '2px solid #0052a3' : '1px solid rgba(0,82,163,0.2)',
-														bgcolor: selected ? 'rgba(0,82,163,0.08)' : 'rgba(0,82,163,0.04)',
-														fontFamily: FONT,
-														fontSize: '0.8rem',
-														color: '#0A1A2F',
-														transition: 'border-color 0.15s ease, background 0.15s ease',
-														'&:hover': {
-															borderColor: '#0052a3',
-															bgcolor: 'rgba(0,82,163,0.08)',
-														},
-													}}>
-													{pack.label || `${pack.sessionCount} Bilet`}
-													{price ? ` — ${setCurrencySymbol(price.currency)}${price.amount}` : ''}
-												</Box>
-											);
-										})}
-									</Box>
-								</Box>
-							)}
-
 							<Box sx={{ mb: 2 }}>
-								<Box
-									sx={{
-										display: maxSessionCount > 0 ? 'flex' : 'none',
-										alignItems: 'center',
-										justifyContent: 'space-between',
-										gap: 1.5,
-										flexWrap: 'wrap',
-									}}>
-									<Typography
-										sx={{
-											fontFamily: FONT,
-											fontSize: isMobileSize ? '0.95rem' : '1.05rem',
-											fontWeight: 700,
-											color: '#0A1A2F',
-										}}>
-										Bilet sayısı
+								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 0.75 }}>
+									<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.95rem' : '1.05rem', fontWeight: 700, color: '#0A1A2F' }}>
+										Kişi sayısı
 									</Typography>
-									<Box
-										sx={{
-											display: 'inline-flex',
-											alignItems: 'center',
-											gap: 0.5,
-											border: '1px solid',
-											borderColor: 'divider',
-											borderRadius: 2,
-											px: 0.5,
-											py: 0.25,
-											bgcolor: '#fff',
-											boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
-											ml: 'auto',
-										}}>
-										<IconButton
-											size='small'
-											aria-label='Oturum azalt'
-											disabled={isProcessing || sessionCount <= 1 || maxSessionCount < 1}
-											onClick={() => {
-												setSessionCount((n) => Math.max(1, n - 1));
-												clearError();
-											}}
-											sx={{
-												width: 36,
-												height: 36,
-												borderRadius: 1.5,
-												color: '#0052a3',
-												'&:hover': { bgcolor: 'rgba(0, 82, 163, 0.08)' },
-												'&.Mui-disabled': { color: 'rgba(0,0,0,0.26)' },
-											}}>
+									<Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, px: 0.5, py: 0.25, bgcolor: '#fff' }}>
+										<IconButton size='small' aria-label='Kişi azalt' disabled={isProcessing || personCount <= 1} onClick={() => { setPersonCount((n) => Math.max(1, n - 1)); clearError(); }} sx={{ color: '#0052a3' }}>
 											<Remove fontSize='small' />
 										</IconButton>
-										<Typography
-											sx={{
-												fontFamily: FONT,
-												fontWeight: 700,
-												fontSize: '1.05rem',
-												minWidth: 40,
-												textAlign: 'center',
-												color: '#0A1A2F',
-												userSelect: 'none',
-											}}>
-											{sessionCount}
-										</Typography>
+										<Typography sx={{ fontFamily: FONT, fontWeight: 700, minWidth: 28, textAlign: 'center' }}>{personCount}</Typography>
 										<IconButton
 											size='small'
-											aria-label='Oturum artır'
-											disabled={isProcessing || maxSessionCount < 1 || sessionCount >= maxSessionCount}
+											aria-label='Kişi artır'
+											disabled={isProcessing || personCount >= Math.max(1, seatCeiling)}
 											onClick={() => {
-												setSessionCount((n) => Math.min(maxSessionCount, n + 1));
+												setPersonCount((n) => Math.min(Math.max(1, seatCeiling), n + 1));
 												clearError();
 											}}
-											sx={{
-												width: 36,
-												height: 36,
-												borderRadius: 1.5,
-												color: '#0052a3',
-												'&:hover': { bgcolor: 'rgba(0, 82, 163, 0.08)' },
-												'&.Mui-disabled': { color: 'rgba(0,0,0,0.26)' },
-											}}>
+											sx={{ color: '#0052a3' }}>
 											<Add fontSize='small' />
 										</IconButton>
 									</Box>
 								</Box>
-								<Typography
-									sx={{
-										fontFamily: FONT,
-										fontSize: '0.75rem',
-										color: maxSessionCount > 0 ? 'text.secondary' : '#E11D48',
-										mt: 0.75,
-										fontWeight: maxSessionCount > 0 ? 400 : 600,
-									}}>
-									{maxSessionCount > 0
-										? `En fazla ${maxSessionCount} bilet (açık oturum kapasitesi). Bilet, satın alma anındaki açık oturumlar bitince geçersiz olur. Özel paket yoksa 1 oturum fiyatı × adet hesaplanır.`
-										: 'Şu an satılabilir bilet kalmadığı için satın alma yapılamaz.'}
+								<Typography sx={{ fontFamily: FONT, fontSize: '0.75rem', color: purchaseSessions.length ? 'text.secondary' : '#E11D48' }}>
+									{purchaseSessions.length
+										? 'Seçtiğiniz her oturumda bu kadar koltuk ayrılır. Ödeme sonrası Zoom linkleri e-postanıza gelir.'
+										: 'Bu ay ve sonraki ay için açık oturum yok.'}
 								</Typography>
+							</Box>
+
+							<Box sx={{ mb: 2 }}>
+								<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.95rem' : '1.05rem', fontWeight: 700, color: '#0A1A2F', mb: 1 }}>
+									Oturumlar
+								</Typography>
+								{sessionsByMonth.map((group) => (
+									<Box key={group.monthKey} sx={{ mb: 1.25 }}>
+										<Typography sx={{ fontFamily: FONT, fontSize: '0.8rem', fontWeight: 700, color: '#0052a3', textTransform: 'capitalize', mb: 0.5 }}>
+											{group.monthLabel}
+										</Typography>
+										{group.sessions.map((session) => {
+											const blocked = session.isFull || session.seatsLeft < personCount;
+											const checked = selectedSessionIds.includes(session._id);
+											const when = new Date(session.startsAt).toLocaleString('tr-TR', {
+												weekday: 'short',
+												day: 'numeric',
+												month: 'short',
+												hour: '2-digit',
+												minute: '2-digit',
+											});
+											return (
+												<FormControlLabel
+													key={session._id}
+													sx={{ display: 'flex', alignItems: 'flex-start', ml: 0, mr: 0, mb: 0.25 }}
+													control={
+														<Checkbox
+															size='small'
+															checked={checked}
+															disabled={isProcessing || (blocked && !checked)}
+															onChange={() => {
+																setSelectedSessionIds((ids) => (ids.includes(session._id) ? ids.filter((id) => id !== session._id) : [...ids, session._id]));
+																clearError();
+															}}
+															sx={{ py: 0.4, color: '#0052a3' }}
+														/>
+													}
+													label={
+														<Typography sx={{ fontFamily: FONT, fontSize: '0.82rem', color: blocked && !checked ? '#94a3b8' : '#0A1A2F', textTransform: 'capitalize' }}>
+															{when} · {session.seatsLeft} boş
+															{blocked && !checked ? ' · bu kişi sayısı için yer yok' : ''}
+														</Typography>
+													}
+												/>
+											);
+										})}
+									</Box>
+								))}
 							</Box>
 
 							<CustomTextField
@@ -563,7 +516,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								{quote.ok && (
 									<Box sx={{ px: 2, py: 1, borderTop: '1px solid rgba(0, 82, 163, 0.06)' }}>
 										<Typography sx={{ fontFamily: FONT, fontSize: '0.8rem', color: 'text.secondary' }}>
-											{sessionCount} bilet — {quote.label}
+											{personCount} kişi, {selectedSessions.length} oturum — {quote.label}
 										</Typography>
 									</Box>
 								)}
@@ -584,9 +537,15 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 									backgroundColor: 'rgba(255, 107, 61, 0.1)',
 									border: '1px solid rgba(255, 107, 61, 0.28)',
 								}}>
-								Satın alınan biletler sadece bu kulüpte kullanılabilir.
+								Ödeme, seçtiğiniz kişi ve oturumlar içindir.
 								<br />
-								Bir biletle bir oturuma katılabilirsiniz.
+								Koltuklar ödeme başlarken ayrılır. Zoom linkleri e-postanıza gelir.
+								<br />
+								Oturum iptali veya değişikliği için bizimle{' '}
+								<Link to='/contact-us' target='_blank' rel='noopener noreferrer' style={{ color: linkColor, textDecoration: 'underline' }}>
+									iletişime geçin
+								</Link>
+								.
 							</Typography>
 
 
@@ -614,7 +573,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 											color: 'rgba(0,0,0,0.26) !important',
 										},
 									}}
-									disableBtn={isProcessing || !quote.ok || !agreeTermsAndPrivacy || maxSessionCount < 1}
+									disableBtn={isProcessing || !quote.ok || !agreeTermsAndPrivacy || !selectedSessions.length || purchaseSessions.length < 1}
 									submitBtnType='submit'
 									actionSx={{ flexDirection: 'column', gap: 0, px: 0, width: '100%', mb: 0, marginBottom: 0, pb: 0 }}
 								/>
