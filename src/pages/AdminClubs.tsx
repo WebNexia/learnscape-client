@@ -306,7 +306,7 @@ const AdminClubs = () => {
 												.join(', ')} ${club.schedule?.startTime || ''}`}
 										/>
 										<CustomTableCell value={club.defaultCapacity} />
-										<CustomTableCell value={club.packs?.length || 0} />
+										<CustomTableCell value={club.packCount ?? 0} />
 										<CustomTableCell value={club.isActive ? 'Active' : 'Inactive'} />
 										<TableCell
 											sx={{

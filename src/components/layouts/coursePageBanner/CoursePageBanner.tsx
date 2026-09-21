@@ -526,8 +526,8 @@ const CoursePageBanner = ({
 							bottom: isRotated ? 60 : '1.5rem',
 							left: '1rem',
 							display: 'flex',
-							flexDirection: { xs: 'column', sm: 'row' },
-							alignItems: { xs: 'flex-start', sm: 'center' },
+							flexDirection: { xs: 'row', sm: 'row' },
+							alignItems: { xs: 'center', sm: 'center' },
 							flexWrap: 'wrap',
 							gap: 1,
 							maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
@@ -540,6 +540,8 @@ const CoursePageBanner = ({
 								color: theme.textColor?.common.main,
 								width: 'fit-content',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								px: 1,
+								py: isVerySmallScreen || isRotated ? 0 : 0.5,
 							}}>
 							{isCapacityFull
 								? isTrUi

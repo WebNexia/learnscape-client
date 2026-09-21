@@ -28,7 +28,6 @@ type ClubTicketRow = {
 	guestName?: string;
 	guestEmail?: string;
 	clubId?: { title?: string } | string;
-	sessionsRemaining?: number;
 	sessionsTotal?: number;
 	expiresAt?: string | null;
 	status?: string;
@@ -97,7 +96,7 @@ const AdminClubTickets = () => {
 	const loadClubs = async () => {
 		if (!orgId) return;
 		try {
-			const res = await clubsService.getAdminClubs(orgId, { limit: 100 });
+			const res = await clubsService.getAdminClubs(orgId, { limit: 100, picker: 1 });
 			const list = (res?.data || []).map((c: { _id: string; title: string }) => ({
 				_id: c._id,
 				title: c.title,

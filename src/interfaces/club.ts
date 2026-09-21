@@ -34,6 +34,7 @@ export interface Club {
 	defaultCapacity: number;
 	hostUserId?: string;
 	packs?: ClubPack[];
+	packCount?: number;
 	/** Remaining sellable session rights in the current purchase window */
 	availableTicketCount?: number;
 	seatPool?: number;
@@ -74,15 +75,18 @@ export interface ClubSession {
 export interface ClubTicketPublic {
 	code: string;
 	guestName: string;
-	guestEmail: string;
-	sessionsTotal: number;
 	expiresAt?: string | null;
-	status: string;
-	clubId: string;
 }
 
 export interface ClubTicketLookupResult {
 	ticket: ClubTicketPublic;
-	club: { _id: string; title: string; description?: string; scheduleSummary?: string };
-	sessions: ClubSession[];
+	club: { title: string };
+	sessions: Array<{
+		_id: string;
+		startsAt: string;
+		durationMinutes: number;
+		isFull?: boolean;
+		alreadyRegistered?: boolean;
+		zoomJoinUrl?: string;
+	}>;
 }
