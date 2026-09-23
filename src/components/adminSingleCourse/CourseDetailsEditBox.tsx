@@ -1306,7 +1306,10 @@ const CourseDetailsEditBox = ({
 									}}
 								/>
 							</Tooltip>
-							<Tooltip title='Keeps the banner price box, but leaves the amount empty.' placement='left' arrow>
+							<Tooltip
+								title='Hides prices on the banner and in landing-page sections (placeholders and currency amounts).'
+								placement='left'
+								arrow>
 								<FormControlLabel
 									control={
 										<Checkbox

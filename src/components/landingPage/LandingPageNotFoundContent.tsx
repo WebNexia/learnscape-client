@@ -22,7 +22,7 @@ const LandingPageNotFoundContent = () => {
 				<Typography
 					variant='h1'
 					sx={{
-						fontSize: { xs: '4rem', sm: '5rem', md: '6rem', lg: '8rem' },
+						fontSize: { xs: '3rem', sm: '4rem', md: '5rem', lg: '6rem' },
 						fontWeight: 700,
 						color: 'primary.main',
 						fontFamily: 'Varela Round',
@@ -38,7 +38,7 @@ const LandingPageNotFoundContent = () => {
 						color: 'text.primary',
 						fontFamily: 'Varela Round',
 						mb: { xs: 1, md: 2 },
-						fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
+						fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem', lg: '1.75rem' },
 					}}>
 					Sayfa Bulunamadı
 				</Typography>
@@ -48,7 +48,7 @@ const LandingPageNotFoundContent = () => {
 						color: 'text.secondary',
 						fontFamily: 'Varela Round',
 						mb: { xs: 3, md: 4 },
-						fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+						fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem', lg: '1rem' },
 						maxWidth: '500px',
 						px: { xs: 1, md: 0 },
 					}}>
@@ -71,11 +71,11 @@ const LandingPageNotFoundContent = () => {
 							fontFamily: 'Varela Round',
 							fontWeight: 600,
 							borderRadius: 2,
-							px: { xs: 2, md: 3 },
-							py: { xs: 0.75, md: 1.5 },
-							fontSize: { xs: '0.8rem', md: '0.9rem' },
+							px: { xs: 2, md: 2.5 },
+							py: { xs: 0.75, md: 1.25 },
+							fontSize: { xs: '0.75rem', md: '0.85rem' },
 							width: { xs: '100%', sm: 'auto' },
-							maxWidth: { xs: '200px', sm: 'none' },
+							maxWidth: { xs: '150px', sm: 'none' },
 						}}>
 						Ana Sayfa
 					</Button>
@@ -88,11 +88,11 @@ const LandingPageNotFoundContent = () => {
 							fontFamily: 'Varela Round',
 							fontWeight: 600,
 							borderRadius: 2,
-							px: { xs: 1.5, md: 3 },
-							py: { xs: 0.75, md: 1.5 },
-							fontSize: { xs: '0.8rem', md: '0.9rem' },
+							px: { xs: 1.5, md: 2.5 },
+							py: { xs: 0.75, md: 1.25 },
+							fontSize: { xs: '0.75rem', md: '0.85rem' },
 							width: { xs: '100%', sm: 'auto' },
-							maxWidth: { xs: '200px', sm: 'none' },
+							maxWidth: { xs: '150px', sm: 'none' },
 						}}>
 						Geri Dön
 					</Button>

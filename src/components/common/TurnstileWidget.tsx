@@ -195,7 +195,7 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 			{hideWidget ? (
 				<p
 					style={{
-						margin: '0.6rem 0 0',
+						margin: '0.75rem 0 0.75rem 0',
 						fontFamily: 'Varela Round, sans-serif',
 						fontSize: '0.8rem',
 						color: '#166534',
