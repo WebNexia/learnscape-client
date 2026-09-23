@@ -3,6 +3,7 @@ import { CloudUpload } from '@mui/icons-material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
+import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { CourseLandingPageSection, Price, SingleCourse } from '../interfaces/course';
@@ -80,6 +81,7 @@ const AdminCourseEditPage = () => {
 	const { courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor } = useAuth();
@@ -569,6 +571,9 @@ const AdminCourseEditPage = () => {
 				const { chapters: _ch, documents: _d, ...courseFields } = singleCourseBeforeSave as unknown as Record<string, unknown>;
 				const patchPayload = {
 					...courseFields,
+					startingDate: singleCourseBeforeSave.startingDate ?? null,
+					durationWeeks: singleCourseBeforeSave.durationWeeks ?? null,
+					durationHours: singleCourseBeforeSave.durationHours ?? null,
 					chapterIds: updatedChapters?.map((chapter) => chapter?.chapterId),
 					documentIds: updatedDocumentIds,
 					// BE needs chapters with lessonIds for usedInCourses sync - send minimal structure only
@@ -603,6 +608,9 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourseBeforeSave({
 						...updatedCourse,
+						startingDate: responseUpdatedData.startingDate ?? null,
+						durationWeeks: responseUpdatedData.durationWeeks ?? null,
+						durationHours: responseUpdatedData.durationHours ?? null,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
@@ -639,12 +647,19 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourse({
 						...updatedCourse,
+						startingDate: responseUpdatedData.startingDate ?? null,
+						durationWeeks: responseUpdatedData.durationWeeks ?? null,
+						durationHours: responseUpdatedData.durationHours ?? null,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+
+					void queryClient.invalidateQueries(['lpPublicCourseDetail']);
+					void queryClient.invalidateQueries(['landingPageCourses']);
+					void queryClient.invalidateQueries(['landingPageLatestCourses']);
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {
