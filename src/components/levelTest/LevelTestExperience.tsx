@@ -40,15 +40,31 @@ import {
   summarizeAttempt,
 } from "../../utils/levelTest/skillInsights";
 import type { AnswerSelection } from "../../utils/levelTest/types";
+import { attemptsFromLevelResults } from "../../utils/levelTest/report";
+import TurnstileWidget, {
+  type TurnstileWidgetHandle,
+} from "../common/TurnstileWidget";
 import LevelTestQuestions from "./LevelTestQuestions";
 import LevelTestReportDialog from "./LevelTestReportDialog";
+import type { LevelTestParticipant } from "./LevelTestParticipantGate";
 import ListeningPanel from "./ListeningPanel";
 import ReadingPanel from "./ReadingPanel";
 import { levelTestCardSx, levelTestHeadingSx, primaryButtonSx } from "./styles";
 
 type Stage = "intro" | "questions" | "transition" | "result";
 
-const LevelTestExperience = () => {
+type Props = {
+  mode?: "anonymous" | "tracked";
+  campaignSlug?: string;
+  participant?: LevelTestParticipant | null;
+};
+
+const LevelTestExperience = ({
+  mode = "anonymous",
+  campaignSlug,
+  participant = null,
+}: Props) => {
+  const isTracked = mode === "tracked";
   const [stage, setStage] = useState<Stage>("intro");
   const [assessment, setAssessment] = useState(createInitialAssessmentState);
   const [answers, setAnswers] = useState<AnswerSelection>({});
@@ -56,7 +72,16 @@ const LevelTestExperience = () => {
   const [transitionReady, setTransitionReady] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(1);
+  const [trackedStatus, setTrackedStatus] = useState<
+    "idle" | "waiting_captcha" | "saving" | "saved" | "saved_no_email" | "error"
+  >("idle");
+  const [trackedError, setTrackedError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const startedAt = useRef<number | null>(null);
+  const trackedSubmitRef = useRef(false);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const turnstileEnabled = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
   const currentSteps =
     assessment.currentLevel && assessment.currentPassageKind
@@ -86,12 +111,82 @@ const LevelTestExperience = () => {
     assessment.currentPassageKind,
   ]);
 
+  useEffect(() => {
+    if (!isTracked || stage !== "result" || !assessment.outcome || !participant || !campaignSlug) {
+      return;
+    }
+    if (trackedSubmitRef.current) return;
+    if (turnstileEnabled && !recaptchaToken) {
+      setTrackedStatus((prev) => (prev === "idle" ? "waiting_captcha" : prev));
+      return;
+    }
+
+    trackedSubmitRef.current = true;
+    setTrackedStatus("saving");
+    setTrackedError("");
+
+    const results = getCompletedLevelResults(assessment);
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SERVER_BASE_URL}/level-test/campaigns/public/${campaignSlug}/results`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: participant.name,
+              email: participant.email,
+              phone: participant.phone,
+              contentVersion: assessment.contentVersion,
+              attempts: attemptsFromLevelResults(results),
+              durationMinutes,
+              website: "",
+              recaptchaToken: recaptchaToken ?? "dev-bypass",
+            }),
+          },
+        );
+        const payload = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          emailSent?: boolean;
+          message?: string;
+        } | null;
+        if (!response.ok || payload?.ok === false) {
+          throw new Error(payload?.message || "Sonuç kaydedilemedi.");
+        }
+        setTrackedStatus(payload?.emailSent === false ? "saved_no_email" : "saved");
+      } catch (error) {
+        trackedSubmitRef.current = false;
+        setTrackedStatus("error");
+        setTrackedError(
+          error instanceof Error ? error.message : "Sonuç kaydedilemedi.",
+        );
+        setRecaptchaToken(null);
+        setTurnstileResetKey((value) => value + 1);
+        turnstileRef.current?.reset();
+      }
+    })();
+  }, [
+    isTracked,
+    stage,
+    assessment,
+    participant,
+    campaignSlug,
+    durationMinutes,
+    recaptchaToken,
+    turnstileEnabled,
+  ]);
+
   const start = () => {
     startedAt.current = Date.now();
     setAssessment(createInitialAssessmentState());
     setAnswers({});
     setStepIndex(0);
     setReportOpen(false);
+    setTrackedStatus("idle");
+    setTrackedError("");
+    setRecaptchaToken(null);
+    trackedSubmitRef.current = false;
     setStage("questions");
   };
 
@@ -143,7 +238,7 @@ const LevelTestExperience = () => {
               fontSize: { xs: "1.25rem", sm: "1.85rem" },
             }}
           >
-            Ücretsiz İngilizce Seviye Testi
+            {isTracked ? "İngilizce Seviye Testi" : "Ücretsiz İngilizce Seviye Testi"}
           </Typography>
           <Typography
             sx={{
@@ -155,8 +250,9 @@ const LevelTestExperience = () => {
               lineHeight: 1.7,
             }}
           >
-            Kısa okuma metinleri ve tarayıcının seslendirdiği kısa dinleme
-            bölümleriyle seviyeni A1–C2 aralığında belirle.
+            {isTracked
+              ? "Kısa okuma ve dinleme bölümleriyle seviyeni belirle. Test bitince raporun e-posta adresine PDF olarak gönderilecek."
+              : "Kısa okuma metinleri ve tarayıcının seslendirdiği kısa dinleme bölümleriyle seviyeni A1–C2 aralığında belirle."}
           </Typography>
           <Box
             sx={{
@@ -354,16 +450,67 @@ const LevelTestExperience = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "center", m: { xs: 1, sm: 1.5 } }}>
-          <Button
-            variant="contained"
-            startIcon={<MailOutlineRounded />}
-            onClick={() => setReportOpen(true)}
-            sx={{ ...primaryButtonSx, py: { xs: 0.75, sm: 1 }, width: { xs: "100%", sm: "auto" } }}
+        {isTracked ? (
+          <Box
+            sx={{
+              ...levelTestCardSx,
+              p: 2.5,
+              textAlign: "center",
+              display: "grid",
+              gap: 1.25,
+              justifyItems: "center",
+            }}
           >
-            Detaylı PDF raporunu e-postana gönder
-          </Button>
-        </Box>
+            {trackedStatus === "waiting_captcha" || trackedStatus === "error" ? (
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="level-test-tracked"
+                onChange={setRecaptchaToken}
+                onError={() => {
+                  setTrackedStatus("error");
+                  setTrackedError("Güvenlik doğrulaması başarısız oldu. Lütfen yeniden dene.");
+                }}
+                resetKey={turnstileResetKey}
+              />
+            ) : null}
+            {trackedStatus === "saving" || trackedStatus === "waiting_captcha" ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#0052a3" }}>
+                <CircularProgress size={18} />
+                <Typography sx={{ fontWeight: 700 }}>
+                  {trackedStatus === "waiting_captcha"
+                    ? "Güvenlik doğrulaması bekleniyor..."
+                    : "Sonucun kaydediliyor ve raporun gönderiliyor..."}
+                </Typography>
+              </Box>
+            ) : null}
+            {trackedStatus === "saved" ? (
+              <Alert severity="success" sx={{ width: "100%" }}>
+                Sonucun kaydedildi. Detaylı PDF raporun {participant?.email} adresine gönderildi.
+              </Alert>
+            ) : null}
+            {trackedStatus === "saved_no_email" ? (
+              <Alert severity="warning" sx={{ width: "100%" }}>
+                Sonucun kaydedildi ancak e-posta gönderilemedi. Gerekirse bizimle iletişime geç.
+              </Alert>
+            ) : null}
+            {trackedStatus === "error" ? (
+              <Alert severity="error" sx={{ width: "100%" }}>
+                {trackedError || "Sonuç kaydedilemedi."}
+              </Alert>
+            ) : null}
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", justifyContent: "center", m: { xs: 1, sm: 1.5 } }}>
+            <Button
+              variant="contained"
+              startIcon={<MailOutlineRounded />}
+              onClick={() => setReportOpen(true)}
+              sx={{ ...primaryButtonSx, py: { xs: 0.75, sm: 1 }, width: { xs: "100%", sm: "auto" } }}
+            >
+              Detaylı PDF raporunu e-postana gönder
+            </Button>
+          </Box>
+        )}
 
         <Box
           sx={{
@@ -490,12 +637,14 @@ const LevelTestExperience = () => {
         >
           Testi tekrarla
         </Button>
-        <LevelTestReportDialog
-          open={reportOpen}
-          onClose={() => setReportOpen(false)}
-          results={results}
-          contentVersion={assessment.contentVersion}
-        />
+        {!isTracked ? (
+          <LevelTestReportDialog
+            open={reportOpen}
+            onClose={() => setReportOpen(false)}
+            results={results}
+            contentVersion={assessment.contentVersion}
+          />
+        ) : null}
       </Box>
     );
   }

@@ -18,6 +18,7 @@ import {
 	Settings,
 	VideoCall,
 	Insights,
+	AssessmentOutlined,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import SidebarGroupedMenu from './SidebarGroupedMenu';
@@ -229,6 +230,12 @@ const Sidebar = () => {
 								IconName={Ballot}
 								onClick={() => navigateWithPage(`/admin/forms`)}
 								active={currentPath?.includes('/admin/forms') && !currentPath?.includes('/admin/course')}
+							/>
+							<SidebarBtn
+								btnText='Level Test'
+								IconName={AssessmentOutlined}
+								onClick={() => navigateWithPage(`/admin/level-test`)}
+								active={currentPath?.includes('/admin/level-test')}
 							/>
 							<SidebarBtn
 								btnText='Consultancy'

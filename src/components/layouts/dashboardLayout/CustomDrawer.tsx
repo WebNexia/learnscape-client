@@ -24,6 +24,7 @@ import {
 	Settings,
 	VideoCall,
 	Insights,
+	AssessmentOutlined,
 } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../../hooks/useAuth';
@@ -268,6 +269,15 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Ballot}
 										onClick={() => navigateWithPage(PageName.ADMIN_FORMS, `/admin/forms`)}
 										active={selectedPage === PageName.ADMIN_FORMS && !window.location.pathname?.includes('/admin/course')}
+									/>
+									<SidebarBtn
+										btnText='Level Test'
+										IconName={AssessmentOutlined}
+										onClick={() => navigateWithPage(PageName.ADMIN_LEVEL_TEST, `/admin/level-test`)}
+										active={
+											selectedPage === PageName.ADMIN_LEVEL_TEST ||
+											window.location.pathname?.includes('/admin/level-test')
+										}
 									/>
 									<SidebarBtn
 										btnText='Consultancy'

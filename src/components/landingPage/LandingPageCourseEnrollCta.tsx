@@ -44,10 +44,12 @@ const LandingPageCourseEnrollCta = ({ course }: Props) => {
 	const price = getPriceForCountry(course, resolvedCountryCode);
 	const isCourseFree = price?.amount === 'Free' || price?.amount === '' || price?.amount === '0';
 	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
+	const isMarkedFullByAdmin = Boolean(course?.isMarkedFullByAdmin);
 	const isCapacityFull = Boolean(course?.isCapacityFull);
+	const isCourseFull = isCapacityFull || isMarkedFullByAdmin;
 
-	const canEnroll = !course.isExpired && !isManuallyClosed && !isCapacityFull && !isCourseFree;
-	const canJoinWaitlist = !course.isExpired && !isCourseFree && (isManuallyClosed || isCapacityFull);
+	const canEnroll = !course.isExpired && !isManuallyClosed && !isCourseFull && !isCourseFree;
+	const canJoinWaitlist = !course.isExpired && !isCourseFree && (isManuallyClosed || isCourseFull);
 
 	if (!canEnroll && !canJoinWaitlist) return null;
 

@@ -179,8 +179,10 @@ const CourseDetailsEditBox = ({
 	};
 
 	const parseDate = (dateString: string) => {
+		if (!dateString?.trim()) return null;
 		const [year, month, day] = dateString.split('-');
-		return new Date(`${year}-${month}-${day}`);
+		const parsed = new Date(`${year}-${month}-${day}`);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
 	};
 
 	const todayDateString = (): string => {
@@ -1012,7 +1014,7 @@ const CourseDetailsEditBox = ({
 											if (singleCourseBeforeSave) {
 												setSingleCourseBeforeSave({
 													...singleCourseBeforeSave,
-													durationWeeks: +e.target.value,
+													durationWeeks: e.target.value === '' ? null : +e.target.value,
 												});
 												setHasUnsavedChanges(true);
 											}
@@ -1033,7 +1035,7 @@ const CourseDetailsEditBox = ({
 											if (singleCourseBeforeSave) {
 												setSingleCourseBeforeSave({
 													...singleCourseBeforeSave,
-													durationHours: +e.target.value,
+													durationHours: e.target.value === '' ? null : +e.target.value,
 												});
 												setHasUnsavedChanges(true);
 											}
@@ -1048,11 +1050,11 @@ const CourseDetailsEditBox = ({
 									Starting Date
 								</Typography>
 								<CustomTextField
-									required={isCohort}
+									required={false}
 									sx={{ marginTop: '0.5rem' }}
 									value={
 										singleCourseBeforeSave && singleCourseBeforeSave.startingDate
-											? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
+											? formatDate(new Date(singleCourseBeforeSave.startingDate))
 											: ''
 									}
 									onChange={(e) => {
@@ -1274,6 +1276,63 @@ const CourseDetailsEditBox = ({
 									},
 								}}
 							/>
+							<Tooltip
+								title='Shows “Kayıtlar Doldu” on the course banner and opens the waitlist, even if seats remain.'
+								placement='left'
+								arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={Boolean(singleCourseBeforeSave?.isMarkedFullByAdmin)}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev) return prev;
+													return { ...prev, isMarkedFullByAdmin: e.target.checked };
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Mark course as full'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
+							<Tooltip title='Keeps the banner price box, but leaves the amount empty.' placement='left' arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={Boolean(singleCourseBeforeSave?.hidePrices)}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev) return prev;
+													return { ...prev, hidePrices: e.target.checked };
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Hide prices'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
 							<Tooltip
 								title='Hidden from the landing page and regular learners. Only test-learner accounts can see and take this course.'
 								placement='left'
