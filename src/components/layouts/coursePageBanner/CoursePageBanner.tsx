@@ -730,7 +730,7 @@ const CoursePageBanner = ({
 					<Box>
 						<CoursePageBannerDataCard
 							title={isTrUi ? 'Başlangıç Tarihi' : 'Starting Date'}
-							content={dateFormatter(course.startingDate)}
+							content={dateFormatter(course.startingDate || null)}
 							fromHomePage={fromHomePage}
 							customSettings={{
 								color: fromHomePage ? theme.textColor?.common.main : isEnrolledStatus ? theme.textColor?.primary.main : theme.textColor?.common.main,
@@ -740,14 +740,14 @@ const CoursePageBanner = ({
 
 						<CoursePageBannerDataCard
 							title={isTrUi ? 'Hafta(#)' : 'Weeks(#)'}
-							content={course.durationWeeks ?? ''}
+							content={course.durationWeeks || ''}
 							fromHomePage={fromHomePage}
 						/>
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard
 							title={isTrUi ? 'Ders(#)' : 'Lessons(#)'}
-							content={course.durationHours ?? ''}
+							content={course.durationHours || ''}
 							fromHomePage={fromHomePage}
 						/>
 						<CoursePageBannerDataCard
