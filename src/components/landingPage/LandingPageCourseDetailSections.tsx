@@ -400,8 +400,10 @@ const proseSx = {
 
 type Props = {
 	sections: CourseLandingPageSection[];
-	course?: Pick<SingleCourse, 'prices' | 'originalPrices'>;
+	course?: Pick<SingleCourse, 'prices' | 'originalPrices' | 'hidePrices'>;
 };
+
+const PRICE_SECTION_TITLE_RE = /ücret|fiyat|price|fee|tuition/i;
 
 type SectionMeta = {
 	section: CourseLandingPageSection;
@@ -504,7 +506,13 @@ const LandingPageCourseDetailSections = ({ sections, course }: Props) => {
 
 	if (!sections?.length) return null;
 
-	const metas: SectionMeta[] = sections.map((section, index) => {
+	const visibleSections = course?.hidePrices
+		? sections.filter((section) => !PRICE_SECTION_TITLE_RE.test(section.title || ''))
+		: sections;
+
+	if (!visibleSections.length) return null;
+
+	const metas: SectionMeta[] = visibleSections.map((section, index) => {
 		const interpolatedBody = course
 			? interpolateLandingPagePricePlaceholders(section.body, course, geoLocation?.countryCode, geoLocation?.country)
 			: section.body;

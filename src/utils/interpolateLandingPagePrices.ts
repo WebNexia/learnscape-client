@@ -45,26 +45,39 @@ export function getFromCountryPhrase(countryCode?: string | null, countryName?: 
 	return 'yurtdışından katılanlar';
 }
 
+const HIDDEN_CURRENCY_AMOUNT_RE = /(?:£|\$|€|₺)\s*[\d.,]+|[\d.]+\s*(?:TL|GBP|USD|EUR)\b/gi;
+
 export function interpolateLandingPagePricePlaceholders(
 	html: string,
-	course: Pick<SingleCourse, 'prices' | 'originalPrices'>,
+	course: Pick<SingleCourse, 'prices' | 'originalPrices' | 'hidePrices'>,
 	countryCode?: string | null,
 	countryName?: string | null
 ): string {
-	if (typeof html !== 'string' || !html.includes('{{')) return html;
+	if (typeof html !== 'string') return html;
 
-	const selling = formatLandingPagePrice(getPriceFromList(course.prices, countryCode || 'US'));
-	const original = formatLandingPagePrice(getOriginalPriceForCountry(course, countryCode || 'US'));
-	const fromCountry = getFromCountryPhrase(countryCode, countryName);
+	const hidePrices = Boolean(course.hidePrices);
+	let result = html;
 
-	const values: Record<string, string> = {
-		originalprice: original,
-		launchprice: selling,
-		price: selling,
-		fromcountry: fromCountry,
-	};
+	if (html.includes('{{')) {
+		const selling = hidePrices ? '' : formatLandingPagePrice(getPriceFromList(course.prices, countryCode || 'US'));
+		const original = hidePrices ? '' : formatLandingPagePrice(getOriginalPriceForCountry(course, countryCode || 'US'));
+		const fromCountry = getFromCountryPhrase(countryCode, countryName);
 
-	return html.replace(/\{\{\s*(originalPrice|launchPrice|price|fromCountry)\s*\}\}/gi, (_match, token: string) =>
-		escapeHtml(values[token.toLowerCase()] ?? '')
-	);
+		const values: Record<string, string> = {
+			originalprice: original,
+			launchprice: selling,
+			price: selling,
+			fromcountry: fromCountry,
+		};
+
+		result = html.replace(/\{\{\s*(originalPrice|launchPrice|price|fromCountry)\s*\}\}/gi, (_match, token: string) =>
+			escapeHtml(values[token.toLowerCase()] ?? '')
+		);
+	}
+
+	if (hidePrices) {
+		result = result.replace(HIDDEN_CURRENCY_AMOUNT_RE, '');
+	}
+
+	return result;
 }
