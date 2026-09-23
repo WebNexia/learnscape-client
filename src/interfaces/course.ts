@@ -46,6 +46,10 @@ export interface BaseCourse {
 	capacity?: number | null;
 	isCapacityFull?: boolean;
 	isRegistrationClosedByAdmin?: boolean;
+	/** Admin override: treat the course as full and open the waitlist. */
+	isMarkedFullByAdmin?: boolean;
+	/** Hide selling/list prices on the public course banner. */
+	hidePrices?: boolean;
 	/** Hidden from LP and regular learners; only test-learner accounts can take the course. */
 	isTestCourse?: boolean;
 	/** Listed nowhere on the landing site; the detail URL still works when published. */

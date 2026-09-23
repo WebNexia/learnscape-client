@@ -74,13 +74,11 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 	};
 
 	const createCourse = async (): Promise<void> => {
-		if (isCohort) {
-			if (!isValidCohortStartingDate(startingDate)) {
-				setStartingDateError('Select a start date (today or later).');
-				return;
-			}
-			setStartingDateError('');
+		if (isCohort && startingDate && !isValidCohortStartingDate(startingDate)) {
+			setStartingDateError('Select a start date (today or later).');
+			return;
 		}
+		setStartingDateError('');
 
 		// For instructors, allow creating courses without prices
 		// For admins, always include prices
@@ -331,7 +329,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 						<Box sx={{ mt: '0.5rem' }}>
 							<CustomTextField
 								label='Starting Date'
-								required={true}
+								required={false}
 								type='date'
 								value={startingDate}
 								onChange={(e) => {

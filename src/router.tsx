@@ -55,6 +55,9 @@ const LandingPageConsultations = React.lazy(
 const LandingPageCart = React.lazy(() => import("./pages/LandingPageCart"));
 const CheckoutReturn = React.lazy(() => import("./pages/CheckoutReturn"));
 const LevelTest = React.lazy(() => import("./pages/LevelTest"));
+const LevelTestCampaignPage = React.lazy(
+  () => import("./pages/LevelTestCampaignPage"),
+);
 const AboutUs = React.lazy(() => import("./pages/AboutUs"));
 const ContactUs = React.lazy(() => import("./pages/ContactUs"));
 const CookiePolicy = React.lazy(() => import("./pages/CookiePolicy"));
@@ -145,6 +148,9 @@ const AdminQuizSubmissionCheck = React.lazy(
 const AdminPayments = React.lazy(() => import("./pages/AdminPayments"));
 const AdminSiteAnalytics = React.lazy(() => import("./pages/AdminSiteAnalytics"));
 const AdminInquiries = React.lazy(() => import("./pages/AdminInquiries"));
+const AdminLevelTestCampaigns = React.lazy(
+  () => import("./pages/AdminLevelTestCampaigns"),
+);
 const AdminRecycleBin = React.lazy(() => import("./pages/AdminRecycleBin"));
 const AdminPublicEvents = React.lazy(() => import("./pages/AdminPublicEvents"));
 const AdminCourseFeedbackForms = React.lazy(
@@ -220,6 +226,7 @@ export const router = createBrowserRouter([
         ),
       },
       { path: "level-test", element: <LevelTest /> },
+      { path: "level-test/c/:slug", element: <LevelTestCampaignPage /> },
       { path: "seviye-testi", element: <Navigate to="/level-test" replace /> },
       {
         path: "landing-page-document/:name/:documentId",
@@ -648,6 +655,14 @@ export const router = createBrowserRouter([
             <InquiriesContextProvider>
               <AdminInquiries />
             </InquiriesContextProvider>
+          </AdminRouteGuard>
+        ),
+      },
+      {
+        path: "admin/level-test",
+        element: (
+          <AdminRouteGuard>
+            <AdminLevelTestCampaigns />
           </AdminRouteGuard>
         ),
       },

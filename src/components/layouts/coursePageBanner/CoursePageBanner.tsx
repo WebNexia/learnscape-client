@@ -133,7 +133,10 @@ const CoursePageBanner = ({
 	const hasListPrice = Boolean(originalPrice);
 
 	const isManuallyClosed = Boolean(course?.isRegistrationClosedByAdmin);
+	const isMarkedFullByAdmin = Boolean(course?.isMarkedFullByAdmin);
 	const isCapacityFull = Boolean(course?.isCapacityFull);
+	const isCourseFull = isCapacityFull || isMarkedFullByAdmin;
+	const hidePrices = Boolean(course?.hidePrices);
 
 	const introVideoUrl = course?.introVideoUrl?.trim() ?? '';
 	const introEmbedSrc = introVideoUrl ? getIntroVideoEmbedSrc(introVideoUrl) : null;
@@ -413,7 +416,7 @@ const CoursePageBanner = ({
 					!isEnrollmentRemoved &&
 					!course.isExpired &&
 					!isManuallyClosed &&
-					!isCapacityFull &&
+					!isCourseFull &&
 					!(fromHomePage && isCourseFree) &&
 					(isCourseFree ? user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) : true) ? (
 					fromHomePage && introVideoUrl ? (
@@ -519,7 +522,7 @@ const CoursePageBanner = ({
 									: 'Enroll'}
 						</CustomSubmitButton>
 					)
-				) : !isEnrolledStatus && !course.isExpired && (isCapacityFull || isManuallyClosed) ? (
+				) : !isEnrolledStatus && !course.isExpired && (isCourseFull || isManuallyClosed) ? (
 					<Box
 						sx={{
 							position: 'absolute',
@@ -533,7 +536,7 @@ const CoursePageBanner = ({
 							maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
 						}}>
 						<Alert
-							severity={isCapacityFull ? 'error' : 'warning'}
+							severity={isCourseFull ? 'error' : 'warning'}
 							sx={{
 								fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
 								backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
@@ -543,13 +546,17 @@ const CoursePageBanner = ({
 								px: 1,
 								py: isVerySmallScreen || isRotated ? 0 : 0.5,
 							}}>
-							{isCapacityFull
+							{isMarkedFullByAdmin
 								? isTrUi
-									? 'Kontenjan doldu'
-									: 'No seats available'
-								: isTrUi
-									? 'Kayıtlar kapalı'
-									: 'Registration is closed'}
+									? 'Kayıtlar Doldu'
+									: 'Course is full'
+								: isCapacityFull
+									? isTrUi
+										? 'Kontenjan doldu'
+										: 'No seats available'
+									: isTrUi
+										? 'Kayıtlar kapalı'
+										: 'Registration is closed'}
 						</Alert>
 						<CustomSubmitButton
 							variant='contained'
@@ -764,34 +771,36 @@ const CoursePageBanner = ({
 										? fromHomePage
 											? 'Kayıtlı'
 											: 'Enrolled'
-										: isCourseFree
-											? isTrUi
-												? 'Ücretsiz'
-												: 'Free'
-											: (
-												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-													{originalPrice ? (
-														<Box
-															component='span'
-															sx={{
-																fontSize: isMobileSize ? '0.62rem' : '0.78rem',
-																fontWeight: 500,
-																textDecoration: 'line-through',
-																textDecorationThickness: '1px',
-																textDecorationColor: '#94a3b8',
-																color: '#64748b',
-																lineHeight: 1.2,
-															}}>
-															{setCurrencySymbol(originalPrice.currency)}
-															{originalPrice.amount}
+										: hidePrices
+											? ''
+											: isCourseFree
+												? isTrUi
+													? 'Ücretsiz'
+													: 'Free'
+												: (
+													<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+														{originalPrice ? (
+															<Box
+																component='span'
+																sx={{
+																	fontSize: isMobileSize ? '0.62rem' : '0.78rem',
+																	fontWeight: 500,
+																	textDecoration: 'line-through',
+																	textDecorationThickness: '1px',
+																	textDecorationColor: '#94a3b8',
+																	color: '#64748b',
+																	lineHeight: 1.2,
+																}}>
+																{setCurrencySymbol(originalPrice.currency)}
+																{originalPrice.amount}
+															</Box>
+														) : null}
+														<Box component='span' sx={{ lineHeight: 1.15 }}>
+															{setCurrencySymbol(sellingPrice?.currency ?? '')}
+															{sellingPrice?.amount}
 														</Box>
-													) : null}
-													<Box component='span' sx={{ lineHeight: 1.15 }}>
-														{setCurrencySymbol(sellingPrice?.currency ?? '')}
-														{sellingPrice?.amount}
 													</Box>
-												</Box>
-											)
+												)
 							}
 							fromHomePage={fromHomePage}
 							customSettings={
@@ -800,7 +809,7 @@ const CoursePageBanner = ({
 										bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
 										color: fromHomePage ? undefined : theme.textColor?.common.main,
 									}
-									: hasListPrice
+									: !hidePrices && hasListPrice
 										? { height: { xs: '4.6rem', sm: '4.6rem', md: '6rem' } }
 										: undefined
 							}

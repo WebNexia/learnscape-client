@@ -215,7 +215,12 @@ const CoursesInfoModal = ({ courseId, courseTitle, isCourseInfoDialogOpen, setIs
 
 								<Grid item xs={9}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{singleCourse?.isRegistrationClosedByAdmin ? 'Closed' : 'Open'}
+										{singleCourse?.isRegistrationClosedByAdmin
+											? 'Closed'
+											: singleCourse?.isMarkedFullByAdmin
+												? 'Marked full'
+												: 'Open'}
+										{singleCourse?.hidePrices ? ' — Prices hidden' : ''}
 									</Typography>
 								</Grid>
 							</>
