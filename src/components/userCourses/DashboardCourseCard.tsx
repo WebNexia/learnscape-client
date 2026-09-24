@@ -39,6 +39,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 
 	const sellingPrice = getPriceForCountry(course, resolvedCountryCode);
 	const originalPrice = getListPriceIfDifferent(course, resolvedCountryCode);
+	const hidePrices = Boolean(course.hidePrices);
 	const isCourseFree: boolean =
 		sellingPrice?.amount === '0' || sellingPrice?.amount === 'Free' || sellingPrice?.amount === '';
 
@@ -368,7 +369,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							</Box>
 						</Box>
 
-						{fromHomePage && (
+						{fromHomePage && !hidePrices && (
 							<Box
 								sx={{
 									display: 'flex',
@@ -415,7 +416,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 							</Box>
 						)}
 
-						{!fromHomePage && (
+						{!fromHomePage && (isEnrolled || !hidePrices) && (
 							<Box
 								sx={{
 									display: 'flex',
