@@ -96,10 +96,11 @@ const ContactUs = () => {
 	return (
 		<>
 			<SEO
-				title='Contact Aden Academy - Get in Touch'
-				description='Contact Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.'
-				keywords='contact Aden Academy, customer support, technical support, business inquiries, Aden Academy help, customer service, contact form'
+				title='İletişim'
+				description='Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın.'
+				keywords='iletişim, Aden Academy iletişim, destek, kayıt, info@adenacademy.co.uk'
 				type='website'
+				url={`${baseUrl}/contact-us`}
 			/>
 			<StructuredData type='Organization' />
 			<StructuredData type='ContactPage' />
@@ -107,8 +108,8 @@ const ContactUs = () => {
 				type='BreadcrumbList'
 				data={{
 					breadcrumbs: [
-						{ name: 'Home', url: baseUrl },
-						{ name: 'Contact Us', url: `${baseUrl}/contact-us` },
+						{ name: 'Ana Sayfa', url: baseUrl },
+						{ name: 'İletişim', url: `${baseUrl}/contact-us` },
 					],
 				}}
 			/>
@@ -116,9 +117,9 @@ const ContactUs = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/contact-us`,
-					name: 'Contact Aden Academy - Get in Touch',
+					name: 'İletişim',
 					description:
-						'Contact Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
+						'Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın.',
 				}}
 			/>
 			<Box

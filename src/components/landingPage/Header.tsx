@@ -8,7 +8,7 @@ import {
   Badge,
 } from "@mui/material";
 import theme from "../../themes";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useMemo } from "react";
 import { MediaQueryContext } from "../../contexts/MediaQueryContextProvider";
 import { useDocumentCart } from "../../contexts/DocumentCartContextProvider";
@@ -66,12 +66,14 @@ const Header = () => {
   const navItems = useMemo(() => {
     const items: Array<{
       label: string;
+      to: string;
       action: () => void;
       isActive?: boolean;
       NavIcon?: typeof SchoolOutlined;
     }> = [
         {
           label: "Ana Sayfa",
+          to: "/",
           action: () => {
             navigate("/");
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -79,6 +81,7 @@ const Header = () => {
         },
         {
           label: "Kurslar",
+          to: "/landing-page-courses",
           NavIcon: SchoolOutlined,
           action: () => {
             navigate("/landing-page-courses");
@@ -89,6 +92,7 @@ const Header = () => {
 
         {
           label: "Kitaplar",
+          to: "/landing-page-resources",
           NavIcon: MenuBookOutlined,
           action: () => {
             navigate("/landing-page-resources");
@@ -100,6 +104,7 @@ const Header = () => {
         },
         {
           label: "Özel Ders",
+          to: `/#${PRIVATE_LESSONS_SECTION_ID}`,
           NavIcon: PersonOutlined,
           action: () => {
             const scrollToSection = () => {
@@ -129,6 +134,7 @@ const Header = () => {
         // },
         {
           label: "Danışmanlık",
+          to: "/landing-page-consultations",
           NavIcon: GroupsOutlined,
           action: () => {
             navigate("/landing-page-consultations");
@@ -140,6 +146,7 @@ const Header = () => {
         },
         {
           label: "Kulüpler",
+          to: "/landing-page-clubs",
           NavIcon: ForumOutlined,
           action: () => {
             navigate("/landing-page-clubs");
@@ -155,6 +162,7 @@ const Header = () => {
     items.push(
       {
         label: "İletişim",
+        to: "/contact-us",
         NavIcon: MailOutline,
         action: () => {
           navigate("/contact-us");
@@ -164,6 +172,7 @@ const Header = () => {
       },
       {
         label: "Hakkımızda",
+        to: "/about-us",
         NavIcon: InfoOutlined,
         action: () => {
           navigate("/about-us");
@@ -214,21 +223,23 @@ const Header = () => {
               </IconButton>
             )}
             <Box
+              component={Link}
+              to="/"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               sx={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 cursor: "pointer",
-              }}
-              onClick={() => {
-                navigate("/");
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                textDecoration: "none",
               }}
             >
               <Box
                 component="img"
                 src={logo}
-                alt="logo"
+                alt="Aden Academy"
                 sx={{
                   height: { xs: "2.25rem", sm: "2.5rem", md: "clamp(2.5rem, 7vh, 4rem)" },
                   minHeight: "1.75rem",
@@ -266,14 +277,11 @@ const Header = () => {
                   return (
                     <Box
                       key={index}
-                      onClick={item.action}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          item.action();
-                        }
+                      component={Link}
+                      to={item.to}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        item.action();
                       }}
                       sx={{
                         display: "inline-flex",

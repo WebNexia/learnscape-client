@@ -44,10 +44,11 @@ const LandingPageConsultations = () => {
 	return (
 		<>
 			<SEO
-				title='Danışmanlık - LearnScape'
+				title='Danışmanlık'
 				description='Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın.'
-				keywords='danışmanlık, online danışmanlık, bire bir görüşme, randevu, LearnScape danışmanlık'
+				keywords='danışmanlık, online danışmanlık, bire bir görüşme, randevu, Aden Academy danışmanlık'
 				type='website'
+				url={`${baseUrl}/landing-page-consultations`}
 			/>
 			<StructuredData type='Organization' />
 			<StructuredData type='WebSite' />
@@ -64,8 +65,8 @@ const LandingPageConsultations = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/landing-page-consultations`,
-					name: 'Danışmanlık - LearnScape',
-					description: 'Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları.',
+					name: 'Danışmanlık',
+					description: 'Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın.',
 				}}
 			/>
 			<Box

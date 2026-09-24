@@ -77,9 +77,9 @@ const LandingPageCourses = () => {
 	return (
 		<>
 			<SEO
-				title='Browse All Courses - Aden Academy'
-				description='Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.'
-				keywords='online courses, course catalog, programming courses, business courses, design courses, Aden Academy courses, educational content, skill development'
+				title='Kurslar'
+				description='Genel İngilizce ve sınavlara yönelik online kurslarımızı keşfedin. Size uygun programı bulun, detayları inceleyin ve kayıt olun.'
+				keywords='İngilizce kursu, online İngilizce, genel İngilizce, sınav hazırlık, Aden Academy kurslar'
 				type='website'
 				url={`${baseUrl}/landing-page-courses`}
 				noIndex={isQaPreview}
@@ -92,8 +92,8 @@ const LandingPageCourses = () => {
 						type='BreadcrumbList'
 						data={{
 							breadcrumbs: [
-								{ name: 'Home', url: baseUrl },
-								{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
+								{ name: 'Ana Sayfa', url: baseUrl },
+								{ name: 'Kurslar', url: `${baseUrl}/landing-page-courses` },
 							],
 						}}
 					/>
@@ -101,9 +101,9 @@ const LandingPageCourses = () => {
 						type='WebPage'
 						data={{
 							url: `${baseUrl}/landing-page-courses`,
-							name: 'Browse All Courses - Aden Academy',
+							name: 'Kurslar',
 							description:
-								'Explore our comprehensive collection of online courses. Find courses in programming, business, design, and more. Start learning today with expert instructors.',
+								'Genel İngilizce ve sınavlara yönelik online kurslarımızı keşfedin. Size uygun programı bulun, detayları inceleyin ve kayıt olun.',
 						}}
 					/>
 				</>

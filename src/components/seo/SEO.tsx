@@ -34,9 +34,10 @@ const getAbsoluteUrl = (url: string): string => {
 };
 
 const SEO = ({
-	title = 'Aden Academy - Online Learning Platform',
-	description = 'Aden Academy is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
-	keywords = 'online learning, courses, education, e-learning, Aden Academy, interactive learning, online education',
+	title = 'Aden Academy: Anasayfa',
+	description =
+		'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
+	keywords = 'Aden Academy, online İngilizce, İngilizce kursu, online eğitim, İngilizce öğren, Aden Academy kurslar',
 	image = '/og-image.jpg',
 	url,
 	type = 'website',
@@ -75,7 +76,7 @@ const SEO = ({
 			<meta property='og:image' content={absoluteImageUrl} />
 			{!noIndex && <meta property='og:url' content={canonicalUrl} />}
 			<meta property='og:site_name' content='Aden Academy' />
-			<meta property='og:locale' content='en_US' />
+			<meta property='og:locale' content='tr_TR' />
 
 			{/* Twitter */}
 			<meta name='twitter:card' content='summary_large_image' />

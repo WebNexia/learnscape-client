@@ -255,7 +255,7 @@ const LandingPageCourse = () => {
 
 	// Helper function to truncate description to 150 characters
 	const getTruncatedDescription = (description: string): string => {
-		if (!description) return 'Explore this comprehensive online course on LearnScape. Learn from expert instructors and enhance your skills.';
+		if (!description) return 'Aden Academy online İngilizce kursu. Uzman eğitmenlerle İngilizce becerilerinizi geliştirin.';
 		return description.length > 150 ? `${description.substring(0, 150).trim()}...` : description;
 	};
 
@@ -301,7 +301,7 @@ const LandingPageCourse = () => {
 			{course && (
 				<>
 					<SEO
-						title={`${course.title} | LearnScape`}
+						title={course.title}
 						description={seoDescription}
 						keywords={courseKeywords}
 						image={course.imageUrl}

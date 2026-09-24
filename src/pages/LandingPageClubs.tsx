@@ -16,7 +16,7 @@ import { Club } from '../interfaces/club';
 import { clubsService } from '../services/clubsService';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
-import { SEO } from '../components/seo';
+import { SEO, StructuredData } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useNavigate } from 'react-router-dom';
@@ -66,15 +66,42 @@ const LandingPageClubs = () => {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
+
 	return (
 		<>
 			<SEO
-				title='Kulüpler - Aden Academy'
-				description='Haftalık Zoom kulüp oturumları. Kişi sayısını ve oturumları seçip satın alın.'
-				keywords='kulüp, zoom kulüp, oturum'
+				title='Kulüpler'
+				description='Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun.'
+				keywords='kulüp, zoom kulüp, konuşma kulübü, İngilizce pratik, Aden Academy kulüpler'
 				type='website'
+				url={`${baseUrl}/landing-page-clubs`}
 				noIndex={isQaPreview}
 			/>
+			{!isQaPreview && (
+				<>
+					<StructuredData type='Organization' />
+					<StructuredData type='WebSite' />
+					<StructuredData
+						type='BreadcrumbList'
+						data={{
+							breadcrumbs: [
+								{ name: 'Ana Sayfa', url: baseUrl },
+								{ name: 'Kulüpler', url: `${baseUrl}/landing-page-clubs` },
+							],
+						}}
+					/>
+					<StructuredData
+						type='WebPage'
+						data={{
+							url: `${baseUrl}/landing-page-clubs`,
+							name: 'Kulüpler',
+							description:
+								'Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun.',
+						}}
+					/>
+				</>
+			)}
 			<Box
 				sx={{
 					position: 'relative',

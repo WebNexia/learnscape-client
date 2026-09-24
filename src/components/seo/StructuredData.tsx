@@ -33,15 +33,24 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'url': baseUrl,
 					'logo': `${baseUrl}/logo.png`,
 					'description':
-						'Aden Academy is a comprehensive online learning platform offering courses, quizzes, and interactive content for students and professionals.',
+						'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
 					'foundingDate': '2024',
+					'email': 'info@adenacademy.co.uk',
 					'contactPoint': {
 						'@type': 'ContactPoint',
-						'telephone': '+1-555-LEARN',
+						'telephone': '+44-7864-813752',
+						'email': 'info@adenacademy.co.uk',
 						'contactType': 'customer service',
-						'availableLanguage': 'English',
+						'availableLanguage': ['Turkish', 'English'],
 					},
-					'sameAs': ['https://twitter.com/adenacademy', 'https://linkedin.com/company/adenacademy', 'https://facebook.com/adenacademy'],
+					'address': {
+						'@type': 'PostalAddress',
+						'streetAddress': '124 City Road',
+						'addressLocality': 'London',
+						'postalCode': 'EC1V 2NX',
+						'addressCountry': 'GB',
+					},
+					'sameAs': ['https://www.instagram.com/learnwithlondoner/'],
 				};
 
 			case 'WebSite':
@@ -50,14 +59,13 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'@type': 'WebSite',
 					'name': 'Aden Academy',
 					'url': baseUrl,
-					'description': 'Online learning platform with courses, quizzes, and interactive content',
-					'potentialAction': {
-						'@type': 'SearchAction',
-						'target': {
-							'@type': 'EntryPoint',
-							'urlTemplate': `${baseUrl}/search?q={search_term_string}`,
-						},
-						'query-input': 'required name=search_term_string',
+					'description':
+						'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
+					'inLanguage': 'tr',
+					'publisher': {
+						'@type': 'Organization',
+						'name': 'Aden Academy',
+						'url': baseUrl,
 					},
 				};
 
@@ -122,32 +130,31 @@ const StructuredData = ({ type, data }: StructuredDataProps) => {
 					'@context': 'https://schema.org',
 					'@type': 'ContactPage',
 					'@id': data?.url || `${baseUrl}/contact-us`,
-					'name': 'Contact Aden Academy',
+					'name': 'İletişim',
 					'description':
-						'Get in touch with Aden Academy for support, inquiries, or partnerships. Reach out to our team for assistance with courses, technical issues, or business opportunities.',
+						'Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın.',
 					'url': data?.url || `${baseUrl}/contact-us`,
 					'mainEntity': {
 						'@type': 'Organization',
 						'name': 'Aden Academy',
 						'url': baseUrl,
+						'email': 'info@adenacademy.co.uk',
 						'contactPoint': [
 							{
 								'@type': 'ContactPoint',
-								'telephone': '+1-555-LEARN',
+								'telephone': '+44-7864-813752',
+								'email': 'info@adenacademy.co.uk',
 								'contactType': 'customer service',
-								'availableLanguage': 'English',
-								'areaServed': 'Worldwide',
-							},
-							{
-								'@type': 'ContactPoint',
-								'contactType': 'technical support',
-								'availableLanguage': 'English',
+								'availableLanguage': ['Turkish', 'English'],
 								'areaServed': 'Worldwide',
 							},
 						],
 						'address': {
 							'@type': 'PostalAddress',
-							'addressCountry': 'US',
+							'streetAddress': '124 City Road',
+							'addressLocality': 'London',
+							'postalCode': 'EC1V 2NX',
+							'addressCountry': 'GB',
 						},
 					},
 				};
