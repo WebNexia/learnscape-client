@@ -1,4 +1,5 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { responsiveStyles } from '../../styles/responsiveStyles';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -12,6 +13,7 @@ interface LandingPageDrawerProps {
 	setIsDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	navItems: Array<{
 		label: string;
+		to: string;
 		action: () => void;
 		isActive?: boolean;
 	}>;
@@ -77,7 +79,12 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 					{navItems?.map((item, index) => (
 						<ListItem key={index} disablePadding>
 							<ListItemButton
-								onClick={() => handleNavItemClick(item.action)}
+								component={Link}
+								to={item.to}
+								onClick={(e) => {
+									e.preventDefault();
+									handleNavItemClick(item.action);
+								}}
 								sx={{
 									'py': responsiveStyles.spacing.item,
 									'&:hover': {

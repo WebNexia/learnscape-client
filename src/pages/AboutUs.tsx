@@ -193,18 +193,19 @@ const AboutUs = () => {
 	return (
 		<>
 			<SEO
-				title='About Aden Academy - Online Learning Platform'
-				description="Learn about Aden Academy's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide."
-				keywords='about Aden Academy, online education company, learning platform team, educational technology, e-learning mission, Aden Academy values'
+				title='Hakkımızda'
+				description="Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz."
+				keywords='hakkımızda, Aden Academy, online İngilizce, misyon, vizyon'
 				type='website'
+				url={`${baseUrl}/about-us`}
 			/>
 			<StructuredData type='Organization' />
 			<StructuredData
 				type='BreadcrumbList'
 				data={{
 					breadcrumbs: [
-						{ name: 'Home', url: baseUrl },
-						{ name: 'About Us', url: `${baseUrl}/about-us` },
+						{ name: 'Ana Sayfa', url: baseUrl },
+						{ name: 'Hakkımızda', url: `${baseUrl}/about-us` },
 					],
 				}}
 			/>
@@ -212,9 +213,9 @@ const AboutUs = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/about-us`,
-					name: 'About Aden Academy - Online Learning Platform',
+					name: 'Hakkımızda',
 					description:
-						"Learn about Aden Academy's mission to revolutionize online education. Discover our team, values, and commitment to providing quality learning experiences for students worldwide.",
+						"Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz.",
 				}}
 			/>
 			<Box

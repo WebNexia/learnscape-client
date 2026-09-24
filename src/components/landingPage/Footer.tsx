@@ -6,6 +6,7 @@ import { useCookieConsent } from '../../contexts/CookieConsentContext';
 import theme from '../../themes';
 import { Instagram, WhatsApp } from '@mui/icons-material';
 import { responsiveStyles } from '../../styles/responsiveStyles';
+import { PUBLIC_NAV_PAGES } from '../../constants/publicNavPages';
 
 const Footer = () => {
 	const { isSmallScreen } = useContext(MediaQueryContext);
@@ -35,6 +36,7 @@ const Footer = () => {
 					sx={{
 						display: 'flex',
 						flexDirection: { xs: 'column', sm: 'row' },
+						flexWrap: 'wrap',
 						justifyContent: 'space-between',
 						gap: { xs: 3, sm: 4 },
 						width: '100%',
@@ -138,6 +140,43 @@ const Footer = () => {
 								}}
 							/>
 						</Box>
+					</Box>
+
+					<Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								mb: responsiveStyles.spacing.item,
+								fontSize: responsiveStyles.typography.body2,
+								fontFamily: fontFamilyLandingPage,
+							}}>
+							Sayfalar
+						</Typography>
+						{PUBLIC_NAV_PAGES.map((page) => (
+							<Typography
+								key={page.path}
+								component={Link}
+								to={page.path}
+								variant='body2'
+								onClick={() => {
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+								}}
+								sx={{
+									'color': theme.textColor?.common.main,
+									'fontSize': { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+									'fontFamily': fontFamilyLandingPage,
+									'display': 'block',
+									'mb': '0.25rem',
+									'textDecoration': 'none',
+									'cursor': 'pointer',
+									'&:hover': {
+										textDecoration: 'underline',
+									},
+								}}>
+								{page.label}
+							</Typography>
+						))}
 					</Box>
 
 					<Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>

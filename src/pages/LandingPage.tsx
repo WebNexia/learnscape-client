@@ -25,9 +25,9 @@ const LandingPage = () => {
 	return (
 		<>
 			<SEO
-				title='Aden Academy - Online Learning Platform | Courses & Education'
-				description='Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.'
-				keywords='online learning, e-learning, education platform, interactive learning, Aden Academy, online courses, educational content, learning management system, student portal, course platform'
+				title='Aden Academy: Anasayfa'
+				description='Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.'
+				keywords='Aden Academy, online İngilizce, İngilizce kursu, online eğitim, İngilizce öğren'
 				type='website'
 				url={`${baseUrl}/`}
 				noIndex={isQaPreview}
@@ -36,14 +36,14 @@ const LandingPage = () => {
 				<>
 					<StructuredData type='Organization' />
 					<StructuredData type='WebSite' />
-					<StructuredData type='BreadcrumbList' data={{ breadcrumbs: [{ name: 'Home', url: baseUrl }] }} />
+					<StructuredData type='BreadcrumbList' data={{ breadcrumbs: [{ name: 'Ana Sayfa', url: baseUrl }] }} />
 					<StructuredData
 						type='WebPage'
 						data={{
 							url: baseUrl,
-							name: 'Aden Academy - Online Learning Platform',
+							name: 'Aden Academy: Anasayfa',
 							description:
-								'Discover thousands of online courses, interactive quizzes, and educational content. Join Aden Academy for the best e-learning experience with expert instructors and comprehensive learning materials.',
+								'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
 						}}
 					/>
 				</>

@@ -97,10 +97,11 @@ const LandingPageResources = () => {
 	return (
 		<>
 			<SEO
-				title='Kitaplar - Aden Academy'
-				description='Ders kitapları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.'
-				keywords='kitaplar, ders kitapları, eğitim materyalleri, çalışma materyalleri, PDF indirme, ücretsiz kitap, Aden Academy kitaplar'
+				title='Kitaplar'
+				description='Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.'
+				keywords='kitaplar, ders kitapları, eğitim materyalleri, ücretsiz kaynak, Aden Academy kitaplar'
 				type='website'
+				url={`${baseUrl}/landing-page-resources`}
 			/>
 			<StructuredData type='Organization' />
 			<StructuredData type='WebSite' />
@@ -108,7 +109,7 @@ const LandingPageResources = () => {
 				type='BreadcrumbList'
 				data={{
 					breadcrumbs: [
-						{ name: 'Home', url: baseUrl },
+						{ name: 'Ana Sayfa', url: baseUrl },
 						{ name: 'Kitaplar', url: `${baseUrl}/landing-page-resources` },
 					],
 				}}
@@ -117,9 +118,9 @@ const LandingPageResources = () => {
 				type='WebPage'
 				data={{
 					url: `${baseUrl}/landing-page-resources`,
-					name: 'Kitaplar - Aden Academy',
+					name: 'Kitaplar',
 					description:
-						'Ders kitapları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.',
+						'Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.',
 				}}
 			/>
 			<Box
