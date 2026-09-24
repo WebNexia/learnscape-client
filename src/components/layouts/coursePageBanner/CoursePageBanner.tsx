@@ -345,6 +345,7 @@ const CoursePageBanner = ({
 				sx={{
 					display: 'flex',
 					flexDirection: 'row',
+					flexWrap: { xs: 'wrap', md: 'nowrap' },
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					height: '100%',
@@ -404,7 +405,10 @@ const CoursePageBanner = ({
 								lineHeight: { xs: 1.75, sm: isSmallScreen ? 1.6 : 1.7 },
 								textAlign: 'left',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								mb: '3.5rem',
+								mb: {
+									xs: !isEnrolledStatus && !course.isExpired && (isCourseFull || isManuallyClosed) ? '0.75rem' : '3.5rem',
+									md: '3.5rem',
+								},
 								whiteSpace: 'pre-line',
 							}}>
 							{course.description}
@@ -522,66 +526,7 @@ const CoursePageBanner = ({
 									: 'Enroll'}
 						</CustomSubmitButton>
 					)
-				) : !isEnrolledStatus && !course.isExpired && (isCourseFull || isManuallyClosed) ? (
-					<Box
-						sx={{
-							position: 'absolute',
-							bottom: isRotated ? 60 : '1.5rem',
-							left: '1rem',
-							display: 'flex',
-							flexDirection: { xs: 'row', sm: 'row' },
-							alignItems: { xs: 'center', sm: 'center' },
-							flexWrap: 'wrap',
-							gap: 1,
-							maxWidth: { xs: 'calc(100% - 1.5rem)', sm: 'none' },
-						}}>
-						<Alert
-							severity={isCourseFull ? 'error' : 'warning'}
-							sx={{
-								fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
-								backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
-								color: theme.textColor?.common.main,
-								width: 'fit-content',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								px: 1,
-								py: isVerySmallScreen || isRotated ? 0 : 0.5,
-							}}>
-							{isMarkedFullByAdmin
-								? isTrUi
-									? 'Kayıtlar Doldu'
-									: 'Course is full'
-								: isCapacityFull
-									? isTrUi
-										? 'Kontenjan doldu'
-										: 'No seats available'
-									: isTrUi
-										? 'Kayıtlar kapalı'
-										: 'Registration is closed'}
-						</Alert>
-						<CustomSubmitButton
-							variant='contained'
-							onClick={() => {
-								if (isQaPreview) return;
-								setIsWaitingListOpen(true);
-							}}
-							sx={{
-								width: 'fit-content',
-								padding: isMobileSize ? '0.5rem 1rem' : '0.75rem 1.25rem',
-								fontSize: isMobileSize ? '0.75rem' : '0.95rem',
-								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								background: fromHomePage ? '#FF6F4E !important' : undefined,
-								borderRadius: fromHomePage ? '0.75rem' : undefined,
-								color: fromHomePage ? '#fff !important' : undefined,
-								textTransform: 'none',
-								'&:hover': {
-									color: fromHomePage ? '#fff !important' : undefined,
-									backgroundColor: fromHomePage ? '#ff7d55 !important' : undefined,
-								},
-							}}>
-							{isTrUi ? 'Bekleme Listesine Kaydol' : 'Join Waiting List'}
-						</CustomSubmitButton>
-					</Box>
-				) : !isEnrolledStatus && course.isExpired ? (
+				) : !isEnrolledStatus && !course.isExpired && (isCourseFull || isManuallyClosed) ? null : !isEnrolledStatus && course.isExpired ? (
 					<Alert
 						severity='warning'
 						sx={{
@@ -816,6 +761,103 @@ const CoursePageBanner = ({
 						/>
 					</Box>
 				</Box>
+
+				{!isEnrolledStatus && !course.isExpired && (isCourseFull || isManuallyClosed) && (
+					<Box
+						sx={{
+							position: { xs: 'relative', md: 'absolute' },
+							bottom: { xs: 'auto', md: isRotated ? 60 : '1.5rem' },
+							left: { xs: 0, md: '1rem' },
+							display: 'flex',
+							flexDirection: 'row',
+							alignItems: 'center',
+							flexWrap: 'nowrap',
+							gap: { xs: 0.75, sm: 1 },
+							width: { xs: '100%', md: 'auto' },
+							flexBasis: { xs: '100%', md: 'auto' },
+							maxWidth: '100%',
+							mt: { xs: 1.25, md: 0 },
+							pr: { xs: 1, md: 0 },
+						}}>
+						<Alert
+							severity={isCourseFull ? 'error' : 'warning'}
+							sx={{
+								alignItems: 'center',
+								fontSize: isVerySmallScreen || isRotated ? '0.7rem' : '0.9rem',
+								backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+								color: theme.textColor?.common.main,
+								width: 'auto',
+								flex: '0 0 auto',
+								whiteSpace: 'nowrap',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								px: { xs: 0.75, sm: 1 },
+								py: isVerySmallScreen || isRotated ? 0.75 : 1,
+								'& .MuiAlert-icon': {
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									mr: { xs: 0.5, sm: 1 },
+									padding: 0,
+									marginTop: 0,
+									fontSize: { xs: '1rem', sm: '1.25rem' },
+									'& svg': {
+										fontSize: 'inherit',
+										display: 'block',
+									},
+								},
+								overflow: 'hidden',
+								'& .MuiAlert-message': {
+									padding: 0,
+									display: 'flex',
+									alignItems: 'center',
+									whiteSpace: 'nowrap',
+									lineHeight: 1,
+									overflow: 'hidden',
+								},
+								'& .MuiAlert-action': {
+									display: 'none',
+								},
+							}}>
+							{isMarkedFullByAdmin
+								? isTrUi
+									? 'Kayıtlar Doldu'
+									: 'Course is full'
+								: isCapacityFull
+									? isTrUi
+										? 'Kontenjan Doldu'
+										: 'No seats available'
+									: isTrUi
+										? 'Kayıtlar Kapalı'
+										: 'Registration is closed'}
+						</Alert>
+						<CustomSubmitButton
+							variant='contained'
+							onClick={() => {
+								if (isQaPreview) return;
+								setIsWaitingListOpen(true);
+							}}
+							sx={{
+								width: 'auto',
+								flex: '0 0 auto',
+								whiteSpace: 'nowrap',
+								minWidth: 'unset',
+								height: 'auto',
+								padding: isMobileSize ? '0.4rem 0.75rem' : '0.5rem 1rem',
+								fontSize: isMobileSize ? '0.7rem' : '0.95rem',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								background: fromHomePage ? '#FF6F4E !important' : undefined,
+								borderRadius: fromHomePage ? '0.75rem' : undefined,
+								color: fromHomePage ? '#fff !important' : undefined,
+								textTransform: 'none',
+								'&:hover': {
+									color: fromHomePage ? '#fff !important' : undefined,
+									backgroundColor: fromHomePage ? '#ff7d55 !important' : undefined,
+								},
+							}}>
+							{isTrUi ? 'Bekleme Listesine Kaydol' : 'Join Waiting List'}
+						</CustomSubmitButton>
+					</Box>
+				)}
 
 				{!fromHomePage && (
 					<PaymentDialogWrapper
