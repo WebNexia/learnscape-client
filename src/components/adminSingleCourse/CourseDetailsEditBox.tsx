@@ -1,7 +1,7 @@
 import { Box, Button, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, DialogContent, Collapse } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { CourseLandingPageSection, SingleCourse, CourseGroup } from '../../interfaces/course';
+import { CourseIntroModal, CourseLandingPageSection, SingleCourse, CourseGroup } from '../../interfaces/course';
 import theme from '../../themes';
 import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
@@ -18,9 +18,13 @@ import {
 	MAX_LANDING_PAGE_SECTIONS,
 	MAX_LANDING_PAGE_SECTION_TITLE_LENGTH,
 	MAX_LANDING_PAGE_SECTION_BODY_LENGTH,
+	MAX_INTRO_MODAL_TITLE_LENGTH,
+	MAX_INTRO_MODAL_BODY_LENGTH,
 } from '../../constants/landingPageCourseLimits';
 import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 import { courseEditorScope } from '../../utils/editorImageScopes';
+import { defaultCourseIntroModal, resolveCourseIntroModal } from '../../utils/courseIntroModal';
+import CourseIntroModalDialog from '../layouts/coursePageBanner/CourseIntroModalDialog';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -44,12 +48,23 @@ const CourseDetailsEditBox = ({
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [sectionImageEnterUrlByKey, setSectionImageEnterUrlByKey] = useState<Record<string, boolean>>({});
 	const [isLandingPageSectionsExpanded, setIsLandingPageSectionsExpanded] = useState<boolean>(false);
+	const [isIntroModalPreviewOpen, setIsIntroModalPreviewOpen] = useState<boolean>(false);
 
 	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const landingPageSectionCount = singleCourseBeforeSave?.landingPageSections?.length ?? 0;
+	const introModal = singleCourseBeforeSave?.introModal ?? defaultCourseIntroModal(singleCourseBeforeSave?.introVideoUrl);
+
+	const patchIntroModal = (patch: Partial<CourseIntroModal>) => {
+		setSingleCourseBeforeSave((prev) => {
+			if (!prev) return prev;
+			const current = prev.introModal ?? defaultCourseIntroModal(prev.introVideoUrl);
+			return { ...prev, introModal: { ...current, ...patch } };
+		});
+		setHasUnsavedChanges(true);
+	};
 
 	const moveLandingPageSection = (index: number, dir: -1 | 1) => {
 		setSingleCourseBeforeSave((prev) => {
@@ -408,11 +423,25 @@ const CourseDetailsEditBox = ({
 			</Box>
 
 			<Box sx={{ ...sectionSx, mb: '2rem' }}>
-				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', mb: '0.5rem' }}>
-					Landing Page Intro Video
-				</Typography>
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: '0.5rem' }}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+						Landing page intro modal
+					</Typography>
+					<Button
+						size='small'
+						variant='outlined'
+						disabled={
+							!resolveCourseIntroModal({
+								introVideoUrl: singleCourseBeforeSave?.introVideoUrl,
+								introModal,
+							}).shouldOpen
+						}
+						onClick={() => setIsIntroModalPreviewOpen(true)}>
+						Preview modal
+					</Button>
+				</Box>
 				<Typography variant='body2' color='text.secondary' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-					Optional. Shown on the public course detail page.
+					Opens once per tab on the public course page. Choose video, designed info (timetable, group notes), or both.
 				</Typography>
 				<CustomTextField
 					fullWidth
@@ -429,7 +458,77 @@ const CourseDetailsEditBox = ({
 						}
 					}}
 					InputProps={{ inputProps: { maxLength: 500 } }}
+					sx={{ mb: '0.75rem' }}
 				/>
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 0, sm: 2 }, mb: introModal.showContent ? '1rem' : 0 }}>
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={introModal.showVideo}
+								onChange={(e) => patchIntroModal({ showVideo: e.target.checked })}
+								sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : '1.25rem' } }}
+							/>
+						}
+						label='Show intro video'
+						sx={{ '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' } }}
+					/>
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={introModal.showContent}
+								onChange={(e) => patchIntroModal({ showContent: e.target.checked })}
+								sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1rem' : '1.25rem' } }}
+							/>
+						}
+						label='Show info content'
+						sx={{ '& .MuiFormControlLabel-label': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' } }}
+					/>
+				</Box>
+				{introModal.showContent && (
+					<Box>
+						<CustomTextField
+							fullWidth
+							required={false}
+							label='Modal title (optional)'
+							placeholder='Ders saatleri, gruplar…'
+							value={introModal.title}
+							onChange={(e) => patchIntroModal({ title: e.target.value.slice(0, MAX_INTRO_MODAL_TITLE_LENGTH) })}
+							InputProps={{ inputProps: { maxLength: MAX_INTRO_MODAL_TITLE_LENGTH } }}
+							sx={{ mb: '0.5rem' }}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0 0 0.75rem 0', textAlign: 'right' }}>
+							{introModal.title.length}/{MAX_INTRO_MODAL_TITLE_LENGTH}
+						</Typography>
+						<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.5rem' }}>
+							Modal body — timetable, group info, or any notes. Rich text; {'{{price}}'} placeholders work here too.
+						</Typography>
+						<LandingPageSectionBodyEditor
+							key={`intro-modal-body-${singleCourseBeforeSave?._id || 'new'}`}
+							editorId={`intro-modal-body-${singleCourseBeforeSave?._id || 'new'}`}
+							maxLength={MAX_INTRO_MODAL_BODY_LENGTH}
+							imageScopedEntityId={
+								singleCourseBeforeSave?._id ? courseEditorScope(singleCourseBeforeSave._id) : undefined
+							}
+							seedHtml={introModal.body ?? ''}
+							onHtmlChange={(trimmed) => patchIntroModal({ body: trimmed })}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0 0', textAlign: 'right' }}>
+							{(introModal.body?.length ?? 0)}/{MAX_INTRO_MODAL_BODY_LENGTH} (HTML length)
+						</Typography>
+					</Box>
+				)}
+				{singleCourseBeforeSave && (
+					<CourseIntroModalDialog
+						course={{
+							...singleCourseBeforeSave,
+							introModal,
+						}}
+						open={isIntroModalPreviewOpen}
+						onClose={() => setIsIntroModalPreviewOpen(false)}
+						fromHomePage
+						isTrUi
+					/>
+				)}
 			</Box>
 
 			<Box sx={{ ...sectionSx, mb: '2rem' }}>

@@ -16,6 +16,14 @@ export interface CourseEnrollmentProof {
 	promoCodeId?: string;
 }
 
+/** Public LP course-detail welcome modal. Missing flags fall back to video-only when a URL exists. */
+export interface CourseIntroModal {
+	showVideo: boolean;
+	showContent: boolean;
+	title: string;
+	body: string;
+}
+
 /** Public LP detail: optional heading, rich HTML body, and/or featured image. */
 export interface CourseLandingPageSection {
 	title: string;
@@ -36,6 +44,8 @@ export interface BaseCourse {
 	imageUrl: string;
 	/** Landing page course detail: optional intro/trailer video (YouTube / Vimeo URL). */
 	introVideoUrl?: string;
+	/** LP course-detail welcome modal: video and/or designed info (timetable, notes). */
+	introModal?: CourseIntroModal;
 	/** Optional blocks below banner on public LP course detail (title + HTML body). */
 	landingPageSections?: CourseLandingPageSection[];
 	isActive: boolean;

@@ -332,6 +332,12 @@ const AdminCourseEditPage = () => {
 					const courseResponse = response?.data?.data;
 					const withSectionKeys: SingleCourse = {
 						...courseResponse,
+						introModal: {
+							showVideo: courseResponse.introModal?.showVideo ?? true,
+							showContent: Boolean(courseResponse.introModal?.showContent),
+							title: courseResponse.introModal?.title || '',
+							body: courseResponse.introModal?.body || '',
+						},
 						landingPageSections: (courseResponse.landingPageSections || []).map((s: CourseLandingPageSection) => ({
 							title: s.title || '',
 							body: s.body || '',
@@ -589,6 +595,12 @@ const AdminCourseEditPage = () => {
 						body: body ?? '',
 						imageUrl: imageUrl ?? '',
 					})),
+					introModal: {
+						showVideo: Boolean(singleCourseBeforeSave.introModal?.showVideo),
+						showContent: Boolean(singleCourseBeforeSave.introModal?.showContent),
+						title: singleCourseBeforeSave.introModal?.title ?? '',
+						body: singleCourseBeforeSave.introModal?.body ?? '',
+					},
 				};
 
 				try {
@@ -606,12 +618,22 @@ const AdminCourseEditPage = () => {
 								}))
 							: updatedCourse.landingPageSections;
 
+					const introModalAfterSave = responseUpdatedData.introModal
+						? {
+								showVideo: Boolean(responseUpdatedData.introModal.showVideo),
+								showContent: Boolean(responseUpdatedData.introModal.showContent),
+								title: responseUpdatedData.introModal.title || '',
+								body: responseUpdatedData.introModal.body || '',
+							}
+						: singleCourseBeforeSave.introModal;
+
 					setSingleCourseBeforeSave({
 						...updatedCourse,
 						startingDate: responseUpdatedData.startingDate ?? null,
 						durationWeeks: responseUpdatedData.durationWeeks ?? null,
 						durationHours: responseUpdatedData.durationHours ?? null,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave } : {}),
+						...(introModalAfterSave !== undefined ? { introModal: introModalAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -621,6 +643,7 @@ const AdminCourseEditPage = () => {
 					updateCourse({
 						...updatedCourse,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
+						...(introModalAfterSave !== undefined ? { introModal: introModalAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
@@ -651,6 +674,7 @@ const AdminCourseEditPage = () => {
 						durationWeeks: responseUpdatedData.durationWeeks ?? null,
 						durationHours: responseUpdatedData.durationHours ?? null,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
+						...(introModalAfterSave !== undefined ? { introModal: introModalAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
