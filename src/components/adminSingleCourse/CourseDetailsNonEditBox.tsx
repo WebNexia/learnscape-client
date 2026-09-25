@@ -180,6 +180,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					</Box>
 
 					{(Boolean(singleCourse?.introVideoUrl?.trim()) ||
+						Boolean(singleCourse?.introModal?.showContent) ||
 						Boolean(singleCourse?.landingPageSections && singleCourse.landingPageSections.length > 0)) && (
 							<Box
 								sx={{
@@ -194,7 +195,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 								{singleCourse?.introVideoUrl?.trim() ? (
 									<Box sx={{ textAlign: 'left' }}>
 										<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.35rem' }}>
-											Landing Page Intro Video
+											Landing intro modal
 										</Typography>
 										{(() => {
 											const introUrl = singleCourse.introVideoUrl!.trim();
@@ -248,6 +249,17 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 												</Box>
 											);
 										})()}
+									</Box>
+								) : null}
+
+								{singleCourse?.introModal?.showContent ? (
+									<Box sx={{ textAlign: 'left', pt: singleCourse?.introVideoUrl?.trim() ? '1.35rem' : 0 }}>
+										<Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: '0.35rem', whiteSpace: 'nowrap' }}>
+											Intro modal info
+										</Typography>
+										<Typography variant='body2' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+											{singleCourse.introModal.title?.trim() || 'Custom content'}
+										</Typography>
 									</Box>
 								) : null}
 

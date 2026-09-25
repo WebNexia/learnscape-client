@@ -24,31 +24,12 @@ import { getCourseProgress } from '../../../utils/courseProgress';
 import { learnerCourseShellQueryKey } from '../../../hooks/useLearnerCourseShell';
 import { isSubscriptionsProductEnabled } from '../../../config/features';
 import { getPostEnrollmentUserPatch } from '../../../utils/learnerPlatformAccess';
-import { extractVideoId } from '../../../utils/videoUrlUtils';
 import CourseWaitingListDialog from '../../landingPage/CourseWaitingListDialog';
 import { useIsLpQaPreview } from '../../../hooks/useIsLpQaPreview';
+import { resolveCourseIntroModal } from '../../../utils/courseIntroModal';
+import CourseIntroModalDialog from './CourseIntroModalDialog';
 
-const LP_INTRO_SESSION_PREFIX = 'lpIntroVideoSession:';
-
-/** iframe embed URL for common hosts; unsupported URLs should open in a new tab */
-const getIntroVideoEmbedSrc = (raw: string): string | null => {
-	const url = raw.trim();
-	if (!url) return null;
-
-	if (url.includes('youtube.com') || url.includes('youtu.be')) {
-		const id = extractVideoId(url);
-		return id ? `https://www.youtube.com/embed/${id}?rel=0&controls=1&playsinline=1` : null;
-	}
-	if (url.includes('vimeo.com')) {
-		const id = extractVideoId(url);
-		return id ? `https://player.vimeo.com/video/${id}` : null;
-	}
-	if (url.includes('dailymotion.com')) {
-		const id = extractVideoId(url);
-		return id ? `https://www.dailymotion.com/embed/video/${id}` : null;
-	}
-	return null;
-};
+const LP_INTRO_SESSION_PREFIX = 'lpIntroModalSession:';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -138,8 +119,14 @@ const CoursePageBanner = ({
 	const isCourseFull = isCapacityFull || isMarkedFullByAdmin;
 	const hidePrices = Boolean(course?.hidePrices);
 
-	const introVideoUrl = course?.introVideoUrl?.trim() ?? '';
-	const introEmbedSrc = introVideoUrl ? getIntroVideoEmbedSrc(introVideoUrl) : null;
+	const introModal = resolveCourseIntroModal(course);
+	const introButtonLabel = introModal.showVideo
+		? isTrUi
+			? 'Tanıtımı İzle'
+			: 'Watch Intro'
+		: isTrUi
+			? 'Kurs Bilgisi'
+			: 'Course Info';
 
 	const markIntroVideoSeenThisSession = () => {
 		if (!course?._id) return;
@@ -284,14 +271,14 @@ const CoursePageBanner = ({
 
 	// LP: once per browser tab session, auto-open intro modal when configured (flag set on dismiss)
 	useEffect(() => {
-		if (!fromHomePage || !introVideoUrl || !course?._id) return;
+		if (!fromHomePage || !introModal.shouldOpen || !course?._id) return;
 		try {
 			if (sessionStorage.getItem(`${LP_INTRO_SESSION_PREFIX}${course._id}`)) return;
 		} catch {
 			return;
 		}
 		setIsIntroVideoOpen(true);
-	}, [fromHomePage, introVideoUrl, course?._id]);
+	}, [fromHomePage, introModal.shouldOpen, course?._id]);
 
 	return (
 		<Paper
@@ -423,7 +410,7 @@ const CoursePageBanner = ({
 					!isCourseFull &&
 					!(fromHomePage && isCourseFree) &&
 					(isCourseFree ? user?.hasRegisteredCourse || (isSubscriptionsProductEnabled && user?.isSubscribed) : true) ? (
-					fromHomePage && introVideoUrl ? (
+					fromHomePage && introModal.shouldOpen ? (
 						<Box
 							sx={{
 								position: 'absolute',
@@ -461,10 +448,10 @@ const CoursePageBanner = ({
 								onClick={() => setIsIntroVideoOpen(true)}
 								startIcon={<PlayCircleOutlined />}
 								sx={introVideoButtonSx}>
-								Tanıtımı İzle
+								{introButtonLabel}
 							</CustomSubmitButton>
 						</Box>
-					) : !fromHomePage && introVideoUrl ? (
+					) : !fromHomePage && introModal.shouldOpen ? (
 						<Box
 							sx={{
 								position: 'absolute',
@@ -494,7 +481,7 @@ const CoursePageBanner = ({
 								onClick={() => setIsIntroVideoOpen(true)}
 								startIcon={<PlayCircleOutlined />}
 								sx={introVideoButtonSx}>
-								{isTrUi ? 'Tanıtımı İzle' : 'Watch Intro'}
+								{introButtonLabel}
 							</CustomSubmitButton>
 						</Box>
 					) : (
@@ -568,7 +555,7 @@ const CoursePageBanner = ({
 							</Typography>
 						)}
 
-						{introVideoUrl && (
+						{introModal.shouldOpen && (
 							<CustomSubmitButton
 								variant='outlined'
 								onClick={() => setIsIntroVideoOpen(true)}
@@ -578,7 +565,7 @@ const CoursePageBanner = ({
 									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : introVideoButtonSx.fontSize,
 									padding: isVerySmallScreen || isRotated ? '0.35rem 0.75rem' : introVideoButtonSx.padding,
 								}}>
-								{isTrUi ? 'Tanıtımı İzle' : 'Watch Intro'}
+								{introButtonLabel}
 							</CustomSubmitButton>
 						)}
 
@@ -872,86 +859,13 @@ const CoursePageBanner = ({
 				)}
 			</Box>
 
-			{introVideoUrl && (
-				<CustomDialog
-					openModal={isIntroVideoOpen}
-					closeModal={closeIntroVideoModal}
-					maxWidth='md'
-					PaperProps={{
-						style: { backgroundColor: 'transparent' },
-						sx: {
-							backgroundColor: 'transparent',
-							backgroundImage: 'none',
-							overflow: 'hidden',
-							boxShadow: 'none',
-							borderRadius: { xs: '0.5rem', sm: '0.75rem' },
-							margin: { xs: '0.75rem', sm: '1.5rem' },
-							width: { xs: 'calc(100% - 1.5rem)', sm: '100%' },
-							maxWidth: { xs: 'calc(100% - 1.5rem)', md: '900px' },
-						},
-					}}>
-					<DialogContent sx={{ backgroundColor: 'transparent', p: 0, overflow: 'hidden' }}>
-						{introEmbedSrc ? (
-							<Box
-								sx={{
-									position: 'relative',
-									width: 'min(100%, calc((100dvh - 2rem) * 16 / 9))',
-									aspectRatio: '16 / 9',
-									mx: 'auto',
-									overflow: 'hidden',
-									bgcolor: '#000',
-									borderRadius: { xs: '0.5rem', sm: '0.75rem' },
-									'& iframe, & video, & > div': {
-										backgroundColor: '#000',
-									},
-								}}>
-								<Box
-									component='iframe'
-									src={isIntroVideoOpen ? introEmbedSrc : undefined}
-									title={isTrUi ? 'Kurs tanıtım videosu' : 'Course intro video'}
-									allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-									allowFullScreen
-									sx={{
-										position: 'absolute',
-										inset: 0,
-										width: '100%',
-										height: '100%',
-										border: 0,
-										backgroundColor: '#000',
-									}}
-								/>
-							</Box>
-						) : (
-							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
-								<Typography
-									variant='body2'
-									sx={{
-										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-										color: '#fff',
-									}}>
-									{isTrUi
-										? 'Video bu sayfada gömülü izlenemiyor; yeni sekmede açabilirsiniz.'
-										: 'This video cannot be embedded here; you can open it in a new tab.'}
-								</Typography>
-								<Button
-									component='a'
-									href={introVideoUrl}
-									target='_blank'
-									rel='noopener noreferrer'
-									variant='contained'
-									sx={{
-										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-										textTransform: 'none',
-										alignSelf: 'flex-start',
-										borderRadius: fromHomePage ? '0.75rem' : undefined,
-									}}>
-									{isTrUi ? 'Videoyu aç' : 'Open video'}
-								</Button>
-							</Box>
-						)}
-					</DialogContent>
-				</CustomDialog>
-			)}
+			<CourseIntroModalDialog
+				course={course}
+				open={isIntroVideoOpen}
+				onClose={closeIntroVideoModal}
+				fromHomePage={fromHomePage}
+				isTrUi={isTrUi}
+			/>
 
 			{/* Group Info Dialog */}
 			<CustomDialog
