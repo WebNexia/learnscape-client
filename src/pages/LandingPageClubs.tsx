@@ -20,7 +20,7 @@ import { SEO, StructuredData } from '../components/seo';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useNavigate } from 'react-router-dom';
-import { ArrowForward, ForumOutlined } from '@mui/icons-material';
+import { ArrowForward } from '@mui/icons-material';
 import { pickPackPrice } from '../utils/clubPurchasePricing';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 import { LP_QA_PREVIEW_SEGMENT } from '../utils/lpQaPreview';
@@ -249,12 +249,8 @@ const LandingPageClubs = () => {
 														/>
 													)}
 													<CardContent sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-														<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-															<ForumOutlined sx={{ color: '#0052a3', fontSize: 22 }} />
-															<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '1.15rem' }}>
-																{club.title}
-															</Typography>
-															{isQaPreview && isInactive && (
+														{isQaPreview && isInactive && (
+															<Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
 																<Chip
 																	label='Inactive'
 																	size='small'
@@ -266,8 +262,8 @@ const LandingPageClubs = () => {
 																		color: '#475569',
 																	}}
 																/>
-															)}
-														</Box>
+															</Box>
+														)}
 														{club.description && (
 															<Typography
 																sx={{

@@ -50,11 +50,11 @@ const ListeningPanel = ({ audioSrc }: Props) => {
       component="section"
       sx={{
         ...levelTestCardSx,
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 2, sm: 3 },
         position: { md: "sticky" },
         top: 150,
         background: "linear-gradient(145deg, #f4faff, #fff)",
-        mt: { xs: 2, sm: 3 }
+        mt: { xs: 0, sm: 1.5, md: 3 },
       }}
     >
       <Box
@@ -74,7 +74,7 @@ const ListeningPanel = ({ audioSrc }: Props) => {
           Kısa dinleme
         </Typography>
       </Box>
-      <Typography sx={{ color: "#526675", lineHeight: 1.65, mb: 2, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
+      <Typography sx={{ color: "#526675", lineHeight: 1.65, mb: 2, fontSize: { xs: "0.8rem", md: "0.95rem" } }}>
         Metin ekranda gösterilmez. İngilizce kaydı dinle; istersen tekrar
         oynatabilirsin.
       </Typography>
@@ -105,6 +105,7 @@ const ListeningPanel = ({ audioSrc }: Props) => {
               textTransform: "none",
               fontWeight: 700,
               bgcolor: "#0052a3",
+              fontSize: { xs: "0.8rem", md: "0.95rem" }
             }}
           >
             {isPlaying ? "Durdur" : "Dinle"}
@@ -113,7 +114,7 @@ const ListeningPanel = ({ audioSrc }: Props) => {
             variant="outlined"
             onClick={() => void play(true)}
             startIcon={<ReplayRounded />}
-            sx={{ borderRadius: 999, textTransform: "none", fontWeight: 700 }}
+            sx={{ borderRadius: 999, textTransform: "none", fontWeight: 700, fontSize: { xs: "0.8rem", md: "0.95rem" } }}
           >
             Tekrar dinle
           </Button>

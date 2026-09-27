@@ -7,12 +7,13 @@ const ReadingPanel = ({ paragraphs }: { paragraphs: string[] }) => (
     component="section"
     sx={{
       ...levelTestCardSx,
-      p: { xs: 2.5, sm: 3 },
+      p: { xs: 2, sm: 3 },
       position: { md: "sticky" },
       top: 150,
-      maxHeight: { md: "calc(100vh - 130px)" },
+      maxHeight: { xs: "32vh", sm: "36vh", md: "calc(100vh - 130px)" },
       overflowY: "auto",
-      mt: { xs: 2, sm: 3 }
+      WebkitOverflowScrolling: "touch",
+      mt: { xs: 0, sm: 1.5, md: 3 },
     }}
   >
     <Box
