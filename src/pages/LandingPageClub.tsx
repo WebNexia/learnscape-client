@@ -210,19 +210,19 @@ const LandingPageClub = () => {
 									{club.coverImageUrl ? (
 										<Box
 											sx={{
-												width: { xs: '100%', md: 220 },
-												maxWidth: { xs: 280, md: 220 },
+												width: { xs: '100%', md: 380 },
+												maxWidth: { xs: 480, md: 400 },
 												mx: { xs: 'auto', md: 0 },
-												aspectRatio: '3 / 4',
 												borderRadius: '0.75rem',
 												overflow: 'hidden',
 												flexShrink: 0,
+												backgroundColor: '#f1f5f9',
 											}}>
 											<Box
 												component='img'
 												src={club.coverImageUrl}
 												alt={club.title}
-												sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+												sx={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
 											/>
 										</Box>
 									) : null}
@@ -331,7 +331,7 @@ const LandingPageClub = () => {
 														fontWeight: 700,
 														color: '#0f172a',
 													}}>
-													Kişi ve oturum seçip satın alın
+													Kişi sayısı ve oturum seçip bilet satın alın
 												</Typography>
 											</Box>
 											<Typography

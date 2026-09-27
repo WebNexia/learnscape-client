@@ -51,6 +51,7 @@ const LevelTestParticipantGate = ({
         p: { xs: 3, sm: 4 },
         maxWidth: 560,
         mx: "auto",
+        mt: { xs: 3, sm: 6 }
       }}
     >
       <Typography
@@ -73,7 +74,7 @@ const LevelTestParticipantGate = ({
         sx={{ display: "grid", gap: 0.5 }}
       >
         <CustomTextField
-          label="Ad Soyad"
+          label="İsim Soyisim"
           value={name}
           onChange={(event) => setName(event.target.value)}
           InputProps={{ inputProps: { maxLength: 80 } }}

@@ -328,7 +328,7 @@ const LevelTestExperience = ({
         sx={{
           ...levelTestCardSx,
           minHeight: 390,
-          p: 4,
+          p: { xs: 3, sm: 4 },
           display: "grid",
           placeItems: "center",
           textAlign: "center",
@@ -664,103 +664,122 @@ const LevelTestExperience = ({
   const lastStep = stepIndex === currentSteps.length - 1;
 
   return (
-    <Box component="section">
+    <Box
+      component="section"
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: ".9fr 1.1fr" },
+        gap: { xs: 1.5, md: 2.5 },
+        alignItems: "start",
+      }}
+    >
       <Box
         sx={{
-          ...levelTestCardSx,
-          p: 2,
-          mb: 2,
-          position: "sticky",
-          top: { xs: 58, md: 90 },
-          zIndex: 5,
+          display: { xs: "flex", md: "contents" },
+          flexDirection: "column",
+          position: { xs: "sticky", md: "static" },
+          top: { xs: "3.25rem", sm: "3.5rem" },
+          zIndex: 6,
+          bgcolor: { xs: "#f5f9fc", md: "transparent" },
+          mx: { xs: -0.5, md: 0 },
+          px: { xs: 0.5, md: 0 },
+          pt: { xs: 0.5, md: 0 },
+          pb: { xs: 1, md: 0 },
+          boxShadow: {
+            xs: "0 12px 18px -10px rgba(1, 67, 90, 0.28)",
+            md: "none",
+          },
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 2,
-            alignItems: "center",
-            mb: 1,
+            ...levelTestCardSx,
+            gridColumn: { md: "1 / -1" },
+            p: { xs: 1.5, md: 2 },
+            mb: { xs: 1, md: 0 },
+            position: { xs: "relative", md: "sticky" },
+            top: { md: 90 },
+            zIndex: 5,
           }}
         >
-          <Box>
-            <Typography sx={{ ...levelTestHeadingSx }}>
-              {isListening ? "Dinleme" : "Okuma"} bölümü
-            </Typography>
-            <Typography sx={{ color: "#6d7f87", fontSize: ".78rem" }}>
-              {getCompletedPassageCount(assessment) + 1}. bölüm ·{" "}
-              {stepIndex + 1}/{currentSteps.length}
-            </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 2,
+              alignItems: "center",
+              mb: 1,
+            }}
+          >
+            <Box>
+              <Typography sx={{ ...levelTestHeadingSx }}>
+                {isListening ? "Dinleme" : "Okuma"} bölümü
+              </Typography>
+              <Typography sx={{ color: "#6d7f87", fontSize: ".78rem" }}>
+                {getCompletedPassageCount(assessment) + 1}. bölüm ·{" "}
+                {stepIndex + 1}/{currentSteps.length}
+              </Typography>
+            </Box>
+            <Chip
+              label={`${answered}/${currentStep.questions.length} cevaplandı`}
+              sx={{ bgcolor: "#eef6fc", color: "#0052a3" }}
+            />
           </Box>
-          <Chip
-            label={`${answered}/${currentStep.questions.length} cevaplandı`}
-            sx={{ bgcolor: "#eef6fc", color: "#0052a3" }}
+          <LinearProgress
+            variant="determinate"
+            value={(answered / currentStep.questions.length) * 100}
+            sx={{
+              height: 7,
+              borderRadius: 99,
+              bgcolor: "#dce9ef",
+              "& .MuiLinearProgress-bar": { bgcolor: "#FF6B3D" },
+            }}
           />
         </Box>
-        <LinearProgress
-          variant="determinate"
-          value={(answered / currentStep.questions.length) * 100}
-          sx={{
-            height: 7,
-            borderRadius: 99,
-            bgcolor: "#dce9ef",
-            "& .MuiLinearProgress-bar": { bgcolor: "#FF6B3D" },
-          }}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: ".9fr 1.1fr" },
-          gap: 2.5,
-          alignItems: "start",
-        }}
-      >
         {isListening ? (
           <ListeningPanel audioSrc={currentStep.audioSrc ?? ""} />
         ) : (
           <ReadingPanel paragraphs={currentStep.paragraphs} />
         )}
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, mt: { xs: 1, sm: 3.5 } }}>
-            <AutoAwesomeRounded sx={{ color: "#FF6B3D" }} />
-            <Typography
-              component="h2"
-              sx={{ ...levelTestHeadingSx, fontSize: { xs: "1rem", sm: "1.2rem" } }}
-            >
-              Sorular
-            </Typography>
-          </Box>
-          <LevelTestQuestions
-            questions={currentStep.questions}
-            answers={answers}
-            onChange={(questionId, value) =>
-              setAnswers((previous) => ({ ...previous, [questionId]: value }))
-            }
-          />
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={next}
-              sx={{ ...primaryButtonSx, mt: 2.5, py: { xs: 0.75, sm: 1 }, px: { xs: '25%', sm: '25%' } }}
-            >
-              {lastStep ? "Cevapları gönder" : "Devam et"}
-            </Button>
-          </Box>
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, mt: { xs: 0.5, sm: 1, md: 3.5 } }}>
+          <AutoAwesomeRounded sx={{ color: "#FF6B3D" }} />
           <Typography
-            sx={{
-              color: "#82939a",
-              mt: 1,
-              textAlign: "center",
-              fontSize: ".82rem",
-            }}
+            component="h2"
+            sx={{ ...levelTestHeadingSx, fontSize: { xs: "1rem", sm: "1.2rem" } }}
           >
-            Boş bıraktığın sorular yanlış sayılır; doğru cevaplar test sırasında
-            gösterilmez.
+            Sorular
           </Typography>
         </Box>
+        <LevelTestQuestions
+          questions={currentStep.questions}
+          answers={answers}
+          onChange={(questionId, value) =>
+            setAnswers((previous) => ({ ...previous, [questionId]: value }))
+          }
+        />
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={next}
+            sx={{ ...primaryButtonSx, mt: 2.5, py: { xs: 0.75, sm: 1 }, px: { xs: '25%', sm: '25%' } }}
+          >
+            {lastStep ? "Cevapları gönder" : "Devam et"}
+          </Button>
+        </Box>
+        <Typography
+          sx={{
+            color: "#82939a",
+            mt: 2,
+            textAlign: "center",
+            fontSize: ".82rem",
+          }}
+        >
+          Boş bıraktığın sorular yanlış sayılır; doğru cevaplar test sırasında
+          gösterilmez.
+        </Typography>
       </Box>
     </Box>
   );
