@@ -67,6 +67,20 @@ const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) 
 const ensureBlockKeys = (blocks: DocumentDetailBlock[] | undefined): DocumentDetailBlock[] =>
 	(blocks || []).map((b) => (b.rowKey ? b : { ...b, rowKey: generateUniqueId('clubblk_') }));
 
+const toDateInputValue = (value?: string | Date | null) => {
+	if (!value) return '';
+	if (typeof value === 'string') {
+		const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+		if (match) return match[1];
+	}
+	const date = value instanceof Date ? value : new Date(value);
+	if (Number.isNaN(date.getTime())) return '';
+	const y = date.getUTCFullYear();
+	const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+	const d = String(date.getUTCDate()).padStart(2, '0');
+	return `${y}-${m}-${d}`;
+};
+
 const DAY_LABELS = [
 	{ v: 0, l: 'Sun' },
 	{ v: 1, l: 'Mon' },
@@ -97,6 +111,8 @@ const AdminClubDetail = () => {
 	const [editStartTime, setEditStartTime] = useState('19:00');
 	const [editDurationMinutes, setEditDurationMinutes] = useState(60);
 	const [editTimezone, setEditTimezone] = useState('Europe/Istanbul');
+	const [editStartsOn, setEditStartsOn] = useState('');
+	const [editDefaultCapacity, setEditDefaultCapacity] = useState(12);
 	const [editDetailBlocks, setEditDetailBlocks] = useState<DocumentDetailBlock[]>([]);
 	const [enterCoverUrl, setEnterCoverUrl] = useState(true);
 	const [isSavingLanding, setIsSavingLanding] = useState(false);
@@ -151,6 +167,8 @@ const AdminClubDetail = () => {
 		setEditStartTime(found.schedule?.startTime || '19:00');
 		setEditDurationMinutes(found.schedule?.durationMinutes || 60);
 		setEditTimezone(found.schedule?.timezone || 'Europe/Istanbul');
+		setEditStartsOn(toDateInputValue(found.startsOn));
+		setEditDefaultCapacity(found.defaultCapacity || 12);
 		setEditDetailBlocks(ensureBlockKeys(found.detailBlocks));
 	};
 
@@ -202,6 +220,8 @@ const AdminClubDetail = () => {
 				description: editDescription.trim(),
 				coverImageUrl: editCoverUrl.trim() || '',
 				isActive: editIsActive,
+				startsOn: editStartsOn || null,
+				defaultCapacity: Math.max(1, Math.min(500, editDefaultCapacity || 12)),
 				detailBlocks: serializeDetailBlocksForApi(editDetailBlocks),
 				schedule: {
 					daysOfWeek: editDaysOfWeek,
@@ -335,7 +355,10 @@ const AdminClubDetail = () => {
 		if (!id) return;
 		setIsBulkCreating(true);
 		try {
-			const res = await clubsService.bulkCreateSessions(id, { weeks: bulkWeeks });
+			const res = await clubsService.bulkCreateSessions(id, {
+				weeks: bulkWeeks,
+				...(editStartsOn ? { startsOn: editStartsOn } : {}),
+			});
 			showSnack(`${res.count || 0} session(s) created`);
 			await load();
 		} catch (err: any) {
@@ -584,6 +607,14 @@ const AdminClubDetail = () => {
 										gap: 2,
 									}}>
 									<CustomTextField
+										label='Club start date'
+										type='date'
+										value={editStartsOn}
+										onChange={(e) => setEditStartsOn(e.target.value)}
+										sx={{ backgroundColor: '#fff' }}
+										InputLabelProps={{ shrink: true, sx: { fontSize: '0.8rem' } }}
+									/>
+									<CustomTextField
 										label='Start Time (HH:mm)'
 										value={editStartTime}
 										onChange={(e) => setEditStartTime(e.target.value)}
@@ -606,7 +637,19 @@ const AdminClubDetail = () => {
 										sx={{ backgroundColor: '#fff' }}
 										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
 									/>
+									<CustomTextField
+										label='Default capacity'
+										type='number'
+										value={editDefaultCapacity}
+										onChange={(e) => setEditDefaultCapacity(Number(e.target.value) || 12)}
+										sx={{ backgroundColor: '#fff' }}
+										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
+										InputProps={{ inputProps: { min: 1, max: 500 } }}
+									/>
 								</Box>
+								<Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 2, mt: -1 }}>
+									Generate Zoom Sessions uses this start date (or today if empty), weekly days, and default capacity.
+								</Typography>
 								<FormControlLabel
 									control={<Checkbox checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} size='small' />}
 									label='Active on landing page'
@@ -818,6 +861,11 @@ const AdminClubDetail = () => {
 									</CustomSubmitButton>
 								</Box>
 							</Box>
+							{editStartsOn ? (
+								<Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: sessionsExpanded ? 1 : 0 }}>
+									Generating from club start date: {editStartsOn}
+								</Typography>
+							) : null}
 
 							<Collapse in={sessionsExpanded} timeout='auto' unmountOnExit>
 								<Table size='small' sx={{ tableLayout: 'fixed', width: '100%' }}>

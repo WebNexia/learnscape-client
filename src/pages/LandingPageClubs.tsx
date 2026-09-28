@@ -282,6 +282,7 @@ const LandingPageClubs = () => {
 														<Typography sx={{ fontFamily: 'Varela Round', color: '#334155', mb: 0.5, fontSize: '0.88rem' }}>
 															Program: {(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')}{' '}
 															{club.schedule?.startTime}
+															{club.schedule?.startTime ? ' (TSI)' : ''}
 														</Typography>
 														{fromPrice && (
 															<Typography

@@ -30,6 +30,7 @@ const emptyForm = (): CreateClubFormState => ({
 	durationMinutes: 60,
 	defaultCapacity: 12,
 	timezone: 'Europe/Istanbul',
+	startsOn: '',
 });
 
 const AdminClubs = () => {
@@ -118,6 +119,7 @@ const AdminClubs = () => {
 					timezone: form.timezone || 'Europe/Istanbul',
 				},
 				defaultCapacity: form.defaultCapacity,
+				...(form.startsOn ? { startsOn: form.startsOn } : {}),
 			});
 			setSnackbarMessage('Club created successfully');
 			setSnackbarSeverity('success');

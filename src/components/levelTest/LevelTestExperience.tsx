@@ -41,9 +41,6 @@ import {
 } from "../../utils/levelTest/skillInsights";
 import type { AnswerSelection } from "../../utils/levelTest/types";
 import { attemptsFromLevelResults } from "../../utils/levelTest/report";
-import TurnstileWidget, {
-  type TurnstileWidgetHandle,
-} from "../common/TurnstileWidget";
 import LevelTestQuestions from "./LevelTestQuestions";
 import LevelTestReportDialog from "./LevelTestReportDialog";
 import type { LevelTestParticipant } from "./LevelTestParticipantGate";
@@ -73,15 +70,12 @@ const LevelTestExperience = ({
   const [reportOpen, setReportOpen] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(1);
   const [trackedStatus, setTrackedStatus] = useState<
-    "idle" | "waiting_captcha" | "saving" | "saved" | "saved_no_email" | "error"
+    "idle" | "saving" | "saved" | "saved_no_email" | "error"
   >("idle");
   const [trackedError, setTrackedError] = useState("");
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [trackedRetryKey, setTrackedRetryKey] = useState(0);
   const startedAt = useRef<number | null>(null);
   const trackedSubmitRef = useRef(false);
-  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
-  const turnstileEnabled = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
   const currentSteps =
     assessment.currentLevel && assessment.currentPassageKind
@@ -116,10 +110,6 @@ const LevelTestExperience = ({
       return;
     }
     if (trackedSubmitRef.current) return;
-    if (turnstileEnabled && !recaptchaToken) {
-      setTrackedStatus((prev) => (prev === "idle" ? "waiting_captcha" : prev));
-      return;
-    }
 
     trackedSubmitRef.current = true;
     setTrackedStatus("saving");
@@ -142,7 +132,6 @@ const LevelTestExperience = ({
               attempts: attemptsFromLevelResults(results),
               durationMinutes,
               website: "",
-              recaptchaToken: recaptchaToken ?? "dev-bypass",
             }),
           },
         );
@@ -161,9 +150,6 @@ const LevelTestExperience = ({
         setTrackedError(
           error instanceof Error ? error.message : "Sonuç kaydedilemedi.",
         );
-        setRecaptchaToken(null);
-        setTurnstileResetKey((value) => value + 1);
-        turnstileRef.current?.reset();
       }
     })();
   }, [
@@ -173,8 +159,7 @@ const LevelTestExperience = ({
     participant,
     campaignSlug,
     durationMinutes,
-    recaptchaToken,
-    turnstileEnabled,
+    trackedRetryKey,
   ]);
 
   const start = () => {
@@ -185,8 +170,8 @@ const LevelTestExperience = ({
     setReportOpen(false);
     setTrackedStatus("idle");
     setTrackedError("");
-    setRecaptchaToken(null);
     trackedSubmitRef.current = false;
+    setTrackedRetryKey(0);
     setStage("questions");
   };
 
@@ -461,25 +446,11 @@ const LevelTestExperience = ({
               justifyItems: "center",
             }}
           >
-            {trackedStatus === "waiting_captcha" || trackedStatus === "error" ? (
-              <TurnstileWidget
-                ref={turnstileRef}
-                action="level-test-tracked"
-                onChange={setRecaptchaToken}
-                onError={() => {
-                  setTrackedStatus("error");
-                  setTrackedError("Güvenlik doğrulaması başarısız oldu. Lütfen yeniden dene.");
-                }}
-                resetKey={turnstileResetKey}
-              />
-            ) : null}
-            {trackedStatus === "saving" || trackedStatus === "waiting_captcha" ? (
+            {trackedStatus === "saving" || trackedStatus === "idle" ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#0052a3" }}>
                 <CircularProgress size={18} />
                 <Typography sx={{ fontWeight: 700 }}>
-                  {trackedStatus === "waiting_captcha"
-                    ? "Güvenlik doğrulaması bekleniyor..."
-                    : "Sonucun kaydediliyor ve raporun gönderiliyor..."}
+                  Sonucun kaydediliyor ve raporun gönderiliyor...
                 </Typography>
               </Box>
             ) : null}
@@ -494,9 +465,22 @@ const LevelTestExperience = ({
               </Alert>
             ) : null}
             {trackedStatus === "error" ? (
-              <Alert severity="error" sx={{ width: "100%" }}>
-                {trackedError || "Sonuç kaydedilemedi."}
-              </Alert>
+              <>
+                <Alert severity="error" sx={{ width: "100%" }}>
+                  {trackedError || "Sonuç kaydedilemedi."}
+                </Alert>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    trackedSubmitRef.current = false;
+                    setTrackedError("");
+                    setTrackedRetryKey((value) => value + 1);
+                  }}
+                  sx={primaryButtonSx}
+                >
+                  Tekrar dene
+                </Button>
+              </>
             ) : null}
           </Box>
         ) : (

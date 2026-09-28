@@ -32,6 +32,8 @@ export interface Club {
 	schedule: ClubSchedule;
 	scheduleSummary?: string;
 	defaultCapacity: number;
+	/** First calendar day used when generating weekly sessions */
+	startsOn?: string | null;
 	hostUserId?: string;
 	packs?: ClubPack[];
 	packCount?: number;
@@ -80,7 +82,7 @@ export interface ClubTicketPublic {
 
 export interface ClubTicketLookupResult {
 	ticket: ClubTicketPublic;
-	club: { title: string };
+	club: { title: string; timezone?: string };
 	sessions: Array<{
 		_id: string;
 		startsAt: string;

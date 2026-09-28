@@ -23,6 +23,7 @@ export interface CreateClubFormState {
 	durationMinutes: number;
 	defaultCapacity: number;
 	timezone: string;
+	startsOn: string;
 }
 
 interface CreateClubDialogProps {
@@ -115,6 +116,14 @@ const CreateClubDialog = ({ isOpen, onClose, onSubmit, form, setForm, isCreating
 						gap: 2,
 					}}>
 					<CustomTextField
+						label='Club start date'
+						type='date'
+						value={form.startsOn}
+						onChange={(e) => setForm({ ...form, startsOn: e.target.value })}
+						sx={{ backgroundColor: '#fff' }}
+						InputLabelProps={{ shrink: true, sx: { fontSize: '0.8rem' } }}
+					/>
+					<CustomTextField
 						label='Start Time (HH:mm)'
 						value={form.startTime}
 						onChange={(e) => setForm({ ...form, startTime: e.target.value })}
@@ -158,7 +167,7 @@ const CreateClubDialog = ({ isOpen, onClose, onSubmit, form, setForm, isCreating
 						mx: isMobileSize ? 0 : '1rem',
 						mb: 1,
 					}}>
-					Session packs (GBP / USD / EUR / TRY) can be added after creating the club.
+					Sessions are generated from the club start date. Packs can be added after creating the club.
 				</Typography>
 
 				<CustomDialogActions

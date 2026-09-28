@@ -86,7 +86,10 @@ export const clubsService = {
 		const res = await axios.post(`${base_url}/clubs/${clubId}/sessions`, body);
 		return res.data.data;
 	},
-	bulkCreateSessions: async (clubId: string, body: { weeks?: number; capacity?: number }) => {
+	bulkCreateSessions: async (
+		clubId: string,
+		body: { weeks?: number; capacity?: number; startsOn?: string },
+	) => {
 		const res = await axios.post(`${base_url}/clubs/${clubId}/sessions/bulk`, body);
 		return res.data;
 	},

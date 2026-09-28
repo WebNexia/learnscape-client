@@ -21,7 +21,7 @@ import { OrganisationContext } from '../../contexts/OrganisationContextProvider'
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { saveCheckoutReturnContext, type ClubCheckoutReturnContext } from '../../utils/hostedCheckout';
-import { clubDetailPath, resolveSeatPurchasePrice } from '../../utils/clubPurchasePricing';
+import { clubDetailPath, pickPackPrice, resolveSeatPurchasePrice } from '../../utils/clubPurchasePricing';
 import theme from '../../themes';
 
 const FONT = 'Varela Round';
@@ -71,6 +71,26 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 		() => resolveSeatPurchasePrice(club?.packs, selectedSessions.length, personCount, geoLocation?.countryCode),
 		[club, selectedSessions.length, personCount, geoLocation?.countryCode],
 	);
+
+	const packPrices = useMemo(() => {
+		return (club?.packs || [])
+			.filter((pack) => pack.isActive !== false && pack.sessionCount >= 1)
+			.map((pack) => {
+				const price = pickPackPrice(pack, geoLocation?.countryCode);
+				if (!price) return null;
+				const defaultLabel =
+					pack.sessionCount === 1 ? '1 oturum' : `${pack.sessionCount} oturum paketi`;
+				return {
+					_id: pack._id,
+					sessionCount: pack.sessionCount,
+					label: pack.label?.trim() || defaultLabel,
+					amount: price.amount,
+					currency: price.currency,
+				};
+			})
+			.filter((pack): pack is NonNullable<typeof pack> => Boolean(pack))
+			.sort((a, b) => a.sessionCount - b.sessionCount);
+	}, [club?.packs, geoLocation?.countryCode]);
 
 	const sessionsByMonth = useMemo(() => {
 		const groups: { monthKey: string; monthLabel: string; sessions: ClubPurchaseSession[] }[] = [];
@@ -215,6 +235,62 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 								</Typography>
 							</Box>
 
+							{packPrices.length > 0 ? (
+								<Box
+									sx={{
+										mb: 2,
+										px: 1.5,
+										py: 1.25,
+										borderRadius: 2,
+										border: '1px solid rgba(0, 82, 163, 0.14)',
+										background: 'linear-gradient(135deg, rgba(0, 82, 163, 0.06) 0%, rgba(0, 102, 204, 0.03) 100%)',
+									}}>
+									<Typography
+										sx={{
+											fontFamily: FONT,
+											fontSize: isMobileSize ? '0.88rem' : '0.95rem',
+											fontWeight: 700,
+											color: '#0A1A2F',
+											mb: 0.75,
+										}}>
+										Oturum fiyatları
+									</Typography>
+									<Typography sx={{ fontFamily: FONT, fontSize: '0.72rem', color: 'text.secondary', mb: 1 }}>
+										Seçtiğiniz oturum sayısına göre kişi başı fiyat uygulanır.
+									</Typography>
+									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.65 }}>
+										{packPrices.map((pack) => {
+											const isActiveQuote = selectedSessions.length === pack.sessionCount;
+											return (
+												<Box
+													key={pack._id}
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'space-between',
+														gap: 1,
+														px: 1,
+														py: 0.65,
+														borderRadius: 1.5,
+														bgcolor: isActiveQuote ? 'rgba(0, 82, 163, 0.1)' : '#fff',
+														border: '1px solid',
+														borderColor: isActiveQuote ? 'rgba(0, 82, 163, 0.35)' : 'rgba(0, 82, 163, 0.1)',
+													}}>
+													<Typography sx={{ fontFamily: FONT, fontSize: '0.8rem', fontWeight: 600, color: '#0A1A2F' }}>
+														{pack.label}
+													</Typography>
+													<Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', fontWeight: 800, color: '#0052a3', whiteSpace: 'nowrap' }}>
+														{setCurrencySymbol(pack.currency)}
+														{pack.amount}
+														<span style={{ fontWeight: 600, fontSize: '0.72rem', color: '#64748b' }}> / kişi</span>
+													</Typography>
+												</Box>
+											);
+										})}
+									</Box>
+								</Box>
+							) : null}
+
 							<Box sx={{ mb: 2 }}>
 								<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.95rem' : '1.05rem', fontWeight: 700, color: '#0A1A2F', mb: 1 }}>
 									Oturumlar
@@ -233,11 +309,20 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 												month: 'short',
 												hour: '2-digit',
 												minute: '2-digit',
+												timeZone: club.schedule?.timezone || 'Europe/Istanbul',
 											});
 											return (
 												<FormControlLabel
 													key={session._id}
-													sx={{ display: 'flex', alignItems: 'flex-start', ml: 0, mr: 0, mb: 0.25 }}
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														ml: 0,
+														mr: 0,
+														mb: 0.25,
+														'& .MuiFormControlLabel-label': { mt: 0 },
+														'& .MuiCheckbox-root': { py: 0.25 },
+													}}
 													control={
 														<Checkbox
 															size='small'
@@ -247,12 +332,12 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 																setSelectedSessionIds((ids) => (ids.includes(session._id) ? ids.filter((id) => id !== session._id) : [...ids, session._id]));
 																clearError();
 															}}
-															sx={{ py: 0.4, color: '#0052a3' }}
+															sx={{ color: '#0052a3' }}
 														/>
 													}
 													label={
-														<Typography sx={{ fontFamily: FONT, fontSize: '0.82rem', color: blocked && !checked ? '#94a3b8' : '#0A1A2F', textTransform: 'capitalize' }}>
-															{when} · {session.seatsLeft} boş
+														<Typography sx={{ fontFamily: FONT, fontSize: '0.82rem', lineHeight: 1.35, color: blocked && !checked ? '#94a3b8' : '#0A1A2F', textTransform: 'capitalize' }}>
+															{when} (TSI) · {session.seatsLeft} boş
 															{blocked && !checked ? ' · bu kişi sayısı için yer yok' : ''}
 														</Typography>
 													}
