@@ -66,7 +66,9 @@ const LandingPageClub = () => {
 		.trim();
 
 	const scheduleLabel = club
-		? `${(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')} ${club.schedule?.startTime || ''}`.trim()
+		? `${(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')} ${club.schedule?.startTime || ''}${
+				club.schedule?.startTime ? ' (TSI)' : ''
+			}`.trim()
 		: '';
 
 	const unitPack = (club?.packs || []).find((p) => p.sessionCount === 1) || (club?.packs || [])[0];

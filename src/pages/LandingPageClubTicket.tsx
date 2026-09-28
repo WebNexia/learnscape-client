@@ -43,6 +43,7 @@ function buildTicketShareText(result: ClubTicketLookupResult) {
 	const lines = ['Aden Academy kulüp bileti', `Kod: ${result.ticket.code}`];
 	if (result.ticket.guestName) lines.push(`Ad: ${result.ticket.guestName}`);
 	if (result.club?.title) lines.push(`Kulüp: ${result.club.title}`);
+	const timeZone = result.club?.timezone || 'Europe/Istanbul';
 	lines.push('');
 	result.sessions.forEach((session) => {
 		const when = new Date(session.startsAt).toLocaleString('tr-TR', {
@@ -51,6 +52,7 @@ function buildTicketShareText(result: ClubTicketLookupResult) {
 			month: 'long',
 			hour: '2-digit',
 			minute: '2-digit',
+			timeZone,
 		});
 		lines.push(when);
 		if (session.zoomJoinUrl) lines.push(session.zoomJoinUrl);
@@ -447,6 +449,7 @@ const LandingPageClubTicket = () => {
 												month: 'long',
 												hour: '2-digit',
 												minute: '2-digit',
+												timeZone: result.club?.timezone || 'Europe/Istanbul',
 											});
 											const disabled = s.isFull || s.alreadyRegistered || !!redeemingId;
 											return (
