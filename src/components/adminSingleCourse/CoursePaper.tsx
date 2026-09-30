@@ -224,21 +224,18 @@ const CoursePaper = ({
 								{isSticky ? ')' : ''}
 							</Typography> */}
 
-							{/* Analytics icon next to status info */}
-							{!singleCourseBeforeSave?.courseManagement?.isExternal && (
-								<Tooltip title='Course Analytics' placement='top' arrow>
-									<IconButton
-										size='small'
-										sx={{ color: theme.textColor?.common.main }}
-										onClick={() => {
-											if (!courseId) return;
-											const basePath = hasAdminAccess ? '/admin' : '/instructor';
-											navigate(`${basePath}/course-analytics/course/${courseId}`);
-										}}>
-										<Insights fontSize='small' />
-									</IconButton>
-								</Tooltip>
-							)}
+							<Tooltip title='Course Analytics' placement='top' arrow>
+								<IconButton
+									size='small'
+									sx={{ color: theme.textColor?.common.main }}
+									onClick={() => {
+										if (!courseId) return;
+										const basePath = hasAdminAccess ? '/admin' : '/instructor';
+										navigate(`${basePath}/course-analytics/course/${courseId}`);
+									}}>
+									<Insights fontSize='small' />
+								</IconButton>
+							</Tooltip>
 							{/* Roster icon next to Analytics */}
 							<Tooltip title='Course Roster' placement='top' arrow>
 								<IconButton
@@ -261,20 +258,18 @@ const CoursePaper = ({
 								alignItems: 'center',
 								paddingLeft: '0.25rem',
 							}}>
-							{!singleCourseBeforeSave?.courseManagement?.isExternal && (
-								<Tooltip title='Course Analytics' placement='top' arrow>
-									<IconButton
-										size='small'
-										sx={{ color: theme.textColor?.common.main }}
-										onClick={() => {
-											if (!courseId) return;
-											const basePath = hasAdminAccess ? '/admin' : '/instructor';
-											navigate(`${basePath}/course-analytics/course/${courseId}`);
-										}}>
-										<Insights fontSize='small' />
-									</IconButton>
-								</Tooltip>
-							)}
+							<Tooltip title='Course Analytics' placement='top' arrow>
+								<IconButton
+									size='small'
+									sx={{ color: theme.textColor?.common.main }}
+									onClick={() => {
+										if (!courseId) return;
+										const basePath = hasAdminAccess ? '/admin' : '/instructor';
+										navigate(`${basePath}/course-analytics/course/${courseId}`);
+									}}>
+									<Insights fontSize='small' />
+								</IconButton>
+							</Tooltip>
 							{/* Roster icon next to Analytics */}
 							<Tooltip title='Course Roster' placement='top' arrow>
 								<IconButton
