@@ -19,9 +19,12 @@ interface VideoRecorderProps {
 	isVideoUploading: boolean;
 	/** Speaking tests can replace a recording after upload. */
 	allowReplace?: boolean;
+	/** Keep the recording in the browser. The parent uploads it later. */
+	deferUpload?: boolean;
+	onRecordingReady?: (blob: Blob) => void;
 }
 
-const VideoRecorder = ({ uploadVideo, isVideoUploading, allowReplace = false }: VideoRecorderProps) => {
+const VideoRecorder = ({ uploadVideo, isVideoUploading, allowReplace = false, deferUpload = false, onRecordingReady }: VideoRecorderProps) => {
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -128,6 +131,11 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading, allowReplace = false }: 
 			}
 		};
 	};
+
+	useEffect(() => {
+		if (!deferUpload || !videoBlob || isVideoTooLarge) return;
+		onRecordingReady?.(videoBlob);
+	}, [deferUpload, isVideoTooLarge, onRecordingReady, videoBlob]);
 
 	useEffect(() => {
 		return () => {
@@ -317,7 +325,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading, allowReplace = false }: 
 				)}
 			</Box>
 
-			{recordedVideo && (
+			{!deferUpload && recordedVideo && (
 				<CustomSubmitButton
 					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'

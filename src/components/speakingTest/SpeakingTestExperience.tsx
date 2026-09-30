@@ -1,12 +1,12 @@
 import { Alert, Box, Button, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CustomAudioPlayer from '../audio/CustomAudioPlayer';
 import AudioRecorder from '../userCourses/AudioRecorder';
 import VideoRecorder from '../userCourses/VideoRecorder';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 import { levelTestCardSx, levelTestHeadingSx, primaryButtonSx } from '../levelTest/styles';
 import { discardSpeakingRecording, submitSpeakingTest, uploadSpeakingRecording } from '../../utils/speakingTest/publicApi';
-import type { SpeakingAnswerDraft, SpeakingQuestion } from '../../utils/speakingTest/types';
+import type { SpeakingQuestion } from '../../utils/speakingTest/types';
 import type { SpeakingTestParticipant } from './SpeakingTestParticipantGate';
 
 type Props = {
@@ -16,67 +16,109 @@ type Props = {
 	questions: SpeakingQuestion[];
 };
 
-const emptyAnswers = (questions: SpeakingQuestion[]): SpeakingAnswerDraft[] =>
-	questions.map((question) => ({ questionId: question._id, audioUrl: '', videoUrl: '' }));
+type LocalAnswer = {
+	questionId: string;
+	audioBlob: Blob | null;
+	videoBlob: Blob | null;
+	audioPreview: string;
+	videoPreview: string;
+};
 
-const answerReady = (question: SpeakingQuestion, answer?: SpeakingAnswerDraft) => {
+const emptyAnswers = (questions: SpeakingQuestion[]): LocalAnswer[] =>
+	questions.map((question) => ({
+		questionId: question._id,
+		audioBlob: null,
+		videoBlob: null,
+		audioPreview: '',
+		videoPreview: '',
+	}));
+
+const answerReady = (question: SpeakingQuestion, answer?: LocalAnswer) => {
 	if (!answer) return false;
-	if (question.askAudio && !answer.audioUrl) return false;
-	if (question.askVideo && !answer.videoUrl) return false;
+	if (question.askAudio && !answer.audioBlob) return false;
+	if (question.askVideo && !answer.videoBlob) return false;
 	return true;
 };
 
+const noopUpload = async () => undefined;
+
 const SpeakingTestExperience = ({ slug, campaignName, participant, questions }: Props) => {
-	const [answers, setAnswers] = useState<SpeakingAnswerDraft[]>(() => emptyAnswers(questions));
+	const [answers, setAnswers] = useState<LocalAnswer[]>(() => emptyAnswers(questions));
 	const [index, setIndex] = useState(0);
-	const [audioUploading, setAudioUploading] = useState(false);
-	const [videoUploading, setVideoUploading] = useState(false);
 	const [error, setError] = useState('');
 	const [submitting, setSubmitting] = useState(false);
 	const [done, setDone] = useState(false);
+	const answersRef = useRef(answers);
+	answersRef.current = answers;
 
 	const question = questions[index];
 	const answer = answers.find((item) => item.questionId === question?._id);
 
-	const patchAnswer = (questionId: string, patch: Partial<SpeakingAnswerDraft>) => {
-		setAnswers((current) => current.map((item) => (item.questionId === questionId ? { ...item, ...patch } : item)));
+	useEffect(() => {
+		return () => {
+			for (const item of answersRef.current) {
+				if (item.audioPreview) URL.revokeObjectURL(item.audioPreview);
+				if (item.videoPreview) URL.revokeObjectURL(item.videoPreview);
+			}
+		};
+	}, []);
+
+	const keepRecording = (questionId: string, kind: 'audio' | 'video', blob: Blob) => {
+		setError('');
+		setAnswers((current) =>
+			current.map((item) => {
+				if (item.questionId !== questionId) return item;
+				const blobKey = kind === 'audio' ? 'audioBlob' : 'videoBlob';
+				const previewKey = kind === 'audio' ? 'audioPreview' : 'videoPreview';
+				if (item[blobKey] === blob) return item;
+				if (item[previewKey]) URL.revokeObjectURL(item[previewKey]);
+				return { ...item, [blobKey]: blob, [previewKey]: URL.createObjectURL(blob) };
+			}),
+		);
 	};
 
-	const upload = async (kind: 'audio' | 'video', blob: Blob) => {
+	const replace = (kind: 'audio' | 'video') => {
 		if (!question) return;
 		setError('');
-		if (kind === 'audio') setAudioUploading(true);
-		else setVideoUploading(true);
-		try {
-			const url = await uploadSpeakingRecording(slug, question._id, kind, blob);
-			patchAnswer(question._id, kind === 'audio' ? { audioUrl: url } : { videoUrl: url });
-		} catch (uploadError) {
-			setError(uploadError instanceof Error ? uploadError.message : 'Kayıt yüklenemedi.');
-		} finally {
-			setAudioUploading(false);
-			setVideoUploading(false);
-		}
-	};
-
-	const replace = async (kind: 'audio' | 'video') => {
-		if (!question || !answer) return;
-		const currentUrl = kind === 'audio' ? answer.audioUrl : answer.videoUrl;
-		setError('');
-		try {
-			if (currentUrl) await discardSpeakingRecording(slug, currentUrl);
-			patchAnswer(question._id, kind === 'audio' ? { audioUrl: '' } : { videoUrl: '' });
-		} catch (discardError) {
-			setError(discardError instanceof Error ? discardError.message : 'Önceki kayıt silinemedi.');
-		}
+		setAnswers((current) =>
+			current.map((item) => {
+				if (item.questionId !== question._id) return item;
+				if (kind === 'audio') {
+					if (item.audioPreview) URL.revokeObjectURL(item.audioPreview);
+					return { ...item, audioBlob: null, audioPreview: '' };
+				}
+				if (item.videoPreview) URL.revokeObjectURL(item.videoPreview);
+				return { ...item, videoBlob: null, videoPreview: '' };
+			}),
+		);
 	};
 
 	const submit = async () => {
 		setError('');
 		setSubmitting(true);
+		const uploaded: string[] = [];
 		try {
-			await submitSpeakingTest(slug, participant, answers);
+			const payload = [];
+			for (const item of questions) {
+				const draft = answersRef.current.find((entry) => entry.questionId === item._id);
+				let audioUrl = '';
+				let videoUrl = '';
+				if (item.askAudio) {
+					if (!draft?.audioBlob) throw new Error('Ses kaydı eksik.');
+					audioUrl = await uploadSpeakingRecording(slug, item._id, 'audio', draft.audioBlob);
+					uploaded.push(audioUrl);
+				}
+				if (item.askVideo) {
+					if (!draft?.videoBlob) throw new Error('Video kaydı eksik.');
+					videoUrl = await uploadSpeakingRecording(slug, item._id, 'video', draft.videoBlob);
+					uploaded.push(videoUrl);
+				}
+				payload.push({ questionId: item._id, audioUrl, videoUrl });
+			}
+			await submitSpeakingTest(slug, participant, payload);
 			setDone(true);
 		} catch (submitError) {
+			await Promise.all(uploaded.map((url) => discardSpeakingRecording(slug, url).catch(() => undefined)));
 			setError(submitError instanceof Error ? submitError.message : 'Cevaplar kaydedilemedi.');
 		} finally {
 			setSubmitting(false);
@@ -121,7 +163,7 @@ const SpeakingTestExperience = ({ slug, campaignName, participant, questions }: 
 			<Typography
 				sx={{
 					color: '#01435A',
-					fontSize: { xs: '0.85rem', sm: '1rem' },
+					fontSize: { xs: '0.8rem', sm: '0.9rem' },
 					fontWeight: 600,
 					lineHeight: 1.65,
 					mt: 1,
@@ -141,40 +183,46 @@ const SpeakingTestExperience = ({ slug, campaignName, participant, questions }: 
 					) : null}
 				</Box>
 			)}
-			<Typography sx={{ color: '#526675', mt: 1.5, fontSize: { xs: '0.85rem', sm: '0.9rem', textDecoration: 'underline' } }}>
+			<Typography sx={{ color: '#526675', mt: 1.5, fontSize: { xs: '0.8rem', sm: '0.9rem' }, textDecoration: 'underline' }}>
 				{question.askAudio && question.askVideo
-					? 'Cevabını hem ses hem video olarak kaydet. Ses en fazla 5 dakika, video en fazla 1 dakika olabilir.'
+					? 'Cevabını hem ses hem video olarak kaydet. Ses en fazla 5 dakika, video en fazla 1 dakika olabilir. Gönder’e basınca kaydedilir.'
 					: question.askAudio
-						? 'Cevabını ses olarak kaydet. Kayıt en fazla 5 dakika olabilir.'
-						: 'Cevabını video olarak kaydet. Kayıt en fazla 1 dakika olabilir.'}
+						? 'Cevabını ses olarak kaydet. Kayıt en fazla 5 dakika olabilir. Gönder’e basınca kaydedilir.'
+						: 'Cevabını video olarak kaydet. Kayıt en fazla 1 dakika olabilir. Gönder’e basınca kaydedilir.'}
 			</Typography>
 
-			{question.askAudio && !answer.audioUrl ? (
+			{question.askAudio && !answer.audioBlob ? (
 				<AudioRecorder
-					uploadAudio={(blob) => upload('audio', blob)}
-					isAudioUploading={audioUploading}
-					allowReplace
+					uploadAudio={noopUpload}
+					isAudioUploading={false}
+					deferUpload
+					onRecordingReady={(blob) => keepRecording(question._id, 'audio', blob)}
 					recorderTitle='Ses kaydı'
-					recorderTitleDescription='Kaydet, dinle, sonra yükle.'
+					recorderTitleDescription='Kaydet ve dinle. Gönder’e basınca kaydınız gönderilir.'
 					maxRecordTime={300000}
 				/>
 			) : null}
-			{question.askAudio && answer.audioUrl ? (
+			{question.askAudio && answer.audioPreview ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
-					<CustomAudioPlayer audioUrl={answer.audioUrl} title='Ses cevabın' sx={{ width: '100%', maxWidth: 480 }} />
-					<Button onClick={() => void replace('audio')} sx={{ mt: 1, textTransform: 'none' }}>
+					<CustomAudioPlayer audioUrl={answer.audioPreview} title='Ses cevabın' sx={{ width: '100%', maxWidth: 480 }} />
+					<Button disabled={submitting} onClick={() => replace('audio')} sx={{ mt: 1, textTransform: 'none' }}>
 						Yeniden kaydet
 					</Button>
 				</Box>
 			) : null}
 
-			{question.askVideo && !answer.videoUrl ? (
-				<VideoRecorder uploadVideo={(blob) => upload('video', blob)} isVideoUploading={videoUploading} allowReplace />
+			{question.askVideo && !answer.videoBlob ? (
+				<VideoRecorder
+					uploadVideo={noopUpload}
+					isVideoUploading={false}
+					deferUpload
+					onRecordingReady={(blob) => keepRecording(question._id, 'video', blob)}
+				/>
 			) : null}
-			{question.askVideo && answer.videoUrl ? (
+			{question.askVideo && answer.videoPreview ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2, width: '100%' }}>
-					<Box component='video' src={answer.videoUrl} controls sx={{ width: '100%', maxWidth: 520, borderRadius: 2 }} />
-					<Button onClick={() => void replace('video')} sx={{ mt: 1, textTransform: 'none' }}>
+					<Box component='video' src={answer.videoPreview} controls sx={{ width: '100%', maxWidth: 520, borderRadius: 2 }} />
+					<Button disabled={submitting} onClick={() => replace('video')} sx={{ mt: 1, textTransform: 'none' }}>
 						Yeniden kaydet
 					</Button>
 				</Box>

@@ -1,4 +1,4 @@
-import { Add, ContentCopy, Delete, Edit, Visibility } from '@mui/icons-material';
+import { Add, CampaignOutlined, ContentCopy, Delete, Edit, MicNoneOutlined, QuizOutlined, Visibility } from '@mui/icons-material';
 import {
 	Alert,
 	Box,
@@ -352,185 +352,315 @@ const AdminSpeakingTestCampaigns = () => {
 			}
 			: null;
 
+	const activeCampaigns = campaigns.filter((campaign) => campaign.isActive).length;
+	const recordingSum = campaigns.reduce((sum, campaign) => sum + (campaign.submissionCount || 0), 0);
+	const selectedCampaign = campaigns.find((campaign) => campaign._id === selectedId);
+
+	const sectionSx = {
+		backgroundColor: theme.bgColor?.common || '#fff',
+		borderRadius: '0.75rem',
+		padding: isMobileSize ? '1rem' : '1.35rem',
+		border: `1px solid ${theme.palette.divider}`,
+		boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+	};
+
+	const tableSx = {
+		tableLayout: 'fixed' as const,
+		width: '100%',
+		'& .MuiTableHead-root': {
+			backgroundColor: theme.bgColor?.secondary,
+		},
+		'& .MuiTableRow-root.Mui-selected': {
+			backgroundColor: 'rgba(0, 82, 163, 0.06)',
+		},
+		'& .MuiTableRow-root.Mui-selected:hover': {
+			backgroundColor: 'rgba(0, 82, 163, 0.09)',
+		},
+	};
+
+	const countChipSx = (selected: boolean) => ({
+		minWidth: 36,
+		fontWeight: 700,
+		backgroundColor: selected ? 'rgba(0, 82, 163, 0.12)' : 'rgba(15, 23, 42, 0.06)',
+	});
+
 	return (
-		<Box sx={{ width: '100%', px: isMobileSize ? 1 : 2, pb: 4 }}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-				<Box>
-					<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '1rem' : '1.15rem' }}>
+		<Box sx={{ width: '100%', px: isMobileSize ? 1 : 2.5, pb: 4, pt: isMobileSize ? 1 : 1.5 }}>
+			<Box
+				sx={{
+					...sectionSx,
+					mb: 2.5,
+					display: 'flex',
+					flexDirection: { xs: 'column', md: 'row' },
+					alignItems: { xs: 'stretch', md: 'center' },
+					justifyContent: 'space-between',
+					gap: 2,
+				}}>
+				<Box sx={{ minWidth: 0, flex: 1 }}>
+					<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '1rem' : '1.15rem', mb: 0.75, color: '#0f172a' }}>
 						Share a speaking test link
 					</Typography>
-					<Typography sx={{ color: theme.textColor?.secondary.main, maxWidth: 680, mt: 0.5, fontSize: '0.9rem' }}>
+					<Typography
+						sx={{
+							color: theme.textColor?.secondary.main,
+							maxWidth: 680,
+							lineHeight: 1.65,
+							fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+						}}>
 						Create a campaign, add questions, and choose audio or video answers the same way as admin questions.
 						Students record their replies. Deleting a campaign removes those recordings from storage.
 					</Typography>
 				</Box>
-				<CustomSubmitButton startIcon={<Add />} onClick={() => setCreateOpen(true)}>
-					New campaign
-				</CustomSubmitButton>
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+					<Chip label={`${campaigns.length} campaigns`} size='small' sx={{ fontWeight: 600 }} />
+					<Chip
+						label={`${activeCampaigns} active`}
+						size='small'
+						color={activeCampaigns > 0 ? 'success' : 'default'}
+						variant={activeCampaigns > 0 ? 'filled' : 'outlined'}
+					/>
+					<Chip label={`${recordingSum} recordings`} size='small' variant='outlined' />
+					<CustomSubmitButton startIcon={<Add />} onClick={() => setCreateOpen(true)}>
+						New campaign
+					</CustomSubmitButton>
+				</Box>
 			</Box>
 
 			{error ? <Alert severity='error' sx={{ mb: 2 }}>{error}</Alert> : null}
-			{loading ? (
-				<AdminTableSkeleton />
-			) : (
-				<Table size='small'>
-					<CustomTableHead
-						order='desc'
-						orderBy='createdAt'
-						handleSort={() => undefined}
-						columns={[
-							{ key: 'name', label: 'Campaign' },
-							{ key: 'link', label: 'Link' },
-							{ key: 'questions', label: 'Questions' },
-							{ key: 'submissions', label: 'Recordings' },
-							{ key: 'active', label: 'Active' },
-							{ key: 'actions', label: '' },
-						]}
-					/>
-					<TableBody>
-						{campaigns.length === 0 ? (
-							<TableRow>
-								<TableCell colSpan={6} sx={{ py: 4, textAlign: 'center' }}>
-									No campaigns yet.
-								</TableCell>
-							</TableRow>
-						) : (
-							campaigns.map((campaign) => (
-								<TableRow
-									key={campaign._id}
-									hover
-									selected={selectedId === campaign._id}
-									sx={{ cursor: 'pointer' }}
-									onClick={() => {
-										setSubmissionsPage(1);
-										setSelectedId(campaign._id);
-									}}>
-									<TableCell>
-										<Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{campaign.name}</Typography>
-										<Typography sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-											{campaign.title || 'No student title yet'}
-										</Typography>
-									</TableCell>
-									<CustomTableCell>
-										<Chip
-											label={`/speaking-test/c/${campaign.slug}`}
-											size='small'
-											onClick={(event) => {
-												event.stopPropagation();
-												void copyLink(campaign.slug);
-											}}
-										/>
-									</CustomTableCell>
-									<CustomTableCell value={campaign.questionCount} />
-									<CustomTableCell value={campaign.submissionCount} />
-									<TableCell onClick={(event) => event.stopPropagation()} align='center'>
-										<Switch
-											checked={campaign.isActive}
-											onChange={(event) => void toggleActive(campaign, event.target.checked)}
-										/>
-									</TableCell>
-									<TableCell onClick={(event) => event.stopPropagation()} align='center'>
-										<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-											<CustomActionBtn title='Edit title and description' icon={<Edit fontSize='small' />} onClick={() => openEdit(campaign)} />
-											<CustomActionBtn title='Copy link' icon={<ContentCopy fontSize='small' />} onClick={() => void copyLink(campaign.slug)} />
-											<CustomActionBtn title='Delete campaign' icon={<Delete fontSize='small' />} onClick={() => setCampaignToDelete(campaign)} />
-										</Box>
-									</TableCell>
-								</TableRow>
-							))
-						)}
-					</TableBody>
-				</Table>
-			)}
-
-			{selectedId ? (
-				<Box sx={{ mt: 4 }}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-						<Typography sx={{ fontWeight: 700 }}>{detail?.name || 'Questions'}</Typography>
-						<CustomSubmitButton startIcon={<Add />} onClick={() => setQuestionMode('new')} disabled={detailLoading}>
-							Add question
-						</CustomSubmitButton>
-					</Box>
-					{detailLoading ? (
-						<CircularProgress size={28} />
-					) : (
-						<Table size='small'>
-							<TableBody>
-								{(detail?.questions || []).length === 0 ? (
-									<TableRow>
-										<TableCell>No questions yet. Add one before sharing the link.</TableCell>
-									</TableRow>
-								) : (
-									detail?.questions.map((question, questionIndex) => (
-										<TableRow key={question._id}>
-											<TableCell sx={{ width: 48 }}>{questionIndex + 1}</TableCell>
-											<TableCell>
-												<Typography sx={{ whiteSpace: 'pre-wrap' }}>{question.prompt}</Typography>
-												<Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-													{question.askAudio ? <Chip size='small' label='Audio' /> : null}
-													{question.askVideo ? <Chip size='small' label='Video' /> : null}
-												</Box>
-											</TableCell>
-											<TableCell align='right'>
-												<CustomActionBtn title='Edit question' icon={<Edit fontSize='small' />} onClick={() => setQuestionMode(question)} />
-												<CustomActionBtn title='Delete question' icon={<Delete fontSize='small' />} onClick={() => setQuestionToDelete(question)} />
-											</TableCell>
-										</TableRow>
-									))
-								)}
-							</TableBody>
-						</Table>
-					)}
-
-					<Typography sx={{ fontWeight: 700, mt: 3, mb: 1 }}>Student recordings</Typography>
-					{submissionsLoading ? (
-						<CircularProgress size={28} />
-					) : (
-						<Table size='small'>
+			<Box sx={{ ...sectionSx, mb: 2.5 }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+					<CampaignOutlined sx={{ color: '#0052a3', fontSize: 22 }} />
+					<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '0.95rem' : '1.05rem' }}>Campaigns</Typography>
+				</Box>
+				{loading ? (
+					<AdminTableSkeleton />
+				) : (
+					<Box sx={{ overflowX: 'auto' }}>
+						<Table size='small' sx={{ ...tableSx, minWidth: 720 }}>
 							<CustomTableHead
 								order='desc'
 								orderBy='createdAt'
 								handleSort={() => undefined}
 								columns={[
-									{ key: 'name', label: 'Name' },
-									{ key: 'email', label: 'Email' },
-									{ key: 'phone', label: 'Phone' },
-									{ key: 'createdAt', label: 'Submitted' },
-									{ key: 'actions', label: '' },
+									{ key: 'name', label: 'Name', align: 'left' },
+									...(!isMobileSize ? [{ key: 'link', label: 'Link', align: 'left' as const }] : []),
+									{ key: 'questions', label: 'Questions' },
+									{ key: 'submissions', label: 'Recordings' },
+									{ key: 'active', label: 'Active' },
+									{ key: 'actions', label: 'Actions' },
 								]}
 							/>
 							<TableBody>
-								{submissions.length === 0 ? (
+								{campaigns.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={5}>No recordings yet.</TableCell>
+										<TableCell colSpan={isMobileSize ? 5 : 6} sx={{ py: 4, textAlign: 'center', border: 0 }}>
+											<Typography sx={{ color: theme.textColor?.secondary.main, mb: 1.5 }}>
+												No campaigns yet. Create one and share the link with students.
+											</Typography>
+											<CustomSubmitButton startIcon={<Add />} onClick={() => setCreateOpen(true)}>
+												New campaign
+											</CustomSubmitButton>
+										</TableCell>
 									</TableRow>
 								) : (
-									submissions.map((submission) => (
-										<TableRow key={submission._id}>
-											<CustomTableCell value={submission.name} align='left' />
-											<CustomTableCell value={submission.email} align='left' />
-											<CustomTableCell value={submission.phone} />
-											<CustomTableCell value={dateTimeFormatter(submission.createdAt)} />
-											<TableCell align='center'>
-												<CustomActionBtn title='Play recordings' icon={<Visibility fontSize='small' />} onClick={() => void openSubmission(submission)} />
-												<CustomActionBtn title='Delete recording' icon={<Delete fontSize='small' />} onClick={() => setSubmissionToDelete(submission)} />
+									campaigns.map((campaign) => (
+										<TableRow
+											key={campaign._id}
+											hover
+											selected={selectedId === campaign._id}
+											sx={{ cursor: 'pointer' }}
+											onClick={() => {
+												setSubmissionsPage(1);
+												setSelectedId(campaign._id);
+											}}>
+											<TableCell sx={{ textAlign: 'left' }}>
+												<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+													{campaign.name}
+												</Typography>
+												<Typography
+													sx={{
+														color: theme.textColor?.secondary.main,
+														fontSize: '0.75rem',
+														mt: 0.25,
+														display: '-webkit-box',
+														WebkitLineClamp: 2,
+														WebkitBoxOrient: 'vertical',
+														overflow: 'hidden',
+													}}>
+													{campaign.title || 'No student title yet'}
+												</Typography>
+											</TableCell>
+											{!isMobileSize ? (
+												<TableCell sx={{ textAlign: 'left' }}>
+													<Chip
+														label={`/speaking-test/c/${campaign.slug}`}
+														size='small'
+														onClick={(event) => {
+															event.stopPropagation();
+															void copyLink(campaign.slug);
+														}}
+														sx={{
+															maxWidth: '100%',
+															fontFamily: 'monospace',
+															fontSize: '0.72rem',
+															height: 26,
+															backgroundColor: 'rgba(0, 82, 163, 0.06)',
+															color: '#0052a3',
+															'& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' },
+														}}
+													/>
+												</TableCell>
+											) : null}
+											<CustomTableCell>
+												<Chip label={campaign.questionCount} size='small' sx={countChipSx(selectedId === campaign._id)} />
+											</CustomTableCell>
+											<CustomTableCell>
+												<Chip label={campaign.submissionCount} size='small' sx={countChipSx(selectedId === campaign._id)} />
+											</CustomTableCell>
+											<TableCell onClick={(event) => event.stopPropagation()} align='center'>
+												<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+													<Switch
+														checked={campaign.isActive}
+														onChange={(event) => void toggleActive(campaign, event.target.checked)}
+														size='small'
+													/>
+													<Typography
+														sx={{
+															fontSize: '0.75rem',
+															fontWeight: 600,
+															color: campaign.isActive ? '#15803d' : theme.textColor?.secondary.main,
+															minWidth: 28,
+														}}>
+														{campaign.isActive ? 'On' : 'Off'}
+													</Typography>
+												</Box>
+											</TableCell>
+											<TableCell onClick={(event) => event.stopPropagation()} align='center'>
+												<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+													<CustomActionBtn title='Edit title and description' icon={<Edit fontSize='small' />} onClick={() => openEdit(campaign)} />
+													<CustomActionBtn title='Copy link' icon={<ContentCopy fontSize='small' />} onClick={() => void copyLink(campaign.slug)} />
+													<CustomActionBtn title='Delete campaign' icon={<Delete fontSize='small' />} onClick={() => setCampaignToDelete(campaign)} />
+												</Box>
 											</TableCell>
 										</TableRow>
 									))
 								)}
 							</TableBody>
 						</Table>
-					)}
-					{submissionsTotal > submissionsLimit ? (
-						<Box sx={{ mt: 2 }}>
-							<CustomTablePagination
-								count={Math.ceil(submissionsTotal / submissionsLimit)}
-								page={submissionsPage}
-								onChange={setSubmissionsPage}
-							/>
+					</Box>
+				)}
+			</Box>
+
+			{selectedId ? (
+				<>
+					<Box sx={{ ...sectionSx, mb: 2.5 }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+								<QuizOutlined sx={{ color: '#0052a3', fontSize: 22 }} />
+								<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '0.95rem' : '1.05rem' }}>Questions</Typography>
+								<Chip label={selectedCampaign?.name || detail?.name || 'Campaign'} size='small' sx={{ fontWeight: 600 }} />
+							</Box>
+							<CustomSubmitButton startIcon={<Add />} onClick={() => setQuestionMode('new')} disabled={detailLoading}>
+								Add question
+							</CustomSubmitButton>
 						</Box>
-					) : null}
-				</Box>
+						{detailLoading ? (
+							<AdminTableSkeleton />
+						) : (
+							<Box sx={{ overflowX: 'auto' }}>
+								<Table size='small' sx={tableSx}>
+									<TableBody>
+										{(detail?.questions || []).length === 0 ? (
+											<TableRow>
+												<TableCell colSpan={3} sx={{ py: 4, textAlign: 'center', border: 0 }}>
+													<Typography sx={{ color: theme.textColor?.secondary.main }}>
+														No questions yet. Add one before sharing the link.
+													</Typography>
+												</TableCell>
+											</TableRow>
+										) : (
+											detail?.questions.map((question, questionIndex) => (
+												<TableRow key={question._id}>
+													<TableCell sx={{ width: 48, fontWeight: 700 }}>{questionIndex + 1}</TableCell>
+													<TableCell>
+														<Typography sx={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', lineHeight: 1.6 }}>{question.prompt}</Typography>
+														<Box sx={{ display: 'flex', gap: 0.5, mt: 0.75 }}>
+															{question.askAudio ? <Chip size='small' label='Audio' /> : null}
+															{question.askVideo ? <Chip size='small' label='Video' /> : null}
+														</Box>
+													</TableCell>
+													<TableCell align='right' sx={{ width: 110 }}>
+														<CustomActionBtn title='Edit question' icon={<Edit fontSize='small' />} onClick={() => setQuestionMode(question)} />
+														<CustomActionBtn title='Delete question' icon={<Delete fontSize='small' />} onClick={() => setQuestionToDelete(question)} />
+													</TableCell>
+												</TableRow>
+											))
+										)}
+									</TableBody>
+								</Table>
+							</Box>
+						)}
+					</Box>
+
+					<Box sx={sectionSx}>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
+							<MicNoneOutlined sx={{ color: '#0052a3', fontSize: 22 }} />
+							<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '0.95rem' : '1.05rem' }}>Student recordings</Typography>
+							<Chip label={`${submissionsTotal} total`} size='small' variant='outlined' />
+						</Box>
+						{submissionsLoading ? (
+							<AdminTableSkeleton />
+						) : (
+							<Box sx={{ overflowX: 'auto' }}>
+								<Table size='small' sx={{ ...tableSx, minWidth: 720 }}>
+									<CustomTableHead
+										order='desc'
+										orderBy='createdAt'
+										handleSort={() => undefined}
+										columns={[
+											{ key: 'name', label: 'Name', align: 'left' },
+											{ key: 'email', label: 'Email', align: 'left' },
+											{ key: 'phone', label: 'Phone' },
+											{ key: 'createdAt', label: 'Submitted' },
+											{ key: 'actions', label: 'Actions' },
+										]}
+									/>
+									<TableBody>
+										{submissions.length === 0 ? (
+											<TableRow>
+												<TableCell colSpan={5} sx={{ py: 4, textAlign: 'center', border: 0 }}>
+													<Typography sx={{ color: theme.textColor?.secondary.main }}>No recordings yet.</Typography>
+												</TableCell>
+											</TableRow>
+										) : (
+											submissions.map((submission) => (
+												<TableRow key={submission._id} hover>
+													<CustomTableCell value={submission.name} align='left' />
+													<CustomTableCell value={submission.email} align='left' />
+													<CustomTableCell value={submission.phone} />
+													<CustomTableCell value={dateTimeFormatter(submission.createdAt)} />
+													<TableCell align='center'>
+														<CustomActionBtn title='Play recordings' icon={<Visibility fontSize='small' />} onClick={() => void openSubmission(submission)} />
+														<CustomActionBtn title='Delete recording' icon={<Delete fontSize='small' />} onClick={() => setSubmissionToDelete(submission)} />
+													</TableCell>
+												</TableRow>
+											))
+										)}
+									</TableBody>
+								</Table>
+							</Box>
+						)}
+						{submissionsTotal > submissionsLimit ? (
+							<Box sx={{ mt: 2 }}>
+								<CustomTablePagination
+									count={Math.ceil(submissionsTotal / submissionsLimit)}
+									page={submissionsPage}
+									onChange={setSubmissionsPage}
+								/>
+							</Box>
+						) : null}
+					</Box>
+				</>
 			) : null}
 
 			<CustomDialog openModal={createOpen} closeModal={() => !creating && setCreateOpen(false)} maxWidth='sm' title='New speaking-test campaign'>
@@ -678,6 +808,7 @@ const AdminSpeakingTestCampaigns = () => {
 					submitBtnText='Delete'
 					disableBtn={isDeleting}
 					isSubmitting={isDeleting}
+					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 				/>
 			</CustomDialog>
 
