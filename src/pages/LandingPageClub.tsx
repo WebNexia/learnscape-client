@@ -20,6 +20,11 @@ import { clubPaymentPath, pickPackPrice } from '../utils/clubPurchasePricing';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
+const formatClubDays = (days?: number[]) => {
+	const names = (days || []).map((day) => DAY_NAMES[day]).filter(Boolean);
+	return names.length ? `${names.join(', ')} Günleri` : '';
+};
+
 const ctaButtonSx = {
 	textTransform: 'none' as const,
 	fontFamily: 'Varela Round',
@@ -66,7 +71,7 @@ const LandingPageClub = () => {
 		.trim();
 
 	const scheduleLabel = club
-		? `${(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')} ${club.schedule?.startTime || ''}${
+		? `${formatClubDays(club.schedule?.daysOfWeek)} ${club.schedule?.startTime || ''}${
 				club.schedule?.startTime ? ' (TSI)' : ''
 			}`.trim()
 		: '';
