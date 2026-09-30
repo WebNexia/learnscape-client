@@ -24,6 +24,8 @@ interface AudioRecorderProps {
 	onAudioUploadAttempt?: () => void;
 	/** Notifies parent when there is a finished recording that has not been uploaded yet */
 	onPendingRecordingChange?: (hasPending: boolean) => void;
+	/** Speaking tests can replace a recording after upload. */
+	allowReplace?: boolean;
 }
 
 const AudioRecorder = ({
@@ -39,6 +41,7 @@ const AudioRecorder = ({
 	maxSessionAttempts = 5,
 	onAudioUploadAttempt,
 	onPendingRecordingChange,
+	allowReplace = false,
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
@@ -279,8 +282,9 @@ const AudioRecorder = ({
 					setIsUploadModalOpen(false);
 				}}
 				title='Upload Audio'
-				content={`Are you sure you want to upload the audio recording?
-				${!teacherFeedback && !fromCreateCommunityTopic ? `You will not have another chance.` : ''}`}>
+				content={`Are you sure you want to upload the audio recording?${
+					allowReplace || teacherFeedback || fromCreateCommunityTopic ? '' : ' You will not have another chance.'
+				}`}>
 				{isAudioUploading ? (
 					<DialogActions sx={{ marginBottom: '1.5rem' }}>
 						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />

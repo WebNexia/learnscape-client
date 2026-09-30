@@ -26,6 +26,7 @@ export const useIsLandingPageRoute = (): boolean => {
     location.pathname === "/level-test" ||
     location.pathname === "/seviye-testi" ||
     location.pathname.startsWith("/level-test/c/") ||
+    location.pathname.startsWith("/speaking-test/c/") ||
     location.pathname === "/auth" ||
     (location.pathname.startsWith("/landing-page-course/") &&
       !location.pathname.includes("/userCourseId/")) ||
