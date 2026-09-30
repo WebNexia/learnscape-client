@@ -28,6 +28,11 @@ import ClubJoinHowItWorks from '../components/clubs/ClubJoinHowItWorks';
 
 const DAY_NAMES = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
+const formatClubDays = (days?: number[]) => {
+	const names = (days || []).map((day) => DAY_NAMES[day]).filter(Boolean);
+	return names.length ? `${names.join(', ')} Günleri` : '';
+};
+
 const LandingPageClubs = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -280,7 +285,7 @@ const LandingPageClubs = () => {
 															</Typography>
 														)}
 														<Typography sx={{ fontFamily: 'Varela Round', color: '#334155', mb: 0.5, fontSize: '0.88rem' }}>
-															Program: {(club.schedule?.daysOfWeek || []).map((d) => DAY_NAMES[d]).join(', ')}{' '}
+															Program: {formatClubDays(club.schedule?.daysOfWeek)}{' '}
 															{club.schedule?.startTime}
 															{club.schedule?.startTime ? ' (TSI)' : ''}
 														</Typography>
