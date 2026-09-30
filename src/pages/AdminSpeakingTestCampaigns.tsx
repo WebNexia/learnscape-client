@@ -5,6 +5,10 @@ import {
 	Chip,
 	CircularProgress,
 	DialogContent,
+	FormControl,
+	InputLabel,
+	MenuItem,
+	Select,
 	Snackbar,
 	Switch,
 	Table,
@@ -62,7 +66,13 @@ type SubmissionAnswer = {
 	videoUrl: string;
 };
 
-type SubmissionDetail = SubmissionRow & { answers: SubmissionAnswer[] };
+type SubmissionDetail = SubmissionRow & {
+	answers: SubmissionAnswer[];
+	level?: string;
+	adminComment?: string;
+};
+
+const SPEAKING_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 const siteBase = () => (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '');
 
@@ -109,6 +119,9 @@ const AdminSpeakingTestCampaigns = () => {
 	const [submissionToDelete, setSubmissionToDelete] = useState<SubmissionRow | null>(null);
 	const [submissionDetail, setSubmissionDetail] = useState<SubmissionDetail | null>(null);
 	const [submissionLoading, setSubmissionLoading] = useState(false);
+	const [reviewLevel, setReviewLevel] = useState('');
+	const [reviewComment, setReviewComment] = useState('');
+	const [savingReview, setSavingReview] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const publicLink = useCallback((slug: string) => `${siteBase()}/speaking-test/c/${slug}`, []);
@@ -309,16 +322,47 @@ const AdminSpeakingTestCampaigns = () => {
 		}
 	};
 
+	const closeSubmission = () => {
+		if (savingReview) return;
+		setSubmissionDetail(null);
+		setSubmissionLoading(false);
+		setReviewLevel('');
+		setReviewComment('');
+	};
+
 	const openSubmission = async (row: SubmissionRow) => {
 		setSubmissionLoading(true);
 		setSubmissionDetail(null);
+		setReviewLevel('');
+		setReviewComment('');
 		try {
 			const { data } = await axios.get<{ data: SubmissionDetail }>(`speaking-test/submissions/${row._id}`);
 			setSubmissionDetail(data.data);
+			setReviewLevel(data.data.level || '');
+			setReviewComment(data.data.adminComment || '');
 		} catch (requestError) {
 			setSnackbar(apiMessage(requestError, 'Kayıt yüklenemedi.'));
 		} finally {
 			setSubmissionLoading(false);
+		}
+	};
+
+	const saveReview = async () => {
+		if (!submissionDetail) return;
+		setSavingReview(true);
+		try {
+			const { data } = await axios.patch<{ data: SubmissionDetail }>(`speaking-test/submissions/${submissionDetail._id}`, {
+				level: reviewLevel,
+				adminComment: reviewComment,
+			});
+			setSubmissionDetail(data.data);
+			setReviewLevel(data.data.level || '');
+			setReviewComment(data.data.adminComment || '');
+			setSnackbar('Review saved.');
+		} catch (requestError) {
+			setSnackbar(apiMessage(requestError, 'Değerlendirme kaydedilemedi.'));
+		} finally {
+			setSavingReview(false);
 		}
 	};
 
@@ -814,39 +858,65 @@ const AdminSpeakingTestCampaigns = () => {
 
 			<CustomDialog
 				openModal={submissionLoading || !!submissionDetail}
-				closeModal={() => {
-					setSubmissionDetail(null);
-					setSubmissionLoading(false);
-				}}
+				closeModal={closeSubmission}
 				title={submissionDetail ? submissionDetail.name : 'Recording'}
 				maxWidth='sm'>
 				<DialogContent>
 					{submissionLoading ? (
 						<CircularProgress size={28} />
 					) : (
-						submissionDetail?.answers.map((answer, answerIndex) => (
-							<Box key={answer.questionId} sx={{ mb: 3 }}>
-								{submissionDetail.answers.length > 1 ? (
-									<Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.secondary', mb: 0.5 }}>
-										Question {answerIndex + 1}
-									</Typography>
-								) : null}
-								<Typography sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, mb: 1.5 }}>{answer.prompt}</Typography>
-								{answer.audioUrl ? <CustomAudioPlayer audioUrl={answer.audioUrl} title='Audio answer' /> : null}
-								{answer.videoUrl ? (
-									<Box component='video' src={answer.videoUrl} controls sx={{ width: '100%', mt: 1, borderRadius: 1 }} />
-								) : null}
-							</Box>
-						))
+						<>
+							{submissionDetail?.answers.map((answer, answerIndex) => (
+								<Box key={answer.questionId} sx={{ mb: 3 }}>
+									{submissionDetail.answers.length > 1 ? (
+										<Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.secondary', mb: 0.5 }}>
+											Question {answerIndex + 1}
+										</Typography>
+									) : null}
+									<Typography sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, mb: 1.5, fontSize: '0.9rem' }}>{answer.prompt}</Typography>
+									{answer.audioUrl ? <CustomAudioPlayer audioUrl={answer.audioUrl} title='Audio answer' /> : null}
+									{answer.videoUrl ? (
+										<Box component='video' src={answer.videoUrl} controls sx={{ width: '100%', mt: 1, borderRadius: 1 }} />
+									) : null}
+								</Box>
+							))}
+							<FormControl fullWidth size='small' sx={{ mt: 1 }}>
+								<InputLabel id='speaking-review-level'>Level</InputLabel>
+								<Select
+									labelId='speaking-review-level'
+									label='Level'
+									value={reviewLevel}
+									sx={{ fontSize: '0.8rem' }}
+									onChange={(event) => setReviewLevel(event.target.value)}>
+									<MenuItem value='' sx={{ fontSize: '0.9rem' }}>Select level</MenuItem>
+									{SPEAKING_LEVELS.map((level) => (
+										<MenuItem key={level} value={level} sx={{ fontSize: '0.9rem' }}>
+											{level}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+							<CustomTextField
+								label='Comment'
+								value={reviewComment}
+								onChange={(event) => setReviewComment(event.target.value)}
+								required={false}
+								multiline
+								rows={4}
+								InputProps={{ inputProps: { maxLength: 2000 } }}
+								sx={{ mt: 2 }}
+							/>
+						</>
 					)}
 				</DialogContent>
 				<CustomDialogActions
-					onCancel={() => {
-						setSubmissionDetail(null);
-						setSubmissionLoading(false);
-					}}
-					hideSubmit
+					onCancel={closeSubmission}
+					onSubmit={() => void saveReview()}
+					submitBtnText='Save'
 					cancelBtnText='Close'
+					disableBtn={submissionLoading || savingReview || !submissionDetail}
+					disableCancelBtn={savingReview}
+					isSubmitting={savingReview}
 					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 				/>
 			</CustomDialog>
