@@ -151,6 +151,9 @@ const AdminInquiries = React.lazy(() => import("./pages/AdminInquiries"));
 const AdminLevelTestCampaigns = React.lazy(
   () => import("./pages/AdminLevelTestCampaigns"),
 );
+const SpeakingTestCampaignPage = React.lazy(
+  () => import("./pages/SpeakingTestCampaignPage"),
+);
 const AdminRecycleBin = React.lazy(() => import("./pages/AdminRecycleBin"));
 const AdminPublicEvents = React.lazy(() => import("./pages/AdminPublicEvents"));
 const AdminCourseFeedbackForms = React.lazy(
@@ -227,6 +230,7 @@ export const router = createBrowserRouter([
       },
       { path: "level-test", element: <LevelTest /> },
       { path: "level-test/c/:slug", element: <LevelTestCampaignPage /> },
+      { path: "speaking-test/c/:slug", element: <SpeakingTestCampaignPage /> },
       { path: "seviye-testi", element: <Navigate to="/level-test" replace /> },
       {
         path: "landing-page-document/:name/:documentId",

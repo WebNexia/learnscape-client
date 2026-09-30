@@ -16,10 +16,12 @@ import {
 	DialogContent,
 	Snackbar,
 	Switch,
+	Tab,
 	Table,
 	TableBody,
 	TableCell,
 	TableRow,
+	Tabs,
 	Typography,
 } from '@mui/material';
 import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -40,6 +42,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import axios from '@utils/axiosInstance';
 import { dateTimeFormatter } from '@utils/dateFormatter';
 import theme from '../themes';
+import AdminSpeakingTestCampaigns from './AdminSpeakingTestCampaigns';
 
 type CampaignRow = {
 	_id: string;
@@ -135,10 +138,41 @@ const reportEmailLabel = (status: string) => {
 	return status || '—';
 };
 
+type TestSection = 'level' | 'speaking';
+
+const LevelTestAdminShell = ({
+	section,
+	onSection,
+	children,
+}: {
+	section: TestSection;
+	onSection: (section: TestSection) => void;
+	children: ReactNode;
+}) => (
+	<AdminPageErrorBoundary pageName='Level Test Campaigns'>
+		<DashboardPagesLayout pageName='Level Test Campaigns' customSettings={{ justifyContent: 'flex-start' }} showCopyRight>
+			<Box sx={{ px: { xs: 1, sm: 2.5 }, pt: 1 }}>
+				<Tabs
+					value={section}
+					onChange={(_, value: TestSection) => onSection(value)}
+					sx={{
+						mb: 1,
+						'& .MuiTab-root': { textTransform: 'none', fontWeight: 700 },
+					}}>
+					<Tab value='level' label='Level Test' />
+					<Tab value='speaking' label='Speaking Test' />
+				</Tabs>
+			</Box>
+			{children}
+		</DashboardPagesLayout>
+	</AdminPageErrorBoundary>
+);
+
 const AdminLevelTestCampaigns = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const [section, setSection] = useState<TestSection>('level');
 
 	const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -399,17 +433,24 @@ const AdminLevelTestCampaigns = () => {
 		},
 	};
 
+	if (section === 'speaking') {
+		return (
+			<LevelTestAdminShell section={section} onSection={setSection}>
+				<AdminSpeakingTestCampaigns />
+			</LevelTestAdminShell>
+		);
+	}
+
 	if (loading) {
 		return (
-			<DashboardPagesLayout pageName='Level Test Campaigns' customSettings={{ justifyContent: 'flex-start' }} showCopyRight>
+			<LevelTestAdminShell section={section} onSection={setSection}>
 				<AdminTableSkeleton />
-			</DashboardPagesLayout>
+			</LevelTestAdminShell>
 		);
 	}
 
 	return (
-		<AdminPageErrorBoundary pageName='Level Test Campaigns'>
-			<DashboardPagesLayout pageName='Level Test Campaigns' customSettings={{ justifyContent: 'flex-start' }} showCopyRight>
+		<LevelTestAdminShell section={section} onSection={setSection}>
 				<Box sx={{ width: '100%', px: isMobileSize ? 1 : 2.5, pb: 4, pt: isMobileSize ? 1 : 1.5 }}>
 					{error ? (
 						<Alert severity='error' sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -787,16 +828,15 @@ const AdminLevelTestCampaigns = () => {
 							<code> /level-test/c/…</code>
 						</Typography>
 					</DialogContent>
-					<DialogActions>
-						<CustomCancelButton onClick={() => setCreateOpen(false)} disabled={creating}>
-							Cancel
-						</CustomCancelButton>
-						<CustomSubmitButton
-							onClick={() => void handleCreate()}
-							disabled={creating || newName.trim().length < 2}>
-							{creating ? 'Creating…' : 'Create'}
-						</CustomSubmitButton>
-					</DialogActions>
+					<CustomDialogActions
+						onCancel={() => setCreateOpen(false)}
+						onSubmit={() => void handleCreate()}
+						submitBtnText='Create'
+						disableBtn={creating || newName.trim().length < 2}
+						disableCancelBtn={creating}
+						isSubmitting={creating}
+						actionSx={{ marginBottom: '0.5rem' }}
+					/>
 				</CustomDialog>
 
 				{campaignToDelete ? (
@@ -1067,8 +1107,7 @@ const AdminLevelTestCampaigns = () => {
 					onClose={() => setSnackbar('')}
 					message={snackbar}
 				/>
-			</DashboardPagesLayout>
-		</AdminPageErrorBoundary>
+			</LevelTestAdminShell>
 	);
 };
 

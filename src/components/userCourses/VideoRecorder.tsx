@@ -17,9 +17,11 @@ const MAX_VIDEO_SIZE = 5 * 1024 * 1024; // 5MB limit
 interface VideoRecorderProps {
 	uploadVideo: (blob: Blob) => Promise<void>;
 	isVideoUploading: boolean;
+	/** Speaking tests can replace a recording after upload. */
+	allowReplace?: boolean;
 }
 
-const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) => {
+const VideoRecorder = ({ uploadVideo, isVideoUploading, allowReplace = false }: VideoRecorderProps) => {
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -331,8 +333,9 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 				closeModal={() => setIsUploadModalOpen(false)}
 				maxWidth='xs'
 				title='Upload Video'
-				content={`Are you sure you want to upload the video recording?
-					You will not have another chance.`}>
+				content={`Are you sure you want to upload the video recording?${
+					allowReplace ? '' : ' You will not have another chance.'
+				}`}>
 				{isVideoUploading ? (
 					<DialogActions sx={{ marginBottom: '1.5rem' }}>
 						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />

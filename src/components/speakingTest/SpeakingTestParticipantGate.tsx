@@ -1,0 +1,95 @@
+import { Box, Button, Typography } from '@mui/material';
+import { useState } from 'react';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import { levelTestCardSx, levelTestHeadingSx, primaryButtonSx } from '../levelTest/styles';
+
+export type SpeakingTestParticipant = {
+	name: string;
+	email: string;
+	phone: string;
+};
+
+type Props = {
+	title: string;
+	description?: string;
+	onSubmit: (participant: SpeakingTestParticipant) => void;
+};
+
+const SpeakingTestParticipantGate = ({ title, description, onSubmit }: Props) => {
+	const [name, setName] = useState('');
+	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
+	const [error, setError] = useState('');
+
+	const submit = () => {
+		const cleanName = name.trim().replace(/\s+/g, ' ');
+		const cleanEmail = email.trim().toLowerCase();
+		const cleanPhone = phone.trim();
+		if (cleanName.length < 2) {
+			setError('Lütfen adını yaz.');
+			return;
+		}
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+			setError('Geçerli bir e-posta adresi yaz.');
+			return;
+		}
+		if (cleanPhone.length < 7) {
+			setError('Geçerli bir telefon numarası yaz.');
+			return;
+		}
+		setError('');
+		onSubmit({ name: cleanName, email: cleanEmail, phone: cleanPhone });
+	};
+
+	return (
+		<Box component='section' sx={{ ...levelTestCardSx, p: { xs: 3, sm: 4 }, maxWidth: 560, mx: 'auto', mt: { xs: 3, sm: 6 } }}>
+			<Typography component='h1' sx={{ ...levelTestHeadingSx, fontSize: { xs: '1.15rem', sm: '1.5rem' } }}>
+				{title}
+			</Typography>
+			{description?.trim() ? (
+				<Typography sx={{ color: '#526675', mt: 1.25, mb: 2.5, lineHeight: 1.65, fontSize: { xs: '0.8rem', sm: '1rem' }, whiteSpace: 'pre-wrap' }}>
+					{description}
+				</Typography>
+			) : (
+				<Box sx={{ mb: 2.5 }} />
+			)}
+			<Box
+				component='form'
+				onSubmit={(event) => {
+					event.preventDefault();
+					submit();
+				}}
+				sx={{ display: 'grid', gap: 0.5 }}>
+				<CustomTextField
+					label='İsim Soyisim'
+					value={name}
+					onChange={(event) => setName(event.target.value)}
+					InputProps={{ inputProps: { maxLength: 80 } }}
+					required
+				/>
+				<CustomTextField
+					type='email'
+					label='E-posta'
+					value={email}
+					onChange={(event) => setEmail(event.target.value)}
+					InputProps={{ inputProps: { maxLength: 254 } }}
+					required
+				/>
+				<CustomTextField
+					label='Telefon'
+					placeholder='WhatsApp numaranızı giriniz'
+					value={phone}
+					onChange={(event) => setPhone(event.target.value)}
+					InputProps={{ inputProps: { maxLength: 40 } }}
+					required
+				/>
+				{error ? <Typography sx={{ color: '#b91c1c', fontSize: '0.9rem', mt: 0.5 }}>{error}</Typography> : null}
+				<Button type='submit' variant='contained' sx={{ ...primaryButtonSx, mt: 2 }}>
+					Teste Başla
+				</Button>
+			</Box>
+		</Box>
+	);
+};
+
+export default SpeakingTestParticipantGate;
