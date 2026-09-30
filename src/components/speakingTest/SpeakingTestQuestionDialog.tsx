@@ -136,6 +136,7 @@ const SpeakingTestQuestionDialog = ({ open, campaignId, initial, saving, onClose
 				disableBtn={saving}
 				disableCancelBtn={saving}
 				isSubmitting={saving}
+				actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 			/>
 		</CustomDialog>
 	);

@@ -26,6 +26,9 @@ interface AudioRecorderProps {
 	onPendingRecordingChange?: (hasPending: boolean) => void;
 	/** Speaking tests can replace a recording after upload. */
 	allowReplace?: boolean;
+	/** Keep the recording in the browser. The parent uploads it later. */
+	deferUpload?: boolean;
+	onRecordingReady?: (blob: Blob) => void;
 }
 
 const AudioRecorder = ({
@@ -42,6 +45,8 @@ const AudioRecorder = ({
 	onAudioUploadAttempt,
 	onPendingRecordingChange,
 	allowReplace = false,
+	deferUpload = false,
+	onRecordingReady,
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
@@ -167,6 +172,11 @@ const AudioRecorder = ({
 		};
 	}, [stream]);
 
+	useEffect(() => {
+		if (!deferUpload || !audioBlob || isAudioTooLarge) return;
+		onRecordingReady?.(audioBlob);
+	}, [audioBlob, deferUpload, isAudioTooLarge, onRecordingReady]);
+
 	// Report whether a finished recording is waiting to be uploaded; clear on unmount (e.g. after upload)
 	useEffect(() => {
 		onPendingRecordingChange?.(Boolean(audio && !isAudioTooLarge));
@@ -261,7 +271,7 @@ const AudioRecorder = ({
 				</Typography>
 			)}
 
-			{audio && !isRecording && !isAudioTooLarge && (
+			{!deferUpload && audio && !isRecording && !isAudioTooLarge && (
 				<CustomSubmitButton
 					sx={{ marginTop: '2rem', marginBottom: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'
