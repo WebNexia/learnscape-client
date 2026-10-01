@@ -339,89 +339,57 @@ const AdminConsultationSlots = () => {
 				{/* Delete unbooked slots options dialog */}
 				{isDeleteOptionsDialogOpen && (
 					<CustomDialog
-					openModal={true}
-					closeModal={() => {
-						if (!isDeletingUnbooked) setIsDeleteOptionsDialogOpen(false);
-					}}
-					title='Delete Unbooked Slots'
-					maxWidth='sm'>
-					<DialogContent>
-						<RadioGroup
-							value={deleteUnbookedOption}
-							onChange={(e) => setDeleteUnbookedOption(e.target.value as DeleteUnbookedOption)}
-							sx={{ gap: '0.5rem' }}>
-							<FormControlLabel
-								value='my'
-								control={<Radio size='small' />}
-								label={
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Delete all my unbooked slots
-									</Typography>
-								}
-							/>
-							{(isOwner || isSuperAdmin) && (
+						openModal={true}
+						closeModal={() => {
+							if (!isDeletingUnbooked) setIsDeleteOptionsDialogOpen(false);
+						}}
+						title='Delete Unbooked Slots'
+						maxWidth='sm'>
+						<DialogContent>
+							<RadioGroup
+								value={deleteUnbookedOption}
+								onChange={(e) => setDeleteUnbookedOption(e.target.value as DeleteUnbookedOption)}
+								sx={{ gap: '0.5rem' }}>
 								<FormControlLabel
-									value='all'
+									value='my'
 									control={<Radio size='small' />}
 									label={
 										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											Delete all unbooked Slots
+											Delete all my unbooked slots
 										</Typography>
 									}
 								/>
-							)}
-							<FormControlLabel
-								value='my_days'
-								control={<Radio size='small' />}
-								label={
-									<Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											Delete my unbooked slots within
-										</Typography>
-										<TextField
-											type='number'
-											size='small'
-											value={deleteMyDays}
-											onChange={(e) => {
-												const raw = e.target.value.replace(/\D/g, '').slice(0, 4);
-												if (raw === '') {
-													setDeleteMyDays('');
-													return;
-												}
-												const n = parseInt(raw, 10);
-												setDeleteMyDays(n >= 1 ? String(n) : deleteMyDays);
-											}}
-											onClick={(e) => e.stopPropagation()}
-											inputProps={{ min: 1, max: 9999 }}
-											sx={{ width: 72, '& .MuiInputBase-input': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' } }}
-										/>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											days
-										</Typography>
-									</Box>
-								}
-							/>
-							{(isOwner || isSuperAdmin) && (
+								{(isOwner || isSuperAdmin) && (
+									<FormControlLabel
+										value='all'
+										control={<Radio size='small' />}
+										label={
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												Delete all unbooked Slots
+											</Typography>
+										}
+									/>
+								)}
 								<FormControlLabel
-									value='all_days'
+									value='my_days'
 									control={<Radio size='small' />}
 									label={
 										<Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
 											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												Delete all unbooked slots within
+												Delete my unbooked slots within
 											</Typography>
 											<TextField
 												type='number'
 												size='small'
-												value={deleteAllDays}
+												value={deleteMyDays}
 												onChange={(e) => {
 													const raw = e.target.value.replace(/\D/g, '').slice(0, 4);
 													if (raw === '') {
-														setDeleteAllDays('');
+														setDeleteMyDays('');
 														return;
 													}
 													const n = parseInt(raw, 10);
-													setDeleteAllDays(n >= 1 ? String(n) : deleteAllDays);
+													setDeleteMyDays(n >= 1 ? String(n) : deleteMyDays);
 												}}
 												onClick={(e) => e.stopPropagation()}
 												inputProps={{ min: 1, max: 9999 }}
@@ -433,117 +401,149 @@ const AdminConsultationSlots = () => {
 										</Box>
 									}
 								/>
-							)}
-						</RadioGroup>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', lineHeight: '1.8', mt: '1rem' }}>
-							* Past unbooked slots will be deleted by system automatically every day. You can delete them manually here.
-						</Typography>
-					</DialogContent>
-					<CustomDialogActions
-						onCancel={() => {
-							if (!isDeletingUnbooked) setIsDeleteOptionsDialogOpen(false);
-						}}
-						showCancelBtn={true}
-						cancelBtnText='Cancel'
-						deleteBtn={true}
-						deleteBtnText='Delete'
-						onDelete={async () => {
-							if (!consultationId) return;
-							if (deleteUnbookedOption === 'my_days') {
-								const n = parseInt(deleteMyDays, 10);
-								if (Number.isNaN(n) || n < 1) {
-									setUrlErrorMessage('Enter a positive number of days (at least 1)');
-									setIsUrlErrorOpen(true);
-									return;
+								{(isOwner || isSuperAdmin) && (
+									<FormControlLabel
+										value='all_days'
+										control={<Radio size='small' />}
+										label={
+											<Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													Delete all unbooked slots within
+												</Typography>
+												<TextField
+													type='number'
+													size='small'
+													value={deleteAllDays}
+													onChange={(e) => {
+														const raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+														if (raw === '') {
+															setDeleteAllDays('');
+															return;
+														}
+														const n = parseInt(raw, 10);
+														setDeleteAllDays(n >= 1 ? String(n) : deleteAllDays);
+													}}
+													onClick={(e) => e.stopPropagation()}
+													inputProps={{ min: 1, max: 9999 }}
+													sx={{ width: 72, '& .MuiInputBase-input': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' } }}
+												/>
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													days
+												</Typography>
+											</Box>
+										}
+									/>
+								)}
+							</RadioGroup>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', lineHeight: '1.8', mt: '1rem' }}>
+								* Past unbooked slots will be deleted by system automatically every day. You can delete them manually here.
+							</Typography>
+						</DialogContent>
+						<CustomDialogActions
+							onCancel={() => {
+								if (!isDeletingUnbooked) setIsDeleteOptionsDialogOpen(false);
+							}}
+							showCancelBtn={true}
+							cancelBtnText='Cancel'
+							deleteBtn={true}
+							deleteBtnText='Delete'
+							onDelete={async () => {
+								if (!consultationId) return;
+								if (deleteUnbookedOption === 'my_days') {
+									const n = parseInt(deleteMyDays, 10);
+									if (Number.isNaN(n) || n < 1) {
+										setUrlErrorMessage('Enter a positive number of days (at least 1)');
+										setIsUrlErrorOpen(true);
+										return;
+									}
 								}
-							}
-							if (deleteUnbookedOption === 'all_days') {
-								const n = parseInt(deleteAllDays, 10);
-								if (Number.isNaN(n) || n < 1) {
-									setUrlErrorMessage('Enter a positive number of days (at least 1)');
-									setIsUrlErrorOpen(true);
-									return;
+								if (deleteUnbookedOption === 'all_days') {
+									const n = parseInt(deleteAllDays, 10);
+									if (Number.isNaN(n) || n < 1) {
+										setUrlErrorMessage('Enter a positive number of days (at least 1)');
+										setIsUrlErrorOpen(true);
+										return;
+									}
 								}
-							}
-							setIsDeletingUnbooked(true);
-							try {
-								let url = `${base_url}/consultations/${consultationId}/slots/unbooked?`;
-								if (deleteUnbookedOption === 'my') url += 'scope=my';
-								else if (deleteUnbookedOption === 'all') url += 'scope=all';
-								else if (deleteUnbookedOption === 'my_days') url += `scope=my&days=${parseInt(deleteMyDays, 10)}`;
-								else url += `scope=all&days=${parseInt(deleteAllDays, 10)}`;
-								const res = await axios.delete(url);
-								if (consultationId) await fetchSlots(consultationId);
-								setBulkCreateSnackbarMessage(res.data?.message || 'Done');
-								setIsBulkCreateSnackbarOpen(true);
-								setIsDeleteOptionsDialogOpen(false);
-							} catch (e: any) {
-								setUrlErrorMessage(e.response?.data?.message || 'Failed to delete');
-								setIsUrlErrorOpen(true);
-							} finally {
-								setIsDeletingUnbooked(false);
-							}
-						}}
-						disableBtn={false}
-						disableCancelBtn={isDeletingUnbooked}
-						isDeleting={isDeletingUnbooked}
-						actionSx={{ marginBottom: '0.5rem' }}
-					/>
+								setIsDeletingUnbooked(true);
+								try {
+									let url = `${base_url}/consultations/${consultationId}/slots/unbooked?`;
+									if (deleteUnbookedOption === 'my') url += 'scope=my';
+									else if (deleteUnbookedOption === 'all') url += 'scope=all';
+									else if (deleteUnbookedOption === 'my_days') url += `scope=my&days=${parseInt(deleteMyDays, 10)}`;
+									else url += `scope=all&days=${parseInt(deleteAllDays, 10)}`;
+									const res = await axios.delete(url);
+									if (consultationId) await fetchSlots(consultationId);
+									setBulkCreateSnackbarMessage(res.data?.message || 'Done');
+									setIsBulkCreateSnackbarOpen(true);
+									setIsDeleteOptionsDialogOpen(false);
+								} catch (e: any) {
+									setUrlErrorMessage(e.response?.data?.message || 'Failed to delete');
+									setIsUrlErrorOpen(true);
+								} finally {
+									setIsDeletingUnbooked(false);
+								}
+							}}
+							disableBtn={false}
+							disableCancelBtn={isDeletingUnbooked}
+							isDeleting={isDeletingUnbooked}
+							actionSx={{ marginBottom: '0.5rem' }}
+						/>
 					</CustomDialog>
 				)}
 
 				{/* Delete Slot Confirmation Dialog */}
 				{isDeleteSlotDialogOpen && slotToDelete && (
 					<CustomDialog
-					openModal={true}
-					closeModal={() => {
-						if (!isDeletingSlot) {
-							setIsDeleteSlotDialogOpen(false);
-							setSlotToDelete(null);
-						}
-					}}
-					title='Delete Slot'
-					maxWidth='xs'>
-					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-							Are you sure you want to delete this slot?
-						</Typography>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 'bold', color: 'error.main', mt: '1rem' }}>
-							This action cannot be undone.
-						</Typography>
-					</DialogContent>
-					<CustomDialogActions
-						onCancel={() => {
+						openModal={true}
+						closeModal={() => {
 							if (!isDeletingSlot) {
 								setIsDeleteSlotDialogOpen(false);
 								setSlotToDelete(null);
 							}
 						}}
-						deleteBtn={true}
-						onDelete={async () => {
-							if (slotToDelete && consultationId && !isDeletingSlot) {
-								setIsDeletingSlot(true);
-								try {
-									await axios.delete(`${base_url}/consultations/${consultationId}/slots/${slotToDelete}`);
-									setSlots(slots.filter((s) => s._id !== slotToDelete));
+						title='Delete Slot'
+						maxWidth='xs'>
+						<DialogContent>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+								Are you sure you want to delete this slot?
+							</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontWeight: 'bold', color: 'error.main', mt: '1rem' }}>
+								This action cannot be undone.
+							</Typography>
+						</DialogContent>
+						<CustomDialogActions
+							onCancel={() => {
+								if (!isDeletingSlot) {
 									setIsDeleteSlotDialogOpen(false);
 									setSlotToDelete(null);
-								} catch (error: any) {
-									console.error('Error deleting slot:', error);
-									setUrlErrorMessage(error.response?.data?.message || 'Failed to delete slot');
-									setIsUrlErrorOpen(true);
-									setIsDeleteSlotDialogOpen(false);
-									setSlotToDelete(null);
-								} finally {
-									setIsDeletingSlot(false);
 								}
-							}
-						}}
-						disableBtn={isDeletingSlot}
-						disableCancelBtn={isDeletingSlot}
-						isDeleting={isDeletingSlot}
-						actionSx={{ marginBottom: '0.5rem' }}
-					/>
+							}}
+							deleteBtn={true}
+							onDelete={async () => {
+								if (slotToDelete && consultationId && !isDeletingSlot) {
+									setIsDeletingSlot(true);
+									try {
+										await axios.delete(`${base_url}/consultations/${consultationId}/slots/${slotToDelete}`);
+										setSlots(slots.filter((s) => s._id !== slotToDelete));
+										setIsDeleteSlotDialogOpen(false);
+										setSlotToDelete(null);
+									} catch (error: any) {
+										console.error('Error deleting slot:', error);
+										setUrlErrorMessage(error.response?.data?.message || 'Failed to delete slot');
+										setIsUrlErrorOpen(true);
+										setIsDeleteSlotDialogOpen(false);
+										setSlotToDelete(null);
+									} finally {
+										setIsDeletingSlot(false);
+									}
+								}
+							}}
+							disableBtn={isDeletingSlot}
+							disableCancelBtn={isDeletingSlot}
+							isDeleting={isDeletingSlot}
+							actionSx={{ marginBottom: '0.5rem' }}
+						/>
 					</CustomDialog>
 				)}
 

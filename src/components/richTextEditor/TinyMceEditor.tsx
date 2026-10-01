@@ -22,6 +22,8 @@ interface TinyMceEditorProps {
 	enableImage?: boolean;
 	/** e.g. lessons/{id}, questions/{id}, courses/{id} — required for image upload */
 	imageScopedEntityId?: string;
+	/** Bold, italic, underline, lists, and links only. */
+	simple?: boolean;
 }
 
 const TinyMceEditor = ({
@@ -37,6 +39,7 @@ const TinyMceEditor = ({
 	maxLength = 10000,
 	enableImage = true,
 	imageScopedEntityId,
+	simple = false,
 }: TinyMceEditorProps) => {
 	const allowImages = enableImage && Boolean(imageScopedEntityId?.trim());
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
@@ -135,7 +138,7 @@ const TinyMceEditor = ({
 				init={{
 					height: height,
 					width: '100%',
-					menubar: 'edit view insert format tools table',
+					menubar: simple ? false : 'edit view insert format tools table',
 					statusbar: false,
 					menu: {
 						edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
@@ -149,9 +152,12 @@ const TinyMceEditor = ({
 						tools: { title: 'Tools', items: 'wordcount' },
 						table: { title: 'Table', items: 'inserttable | cell row column | advtablesort | tableprops deletetable' },
 					},
-					plugins: `lists link${allowImages ? ' image' : ''} media charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount`,
-					toolbar:
-						`undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor${allowImages ? ' | image' : ''} | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code`,
+					plugins: simple
+						? 'lists link'
+						: `lists link${allowImages ? ' image' : ''} media charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount`,
+					toolbar: simple
+						? 'bold italic underline | bullist numlist | link | removeformat'
+						: `undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor${allowImages ? ' | image' : ''} | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code`,
 					font_family_formats:
 						'Varela Round=Varela Round,sans-serif;Nunito=Nunito,sans-serif;System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
 					font_size_formats: '12pt',

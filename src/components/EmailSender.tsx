@@ -3,12 +3,14 @@ import TinyMceEditor from './richTextEditor/TinyMceEditor';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import { emailEditorScope } from '../utils/editorImageScopes';
 import { deleteAllEditorImagesInScope } from '../utils/editorImageStorage';
-import { Select, MenuItem, Box, Alert, CircularProgress, FormControl, Snackbar, Chip, IconButton, Typography } from '@mui/material';
+import { Select, MenuItem, Box, Alert, CircularProgress, FormControl, Snackbar, Chip, IconButton, Typography, ToggleButton, ToggleButtonGroup, DialogContent } from '@mui/material';
 import { AttachFile, Close } from '@mui/icons-material';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from './forms/customButtons/CustomCancelButton';
 import CustomTextField from './forms/customFields/CustomTextField';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
+import CustomDialog from './layouts/dialog/CustomDialog';
+import CustomDialogActions from './layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
@@ -22,8 +24,9 @@ const recipientOptions = [
 	{ value: 'formSubmitters', label: 'All Contact Form Submitters' },
 	{ value: 'documentBuyers', label: 'All Document Buyers' },
 	{ value: 'eventAttendees', label: 'All Event Participants' },
-	{ value: 'marketingConsent', label: 'Kampanya / Duyuru Onayı Verenler' },
+	{ value: 'marketingConsent', label: 'People who opted in to marketing' },
 	{ value: 'everybody', label: 'All Contacts' },
+	{ value: 'manual', label: 'Specific email addresses' },
 ];
 
 interface Attachment {
@@ -33,12 +36,39 @@ interface Attachment {
 	size: number;
 }
 
+type ComposeMode = 'announcement' | 'custom';
+type AnnouncementKind = 'course' | 'book' | 'club' | 'consultation';
+
+interface CatalogItem {
+	id: string;
+	label: string;
+}
+
+const kindOptions: { value: AnnouncementKind; label: string }[] = [
+	{ value: 'course', label: 'Course' },
+	{ value: 'book', label: 'Book' },
+	{ value: 'club', label: 'Club' },
+	{ value: 'consultation', label: 'Consultation' },
+];
+
 const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
+	const [mode, setMode] = useState<ComposeMode>('announcement');
+	const [kind, setKind] = useState<AnnouncementKind>('course');
+	const [itemId, setItemId] = useState('');
+	const [note, setNote] = useState('');
+	const [catalog, setCatalog] = useState<Record<AnnouncementKind, CatalogItem[]>>({ course: [], book: [], club: [], consultation: [] });
+	const [catalogLoading, setCatalogLoading] = useState(false);
 	const [category, setCategory] = useState<string>('');
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [manualEmails, setManualEmails] = useState('');
 	const [subject, setSubject] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
+	const [previewOpen, setPreviewOpen] = useState(false);
+	const [previewHtml, setPreviewHtml] = useState('');
+	const [previewLoading, setPreviewLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [attachments, setAttachments] = useState<Attachment[]>([]);
+	const subjectTouchedRef = useRef(false);
 
 	const [showEmailSuccessMsg, setShowEmailSuccessMsg] = useState<boolean>(false);
 
@@ -55,9 +85,18 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 			const nextScope = emailEditorScope(generateUniqueId('email-'));
 			emailSessionScopeRef.current = nextScope;
 			setEmailSessionScope(nextScope);
+			subjectTouchedRef.current = false;
+			setMode('announcement');
+			setKind('course');
+			setItemId('');
+			setNote('');
 			setSubject('');
 			setCategory('');
+			setConfirmOpen(false);
+			setManualEmails('');
 			setAttachments([]);
+			setPreviewOpen(false);
+			setPreviewHtml('');
 			setError(null);
 			setShowEmailSuccessMsg(false);
 			editorRef.current?.setContent('');
@@ -65,6 +104,42 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 		}
 		void deleteAllEditorImagesInScope(emailSessionScopeRef.current);
 	}, [dialogOpen]);
+
+	useEffect(() => {
+		if (!dialogOpen || !orgId) return;
+		let cancelled = false;
+		const loadCatalog = async () => {
+			setCatalogLoading(true);
+			try {
+				const [coursesRes, booksRes, clubsRes, consultationsRes] = await Promise.all([
+					axios.get(`/courses/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
+					axios.get(`/documents/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
+					axios.get(`/clubs/organisation/${orgId}`, { params: { page: 1, limit: 100 } }),
+					axios.get(`/consultations/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
+				]);
+				const toItems = (rows: { _id?: string; title?: string; name?: string }[] | undefined, labelKey: 'title' | 'name') =>
+					(rows || [])
+						.filter((row) => row._id && row[labelKey])
+						.map((row) => ({ id: String(row._id), label: String(row[labelKey]) }))
+						.sort((a, b) => a.label.localeCompare(b.label));
+				if (cancelled) return;
+				setCatalog({
+					course: toItems(coursesRes.data?.data, 'title'),
+					book: toItems(booksRes.data?.data, 'name'),
+					club: toItems(clubsRes.data?.data, 'title'),
+					consultation: toItems(consultationsRes.data?.data, 'title'),
+				});
+			} catch {
+				if (!cancelled) setError('Could not load courses, books, clubs, and consultations.');
+			} finally {
+				if (!cancelled) setCatalogLoading(false);
+			}
+		};
+		void loadCatalog();
+		return () => {
+			cancelled = true;
+		};
+	}, [dialogOpen, orgId]);
 
 	useEffect(() => {
 		const link = document.createElement('link');
@@ -141,30 +216,49 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 		return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 	};
 
+	const validateBeforeSend = () => {
+		const content = editorRef.current ? editorRef.current.getContent() : '';
+		if (!subject) {
+			setError('Please enter a subject.');
+			return false;
+		}
+		if (mode === 'custom' && (!content || content.trim() === '' || content === '<p><br></p>')) {
+			setError('Please enter email content.');
+			return false;
+		}
+		if (mode === 'announcement' && !itemId) {
+			setError('Please choose a course, book, club, or consultation.');
+			return false;
+		}
+		if (!category) {
+			setError('Please select a recipient.');
+			return false;
+		}
+		if (category === 'manual' && !manualEmails.trim()) {
+			setError('Enter at least one email address.');
+			return false;
+		}
+		return true;
+	};
+
+	const requestSend = () => {
+		setError(null);
+		if (!validateBeforeSend()) return;
+		setConfirmOpen(true);
+	};
+
 	const handleSend = async () => {
 		setLoading(true);
 		setError(null);
 		const content = editorRef.current ? editorRef.current.getContent() : '';
-		if (!subject) {
-			setError('Please enter a subject.');
-			setLoading(false);
-			return;
-		}
-		if (!content || content.trim() === '' || content === '<p><br></p>') {
-			setError('Please enter email content.');
-			setLoading(false);
-			return;
-		}
-		if (!category) {
-			setError('Please select a recipient.');
-			setLoading(false);
-			return;
-		}
 		try {
 			await axios.post('/admin/send-bulk-email', {
 				category,
 				subject,
-				body: content,
+				manualEmails: manualEmails.trim() || undefined,
+				...(mode === 'announcement'
+					? { announcement: { kind, itemId, note: note.trim() } }
+					: { body: content }),
 				orgId,
 				attachments:
 					attachments.length > 0
@@ -175,16 +269,70 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 						}))
 						: undefined,
 			});
+			setConfirmOpen(false);
 			setShowEmailSuccessMsg(true);
 		} catch (err: any) {
+			setConfirmOpen(false);
 			setError('Error sending email: ' + (err.response?.data?.message || err.message));
 		} finally {
 			setLoading(false);
 		}
 	};
 
+	const recipientLabel = recipientOptions.find((option) => option.value === category)?.label || 'the selected recipients';
+
+	const items = catalog[kind];
+
+	const handlePreview = async () => {
+		setError(null);
+		if (!subject.trim()) {
+			setError('Please enter a subject.');
+			return;
+		}
+		if (!itemId) {
+			setError('Please choose a course, book, club, or consultation.');
+			return;
+		}
+		setPreviewLoading(true);
+		try {
+			const response = await axios.post('/admin/preview-bulk-email', {
+				orgId,
+				subject,
+				announcement: { kind, itemId, note: note.trim() },
+			});
+			setPreviewHtml(response.data?.html || '');
+			setPreviewOpen(true);
+		} catch (err: any) {
+			setError('Could not build the preview: ' + (err.response?.data?.message || err.message));
+		} finally {
+			setPreviewLoading(false);
+		}
+	};
+
 	return (
 		<Box sx={{ mx: 'auto', padding: '0.5rem' }}>
+			<ToggleButtonGroup
+				exclusive
+				size='small'
+				value={mode}
+				onChange={(_event, next: ComposeMode | null) => {
+					if (!next) return;
+					setMode(next);
+					setError(null);
+				}}
+				sx={{ mb: 1.5 }}>
+				<ToggleButton value='announcement' sx={{ fontSize: '0.8rem', textTransform: 'none', px: 1.5 }}>
+					Course, book, or club
+				</ToggleButton>
+				<ToggleButton value='custom' sx={{ fontSize: '0.8rem', textTransform: 'none', px: 1.5 }}>
+					Custom message
+				</ToggleButton>
+			</ToggleButtonGroup>
+			<Typography variant='body2' sx={{ fontSize: '0.8rem', color: 'text.secondary', mb: 2 }}>
+				{mode === 'announcement'
+					? 'Pick an item, then Preview. The note appears under the logo. The subject is only the inbox subject line.'
+					: 'Write the message yourself. This path sends the editor content as-is.'}
+			</Typography>
 			<Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
 				<FormControl sx={{ width: '50%' }}>
 					<Select
@@ -211,6 +359,7 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 					label='Subject'
 					value={subject}
 					onChange={(e) => {
+						subjectTouchedRef.current = true;
 						setSubject(e.target.value);
 						setError(null);
 					}}
@@ -223,18 +372,111 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 					}}
 				/>
 			</Box>
-			<Box sx={{ mb: 3 }}>
-				<TinyMceEditor
-					key={emailSessionScope}
-					initialValue=''
-					height={400}
-					editorRef={editorRef}
-					imageScopedEntityId={emailSessionScope}
-					handleEditorChange={() => {
-						setError(null);
-					}}
-				/>
-			</Box>
+			<CustomTextField
+				label={category === 'manual' ? 'Email addresses' : 'Additional email addresses (optional)'}
+				placeholder='name@example.com, another@example.com'
+				value={manualEmails}
+				required={category === 'manual'}
+				multiline
+				rows={3}
+				onChange={(e) => {
+					setManualEmails(e.target.value);
+					setError(null);
+				}}
+				fullWidth
+				sx={{ mb: 1 }}
+			/>
+			<Typography variant='body2' sx={{ fontSize: '0.75rem', color: 'text.secondary', mb: 2 }}>
+				{category === 'manual'
+					? 'Separate addresses with commas, spaces, or new lines. Up to 200.'
+					: 'These addresses are added to the selected list. Separate them with commas, spaces, or new lines.'}
+			</Typography>
+			{((category && category !== 'marketingConsent') || manualEmails.trim()) && (
+				<Typography variant='body2' sx={{ fontSize: '0.75rem', color: 'warning.main', mb: 2, mt: -1 }}>
+					This send can include people who did not opt in to marketing emails.
+				</Typography>
+			)}
+			{mode === 'announcement' ? (
+				<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+					<Box sx={{ display: 'flex', gap: 2 }}>
+						<FormControl sx={{ width: '32%' }}>
+							<Select
+								value={kind}
+								size='small'
+								onChange={(e) => {
+									setKind(e.target.value as AnnouncementKind);
+									setItemId('');
+									if (!subjectTouchedRef.current) setSubject('');
+									setError(null);
+								}}
+								sx={{ fontSize: '0.8rem', backgroundColor: '#fff' }}>
+								{kindOptions.map((option) => (
+									<MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.8rem' }}>
+										{option.label}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+						<FormControl sx={{ flex: 1 }}>
+							<Select
+								displayEmpty
+								value={itemId}
+								size='small'
+								disabled={catalogLoading}
+								onChange={(e) => {
+									const nextId = e.target.value as string;
+									setItemId(nextId);
+									const next = items.find((item) => item.id === nextId);
+									if (!subjectTouchedRef.current) setSubject(next?.label || '');
+									setError(null);
+								}}
+								sx={{ fontSize: '0.8rem', backgroundColor: '#fff' }}>
+								<MenuItem disabled value='' sx={{ fontSize: '0.8rem' }}>
+									{catalogLoading ? 'Loading…' : items.length ? `Select ${kind}` : `No ${kind}s yet`}
+								</MenuItem>
+								{items.map((item) => (
+									<MenuItem key={item.id} value={item.id} sx={{ fontSize: '0.8rem' }}>
+										{item.label}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+					<Box>
+						<Typography variant='body2' sx={{ fontSize: '0.8rem', fontWeight: 600, mb: 0.75 }}>
+							Note
+						</Typography>
+						<TinyMceEditor
+							key={`${emailSessionScope}-note`}
+							initialValue=''
+							height={220}
+							simple
+							maxLength={2000}
+							enableImage={false}
+							handleEditorChange={(content) => {
+								setNote(content);
+								setError(null);
+							}}
+						/>
+						<Typography variant='body2' sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 1 }}>
+							This text appears under the logo. Bold, italic, underline, lists, and links are kept. The {kind} image, description, and button follow it.
+						</Typography>
+					</Box>
+				</Box>
+			) : (
+				<Box sx={{ mb: 3 }}>
+					<TinyMceEditor
+						key={emailSessionScope}
+						initialValue=''
+						height={400}
+						editorRef={editorRef}
+						imageScopedEntityId={emailSessionScope}
+						handleEditorChange={() => {
+							setError(null);
+						}}
+					/>
+				</Box>
+			)}
 
 			{/* File Attachment Section */}
 			<Box sx={{ mb: 2 }}>
@@ -292,13 +534,51 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 			</Snackbar>
 
 			<Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
-				<CustomCancelButton onClick={() => setEmailDialogOpen(false)} disabled={loading}>
+				<CustomCancelButton onClick={() => setEmailDialogOpen(false)} disabled={loading || previewLoading}>
 					Cancel
 				</CustomCancelButton>
-				<CustomSubmitButton onClick={handleSend} disabled={loading} startIcon={loading ? <CircularProgress size={20} /> : null}>
-					Compose
+				{mode === 'announcement' && (
+					<CustomCancelButton type='button' onClick={handlePreview} disabled={loading || previewLoading}>
+						{previewLoading ? 'Preview…' : 'Preview'}
+					</CustomCancelButton>
+				)}
+				<CustomSubmitButton onClick={requestSend} disabled={loading || previewLoading} startIcon={loading ? <CircularProgress size={20} /> : null}>
+					Send
 				</CustomSubmitButton>
 			</Box>
+			<CustomDialog openModal={confirmOpen} closeModal={() => !loading && setConfirmOpen(false)} maxWidth='xs' title='Send this email?' disableDismiss={loading}>
+				<DialogContent>
+					<Typography variant='body2' sx={{ fontSize: '0.85rem', lineHeight: 1.6 }}>
+						Are you sure you want to send “{subject}” to {recipientLabel}?
+					</Typography>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={() => setConfirmOpen(false)}
+					onSubmit={handleSend}
+					cancelBtnText='Cancel'
+					submitBtnText='Send'
+					disableCancelBtn={loading}
+					disableBtn={loading}
+					isSubmitting={loading}
+					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
+				/>
+			</CustomDialog>
+			<CustomDialog openModal={previewOpen} closeModal={() => setPreviewOpen(false)} maxWidth='md'>
+				<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, pt: 2, pb: 0 }}>
+					<Typography sx={{ fontSize: { xs: '0.85rem', sm: '1.25rem' }, fontWeight: 500 }}>Email preview</Typography>
+					<CustomCancelButton type='button' onClick={() => setPreviewOpen(false)}>
+						Close
+					</CustomCancelButton>
+				</Box>
+				<DialogContent>
+					<Typography variant='body2' sx={{ fontSize: '0.8rem', mb: 1.5 }}>
+						Subject: {subject}
+					</Typography>
+					<Box sx={{ height: '70vh', bgcolor: '#f1f5f9', borderRadius: '8px', overflow: 'hidden' }}>
+						<iframe title='Email preview' sandbox='' srcDoc={previewHtml} style={{ width: '100%', height: '100%', border: 0, background: '#f1f5f9' }} />
+					</Box>
+				</DialogContent>
+			</CustomDialog>
 		</Box>
 	);
 };
