@@ -32,20 +32,29 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
-	const [duration, setDuration] = useState(propDuration || 0);
+	const [duration, setDuration] = useState(propDuration && Number.isFinite(propDuration) ? propDuration : 0);
 	const [volume, setVolume] = useState(70);
 	const [isMuted, setIsMuted] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [hasError, setHasError] = useState(false);
 
 	const audioRef = useRef<HTMLAudioElement>(null);
+	const resolvingDurationRef = useRef(false);
 
-	// Format time helper
+	const knownDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+
+	// Format time helper. MediaRecorder WebM often reports duration as Infinity.
 	const formatTime = (seconds: number): string => {
-		if (isNaN(seconds)) return '0:00';
+		if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
 		const mins = Math.floor(seconds / 60);
 		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
+	};
+
+	const commitDuration = (value: number) => {
+		if (Number.isFinite(value) && value > 0) {
+			setDuration(value);
+		}
 	};
 
 	// Handle play/pause
@@ -74,10 +83,9 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 	// Handle time change
 	const handleTimeChange = (_event: Event, newValue: number | number[]) => {
 		const newTime = Array.isArray(newValue) ? newValue[0] : newValue;
-		if (audioRef.current) {
-			audioRef.current.currentTime = newTime;
-			setCurrentTime(newTime);
-		}
+		if (!audioRef.current || !knownDuration) return;
+		audioRef.current.currentTime = newTime;
+		setCurrentTime(newTime);
 	};
 
 	// Handle volume change
@@ -122,17 +130,126 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 		const audio = audioRef.current;
 		if (!audio) return;
 
+		let cancelled = false;
+		let seekTimer: ReturnType<typeof setTimeout> | null = null;
+		let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+		let detachProbe: (() => void) | null = null;
+		resolvingDurationRef.current = false;
+		setCurrentTime(0);
+		setIsPlaying(false);
+		setHasError(false);
+		setDuration(propDuration && Number.isFinite(propDuration) && propDuration > 0 ? propDuration : 0);
+
+		const clearResolveTimeout = () => {
+			if (seekTimer) {
+				clearTimeout(seekTimer);
+				seekTimer = null;
+			}
+			if (fallbackTimer) {
+				clearTimeout(fallbackTimer);
+				fallbackTimer = null;
+			}
+		};
+
+		// Chrome reports Infinity for MediaRecorder WebM until the playhead is forced to the end.
+		const resolveUnknownDuration = () => {
+			if (cancelled || resolvingDurationRef.current) return;
+			if (Number.isFinite(audio.duration) && audio.duration > 0) {
+				commitDuration(audio.duration);
+				return;
+			}
+			if (audio.duration !== Infinity) return;
+
+			resolvingDurationRef.current = true;
+			const resumeAt = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+			const shouldResume = !audio.paused && !audio.ended;
+			if (shouldResume) audio.pause();
+
+			const finish = () => {
+				const resolved = audio.duration;
+				if (!Number.isFinite(resolved) || resolved <= 0) return;
+
+				detach();
+				clearResolveTimeout();
+
+				const target = Math.min(resumeAt, Math.max(resolved - 0.05, 0));
+				if (!cancelled) {
+					setDuration(resolved);
+					setCurrentTime(target);
+				}
+				resolvingDurationRef.current = false;
+				try {
+					audio.currentTime = target;
+				} catch {
+					/* element may already be gone */
+				}
+				if (shouldResume && !cancelled) {
+					audio.play().catch(() => setIsPlaying(false));
+				}
+			};
+
+			const detach = () => {
+				audio.removeEventListener('timeupdate', finish);
+				audio.removeEventListener('durationchange', finish);
+				if (detachProbe === detach) detachProbe = null;
+			};
+			detachProbe = detach;
+
+			audio.addEventListener('timeupdate', finish);
+			audio.addEventListener('durationchange', finish);
+			fallbackTimer = setTimeout(() => {
+				if (!resolvingDurationRef.current) return;
+				resolvingDurationRef.current = false;
+				detach();
+				if (Number.isFinite(audio.duration) && audio.duration > 0 && !cancelled) {
+					setDuration(audio.duration);
+				}
+				try {
+					audio.currentTime = resumeAt;
+				} catch {
+					/* ignore */
+				}
+				if (shouldResume && !cancelled) {
+					audio.play().catch(() => setIsPlaying(false));
+				}
+			}, 2000);
+
+			// Defer so Chrome accepts the seek after loadedmetadata.
+			seekTimer = setTimeout(() => {
+				if (cancelled || !resolvingDurationRef.current) return;
+				try {
+					audio.currentTime = 1e101;
+				} catch {
+					resolvingDurationRef.current = false;
+					detach();
+					clearResolveTimeout();
+				}
+			}, 0);
+		};
+
 		const handleLoadedMetadata = () => {
-			setDuration(audio.duration);
 			setIsLoading(false);
 			setHasError(false);
+			if (Number.isFinite(audio.duration) && audio.duration > 0) {
+				commitDuration(audio.duration);
+			} else {
+				resolveUnknownDuration();
+			}
+		};
+
+		const handleDurationChange = () => {
+			if (resolvingDurationRef.current) return;
+			commitDuration(audio.duration);
 		};
 
 		const handleTimeUpdate = () => {
+			if (resolvingDurationRef.current) return;
 			setCurrentTime(audio.currentTime);
+			commitDuration(audio.duration);
 		};
 
 		const handleEnded = () => {
+			if (resolvingDurationRef.current) return;
 			setIsPlaying(false);
 			setCurrentTime(0);
 			onEnded?.();
@@ -147,22 +264,35 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 		const handleCanPlay = () => {
 			setIsLoading(false);
 			setHasError(false);
+			if (!Number.isFinite(audio.duration) || audio.duration === Infinity) {
+				resolveUnknownDuration();
+			}
 		};
 
 		audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+		audio.addEventListener('durationchange', handleDurationChange);
 		audio.addEventListener('timeupdate', handleTimeUpdate);
 		audio.addEventListener('ended', handleEnded);
 		audio.addEventListener('error', handleError);
 		audio.addEventListener('canplay', handleCanPlay);
 
+		if (audio.readyState >= 1) {
+			handleLoadedMetadata();
+		}
+
 		return () => {
+			cancelled = true;
+			resolvingDurationRef.current = false;
+			clearResolveTimeout();
+			detachProbe?.();
 			audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+			audio.removeEventListener('durationchange', handleDurationChange);
 			audio.removeEventListener('timeupdate', handleTimeUpdate);
 			audio.removeEventListener('ended', handleEnded);
 			audio.removeEventListener('error', handleError);
 			audio.removeEventListener('canplay', handleCanPlay);
 		};
-	}, [audioUrl, onEnded]);
+	}, [audioUrl, onEnded, propDuration]);
 
 	// Set initial volume
 	useEffect(() => {
@@ -261,10 +391,10 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 					{/* Progress Bar */}
 					<Box sx={{ flex: 1 }}>
 						<Slider
-							value={currentTime}
-							max={duration || 100}
+							value={knownDuration ? Math.min(currentTime, knownDuration) : 0}
+							max={knownDuration || 1}
 							onChange={handleTimeChange}
-							disabled={hasError || isLoading}
+							disabled={hasError || isLoading || !knownDuration}
 							sx={{
 								'color': 'white',
 								'height': 5,
@@ -351,7 +481,7 @@ const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({
 							textAlign: 'right',
 							fontWeight: 500,
 						}}>
-						{formatTime(currentTime)} / {formatTime(duration)}
+						{formatTime(currentTime)} / {knownDuration ? formatTime(knownDuration) : '--:--'}
 					</Typography>
 				</Box>
 				{/* Download Button */}

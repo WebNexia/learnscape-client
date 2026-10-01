@@ -253,7 +253,7 @@ const AdminInquiries = () => {
 								disabled: isDownloadingInquiries || (displayInquiries && displayInquiries.length === 0),
 							},
 							{
-								label: isMobileSize ? 'Email' : 'Bulk Email',
+								label: isMobileSize ? 'Email' : 'Email marketing',
 								onClick: () => setEmailDialogOpen(true),
 								startIcon: !isMobileSize ? <EmailIcon /> : undefined,
 							},
@@ -424,7 +424,7 @@ const AdminInquiries = () => {
 						<CustomTablePagination count={inquiriesNumberOfPages} page={inquiriesCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
-				<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
+				<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Email marketing'>
 					<DialogContent>
 						<EmailSender setEmailDialogOpen={setEmailDialogOpen} dialogOpen={emailDialogOpen} />
 					</DialogContent>
