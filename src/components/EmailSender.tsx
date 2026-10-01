@@ -37,7 +37,7 @@ interface Attachment {
 }
 
 type ComposeMode = 'announcement' | 'custom';
-type AnnouncementKind = 'course' | 'book' | 'club';
+type AnnouncementKind = 'course' | 'book' | 'club' | 'consultation';
 
 interface CatalogItem {
 	id: string;
@@ -48,6 +48,7 @@ const kindOptions: { value: AnnouncementKind; label: string }[] = [
 	{ value: 'course', label: 'Course' },
 	{ value: 'book', label: 'Book' },
 	{ value: 'club', label: 'Club' },
+	{ value: 'consultation', label: 'Consultation' },
 ];
 
 const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
@@ -55,7 +56,7 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 	const [kind, setKind] = useState<AnnouncementKind>('course');
 	const [itemId, setItemId] = useState('');
 	const [note, setNote] = useState('');
-	const [catalog, setCatalog] = useState<Record<AnnouncementKind, CatalogItem[]>>({ course: [], book: [], club: [] });
+	const [catalog, setCatalog] = useState<Record<AnnouncementKind, CatalogItem[]>>({ course: [], book: [], club: [], consultation: [] });
 	const [catalogLoading, setCatalogLoading] = useState(false);
 	const [category, setCategory] = useState<string>('');
 	const [confirmOpen, setConfirmOpen] = useState(false);
@@ -110,10 +111,11 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 		const loadCatalog = async () => {
 			setCatalogLoading(true);
 			try {
-				const [coursesRes, booksRes, clubsRes] = await Promise.all([
+				const [coursesRes, booksRes, clubsRes, consultationsRes] = await Promise.all([
 					axios.get(`/courses/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
 					axios.get(`/documents/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
 					axios.get(`/clubs/organisation/${orgId}`, { params: { page: 1, limit: 100 } }),
+					axios.get(`/consultations/organisation/${orgId}`, { params: { page: 1, limit: 200 } }),
 				]);
 				const toItems = (rows: { _id?: string; title?: string; name?: string }[] | undefined, labelKey: 'title' | 'name') =>
 					(rows || [])
@@ -125,9 +127,10 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 					course: toItems(coursesRes.data?.data, 'title'),
 					book: toItems(booksRes.data?.data, 'name'),
 					club: toItems(clubsRes.data?.data, 'title'),
+					consultation: toItems(consultationsRes.data?.data, 'title'),
 				});
 			} catch {
-				if (!cancelled) setError('Could not load courses, books, and clubs.');
+				if (!cancelled) setError('Could not load courses, books, clubs, and consultations.');
 			} finally {
 				if (!cancelled) setCatalogLoading(false);
 			}
@@ -224,7 +227,7 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 			return false;
 		}
 		if (mode === 'announcement' && !itemId) {
-			setError('Please choose a course, book, or club.');
+			setError('Please choose a course, book, club, or consultation.');
 			return false;
 		}
 		if (!category) {
@@ -287,7 +290,7 @@ const EmailSender = ({ setEmailDialogOpen, dialogOpen }: EmailSenderProps) => {
 			return;
 		}
 		if (!itemId) {
-			setError('Please choose a course, book, or club.');
+			setError('Please choose a course, book, club, or consultation.');
 			return;
 		}
 		setPreviewLoading(true);
