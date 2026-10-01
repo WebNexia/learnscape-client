@@ -19,18 +19,18 @@ import { isAnswerCorrect, normalizeGapFillAnswer } from "./scoring";
 import { CEFR_LEVELS } from "./types";
 
 describe("level-test content and scoring", () => {
-  it("ships all 54 unique questions across A1-C2", () => {
+  it("ships all 56 unique questions across A1-C2", () => {
     const questions = readingLevelContent.flatMap((entry) =>
       [...entry.primaryPassages, ...entry.verificationPassages].flatMap(
         (passage) => passage.questions,
       ),
     );
-    expect(questions).toHaveLength(54);
-    expect(new Set(questions.map((question) => question.id)).size).toBe(54);
+    expect(questions).toHaveLength(56);
+    expect(new Set(questions.map((question) => question.id)).size).toBe(56);
     expect(readingLevelContent.map((entry) => entry.level)).toEqual([
       ...CEFR_LEVELS,
     ]);
-    expect(READING_TEST_CONTENT_VERSION).toBe("2026-09-listen-order");
+    expect(READING_TEST_CONTENT_VERSION).toBe("2026-10-c1c2-items");
   });
 
   it("keeps canonical form sizes and listening steps", () => {
