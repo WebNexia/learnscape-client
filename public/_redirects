@@ -4,5 +4,19 @@ https://learnscape-qa.netlify.app/*  https://adenacademy.co.uk/:splat  301!
 # Legacy Turkish slug → English
 /seviye-testi  /level-test  301
 
+# First HTML for the public pages Google should read before JavaScript
+/landing-page-courses        /landing-page-courses/index.html        200
+/landing-page-courses/       /landing-page-courses/index.html        200
+/landing-page-resources      /landing-page-resources/index.html      200
+/landing-page-resources/     /landing-page-resources/index.html      200
+/landing-page-consultations  /landing-page-consultations/index.html  200
+/landing-page-consultations/ /landing-page-consultations/index.html  200
+/landing-page-clubs          /landing-page-clubs/index.html          200
+/landing-page-clubs/         /landing-page-clubs/index.html          200
+/about-us                    /about-us/index.html                    200
+/about-us/                   /about-us/index.html                    200
+/contact-us                  /contact-us/index.html                  200
+/contact-us/                 /contact-us/index.html                  200
+
 # SPA fallback (custom domain + local Netlify dev)
 /*  /index.html  200

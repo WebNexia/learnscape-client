@@ -7,6 +7,7 @@ import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { decodeHtmlEntities } from '../utils/utilText';
 import { useNavigate } from 'react-router-dom';
@@ -44,8 +45,8 @@ const LandingPageConsultations = () => {
 	return (
 		<>
 			<SEO
-				title='Danışmanlık'
-				description='Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın.'
+				title={PUBLIC_PAGE_META.consultations.seoTitle}
+				description={PUBLIC_PAGE_META.consultations.description}
 				keywords='danışmanlık, online danışmanlık, bire bir görüşme, randevu, Aden Academy danışmanlık'
 				type='website'
 				url={`${baseUrl}/landing-page-consultations`}

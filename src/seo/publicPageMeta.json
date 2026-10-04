@@ -1,0 +1,37 @@
+{
+	"home": {
+		"path": "/",
+		"seoTitle": "Aden Academy | Online İngilizce Kursları",
+		"description": "Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin."
+	},
+	"courses": {
+		"path": "/landing-page-courses",
+		"seoTitle": "Kurslar",
+		"description": "Genel İngilizce ve sınavlara yönelik online kurslarımızı keşfedin. Size uygun programı bulun, detayları inceleyin ve kayıt olun."
+	},
+	"books": {
+		"path": "/landing-page-resources",
+		"seoTitle": "Kitaplar",
+		"description": "Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz."
+	},
+	"consultations": {
+		"path": "/landing-page-consultations",
+		"seoTitle": "Danışmanlık",
+		"description": "Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın."
+	},
+	"clubs": {
+		"path": "/landing-page-clubs",
+		"seoTitle": "Kulüpler",
+		"description": "Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun."
+	},
+	"about": {
+		"path": "/about-us",
+		"seoTitle": "Hakkımızda",
+		"description": "Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz."
+	},
+	"contact": {
+		"path": "/contact-us",
+		"seoTitle": "İletişim",
+		"description": "Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın."
+	}
+}

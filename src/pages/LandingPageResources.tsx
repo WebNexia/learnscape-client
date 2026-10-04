@@ -9,6 +9,7 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import SearchFilter from '../components/landingPage/SearchFilter';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 
 const landingHeaderStickyTop = {
@@ -97,8 +98,8 @@ const LandingPageResources = () => {
 	return (
 		<>
 			<SEO
-				title='Kitaplar'
-				description='Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.'
+				title={PUBLIC_PAGE_META.books.seoTitle}
+				description={PUBLIC_PAGE_META.books.description}
 				keywords='kitaplar, ders kitapları, eğitim materyalleri, ücretsiz kaynak, Aden Academy kitaplar'
 				type='website'
 				url={`${baseUrl}/landing-page-resources`}

@@ -11,6 +11,7 @@ import axios from 'axios';
 import TurnstileWidget from '../components/common/TurnstileWidget';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 
 const ContactUs = () => {
@@ -96,8 +97,8 @@ const ContactUs = () => {
 	return (
 		<>
 			<SEO
-				title='İletişim'
-				description='Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın.'
+				title={PUBLIC_PAGE_META.contact.seoTitle}
+				description={PUBLIC_PAGE_META.contact.description}
 				keywords='iletişim, Aden Academy iletişim, destek, kayıt, info@adenacademy.co.uk'
 				type='website'
 				url={`${baseUrl}/contact-us`}

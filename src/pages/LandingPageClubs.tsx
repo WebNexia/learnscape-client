@@ -17,6 +17,7 @@ import { clubsService } from '../services/clubsService';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useNavigate } from 'react-router-dom';
@@ -76,8 +77,8 @@ const LandingPageClubs = () => {
 	return (
 		<>
 			<SEO
-				title='Kulüpler'
-				description='Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun.'
+				title={PUBLIC_PAGE_META.clubs.seoTitle}
+				description={PUBLIC_PAGE_META.clubs.description}
 				keywords='kulüp, zoom kulüp, konuşma kulübü, İngilizce pratik, Aden Academy kulüpler'
 				type='website'
 				url={`${baseUrl}/landing-page-clubs`}
