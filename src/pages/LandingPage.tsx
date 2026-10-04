@@ -15,6 +15,7 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import UpcomingEvents from '../components/landingPage/UpcomingEvents';
 import LandingPageFAQ from '../components/landingPage/LandingPageFAQ';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 
 const LandingPage = () => {
@@ -25,8 +26,8 @@ const LandingPage = () => {
 	return (
 		<>
 			<SEO
-				title='Aden Academy: Anasayfa'
-				description='Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.'
+				title={PUBLIC_PAGE_META.home.seoTitle}
+				description={PUBLIC_PAGE_META.home.description}
 				keywords='Aden Academy, online İngilizce, İngilizce kursu, online eğitim, İngilizce öğren'
 				type='website'
 				url={`${baseUrl}/`}
@@ -41,7 +42,7 @@ const LandingPage = () => {
 						type='WebPage'
 						data={{
 							url: baseUrl,
-							name: 'Aden Academy: Anasayfa',
+							name: PUBLIC_PAGE_META.home.seoTitle,
 							description:
 								'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
 						}}

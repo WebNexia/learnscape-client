@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { PUBLIC_PAGE_META } from '../../seo/publicPageMeta';
 
 interface SEOProps {
 	title?: string;
@@ -34,9 +35,8 @@ const getAbsoluteUrl = (url: string): string => {
 };
 
 const SEO = ({
-	title = 'Aden Academy: Anasayfa',
-	description =
-		'Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.',
+	title = PUBLIC_PAGE_META.home.seoTitle,
+	description = PUBLIC_PAGE_META.home.description,
 	keywords = 'Aden Academy, online İngilizce, İngilizce kursu, online eğitim, İngilizce öğren, Aden Academy kurslar',
 	image = '/og-image.jpg',
 	url,

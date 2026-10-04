@@ -19,6 +19,7 @@ import { CheckCircle, Cancel, Star } from '@mui/icons-material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useContext, useState } from 'react';
 import ContactFormDialog from '../components/landingPage/ContactFormDialog';
 import axios from 'axios';
@@ -193,8 +194,8 @@ const AboutUs = () => {
 	return (
 		<>
 			<SEO
-				title='Hakkımızda'
-				description="Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz."
+				title={PUBLIC_PAGE_META.about.seoTitle}
+				description={PUBLIC_PAGE_META.about.description}
 				keywords='hakkımızda, Aden Academy, online İngilizce, misyon, vizyon'
 				type='website'
 				url={`${baseUrl}/about-us`}

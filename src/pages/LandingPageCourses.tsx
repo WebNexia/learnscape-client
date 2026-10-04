@@ -11,6 +11,7 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import SearchFilter from '../components/landingPage/SearchFilter';
 import LandingPageSectionHeader from '../components/landingPage/LandingPageSectionHeader';
 import { SEO, StructuredData } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
 
 const LandingPageCourses = () => {
@@ -77,8 +78,8 @@ const LandingPageCourses = () => {
 	return (
 		<>
 			<SEO
-				title='Kurslar'
-				description='Genel İngilizce ve sınavlara yönelik online kurslarımızı keşfedin. Size uygun programı bulun, detayları inceleyin ve kayıt olun.'
+				title={PUBLIC_PAGE_META.courses.seoTitle}
+				description={PUBLIC_PAGE_META.courses.description}
 				keywords='İngilizce kursu, online İngilizce, genel İngilizce, sınav hazırlık, Aden Academy kurslar'
 				type='website'
 				url={`${baseUrl}/landing-page-courses`}
