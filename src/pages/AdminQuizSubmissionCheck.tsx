@@ -260,11 +260,11 @@ const AdminQuizSubmissionCheck = () => {
 					prevFeedbacks.map((feedback) =>
 						updatedIds.has(feedback.userQuestionId)
 							? {
-									...feedback,
-									originalTeacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
-									isFeedbackGiven: Boolean(feedback.feedback.trim() || feedback.teacherAudioFeedbackUrl.trim()),
-									isUpdated: false,
-								}
+								...feedback,
+								originalTeacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
+								isFeedbackGiven: Boolean(feedback.feedback.trim() || feedback.teacherAudioFeedbackUrl.trim()),
+								isUpdated: false,
+							}
 							: feedback
 					)
 				);
@@ -354,511 +354,511 @@ const AdminQuizSubmissionCheck = () => {
 				</Box>
 			) : (
 				<>
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					width: isVerySmallScreen ? '90%' : '85%',
-					margin: isMobileSizeSmall ? '1rem' : '2rem',
-					boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0, 0, 0, 0.2)',
-					borderRadius: '0.35rem',
-					padding: '0.75rem 1rem',
-				}}>
-				{[
-					{ label: 'Username', value: username },
-					{ label: isMobileSize ? 'Quiz' : 'Quiz Name', value: quizName },
-					{ label: isMobileSize ? 'Chapter' : 'Chapter Name', value: chapterName || '—' },
-					{ label: isMobileSize ? 'Course' : 'Course Name', value: courseName },
-					{ label: 'Status', value: isCheckedStatus ? 'Checked' : 'Unchecked' },
-				]?.map(({ label, value }, index) => (
-					<Box key={index} sx={{ textAlign: 'center' }}>
-						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.8rem' : undefined }}>
-							{label}
-						</Typography>
-						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem' }}>
-							{value}
-						</Typography>
-					</Box>
-				))}
-			</Box>
-
-			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSizeSmall ? '1rem' : '1.5rem' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						width: '100%',
-						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
-					}}>
-					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-							Questions
-						</Typography>
-						{totalPossible > 0 && (
-							<Box
-								sx={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									backgroundColor: theme.palette.primary.main,
-									color: 'white',
-									padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
-									borderRadius: '1.5rem',
-									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
-									fontWeight: 600,
-									fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
-									boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
-									whiteSpace: 'nowrap',
-								}}>
-								{totalEarned}/{totalPossible} pts
-								{scorePercentage !== null && (
-									<Typography
-										component='span'
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											color: '#ffff',
-											ml: '0.25rem',
-										}}>
-										- ({scorePercentage}%)
-									</Typography>
-								)}
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							width: isVerySmallScreen ? '90%' : '85%',
+							margin: isMobileSizeSmall ? '1rem' : '2rem',
+							boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0, 0, 0, 0.2)',
+							borderRadius: '0.35rem',
+							padding: '0.75rem 1rem',
+						}}>
+						{[
+							{ label: 'Username', value: username },
+							{ label: isMobileSize ? 'Quiz' : 'Quiz Name', value: quizName },
+							{ label: isMobileSize ? 'Chapter' : 'Chapter Name', value: chapterName || '—' },
+							{ label: isMobileSize ? 'Course' : 'Course Name', value: courseName },
+							{ label: 'Status', value: isCheckedStatus ? 'Checked' : 'Unchecked' },
+						]?.map(({ label, value }, index) => (
+							<Box key={index} sx={{ textAlign: 'center' }}>
+								<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.8rem' : undefined }}>
+									{label}
+								</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem' }}>
+									{value}
+								</Typography>
 							</Box>
-						)}
-					</Box>
-					<CustomInfoMessageAlignedRight
-						message={isVerySmallScreen ? 'Click questions to give feedback' : 'Click the questions to give/edit feedback for each question'}
-						sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
-					/>
-				</Box>
-				{userResponseData?.map((response: any, index: number) => (
-					<QuestionResponseCard
-						key={response._id}
-						response={response}
-						index={index}
-						fromAdminSubmissions={true}
-						fetchQuestionTypeName={fetchQuestionTypeName}
-						onCardClick={openResponseFeedback}
-					/>
-				))}
-			</Box>
-
-			{openQuestionFeedbackModal && (
-				<>
-					<IconButton
-						onClick={handlePreviousResponse}
-						disabled={currentResponseIndex === 0}
-						sx={{
-							'position': 'fixed',
-							'left': isMobileSize ? '2%' : '10%',
-							'top': '50%',
-							'transform': 'translateY(-50%)',
-							'backgroundColor': theme.bgColor?.greenPrimary,
-							'color': 'white',
-							'border': 'none',
-							'borderRadius': '50%',
-							'padding': isMobileSize ? '0.5rem' : '0.75rem',
-							'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
-							'zIndex': 13000,
-							':hover': { backgroundColor: theme.bgColor?.adminHeader },
-						}}>
-						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-					</IconButton>
-					<IconButton
-						onClick={handleNextResponse}
-						disabled={currentResponseIndex === userResponseData.length - 1}
-						sx={{
-							'position': 'fixed',
-							'right': isMobileSize ? '2%' : '10%',
-							'top': '50%',
-							'transform': 'translateY(-50%)',
-							'backgroundColor': theme.bgColor?.greenPrimary,
-							'color': 'white',
-							'border': 'none',
-							'borderRadius': '50%',
-							'padding': isMobileSize ? '0.5rem' : '0.75rem',
-							'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
-							'zIndex': 13000,
-							':hover': { backgroundColor: theme.bgColor?.adminHeader },
-						}}>
-						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-					</IconButton>
-
-			<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
-					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-						{getFeedbackModalQuestionTitle(selectedQuestionType)}
-					</Typography>
-
-					<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />
-
-					{selectedQuestionType !== QuestionType.FITB_TYPING &&
-						selectedQuestionType !== QuestionType.FITB_DRAG_DROP && (
-							<Typography
-								variant='body2'
-								component='div'
-								sx={{
-									'lineHeight': 1.8,
-									'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
-									'& img': {
-										maxWidth: '100%',
-										height: 'auto',
-										borderRadius: '0.25rem',
-										margin: '0.5rem 0',
-										boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
-									},
-								}}
-								dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userResponseToFeedback?.questionId.question)) }}
-							/>
-						)}
-				</Box>
-
-				{selectedQuestionType === QuestionType.MULTIPLE_CHOICE && (
-					<Box sx={{ width: '90%', margin: '0 auto' }}>
-						{userResponseToFeedback?.questionId?.options?.map((option: string, index: number) => (
-							<Typography
-								key={index}
-								variant='body2'
-								sx={{
-									margin: '1rem 0 0 2rem',
-									color: option === userResponseToFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-								}}>
-								{String.fromCharCode(97 + index)}) {option}
-							</Typography>
 						))}
-						<Box sx={{ width: '100%', margin: '2rem auto 1rem auto' }}>
-							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-								Student's Answer
-							</Typography>
-							<Typography
-								variant='body2'
-								sx={{
-									color:
-										userResponseToFeedback?.userAnswer === userResponseToFeedback?.questionId.correctAnswer
-											? theme.textColor?.greenPrimary.main
-											: '#ef5350',
-									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-								}}>
-								{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
-									? `${String.fromCharCode(
-											97 + userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer)
-										)})`
-									: ''}{' '}
-								{userResponseToFeedback?.userAnswer}
-							</Typography>
-						</Box>
 					</Box>
-				)}
 
-				{selectedQuestionType === QuestionType.OPEN_ENDED && (
-					<Box sx={{ width: '90%', margin: '1rem auto' }}>
-						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-							Student's Answer
-						</Typography>
-						<Typography sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>{userResponseToFeedback.userAnswer}</Typography>
-					</Box>
-				)}
-
-				{selectedQuestionType === QuestionType.TRUE_FALSE && (
-					<Box sx={{ width: '90%', margin: '1rem auto' }}>
-						<Box sx={{ marginBottom: '2rem' }}>
-							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Correct Answer
-							</Typography>
-							<Typography variant='body2'>{userResponseToFeedback?.questionId.correctAnswer}</Typography>
-						</Box>
-						<Box>
-							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Student's Answer
-							</Typography>
-							<Typography variant='body2'>{userResponseToFeedback.userAnswer}</Typography>
-						</Box>
-					</Box>
-				)}
-
-				{selectedQuestionType === QuestionType.MATCHING && (
-					<Box sx={{ width: '90%', margin: '0rem auto' }}>
-						<MatchingPreview
-							initialPairs={userResponseToFeedback?.questionId.matchingPairs}
-							userMatchingPairsAfterSubmission={userResponseToFeedback?.userMatchingPairAnswers}
-							questionId={userResponseToFeedback?.questionId}
-							fromQuizQuestionUser={true}
-							isLessonCompleted={true}
-						/>
-					</Box>
-				)}
-
-				{selectedQuestionType === QuestionType.FITB_DRAG_DROP && (
-					<Box sx={{ width: '90%', margin: '0rem auto' }}>
-						<FillInTheBlanksDragDrop
-							textWithBlanks={userResponseToFeedback?.questionId.question}
-							blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
-							userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
-							questionId={userResponseToFeedback?.questionId}
-							fromQuizQuestionUser={true}
-							isLessonCompleted={true}
-						/>
-					</Box>
-				)}
-
-				{selectedQuestionType === QuestionType.FITB_TYPING && (
-					<Box sx={{ width: '90%', margin: '0rem auto' }}>
-						<FillInTheBlanksTyping
-							textWithBlanks={userResponseToFeedback?.questionId.question}
-							blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
-							userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
-							questionId={userResponseToFeedback?.questionId}
-							fromQuizQuestionUser={true}
-							isLessonCompleted={true}
-						/>
-					</Box>
-				)}
-
-				{selectedQuestionType === QuestionType.AUDIO_VIDEO && (
-					<Box sx={{ width: '90%', margin: '1rem auto' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-							Student's Recording
-						</Typography>
-						{userResponseToFeedback?.audioRecordUrl && (
-							<Box sx={{ mt: '1rem' }}>
-								<CustomAudioPlayer audioUrl={userResponseToFeedback?.audioRecordUrl} title='Student Recording' />
-							</Box>
-						)}
-						{userResponseToFeedback?.videoRecordUrl && (
-							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-								<video
-									src={userResponseToFeedback?.videoRecordUrl}
-									controls
-									style={{
-										margin: '1rem auto 0 auto',
-										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-										borderRadius: '0.35rem',
-										width: '60%',
-									}}
-								/>
-								<a
-									href={userResponseToFeedback?.videoRecordUrl}
-									download
-									style={{ display: 'block', marginTop: '0.5rem', textAlign: 'center' }}
-									target='_blank'>
-									<Typography variant='body2'>Download Video</Typography>
-								</a>
-							</Box>
-						)}
-
-						<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', mt: '5rem' }}>
-							<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-								Audio Feedback for Question
-							</Typography>
-							<Box sx={{ width: '100%', marginTop: '1rem' }}>
-								{!selectedQuestionFeedback?.teacherAudioFeedbackUrl ? (
-									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} maxRecordTime={300000} />
-								) : (
-									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Box sx={{ flex: 9, mt: '0.5rem' }}>
-											<CustomAudioPlayer
-												audioUrl={selectedQuestionFeedback?.teacherAudioFeedbackUrl || ''}
-												title='Teacher Audio Feedback'
-											/>
-										</Box>
-										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
-											<CustomSubmitButton
-												sx={{ borderRadius: '0.35rem' }}
-												onClick={() => {
-													setUserQuestionsFeedbacks(
-														(prevFeedbacks) =>
-															prevFeedbacks?.map((feedback) =>
-																feedback.userQuestionId === userResponseToFeedback._id
-																	? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '', isFeedbackGiven: !!feedback.feedback }
-																	: feedback
-															) || []
-													);
+					<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSizeSmall ? '1rem' : '1.5rem' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								width: '100%',
+								margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
+							}}>
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+									Questions
+								</Typography>
+								{totalPossible > 0 && (
+									<Box
+										sx={{
+											display: 'inline-flex',
+											alignItems: 'center',
+											backgroundColor: theme.palette.primary.main,
+											color: 'white',
+											padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
+											borderRadius: '1.5rem',
+											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+											fontWeight: 600,
+											fontFamily: theme.fontFamily?.main || 'Varela Round, sans-serif',
+											boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+											whiteSpace: 'nowrap',
+										}}>
+										{totalEarned}/{totalPossible} pts
+										{scorePercentage !== null && (
+											<Typography
+												component='span'
+												sx={{
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+													color: '#ffff',
+													ml: '0.25rem',
 												}}>
-												Remove
-											</CustomSubmitButton>
-										</Box>
+												- ({scorePercentage}%)
+											</Typography>
+										)}
 									</Box>
 								)}
 							</Box>
+							<CustomInfoMessageAlignedRight
+								message={isVerySmallScreen ? 'Click questions to give feedback' : 'Click the questions to give/edit feedback for each question'}
+								sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
+							/>
 						</Box>
+						{userResponseData?.map((response: any, index: number) => (
+							<QuestionResponseCard
+								key={response._id}
+								response={response}
+								index={index}
+								fromAdminSubmissions={true}
+								fetchQuestionTypeName={fetchQuestionTypeName}
+								onCardClick={openResponseFeedback}
+							/>
+						))}
 					</Box>
-				)}
 
-				{userResponseToFeedback?.pointsPossible !== undefined &&
-					userResponseToFeedback?.pointsPossible !== null &&
-					(() => {
-						const canUpdateScore =
-							selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
-						return canUpdateScore ? (
-							<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
-								<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-									Score
-								</Typography>
-								<Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', mb: '1rem' }}>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Points Earned:
+					{openQuestionFeedbackModal && (
+						<>
+							<IconButton
+								onClick={handlePreviousResponse}
+								disabled={currentResponseIndex === 0}
+								sx={{
+									'position': 'fixed',
+									'left': isMobileSize ? '2%' : '10%',
+									'top': '50%',
+									'transform': 'translateY(-50%)',
+									'backgroundColor': theme.bgColor?.greenPrimary,
+									'color': 'white',
+									'border': 'none',
+									'borderRadius': '50%',
+									'padding': isMobileSize ? '0.5rem' : '0.75rem',
+									'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
+									'zIndex': 13000,
+									':hover': { backgroundColor: theme.bgColor?.adminHeader },
+								}}>
+								<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+							</IconButton>
+							<IconButton
+								onClick={handleNextResponse}
+								disabled={currentResponseIndex === userResponseData.length - 1}
+								sx={{
+									'position': 'fixed',
+									'right': isMobileSize ? '2%' : '10%',
+									'top': '50%',
+									'transform': 'translateY(-50%)',
+									'backgroundColor': theme.bgColor?.greenPrimary,
+									'color': 'white',
+									'border': 'none',
+									'borderRadius': '50%',
+									'padding': isMobileSize ? '0.5rem' : '0.75rem',
+									'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
+									'zIndex': 13000,
+									':hover': { backgroundColor: theme.bgColor?.adminHeader },
+								}}>
+								<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+							</IconButton>
+
+							<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
+								<Box sx={{ width: '90%', margin: '1rem auto' }}>
+									<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
+										{getFeedbackModalQuestionTitle(selectedQuestionType)}
+									</Typography>
+
+									<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />
+
+									{selectedQuestionType !== QuestionType.FITB_TYPING &&
+										selectedQuestionType !== QuestionType.FITB_DRAG_DROP && (
+											<Typography
+												variant='body2'
+												component='div'
+												sx={{
+													'lineHeight': 1.8,
+													'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+													'& img': {
+														maxWidth: '100%',
+														height: 'auto',
+														borderRadius: '0.25rem',
+														margin: '0.5rem 0',
+														boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+													},
+												}}
+												dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userResponseToFeedback?.questionId.question)) }}
+											/>
+										)}
+								</Box>
+
+								{selectedQuestionType === QuestionType.MULTIPLE_CHOICE && (
+									<Box sx={{ width: '90%', margin: '0 auto' }}>
+										{userResponseToFeedback?.questionId?.options?.map((option: string, index: number) => (
+											<Typography
+												key={index}
+												variant='body2'
+												sx={{
+													margin: '1rem 0 0 2rem',
+													color: option === userResponseToFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												}}>
+												{String.fromCharCode(97 + index)}) {option}
+											</Typography>
+										))}
+										<Box sx={{ width: '100%', margin: '2rem auto 1rem auto' }}>
+											<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
+												Student's Answer
+											</Typography>
+											<Typography
+												variant='body2'
+												sx={{
+													color:
+														userResponseToFeedback?.userAnswer === userResponseToFeedback?.questionId.correctAnswer
+															? theme.textColor?.greenPrimary.main
+															: '#ef5350',
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												}}>
+												{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
+													? `${String.fromCharCode(
+														97 + userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer)
+													)})`
+													: ''}{' '}
+												{userResponseToFeedback?.userAnswer}
+											</Typography>
+										</Box>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.OPEN_ENDED && (
+									<Box sx={{ width: '90%', margin: '1rem auto' }}>
+										<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+											Student's Answer
+										</Typography>
+										<Typography sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>{userResponseToFeedback.userAnswer}</Typography>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.TRUE_FALSE && (
+									<Box sx={{ width: '90%', margin: '1rem auto' }}>
+										<Box sx={{ marginBottom: '2rem' }}>
+											<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+												Correct Answer
+											</Typography>
+											<Typography variant='body2'>{userResponseToFeedback?.questionId.correctAnswer}</Typography>
+										</Box>
+										<Box>
+											<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+												Student's Answer
+											</Typography>
+											<Typography variant='body2'>{userResponseToFeedback.userAnswer}</Typography>
+										</Box>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.MATCHING && (
+									<Box sx={{ width: '90%', margin: '0rem auto' }}>
+										<MatchingPreview
+											initialPairs={userResponseToFeedback?.questionId.matchingPairs}
+											userMatchingPairsAfterSubmission={userResponseToFeedback?.userMatchingPairAnswers}
+											questionId={userResponseToFeedback?.questionId}
+											fromQuizQuestionUser={true}
+											isLessonCompleted={true}
+										/>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.FITB_DRAG_DROP && (
+									<Box sx={{ width: '90%', margin: '0rem auto' }}>
+										<FillInTheBlanksDragDrop
+											textWithBlanks={userResponseToFeedback?.questionId.question}
+											blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
+											userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
+											questionId={userResponseToFeedback?.questionId}
+											fromQuizQuestionUser={true}
+											isLessonCompleted={true}
+										/>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.FITB_TYPING && (
+									<Box sx={{ width: '90%', margin: '0rem auto' }}>
+										<FillInTheBlanksTyping
+											textWithBlanks={userResponseToFeedback?.questionId.question}
+											blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
+											userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
+											questionId={userResponseToFeedback?.questionId}
+											fromQuizQuestionUser={true}
+											isLessonCompleted={true}
+										/>
+									</Box>
+								)}
+
+								{selectedQuestionType === QuestionType.AUDIO_VIDEO && (
+									<Box sx={{ width: '90%', margin: '1rem auto' }}>
+										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+											Student's Recording
+										</Typography>
+										{userResponseToFeedback?.audioRecordUrl && (
+											<Box sx={{ mt: '1rem' }}>
+												<CustomAudioPlayer audioUrl={userResponseToFeedback?.audioRecordUrl} title='Student Recording' />
+											</Box>
+										)}
+										{userResponseToFeedback?.videoRecordUrl && (
+											<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+												<video
+													src={userResponseToFeedback?.videoRecordUrl}
+													controls
+													style={{
+														margin: '1rem auto 0 auto',
+														boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+														borderRadius: '0.35rem',
+														width: '60%',
+													}}
+												/>
+												<a
+													href={userResponseToFeedback?.videoRecordUrl}
+													download
+													style={{ display: 'block', marginTop: '0.5rem', textAlign: 'center' }}
+													target='_blank'>
+													<Typography variant='body2'>Download Video</Typography>
+												</a>
+											</Box>
+										)}
+
+										<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', mt: '5rem' }}>
+											<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+												Audio Feedback for Question
+											</Typography>
+											<Box sx={{ width: '100%', marginTop: '1rem' }}>
+												{!selectedQuestionFeedback?.teacherAudioFeedbackUrl ? (
+													<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} maxRecordTime={300000} />
+												) : (
+													<Box sx={{ display: 'flex', alignItems: 'center' }}>
+														<Box sx={{ flex: 9, mt: '0.5rem' }}>
+															<CustomAudioPlayer
+																audioUrl={selectedQuestionFeedback?.teacherAudioFeedbackUrl || ''}
+																title='Teacher Audio Feedback'
+															/>
+														</Box>
+														<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+															<CustomSubmitButton
+																sx={{ borderRadius: '0.35rem' }}
+																onClick={() => {
+																	setUserQuestionsFeedbacks(
+																		(prevFeedbacks) =>
+																			prevFeedbacks?.map((feedback) =>
+																				feedback.userQuestionId === userResponseToFeedback._id
+																					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '', isFeedbackGiven: !!feedback.feedback }
+																					: feedback
+																			) || []
+																	);
+																}}>
+																Remove
+															</CustomSubmitButton>
+														</Box>
+													</Box>
+												)}
+											</Box>
+										</Box>
+									</Box>
+								)}
+
+								{userResponseToFeedback?.pointsPossible !== undefined &&
+									userResponseToFeedback?.pointsPossible !== null &&
+									(() => {
+										const canUpdateScore =
+											selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
+										return canUpdateScore ? (
+											<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
+												<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+													Score
+												</Typography>
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', mb: '1rem' }}>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														Points Earned:
+													</Typography>
+													<CustomTextField
+														type='number'
+														value={manualScore !== undefined && manualScore !== null ? String(manualScore) : ''}
+														onChange={(e) => {
+															const value = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+															if (value === undefined || (value >= 0 && value <= (userResponseToFeedback?.pointsPossible || 0))) {
+																setManualScore(value);
+															}
+														}}
+														size='small'
+														sx={{
+															'width': '3.75rem',
+															'& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button': {
+																WebkitAppearance: 'none',
+																margin: 0,
+															},
+															'& input[type=number]': {
+																MozAppearance: 'textfield',
+															},
+														}}
+														InputProps={{
+															inputProps: {
+																min: 0,
+																max: userResponseToFeedback?.pointsPossible || 0,
+															},
+														}}
+													/>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														/ {userResponseToFeedback?.pointsPossible} pts
+													</Typography>
+													{(() => {
+														const isOpenEndedOrAudioVideo =
+															selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
+														// For open-ended and audio/video, always show "Manually Graded" since they cannot be auto-graded
+														if (isOpenEndedOrAudioVideo) {
+															return (
+																<Typography
+																	variant='body2'
+																	sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+																	(Manually Graded)
+																</Typography>
+															);
+														}
+														// For other question types, show based on isAutoGraded flag
+														return userResponseToFeedback?.isAutoGraded === false ? (
+															<Typography
+																variant='body2'
+																sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+																(Manually Graded)
+															</Typography>
+														) : (
+															<Typography
+																variant='body2'
+																sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+																(Auto Graded)
+															</Typography>
+														);
+													})()}
+												</Box>
+												<CustomSubmitButton
+													onClick={async () => {
+														if (manualScore !== undefined && manualScore !== null && manualScore !== userResponseToFeedback?.pointsEarned) {
+															try {
+																setIsScoreUpdating(true);
+																await axios.patch(`${base_url}/userQuestions/${userResponseToFeedback._id}/grade`, {
+																	pointsEarned: manualScore,
+																});
+																// Update local state
+																setUserResponseData(
+																	(prevResponses: any) =>
+																		prevResponses?.map((response: any) =>
+																			response._id === userResponseToFeedback._id ? { ...response, pointsEarned: manualScore, isAutoGraded: false } : response
+																		) || []
+																);
+																setUserResponseToFeedback((prev: any) => ({ ...prev, pointsEarned: manualScore, isAutoGraded: false }));
+															} catch (error) {
+																console.error('Error updating score:', error);
+															} finally {
+																setIsScoreUpdating(false);
+															}
+														}
+													}}
+													disabled={isScoreUpdating || manualScore === userResponseToFeedback?.pointsEarned}
+													sx={{ mt: '1rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+													{isScoreUpdating ? 'Updating...' : 'Update Score'}
+												</CustomSubmitButton>
+											</Box>
+										) : null;
+									})()}
+
+								<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
+									<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+										Feedback for Question
 									</Typography>
 									<CustomTextField
-										type='number'
-										value={manualScore !== undefined && manualScore !== null ? String(manualScore) : ''}
-										onChange={(e) => {
-											const value = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
-											if (value === undefined || (value >= 0 && value <= (userResponseToFeedback?.pointsPossible || 0))) {
-												setManualScore(value);
-											}
-										}}
-										size='small'
-										sx={{
-											'width': '3.75rem',
-											'& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button': {
-												WebkitAppearance: 'none',
-												margin: 0,
-											},
-											'& input[type=number]': {
-												MozAppearance: 'textfield',
-											},
-										}}
+										multiline
+										resizable
+										value={selectedQuestionFeedback?.feedback || ''}
+										onChange={handleFeedbackChange}
+										placeholder='Enter feedback for the question (max 1000 characters)'
 										InputProps={{
 											inputProps: {
-												min: 0,
-												max: userResponseToFeedback?.pointsPossible || 0,
+												maxLength: 1000,
 											},
 										}}
 									/>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										/ {userResponseToFeedback?.pointsPossible} pts
+									<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+										{selectedQuestionFeedback?.feedback.length || 0}/1000 Characters
 									</Typography>
-									{(() => {
-										const isOpenEndedOrAudioVideo =
-											selectedQuestionType === QuestionType.OPEN_ENDED || selectedQuestionType === QuestionType.AUDIO_VIDEO;
-										// For open-ended and audio/video, always show "Manually Graded" since they cannot be auto-graded
-										if (isOpenEndedOrAudioVideo) {
-											return (
-												<Typography
-													variant='body2'
-													sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
-													(Manually Graded)
-												</Typography>
-											);
-										}
-										// For other question types, show based on isAutoGraded flag
-										return userResponseToFeedback?.isAutoGraded === false ? (
-											<Typography
-												variant='body2'
-												sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
-												(Manually Graded)
-											</Typography>
-										) : (
-											<Typography
-												variant='body2'
-												sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
-												(Auto Graded)
-											</Typography>
-										);
-									})()}
 								</Box>
-								<CustomSubmitButton
-									onClick={async () => {
-										if (manualScore !== undefined && manualScore !== null && manualScore !== userResponseToFeedback?.pointsEarned) {
-											try {
-												setIsScoreUpdating(true);
-												await axios.patch(`${base_url}/userQuestions/${userResponseToFeedback._id}/grade`, {
-													pointsEarned: manualScore,
-												});
-												// Update local state
-												setUserResponseData(
-													(prevResponses: any) =>
-														prevResponses?.map((response: any) =>
-															response._id === userResponseToFeedback._id ? { ...response, pointsEarned: manualScore, isAutoGraded: false } : response
-														) || []
-												);
-												setUserResponseToFeedback((prev: any) => ({ ...prev, pointsEarned: manualScore, isAutoGraded: false }));
-											} catch (error) {
-												console.error('Error updating score:', error);
-											} finally {
-												setIsScoreUpdating(false);
-											}
-										}
-									}}
-									disabled={isScoreUpdating || manualScore === userResponseToFeedback?.pointsEarned}
-									sx={{ mt: '1rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-									{isScoreUpdating ? 'Updating...' : 'Update Score'}
-								</CustomSubmitButton>
-							</Box>
-						) : null;
-					})()}
 
-				<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
-					<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-						Feedback for Question
-					</Typography>
-					<CustomTextField
-						multiline
-						resizable
-						value={selectedQuestionFeedback?.feedback || ''}
-						onChange={handleFeedbackChange}
-						placeholder='Enter feedback for the question (max 1000 characters)'
-						InputProps={{
-							inputProps: {
-								maxLength: 1000,
-							},
-						}}
-					/>
-					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-						{selectedQuestionFeedback?.feedback.length || 0}/1000 Characters
-					</Typography>
-				</Box>
+								<CustomDialogActions
+									onCancel={() => setOpenQuestionFeedbackModal(false)}
+									deleteBtn={true}
+									cancelBtnText='Close'
+									deleteBtnText='Reset'
+									submitBtnType='button'
+									actionSx={{ width: '94%', margin: '0 auto 1rem auto' }}
+									onDelete={resetFeedback}
+								/>
+							</CustomDialog>
+						</>
+					)}
 
-				<CustomDialogActions
-					onCancel={() => setOpenQuestionFeedbackModal(false)}
-					deleteBtn={true}
-					cancelBtnText='Close'
-					deleteBtnText='Reset'
-					submitBtnType='button'
-					actionSx={{ width: '94%', margin: '0 auto 1rem auto' }}
-					onDelete={resetFeedback}
-				/>
-			</CustomDialog>
-				</>
-			)}
+					<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
+						<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							Feedback for Quiz
+						</Typography>
+						<CustomTextField
+							multiline
+							resizable
+							value={quizFeedback}
+							onChange={(e) => {
+								setQuizFeedback(e.target.value);
+								setIsQuizFeedbackUpdated(true);
+							}}
+							placeholder='Enter feedback for the quiz (max 1000 characters)'
+							InputProps={{
+								inputProps: {
+									maxLength: 1000,
+								},
+							}}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+							{quizFeedback.length}/1000 Characters
+						</Typography>
+					</Box>
 
-			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
-				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-					Feedback for Quiz
-				</Typography>
-				<CustomTextField
-					multiline
-					resizable
-					value={quizFeedback}
-					onChange={(e) => {
-						setQuizFeedback(e.target.value);
-						setIsQuizFeedbackUpdated(true);
-					}}
-					placeholder='Enter feedback for the quiz (max 1000 characters)'
-					InputProps={{
-						inputProps: {
-							maxLength: 1000,
-						},
-					}}
-				/>
-				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
-					{quizFeedback.length}/1000 Characters
-				</Typography>
-			</Box>
-
-			<Box sx={{ width: '85%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
-				{feedbackSubmitting ? (
-					<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: isMobileSizeSmall ? '1.5rem' : '2rem' }}>
-						Submitting
-					</LoadingButton>
-				) : (
-					<CustomSubmitButton
-						onClick={handleSubmit}
-						sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : undefined, height: isMobileSizeSmall ? '1.5rem' : undefined }}>
-						Submit
-					</CustomSubmitButton>
-				)}
-			</Box>
+					<Box sx={{ width: '85%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
+						{feedbackSubmitting ? (
+							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: isMobileSizeSmall ? '1.5rem' : '2rem' }}>
+								Submitting
+							</LoadingButton>
+						) : (
+							<CustomSubmitButton
+								onClick={handleSubmit}
+								sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : undefined, height: isMobileSizeSmall ? '1.5rem' : undefined }}>
+								Submit
+							</CustomSubmitButton>
+						)}
+					</Box>
 
 				</>
 			)}
