@@ -7,7 +7,7 @@ import type {
   ReadingQuestionType,
 } from "./types";
 
-export const READING_TEST_CONTENT_VERSION = "2026-10-reading-texts";
+export const READING_TEST_CONTENT_VERSION = "2026-10-reading-band";
 export const QUESTIONS_PER_PASSAGE = 4;
 export const QUESTIONS_PER_VERIFICATION_PASSAGE = 2;
 export const QUESTIONS_PER_UPPER_PASSAGE = 6;
@@ -204,7 +204,7 @@ const a1Verification = reading(
         "To ride Tom's bicycle to work.",
         "To look at a bicycle for Ben.",
         "To work at the office.",
-        "To buy bread.",
+        "To give Tom's bicycle to Ben.",
       ],
       "B",
     ),
@@ -333,7 +333,7 @@ const a2Verification = reading(
   "A2",
   "verification",
   [
-    "Sara's neighbour Maria sometimes comes to the market with her. After shopping, they usually drink tea at a small café and talk. For Sara, Saturday is now the best part of the week.",
+    "Sara's neighbour Maria sometimes comes to the market with her. Maria works in a shop on weekdays, so she does not work on Saturday. After shopping, they usually drink tea at a small café and talk. The café is often busy, but they stay and talk. For Sara, that talk is now the best part of the week.",
   ],
   [
     choice(
@@ -341,34 +341,34 @@ const a2Verification = reading(
       "explicit_detail",
       "What do Sara and Maria usually do after shopping?",
       [
-        "They go back to the supermarket.",
+        "They work together in Maria's shop.",
         "They sit in a café and talk.",
-        "They join a walking group.",
-        "They clean the market.",
+        "They leave the café because it is busy.",
+        "They go shopping again.",
       ],
       "B",
     ),
     choice(
       "a2-v2",
       "attitude",
-      "What does Saturday mean to Sara now?",
+      "What does Sara enjoy most about Saturday now?",
       [
-        "It is the best part of her week.",
-        "She wants to stop going to the market.",
-        "She would rather stay at home.",
-        "The market has become boring.",
+        "Maria's shop.",
+        "How busy the café is.",
+        "The long talk after shopping.",
+        "The market itself.",
       ],
-      "A",
+      "C",
     ),
     choice(
       "a2-v3",
       "inference",
       "How does Maria know Sara?",
       [
-        "Maria is Sara's sister.",
+        "They work in the same shop.",
         "Maria owns the café.",
         "Maria lives near Sara.",
-        "Maria sells food at the market.",
+        "They met because the café was busy.",
       ],
       "C",
     ),
@@ -397,25 +397,25 @@ const b1Reading = reading(
     ),
     choice(
       "b1-r2",
-      "purpose",
-      "What problem was the seven o'clock rule meant to solve?",
+      "explicit_detail",
+      "What did Lena's company ask the staff to do?",
       [
-        "The company had ordered everyone to stop at seven.",
-        "Work was taking over her evenings.",
-        "She wanted more emails at night.",
-        "The office building closes at seven.",
+        "To close the office.",
+        "To work at home for part of the week.",
+        "To answer emails only at night.",
+        "To finish at seven o'clock.",
       ],
       "B",
     ),
     choice(
       "b1-r3",
       "inference",
-      "What changed after Lena made her rule?",
+      "What was still true the morning after Lena's rule?",
       [
-        "She stopped getting emails.",
-        "Her evenings felt like her own time again.",
-        "She went back to the office every evening.",
-        "She started working later than before.",
+        "The emails had stopped.",
+        "The work was still waiting.",
+        "She was back in the office.",
+        "She had worked later than seven.",
       ],
       "B",
     ),
@@ -621,13 +621,13 @@ const b2Verification = reading(
   [
     choice(
       "b2-v1",
-      "purpose",
-      "A talk that is not worth a train journey becomes a note. What is that rule for?",
+      "explicit_detail",
+      "What happens to a conversation that is not worth the train journey?",
       [
-        "To turn every note back into a journey.",
-        "To meet only when the conversation deserves it.",
-        "To make staff travel more often.",
-        "To make the remaining meetings longer.",
+        "It is never mentioned again.",
+        "It is written down instead of becoming a meeting.",
+        "It turns into a longer meeting.",
+        "The team travels to it anyway.",
       ],
       "B",
     ),
