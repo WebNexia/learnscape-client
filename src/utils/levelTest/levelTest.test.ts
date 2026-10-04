@@ -30,7 +30,7 @@ describe("level-test content and scoring", () => {
     expect(readingLevelContent.map((entry) => entry.level)).toEqual([
       ...CEFR_LEVELS,
     ]);
-    expect(READING_TEST_CONTENT_VERSION).toBe("2026-10-reading-texts");
+    expect(READING_TEST_CONTENT_VERSION).toBe("2026-10-reading-band");
   });
 
   it("keeps canonical form sizes and listening steps", () => {
