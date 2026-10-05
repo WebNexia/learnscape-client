@@ -162,7 +162,7 @@ const LandingPageClubTicket = () => {
 				qaPreview: isQaPreview,
 			});
 			setJoinUrl(data.zoomJoinUrl || null);
-				setSuccess(data.alreadyRegistered ? 'Bu oturum için zaten kayıtlısınız.' : 'Kayıt tamam.');
+			setSuccess(data.alreadyRegistered ? 'Bu oturum için zaten kayıtlısınız.' : 'Kayıt tamam.');
 			const refreshed = await clubsService.lookupTicket(code.trim(), {
 				qaPreview: isQaPreview,
 			});
@@ -414,7 +414,7 @@ const LandingPageClubTicket = () => {
 										}}>
 										Bilet bilgilerini kopyala
 									</Button>
-									{result.ticket.expiresAt && (
+									{/* {result.ticket.expiresAt && (
 										<Typography
 											sx={{
 												mt: 1,
@@ -432,7 +432,7 @@ const LandingPageClubTicket = () => {
 												minute: '2-digit',
 											})}
 										</Typography>
-									)}
+									)} */}
 								</Box>
 
 								{result.sessions.length === 0 ? (
