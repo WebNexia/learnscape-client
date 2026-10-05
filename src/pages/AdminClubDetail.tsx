@@ -379,10 +379,10 @@ const AdminClubDetail = () => {
 		}
 	};
 
-	const cancelReg = async (registrationId: string) => {
+	const cancelReg = async (registrationId: string, status?: string) => {
 		try {
 			await clubsService.cancelRegistration(registrationId);
-			showSnack('Registration cancelled; credit restored');
+			showSnack(status === 'held' ? 'Pending hold released' : 'Registration cancelled; credit restored');
 			if (selectedSessionId) await openRegs(selectedSessionId);
 			await load();
 		} catch {
@@ -1037,8 +1037,8 @@ const AdminClubDetail = () => {
 				)}
 
 				{regsOpen && (
-					<CustomDialog openModal={regsOpen} closeModal={() => setRegsOpen(false)} title='Session Registrations' maxWidth='sm'>
-						<Box sx={{ px: 2, pb: 1 }}>
+					<CustomDialog openModal={regsOpen} closeModal={() => setRegsOpen(false)} title='Session Registrations' maxWidth='xs'>
+						<Box sx={{ px: 3, pb: 1 }}>
 							{regs.length === 0 ? (
 								<Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>No registrations</Typography>
 							) : (
@@ -1054,17 +1054,22 @@ const AdminClubDetail = () => {
 										}}>
 										<Typography sx={{ fontSize: '0.85rem' }}>
 											{r.guestName} — {r.guestEmail}
+											{r.status === 'held' ? ' — pending payment' : ''}
 										</Typography>
 										<Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-											<CustomSubmitButton
-												type='button'
-												onClick={() => {
-													setMoveReg(r);
-													setMoveSessionId('');
-												}}>
-												Move
-											</CustomSubmitButton>
-											<CustomCancelButton onClick={() => cancelReg(r._id)}>Cancel</CustomCancelButton>
+											{r.status !== 'held' && (
+												<CustomSubmitButton
+													type='button'
+													onClick={() => {
+														setMoveReg(r);
+														setMoveSessionId('');
+													}}>
+													Move
+												</CustomSubmitButton>
+											)}
+											<CustomCancelButton onClick={() => cancelReg(r._id, r.status)}>
+												{r.status === 'held' ? 'Release' : 'Cancel'}
+											</CustomCancelButton>
 										</Box>
 									</Box>
 								))
@@ -1074,7 +1079,7 @@ const AdminClubDetail = () => {
 							onCancel={() => setRegsOpen(false)}
 							cancelBtnText='Close'
 							hideSubmit
-							actionSx={{ marginBottom: '0.5rem' }}
+							actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 						/>
 					</CustomDialog>
 				)}
