@@ -116,6 +116,7 @@ export default function CoursePaymentForm({
 	const enrollWithoutPayment = isCourseFree || isPromoFullyCovered;
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [selectedGroupId, setSelectedGroupId] = useState('');
 	const [selectedGroupName, setSelectedGroupName] = useState('');
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState(true);
 	const [isResendingVerification, setIsResendingVerification] = useState(false);
@@ -183,6 +184,7 @@ export default function CoursePaymentForm({
 	const resetForm = (preserveError = false) => {
 		setEmail(user?.email || '');
 		setPromoCode('');
+		setSelectedGroupId('');
 		setSelectedGroupName('');
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 		setDiscountedAmount(isNaN(amount) ? 0 : amount);
@@ -230,9 +232,10 @@ export default function CoursePaymentForm({
 			return;
 		}
 		const selectedGroup = selectedGroupName.trim()
-			? course?.groups?.find((g) => g.name === selectedGroupName)
+			? course?.groups?.find((g) => (selectedGroupId ? g._id === selectedGroupId : g.name === selectedGroupName))
 			: null;
 		if (selectedGroup?.isFull) {
+			setSelectedGroupId('');
 			setSelectedGroupName('');
 			showCheckoutError('Seçilen grup dolu. Lütfen başka bir grup seçin.');
 			return;
@@ -290,6 +293,7 @@ export default function CoursePaymentForm({
 
 			if (enrollWithoutPayment) {
 				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
+					...(selectedGroupId ? { groupId: selectedGroupId } : {}),
 					email,
 					...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
 					...(registeringWithoutAccount
@@ -338,6 +342,7 @@ export default function CoursePaymentForm({
 				recaptchaToken,
 				hostedCheckout: true,
 				cancelUrl: window.location.href,
+				...(selectedGroupId ? { groupId: selectedGroupId } : {}),
 				...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 				...(registeringWithoutAccount
@@ -559,7 +564,7 @@ export default function CoursePaymentForm({
 														opacity: group.isFull ? 0.7 : 1,
 													}}>
 													<CardActionArea
-														onClick={() => { if (!group.isFull) { setSelectedGroupName(group.name); clearCheckoutError(); setIsGroupSelectionExpanded(false); } }}
+														onClick={() => { if (!group.isFull) { setSelectedGroupId(group._id || ''); setSelectedGroupName(group.name); clearCheckoutError(); setIsGroupSelectionExpanded(false); } }}
 														disabled={group.isFull}>
 														<CardContent sx={{ p: '1rem !important', '&:last-child': { pb: '1rem' } }}>
 															<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
@@ -679,7 +684,7 @@ export default function CoursePaymentForm({
 									{!user?._id && hasAccount
 										? 'Kayıtlı e-posta adresinizle devam edin. Hesabınız yoksa Hesabım var kutusunu boş bırakın.'
 										: !user?._id
-											? 'Hesabınız yoksa bu bilgilerle hesabinizi olusturulur. Ödeme tamamlanınca kullanıcı adı ve şifreniz e-postanıza gelir.'
+											? 'Hesabınız yoksa bu bilgilerle hesabınız oluşturulur. Ödeme tamamlanınca kullanıcı adı ve şifreniz e-postanıza gelir.'
 											: 'Platformumuzda kayıtlı e-posta adresinizle kursu satın alabilirsiniz.'}
 								</Typography>
 							</Box>

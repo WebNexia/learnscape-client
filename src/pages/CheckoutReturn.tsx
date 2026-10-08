@@ -159,7 +159,7 @@ export default function CheckoutReturn() {
 					return;
 				}
 				const courseDoneMessage = res.data.accountCreated
-					? 'Ödemeniz alındı. Kullanıcı adı ve şifreniz e-postanıza gönderildi. E-postanızı ve spam klasörünü kontrol edin. Giriş yaparak kursunuza ulaşabilirsiniz.'
+					? 'Ödemeniz alındı. Kullanıcı adı ve şifreniz e-postanıza gönderildi. E-postanızı ve spam klasörünü kontrol edin.\n\nGiriş yaparak kursunuza ulaşabilirsiniz.\n\nSettings sayfasından profil bilgilerinizi ve şifrenizi değiştirebilirsiniz.'
 					: 'Ödemeniz alındı ve kaydınız tamamlandı. E-postanızı ve spam klasörünü kontrol edin.';
 				if (context?.kind === 'course' && context.source === 'landing') {
 					setBackPath('/auth');
@@ -204,7 +204,7 @@ export default function CheckoutReturn() {
 				<Typography sx={{ fontFamily: FONT, fontWeight: 700, fontSize: '1.35rem', color: '#0A1A2F', mb: 1 }}>
 					{status === 'loading' ? 'Ödeme işleniyor' : status === 'success' ? 'İşlem tamamlandı' : 'Ödeme tamamlanamadı'}
 				</Typography>
-				<Typography sx={{ fontFamily: FONT, color: 'text.secondary', maxWidth: 520, mb: 3, lineHeight: 1.6 }}>
+				<Typography sx={{ fontFamily: FONT, color: 'text.secondary', maxWidth: 520, mb: 3, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
 					{status === 'loading' && showSlowNetworkHint
 						? 'Bağlantı yavaş olabilir, lütfen bekleyin. Sayfayı kapatmayın veya yenilemeyin.'
 						: message}

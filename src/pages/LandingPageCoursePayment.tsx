@@ -57,6 +57,7 @@ export default function LandingPageCoursePayment() {
 			isInProgress: true,
 			orgId: resolvedOrgId,
 			...(groupName && { groupName }),
+			...(proof?.groupId && { groupId: proof.groupId }),
 			...(proof?.email && { email: proof.email }),
 			...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
 			...(proof?.promoCodeId && { promoCodeId: proof.promoCodeId }),

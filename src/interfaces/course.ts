@@ -18,6 +18,8 @@ export interface CourseEnrollmentProof {
 	lastName?: string;
 	phone?: string;
 	countryCode?: string;
+	/** Course group subdocument id. The server writes the current group name from this. */
+	groupId?: string;
 }
 
 /** Public LP course-detail welcome modal. Missing flags fall back to video-only when a URL exists. */

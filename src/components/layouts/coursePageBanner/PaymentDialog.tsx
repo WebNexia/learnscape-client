@@ -127,6 +127,7 @@ const PaymentDialog = ({
 	const [verificationSent, setVerificationSent] = useState<boolean>(false);
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [selectedGroupId, setSelectedGroupId] = useState<string>('');
 	const [selectedGroupName, setSelectedGroupName] = useState<string>('');
 	const [isGroupSelectionExpanded, setIsGroupSelectionExpanded] = useState<boolean>(true);
 	const showSlowNetworkHint = useSlowNetworkHint(isProcessing);
@@ -173,6 +174,7 @@ const PaymentDialog = ({
 	// Reset selected group when dialog closes
 	useEffect(() => {
 		if (!isPaymentDialogOpen) {
+			setSelectedGroupId('');
 			setSelectedGroupName('');
 		}
 	}, [isPaymentDialogOpen]);
@@ -228,10 +230,11 @@ const PaymentDialog = ({
 
 		// Validate selected group is not full
 		if (selectedGroupName.trim()) {
-			const selectedGroup = course?.groups?.find((g) => g.name === selectedGroupName);
+			const selectedGroup = course?.groups?.find((g) => (selectedGroupId ? g._id === selectedGroupId : g.name === selectedGroupName));
 			if (selectedGroup?.isFull) {
 				setErrorMessage(isTrUi ? 'Seçilen grup dolu. Lütfen başka bir grup seçin.' : 'Selected group is full. Please select another group.');
-				setSelectedGroupName(''); // Clear selection if group is full
+				setSelectedGroupId('');
+				setSelectedGroupName('');
 				setIsProcessing(false);
 				setIsSubmitted(false);
 				return;
@@ -311,6 +314,7 @@ const PaymentDialog = ({
 						try {
 							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 								email: email || user?.email,
+								...(selectedGroupId ? { groupId: selectedGroupId } : {}),
 								...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
 								...(registeringWithoutAccount
 									? {
@@ -379,6 +383,7 @@ const PaymentDialog = ({
 				try {
 					await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 						email: email || user?.email,
+						...(selectedGroupId ? { groupId: selectedGroupId } : {}),
 						...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
 					});
 					syncEnrollmentAccessOnClient();
@@ -413,6 +418,7 @@ const PaymentDialog = ({
 					recaptchaToken,
 					hostedCheckout: true,
 					cancelUrl: window.location.href,
+					...(selectedGroupId ? { groupId: selectedGroupId } : {}),
 					...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
 					...(registeringWithoutAccount
@@ -567,6 +573,7 @@ const PaymentDialog = ({
 	const resetForm = (preserveError = false) => {
 		setEmail(user?.email || '');
 		setPromoCode('');
+		setSelectedGroupId('');
 		setSelectedGroupName('');
 		if (!course) return;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
@@ -737,6 +744,7 @@ const PaymentDialog = ({
 											<CardActionArea
 												onClick={() => {
 													if (!group.isFull) {
+														setSelectedGroupId(group._id || '');
 														setSelectedGroupName(group.name);
 														setErrorMessage('');
 														setIsGroupSelectionExpanded(false); // Collapse after selection
