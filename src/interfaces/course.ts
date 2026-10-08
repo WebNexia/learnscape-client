@@ -14,6 +14,12 @@ export interface CourseEnrollmentProof {
 	paymentIntentId?: string;
 	/** 100% promo — enrolls without Stripe like a free course */
 	promoCodeId?: string;
+	firstName?: string;
+	lastName?: string;
+	phone?: string;
+	countryCode?: string;
+	/** Course group subdocument id. The server writes the current group name from this. */
+	groupId?: string;
 }
 
 /** Public LP course-detail welcome modal. Missing flags fall back to video-only when a URL exists. */

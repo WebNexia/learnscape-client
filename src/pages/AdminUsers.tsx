@@ -1,10 +1,10 @@
-import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions } from '@mui/material';
+import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
@@ -148,6 +148,11 @@ const AdminUsers = () => {
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [isDownloadingUsers, setIsDownloadingUsers] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
+	const [emailCorrectionOpen, setEmailCorrectionOpen] = useState(false);
+	const [emailCorrectionValue, setEmailCorrectionValue] = useState('');
+	const [emailCorrectionMessage, setEmailCorrectionMessage] = useState('');
+	const [emailCorrectionCanMove, setEmailCorrectionCanMove] = useState(false);
+	const [emailCorrectionSubmitting, setEmailCorrectionSubmitting] = useState(false);
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
@@ -157,6 +162,36 @@ const AdminUsers = () => {
 		setIsDeleteUserModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserCoursesModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
+
+	const openEmailCorrection = (userToEdit: User) => {
+		setSingleUser(userToEdit);
+		setEmailCorrectionValue(userToEdit.email || '');
+		setEmailCorrectionMessage('');
+		setEmailCorrectionCanMove(false);
+		setEmailCorrectionOpen(true);
+	};
+
+	const submitEmailCorrection = async (moveEnrollment = false) => {
+		if (!singleUser) return;
+		setEmailCorrectionSubmitting(true);
+		setEmailCorrectionMessage('');
+		try {
+			const response = await axios.post(`${base_url}/users/${singleUser._id}/correct-login-email`, {
+				email: emailCorrectionValue.trim(),
+				moveEnrollment,
+			});
+			if (!response.data?.moved) {
+				updateUser({ ...singleUser, email: response.data.email, isEmailVerified: true });
+			}
+			setEmailCorrectionOpen(false);
+		} catch (error: any) {
+			const data = error?.response?.data;
+			setEmailCorrectionMessage(data?.message || 'E-posta güncellenemedi.');
+			setEmailCorrectionCanMove(error?.response?.status === 409 || data?.code === 'EMAIL_IN_USE');
+		} finally {
+			setEmailCorrectionSubmitting(false);
+		}
+	};
 
 	const toggleStatusUpdateEditModal = (index: number) => {
 		const newEditModalOpen = [...isUserStatusUpdateModalOpen];
@@ -637,6 +672,13 @@ const AdminUsers = () => {
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														disabled={user._id === userId}
 													/>
+													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
+														<CustomActionBtn
+															title='Correct login email'
+															onClick={() => openEmailCorrection(user)}
+															icon={<AlternateEmail fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													)}
 
 													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
 														<CustomActionBtn
@@ -1124,6 +1166,47 @@ const AdminUsers = () => {
 							</CustomDialog>
 						) : null;
 					})}
+				<CustomDialog
+					openModal={emailCorrectionOpen}
+					closeModal={() => setEmailCorrectionOpen(false)}
+					maxWidth='xs'
+					title='Correct login email'>
+					<DialogContent>
+						<TextField
+							fullWidth
+							size='small'
+							label='New email'
+							value={emailCorrectionValue}
+							onChange={(e) => {
+								setEmailCorrectionValue(e.target.value);
+								setEmailCorrectionCanMove(false);
+								setEmailCorrectionMessage('');
+							}}
+							sx={{ mt: 1 }}
+						/>
+						{emailCorrectionMessage && (
+							<Typography variant='body2' sx={{ mt: 1.5, color: 'error.main' }}>
+								{emailCorrectionMessage}
+							</Typography>
+						)}
+					</DialogContent>
+					<DialogActions>
+						{emailCorrectionCanMove && (
+							<CustomCancelButton
+								disabled={emailCorrectionSubmitting}
+								onClick={() => submitEmailCorrection(true)}
+								sx={{ margin: '0 0.5rem 0.5rem 0' }}>
+								Move courses
+							</CustomCancelButton>
+						)}
+						<CustomCancelButton
+							disabled={emailCorrectionSubmitting}
+							onClick={() => submitEmailCorrection(false)}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{emailCorrectionSubmitting ? 'Saving...' : 'Save'}
+						</CustomCancelButton>
+					</DialogActions>
+				</CustomDialog>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

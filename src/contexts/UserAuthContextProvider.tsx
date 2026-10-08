@@ -83,7 +83,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		if (hasAdminAccess) {
 			navigate('/admin/dashboard', { replace: true });
 		} else if (isLearnerRole(user.role)) {
-			navigate('/dashboard', { replace: true });
+			navigate('/courses', { replace: true });
 		} else if (user.role === Roles.INSTRUCTOR) {
 			navigate('/instructor/dashboard', { replace: true });
 		}

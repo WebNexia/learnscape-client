@@ -18,6 +18,7 @@ export default function LandingPageCoursePayment() {
 	const { orgId } = useContext(OrganisationContext);
 	const queryClient = useQueryClient();
 	const [success, setSuccess] = useState(false);
+	const [accountCreated, setAccountCreated] = useState(false);
 
 	const detailQueryKey = ['lpPublicCourseDetail', orgId, courseId];
 
@@ -48,19 +49,25 @@ export default function LandingPageCoursePayment() {
 		groupName?: string,
 		proof?: CourseEnrollmentProof
 	): Promise<string> => {
-		if (!courseId || !resolvedUserId || !resolvedOrgId) throw new Error('Missing required data for course registration');
+		if (!courseId || !resolvedOrgId || (!resolvedUserId && !proof?.phone)) throw new Error('Missing required data for course registration');
 		const response = await axios.post(`${base_url}/userCourses/`, {
-			userId: resolvedUserId,
+			...(resolvedUserId ? { userId: resolvedUserId } : {}),
 			courseId,
 			isCompleted: false,
 			isInProgress: true,
 			orgId: resolvedOrgId,
 			...(groupName && { groupName }),
+			...(proof?.groupId && { groupId: proof.groupId }),
 			...(proof?.email && { email: proof.email }),
 			...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
 			...(proof?.promoCodeId && { promoCodeId: proof.promoCodeId }),
+			...(proof?.firstName && { firstName: proof.firstName }),
+			...(proof?.lastName && { lastName: proof.lastName }),
+			...(proof?.phone && { phone: proof.phone }),
+			...(proof?.countryCode && { countryCode: proof.countryCode }),
 		});
 		if (!response.data?._id) throw new Error('User course creation failed: Missing ID');
+		if (response.data.accountCreated) setAccountCreated(true);
 		const userCourseId = response.data._id;
 		// The server creates the initial userLesson during enrollment.
 		if (courseId) queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
@@ -73,7 +80,7 @@ export default function LandingPageCoursePayment() {
 		if (success) {
 			const t = setTimeout(() => {
 				navigate('/auth', { replace: true });
-			}, 2500);
+			}, 12000);
 			return () => clearTimeout(t);
 		}
 	}, [success, navigate]);
@@ -126,7 +133,7 @@ export default function LandingPageCoursePayment() {
 
 			<Snackbar
 				open={success}
-				autoHideDuration={6000}
+				autoHideDuration={12000}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				sx={{ mt: '4rem' }}
 				onClose={() => setSuccess(false)}>
@@ -140,7 +147,9 @@ export default function LandingPageCoursePayment() {
 						color: theme.textColor?.common?.main ?? 'inherit',
 						'& .MuiAlert-icon': { color: 'white' },
 					}}>
-					Kursa başarıyla kayıt oldunuz! Giriş sayfasına yönlendiriliyorsunuz.
+					{accountCreated
+						? 'Kursa kayıt oldunuz. Kullanıcı adı ve şifreniz e-postanıza gönderildi. E-postanızı kontrol edin, spam klasörüne de bakın.'
+						: 'Kursa başarıyla kayıt oldunuz. E-postanızı kontrol edin, spam klasörüne de bakın.'}
 				</Alert>
 			</Snackbar>
 		</LandingPageLayout>
