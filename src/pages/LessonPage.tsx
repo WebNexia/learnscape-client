@@ -24,7 +24,7 @@ import {
 	VolumeOff,
 	VolumeUp,
 } from '@mui/icons-material';
-import theme from '../themes';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import {
@@ -39,7 +39,8 @@ import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 import { UserQuestionData } from '../hooks/useFetchUserQuestion';
 import { useLearnerLesson } from '../hooks/useLearnerLesson';
 import { useLearnerUserAnswersByLesson } from '../hooks/useLearnerUserAnswersByLesson';
-import { LessonType } from '../interfaces/enums';
+import { LessonType, Roles } from '../interfaces/enums';
+import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { Lesson } from '../interfaces/lessons';
@@ -153,6 +154,10 @@ const LessonPage = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const navigate = useNavigate();
+	const { user } = useContext(UserAuthContext);
+	const presentationMode = user?.role === Roles.PRESENTATION;
+	const presentationCoursePath =
+		presentationMode && courseId && userCourseId ? `/course/${courseId}/userCourseId/${userCourseId}` : undefined;
 	const { handleNextLesson, nextLessonId, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
 	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
 
@@ -467,6 +472,7 @@ const LessonPage = () => {
 	}, [isLessonCompleted, wasLessonCompletedOnMount, lessonType]);
 
 	const updateUserLessonNotes = async () => {
+		if (presentationMode) return;
 		if (!userLessonId) {
 			console.error('Cannot update notes: userLessonId is undefined');
 			return;
@@ -940,9 +946,9 @@ const LessonPage = () => {
 													const isCurrent = lesson._id === lessonId;
 													const isCompleted = parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.isCompleted);
 													// Same as CoursePage Lesson: accessible only if user has a userLesson record (unlocked)
-													const isAccessible = parsedUserLessonData.some(
-														(d) => d.lessonId === lesson._id && d.courseId === courseId
-													);
+													const isAccessible =
+														presentationMode ||
+														parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.courseId === courseId);
 													return (
 														<Box
 															key={lesson._id}
@@ -1527,7 +1533,9 @@ const LessonPage = () => {
 									startIcon={<DoneAll />}
 									onClick={async () => {
 										try {
-											await handleNextLesson();
+											if (!presentationMode) {
+												await handleNextLesson();
+											}
 											navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 											window.scrollTo({ top: 0, behavior: 'smooth' });
 										} catch (e) {
@@ -1578,11 +1586,26 @@ const LessonPage = () => {
 							lessonText={lesson?.text ? stripHtml(lesson.text) : undefined}
 							chapterName={currentChapter?.title}
 							chapterId={activeChapterId || undefined}
+							staffPreviewMode={presentationMode}
+							staffPreviewNextLessonId={presentationMode ? nextLessonId || undefined : undefined}
+							staffPreviewCoursePath={presentationCoursePath}
+							onStaffPreviewGoToNextLesson={
+								presentationMode
+									? () => {
+											if (presentationCoursePath && nextLessonId) {
+												navigate(`${presentationCoursePath}/lesson/${nextLessonId}`);
+											} else if (presentationCoursePath) {
+												navigate(`${presentationCoursePath}?isEnrolled=true`);
+											}
+											window.scrollTo({ top: 0, behavior: 'smooth' });
+										}
+									: undefined
+							}
 						/>
 					</Box>
 				);
 			})()}
-			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
+			{isQuiz && isQuestionsVisible && (!isLessonCompleted || presentationMode) && (
 				<>
 					<Box sx={{ position: 'fixed', top: '90vh', right: isMobileSize ? '0.5rem' : '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
 						<Tooltip title='Questions Map' placement='left' arrow>
@@ -1650,9 +1673,9 @@ const LessonPage = () => {
 							onSubmit={async () => {
 								setIsNavigatingToNextLesson(true);
 								try {
-									// Always call handleNextLesson so next-chapter expansion keys are set reliably.
-									await handleNextLesson();
-									// Navigate to course home page
+									if (!presentationMode) {
+										await handleNextLesson();
+									}
 									navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								} catch (error) {

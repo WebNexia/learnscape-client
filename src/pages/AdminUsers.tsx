@@ -617,7 +617,9 @@ const AdminUsers = () => {
 														value={
 															user.role === Roles.TEST_LEARNER
 																? 'Test Learner'
-																: user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)
+																: user.role === Roles.PRESENTATION
+																	? 'Presentation'
+																	: user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)
 														}
 													/>
 												)}
@@ -676,7 +678,7 @@ const AdminUsers = () => {
 																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 																		textTransform: 'capitalize',
 																	}}>
-																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER]
+																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER, Roles.PRESENTATION]
 																		.filter((type) => {
 																			// Only owner can see super-admin role
 																			if (type === Roles.SUPER_ADMIN) {
@@ -690,11 +692,11 @@ const AdminUsers = () => {
 																				key={type}
 																				sx={{
 																					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																					textTransform: type === Roles.TEST_LEARNER ? 'none' : 'capitalize',
+																					textTransform: type === Roles.TEST_LEARNER || type === Roles.PRESENTATION ? 'none' : 'capitalize',
 																					padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 																					minHeight: '2rem',
 																				}}>
-																				{type === Roles.TEST_LEARNER ? 'Test Learner' : type}
+																				{type === Roles.TEST_LEARNER ? 'Test Learner' : type === Roles.PRESENTATION ? 'Presentation' : type}
 																			</MenuItem>
 																		))}
 																</Select>

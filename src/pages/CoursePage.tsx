@@ -7,9 +7,11 @@ import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageB
 import Chapters from '../components/userCourses/Chapters';
 import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { getVideoThumbnailUrl } from '../utils/videoUrlUtils';
 import { useUserLessonsForCourse } from '../hooks/useUserLessonsForCourse';
+import { Roles } from '../interfaces/enums';
 
 const CoursePageLoadingState = ({ isMobileSize }: { isMobileSize: boolean }) => (
 	<Box sx={{ width: isMobileSize ? '90%' : '85%', mt: '1.75rem', mb: '2rem' }}>
@@ -61,7 +63,9 @@ const CoursePageLoadingState = ({ isMobileSize }: { isMobileSize: boolean }) => 
 
 const CoursePage = () => {
 	const { userCoursesData, singleCourseUser, isCourseShellLoading } = useContext(UserCourseLessonDataContext);
+	const { user } = useContext(UserAuthContext);
 	const { courseId } = useParams();
+	const presentationMode = user?.role === Roles.PRESENTATION;
 
 	// Parallel userLessons prefetch (course shell cached via useLearnerCourseShell in context).
 	useUserLessonsForCourse(courseId || '');
@@ -116,7 +120,16 @@ const CoursePage = () => {
 						userCourseId={currentUserCourseId}
 						isCourseCompleted={isCourseCompleted}
 					/>
-					<Chapters course={activeCourse} isEnrolledStatus={isEnrolledStatus} />
+					<Chapters
+						course={activeCourse}
+						isEnrolledStatus={isEnrolledStatus}
+						staffPreviewMode={presentationMode}
+						staffPreviewBasePath={
+							presentationMode && courseId && currentUserCourseId
+								? `/course/${courseId}/userCourseId/${currentUserCourseId}`
+								: undefined
+						}
+					/>
 				</>
 			)}
 			{isEnrolledStatus && hasCourseMaterials && (
