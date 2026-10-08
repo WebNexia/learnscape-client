@@ -167,12 +167,12 @@ const CoursePageBanner = ({
 		proof?: CourseEnrollmentProof
 	): Promise<string> => {
 		try {
-			if (!courseId || !resolvedUserId || !resolvedOrgId) {
+			if (!courseId || !resolvedOrgId || (!resolvedUserId && !proof?.phone)) {
 				throw new Error('Missing required data for course registration');
 			}
 
 			const response = await axios.post(`${base_url}/userCourses/`, {
-				userId: resolvedUserId,
+				...(resolvedUserId ? { userId: resolvedUserId } : {}),
 				courseId,
 				isCompleted: false,
 				isInProgress: true,
@@ -181,6 +181,10 @@ const CoursePageBanner = ({
 				...(proof?.email && { email: proof.email }),
 				...(proof?.paymentIntentId && { paymentIntentId: proof.paymentIntentId }),
 				...(proof?.promoCodeId && { promoCodeId: proof.promoCodeId }),
+				...(proof?.firstName && { firstName: proof.firstName }),
+				...(proof?.lastName && { lastName: proof.lastName }),
+				...(proof?.phone && { phone: proof.phone }),
+				...(proof?.countryCode && { countryCode: proof.countryCode }),
 			});
 
 			if (!response.data?._id) {

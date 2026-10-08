@@ -97,7 +97,10 @@ export default function CoursePaymentForm({
 	const [agreedWithdrawalWaiver, setAgreedWithdrawalWaiver] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [email, setEmail] = useState(() => user?.email || '');
-	const [isUserAccountExist, setIsUserAccountExist] = useState(true);
+	const [hasAccount, setHasAccount] = useState(() => Boolean(user?._id));
+	const [guestFirstName, setGuestFirstName] = useState('');
+	const [guestLastName, setGuestLastName] = useState('');
+	const [guestPhone, setGuestPhone] = useState('');
 	const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
 	const [isEmailVerified, setIsEmailVerified] = useState(true);
 	const [promoCode, setPromoCode] = useState('');
@@ -239,6 +242,19 @@ export default function CoursePaymentForm({
 		const usingSessionUser = Boolean(
 			user?._id && sessionEmail && email.trim().toLowerCase() === sessionEmail.toLowerCase()
 		);
+		const registeringWithoutAccount = !user?._id && !hasAccount;
+		if (registeringWithoutAccount) {
+			if (!guestFirstName.trim() || !guestLastName.trim()) {
+				showCheckoutError('Ad ve soyad gereklidir.');
+				return;
+			}
+			if ((guestPhone.match(/\d/g) || []).length < 7) {
+				showCheckoutError('Geçerli bir telefon numarası girin.');
+				return;
+			}
+			resolvedFirstName = guestFirstName.trim();
+			resolvedLastName = guestLastName.trim();
+		}
 
 		try {
 			const userExistsResponse = await axiosInstance.post(
@@ -247,13 +263,11 @@ export default function CoursePaymentForm({
 				{ timeout: CHECKOUT_LOOKUP_TIMEOUT_MS }
 			);
 			if (!stillCurrent()) return;
-			setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
-			if (!userExistsResponse.data.exists && !usingSessionUser) {
-				setIsUserAccountExist(false);
-				showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
+			if (!registeringWithoutAccount && !userExistsResponse.data.exists && !usingSessionUser) {
+				showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil. Hesabınız yoksa Hesabım var kutusunu boş bırakın.');
 				return;
 			}
-			if (!userExistsResponse.data.isEmailVerified && !usingSessionUser) {
+			if (!registeringWithoutAccount && !userExistsResponse.data.isEmailVerified && !usingSessionUser) {
 				setIsEmailVerified(false);
 				showCheckoutError('Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.');
 				return;
@@ -265,17 +279,27 @@ export default function CoursePaymentForm({
 			}
 			resolvedUserId = userExistsResponse.data.userId || user?._id || '';
 			resolvedOrgId = userExistsResponse.data.orgId || user?.orgId || orgId;
-			if (!resolvedFirstName) {
-				resolvedFirstName = (email || '').split('@')[0] || 'Guest';
-			}
-			if (!resolvedLastName) {
-				resolvedLastName = '-';
+			if (!registeringWithoutAccount) {
+				if (!resolvedFirstName) {
+					resolvedFirstName = (email || '').split('@')[0] || 'Guest';
+				}
+				if (!resolvedLastName) {
+					resolvedLastName = '-';
+				}
 			}
 
 			if (enrollWithoutPayment) {
 				await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 					email,
 					...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
+					...(registeringWithoutAccount
+						? {
+							firstName: guestFirstName.trim(),
+							lastName: guestLastName.trim(),
+							phone: guestPhone.trim(),
+							countryCode: resolvedCountryCode,
+						}
+						: {}),
 				});
 				if (!stillCurrent()) return;
 				resetForm();
@@ -305,7 +329,7 @@ export default function CoursePaymentForm({
 				amount: lockedAmount,
 				currency: getPriceForCountry(course, resolvedCountryCode).currency,
 				orgId: resolvedOrgId,
-				userId: resolvedUserId,
+				...(resolvedUserId ? { userId: resolvedUserId } : {}),
 				courseId: course._id,
 				email,
 				firstName: resolvedFirstName,
@@ -316,6 +340,9 @@ export default function CoursePaymentForm({
 				cancelUrl: window.location.href,
 				...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 				...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
+				...(registeringWithoutAccount
+					? { guestCheckout: true, phone: guestPhone.trim(), countryCode: resolvedCountryCode }
+					: {}),
 			}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
 			if (!stillCurrent()) return;
 			const checkoutUrl = response.data?.checkoutUrl;
@@ -360,13 +387,13 @@ export default function CoursePaymentForm({
 			return;
 		}
 		try {
-			const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
-			setIsUserAccountExist(userExistsResponse.data.exists);
-			resolvedUserId = userExistsResponse?.data?.userId;
-			if (!userExistsResponse.data.exists) {
-				setIsUserAccountExist(false);
-				showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - ');
-				return;
+			if (hasAccount || user?._id) {
+				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
+				resolvedUserId = userExistsResponse?.data?.userId;
+				if (!userExistsResponse.data.exists) {
+					showCheckoutError('Bu e-posta adresi herhangi bir hesaba bağlı değil. Hesabınız yoksa Hesabım var kutusunu boş bırakın.');
+					return;
+				}
 			}
 			const res = await axiosInstance.post(`${base_url}/promocodes/apply`, {
 				code: promoCode.trim(),
@@ -566,6 +593,59 @@ export default function CoursePaymentForm({
 							)}
 
 							<Box sx={{ mb: 2 }}>
+								{!user?._id && (
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={hasAccount}
+												onChange={(e) => {
+													setHasAccount(e.target.checked);
+													clearCheckoutError();
+												}}
+												sx={{ color: '#FF6F4E', '&.Mui-checked': { color: '#FF6F4E' } }}
+											/>
+										}
+										label="Hesabım var"
+										sx={{ mb: 1, '& .MuiFormControlLabel-label': { fontFamily: FONT, fontSize: '0.9rem' } }}
+									/>
+								)}
+								{!user?._id && !hasAccount && (
+									<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 1.5 }}>
+										<CustomTextField
+											label="İsim"
+											size="small"
+											value={guestFirstName}
+											onChange={(e) => {
+												setGuestFirstName(e.target.value);
+												clearCheckoutError();
+											}}
+											sx={{ '& .MuiOutlinedInput-root': { fontFamily: FONT, borderRadius: INPUT_RADIUS } }}
+											InputProps={{ inputProps: { maxLength: 50 } }}
+										/>
+										<CustomTextField
+											label="Soyisim"
+											size="small"
+											value={guestLastName}
+											onChange={(e) => {
+												setGuestLastName(e.target.value);
+												clearCheckoutError();
+											}}
+											sx={{ '& .MuiOutlinedInput-root': { fontFamily: FONT, borderRadius: INPUT_RADIUS } }}
+											InputProps={{ inputProps: { maxLength: 50 } }}
+										/>
+										<CustomTextField
+											label="Telefon"
+											size="small"
+											value={guestPhone}
+											onChange={(e) => {
+												setGuestPhone(e.target.value);
+												clearCheckoutError();
+											}}
+											sx={{ '& .MuiOutlinedInput-root': { fontFamily: FONT, borderRadius: INPUT_RADIUS } }}
+											InputProps={{ inputProps: { maxLength: 20 } }}
+										/>
+									</Box>
+								)}
 								<CustomTextField
 									label="E-posta Adresi"
 									size="small"
@@ -579,7 +659,6 @@ export default function CoursePaymentForm({
 										setDiscountedAmount(isNaN(amount) ? 0 : amount);
 										setUsersUsedPromoCode((prev) => prev?.filter((id) => id !== resolvedUserId) || []);
 										clearCheckoutError();
-										setIsUserAccountExist(true);
 									}}
 									sx={{
 										mb: 0.5,
@@ -589,21 +668,19 @@ export default function CoursePaymentForm({
 									}}
 									InputProps={{ inputProps: { maxLength: 254 } }}
 								/>
-								<Typography variant="body2" sx={{ fontFamily: FONT, fontSize: '0.75rem', color: 'text.secondary', mt: 0.5 }}>
-									Platformumuzda kayıtlı e-posta adresinizle kursu satın alabilirsiniz. Hesabınız yoksa{' '}
-									<Box
-										component="span"
-										onClick={() => window.open('/auth', '_blank')}
-										sx={{
-											color: theme.palette?.primary?.main ?? '#0052a3',
-											textDecoration: 'underline',
-											cursor: 'pointer',
-											fontWeight: 500,
-											'&:hover': { color: theme.palette?.primary?.dark ?? '#003a75' },
-										}}>
-										buraya tıklayın
-									</Box>
-									.
+								<Typography
+									variant="body2"
+									sx={{
+										fontFamily: FONT,
+										fontSize: '0.75rem',
+										color: !user?._id && !hasAccount ? '#FF6F4E' : 'text.secondary',
+										mt: 0.5,
+									}}>
+									{!user?._id && hasAccount
+										? 'Kayıtlı e-posta adresinizle devam edin. Hesabınız yoksa Hesabım var kutusunu boş bırakın.'
+										: !user?._id
+											? 'Hesabınız yoksa bu bilgilerle hesabinizi olusturulur. Ödeme tamamlanınca kullanıcı adı ve şifreniz e-postanıza gelir.'
+											: 'Platformumuzda kayıtlı e-posta adresinizle kursu satın alabilirsiniz.'}
 								</Typography>
 							</Box>
 
@@ -900,26 +977,6 @@ export default function CoursePaymentForm({
 											'& .MuiAlert-action .MuiIconButton-root': { color: '#9F1239' },
 										}}>
 										{errorMessage}
-										{!isUserAccountExist && (
-											<>
-												<Box
-													component="span"
-													onClick={() => window.open('/auth', '_blank')}
-													sx={{
-														color: theme.textColor?.greenSecondary?.main ?? '#2e7d32',
-														textDecoration: 'underline',
-														cursor: 'pointer',
-														fontFamily: FONT,
-														ml: 0.5,
-														fontWeight: 600,
-													}}>
-													Buraya tıklayın
-												</Box>
-												<Box component="span" sx={{ display: 'block', mt: 0.75 }}>
-													Hesabınızda &quot;Courses&quot; sayfasından da kursu satın alabilirsiniz
-												</Box>
-											</>
-										)}
 										{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
 											<Box sx={{ mt: 1 }}>
 												<Button

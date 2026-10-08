@@ -101,7 +101,10 @@ const PaymentDialog = ({
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
 	const [email, setEmail] = useState<string>(() => user?.email || '');
-	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(true);
+	const [hasAccount, setHasAccount] = useState<boolean>(() => Boolean(user?._id));
+	const [guestFirstName, setGuestFirstName] = useState('');
+	const [guestLastName, setGuestLastName] = useState('');
+	const [guestPhone, setGuestPhone] = useState('');
 	const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState<boolean>(false);
 	const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
 	const [promoCode, setPromoCode] = useState<string>('');
@@ -242,6 +245,21 @@ const PaymentDialog = ({
 				const usingSessionUser = Boolean(
 					user?._id && sessionEmail && (email || '').trim().toLowerCase() === sessionEmail.toLowerCase()
 				);
+				const registeringWithoutAccount = Boolean(fromHomePage && !user?._id && !hasAccount);
+				if (registeringWithoutAccount) {
+					if (!guestFirstName.trim() || !guestLastName.trim()) {
+						setErrorMessage(isTrUi ? 'Ad ve soyad gereklidir.' : 'First and last name are required.');
+						setIsProcessing(false);
+						return;
+					}
+					if ((guestPhone.match(/\d/g) || []).length < 7) {
+						setErrorMessage(isTrUi ? 'Geçerli bir telefon numarası girin.' : 'Enter a valid phone number.');
+						setIsProcessing(false);
+						return;
+					}
+					resolvedFirstName = guestFirstName.trim();
+					resolvedLastName = guestLastName.trim();
+				}
 				try {
 					const userExistsResponse = await axiosInstance.post(
 						`${base_url}/users/check-user-exists`,
@@ -249,22 +267,19 @@ const PaymentDialog = ({
 						{ timeout: CHECKOUT_LOOKUP_TIMEOUT_MS }
 					);
 
-					setIsUserAccountExist(userExistsResponse.data.exists || usingSessionUser);
-
-					if (!userExistsResponse.data.exists && !usingSessionUser) {
+					if (!registeringWithoutAccount && !userExistsResponse.data.exists && !usingSessionUser) {
 						setErrorMessage(
 							isTrUi
-								? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
-								: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
+								? 'Bu e-posta adresi herhangi bir hesaba bağlı değil. Hesabınız yoksa Hesabım var kutusunu boş bırakın.'
+								: 'This email address is not linked to an account. Leave “I have an account” unchecked to register without one.'
 						);
-						setIsUserAccountExist(false);
 						setIsProcessing(false);
 						resetRecaptcha();
 						return;
 					}
 
 					// Add email verification check
-					if (!userExistsResponse.data.isEmailVerified && !usingSessionUser) {
+					if (!registeringWithoutAccount && !userExistsResponse.data.isEmailVerified && !usingSessionUser) {
 						setErrorMessage(
 							isTrUi
 								? `Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.`
@@ -297,6 +312,14 @@ const PaymentDialog = ({
 							await courseRegistration(resolvedUserId, resolvedOrgId, selectedGroupName || undefined, {
 								email: email || user?.email,
 								...(isPromoFullyCovered && promoCodeId ? { promoCodeId } : {}),
+								...(registeringWithoutAccount
+									? {
+											firstName: guestFirstName.trim(),
+											lastName: guestLastName.trim(),
+											phone: guestPhone.trim(),
+											countryCode: resolvedCountryCode,
+										}
+									: {}),
 							});
 							syncEnrollmentAccessOnClient();
 
@@ -375,12 +398,13 @@ const PaymentDialog = ({
 				}
 			}
 
+			const registeringWithoutAccount = Boolean(fromHomePage && !user?._id && !hasAccount);
 			try {
 				const response = await axiosInstance.post(`${base_url}/payments`, {
 					amount: lockedAmount,
 					currency: getPriceForCountry(course, resolvedCountryCode).currency,
 					orgId: resolvedOrgId,
-					userId: resolvedUserId,
+					...(resolvedUserId ? { userId: resolvedUserId } : {}),
 					courseId: course._id,
 					email: email || user?.email,
 					firstName: resolvedFirstName,
@@ -391,6 +415,9 @@ const PaymentDialog = ({
 					cancelUrl: window.location.href,
 					...(selectedGroupName.trim() ? { groupName: selectedGroupName.trim() } : {}),
 					...(isPromoCodeApplied && promoCodeId ? { promoCodeId } : {}),
+					...(registeringWithoutAccount
+						? { guestCheckout: true, phone: guestPhone.trim(), countryCode: resolvedCountryCode }
+						: {}),
 				}, { timeout: CHECKOUT_PAYMENT_TIMEOUT_MS });
 
 				const checkoutUrl = response.data?.checkoutUrl;
@@ -455,20 +482,17 @@ const PaymentDialog = ({
 			return;
 		}
 		try {
-			if (fromHomePage && email) {
+			if (fromHomePage && email && (hasAccount || user?._id)) {
 				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
-
-				setIsUserAccountExist(userExistsResponse.data.exists);
 
 				resolvedUserId = userExistsResponse?.data?.userId;
 
 				if (!userExistsResponse.data.exists) {
 					setErrorMessage(
 						isTrUi
-							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
-							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
+							? 'Bu e-posta adresi herhangi bir hesaba bağlı değil. Hesabınız yoksa Hesabım var kutusunu boş bırakın.'
+							: 'This email address is not linked to an account. Leave “I have an account” unchecked to register without one.'
 					);
-					setIsUserAccountExist(false);
 					setIsProcessing(false);
 					return;
 				}
@@ -770,6 +794,56 @@ const PaymentDialog = ({
 
 					{fromHomePage && (
 						<Box>
+							{!user?._id && (
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={hasAccount}
+											onChange={(e) => {
+												setHasAccount(e.target.checked);
+												setErrorMessage('');
+											}}
+											sx={{ color: '#FF6F4E', '&.Mui-checked': { color: '#FF6F4E' } }}
+										/>
+									}
+									label={isTrUi ? 'Hesabım var' : 'I have an account'}
+									sx={{ mb: 1, '& .MuiFormControlLabel-label': { fontFamily: DIALOG_FONT, fontSize: '0.9rem' } }}
+								/>
+							)}
+							{!user?._id && !hasAccount && (
+								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 1.5 }}>
+									<CustomTextField
+										label={isTrUi ? 'Ad' : 'First name'}
+										size='small'
+										value={guestFirstName}
+										onChange={(e) => {
+											setGuestFirstName(e.target.value);
+											setErrorMessage('');
+										}}
+										InputProps={{ inputProps: { maxLength: 50 } }}
+									/>
+									<CustomTextField
+										label={isTrUi ? 'Soyad' : 'Last name'}
+										size='small'
+										value={guestLastName}
+										onChange={(e) => {
+											setGuestLastName(e.target.value);
+											setErrorMessage('');
+										}}
+										InputProps={{ inputProps: { maxLength: 50 } }}
+									/>
+									<CustomTextField
+										label={isTrUi ? 'Telefon' : 'Phone'}
+										size='small'
+										value={guestPhone}
+										onChange={(e) => {
+											setGuestPhone(e.target.value);
+											setErrorMessage('');
+										}}
+										InputProps={{ inputProps: { maxLength: 20 } }}
+									/>
+								</Box>
+							)}
 							<CustomTextField
 								label={isTrUi ? 'E-posta Adresi' : 'Email Address'}
 								size='small'
@@ -783,7 +857,6 @@ const PaymentDialog = ({
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
 									setUsersUsedPromoCode((prevData) => prevData?.filter((id) => id !== resolvedUserId) || []);
 									setErrorMessage('');
-									setIsUserAccountExist(true);
 								}}
 								sx={{
 									'mb': '1.25rem',
@@ -1100,29 +1173,6 @@ const PaymentDialog = ({
 							whiteSpace: 'pre-line',
 						}}>
 						{errorMessage}
-						{!isUserAccountExist && fromHomePage && (
-							<>
-								<Box
-									component='span'
-									onClick={() => window.open('/auth', '_blank')}
-									sx={{
-										color: theme.textColor?.greenSecondary?.main,
-										textDecoration: 'underline',
-										cursor: 'pointer',
-										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
-										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-										ml: 0.5,
-										fontWeight: 600,
-									}}>
-									{isTrUi ? 'Buraya tıklayın' : 'Click here'}
-								</Box>
-								<Box component="span" sx={{ display: 'block', mt: 0.75 }}>
-									{isTrUi
-										? 'Hesabınızda "Courses" sayfasından da kursu satın alabilirsiniz'
-										: 'You can also purchase the course from the "Courses" page in your account'}
-								</Box>
-							</>
-						)}
 						{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
 							<Box sx={{ mt: 1 }}>
 								<Button

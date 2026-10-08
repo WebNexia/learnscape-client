@@ -158,16 +158,19 @@ export default function CheckoutReturn() {
 					navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`, { replace: true });
 					return;
 				}
+				const courseDoneMessage = res.data.accountCreated
+					? 'Ödemeniz alındı. Kullanıcı adı ve şifreniz e-postanıza gönderildi. E-postanızı ve spam klasörünü kontrol edin. Giriş yaparak kursunuza ulaşabilirsiniz.'
+					: 'Ödemeniz alındı ve kaydınız tamamlandı. E-postanızı ve spam klasörünü kontrol edin.';
 				if (context?.kind === 'course' && context.source === 'landing') {
 					setBackPath('/auth');
-					setMessage('Ödemeniz alındı ve kaydınız tamamlandı. Giriş yaparak kursunuza ulaşabilirsiniz.');
-					setTimeout(() => navigate('/auth', { replace: true }), 2200);
+					setMessage(courseDoneMessage);
+					setTimeout(() => navigate('/auth', { replace: true }), 12000);
 					return;
 				}
 				if (courseId) {
 					setBackPath('/auth');
-					setMessage('Ödemeniz alındı ve kaydınız tamamlandı. Giriş yaparak kursunuza ulaşabilirsiniz.');
-					setTimeout(() => navigate('/auth', { replace: true }), 2200);
+					setMessage(courseDoneMessage);
+					setTimeout(() => navigate('/auth', { replace: true }), 12000);
 					return;
 				}
 			} catch (err: unknown) {
@@ -199,7 +202,7 @@ export default function CheckoutReturn() {
 				}}>
 				{status === 'loading' && <CircularProgress size={36} sx={{ mb: 2 }} />}
 				<Typography sx={{ fontFamily: FONT, fontWeight: 700, fontSize: '1.35rem', color: '#0A1A2F', mb: 1 }}>
-					{status === 'loading' ? 'Ödeme işleniyor' : status === 'success' ? 'İşlem tamam' : 'Ödeme tamamlanamadı'}
+					{status === 'loading' ? 'Ödeme işleniyor' : status === 'success' ? 'İşlem tamamlandı' : 'Ödeme tamamlanamadı'}
 				</Typography>
 				<Typography sx={{ fontFamily: FONT, color: 'text.secondary', maxWidth: 520, mb: 3, lineHeight: 1.6 }}>
 					{status === 'loading' && showSlowNetworkHint
