@@ -4,7 +4,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail, PersonAdd, GroupAdd } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd } from '@mui/icons-material';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -212,11 +212,9 @@ const AdminUsers = () => {
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [isDownloadingUsers, setIsDownloadingUsers] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
-	const [emailCorrectionOpen, setEmailCorrectionOpen] = useState(false);
-	const [emailCorrectionValue, setEmailCorrectionValue] = useState('');
-	const [emailCorrectionMessage, setEmailCorrectionMessage] = useState('');
-	const [emailCorrectionCanMove, setEmailCorrectionCanMove] = useState(false);
-	const [emailCorrectionSubmitting, setEmailCorrectionSubmitting] = useState(false);
+	const [editUserMessage, setEditUserMessage] = useState('');
+	const [editUserCanMove, setEditUserCanMove] = useState(false);
+	const [editUserSubmitting, setEditUserSubmitting] = useState(false);
 	const [createAccountOpen, setCreateAccountOpen] = useState(false);
 	const [createFirstName, setCreateFirstName] = useState('');
 	const [createLastName, setCreateLastName] = useState('');
@@ -249,6 +247,12 @@ const AdminUsers = () => {
 	const [paymentLinkMessage, setPaymentLinkMessage] = useState('');
 
 	useEffect(() => {
+		if (orgId) fetchUsers();
+		// Reload so email verification and course enrollment come from the current records.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [orgId]);
+
+	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
@@ -256,36 +260,6 @@ const AdminUsers = () => {
 		setIsDeleteUserModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserCoursesModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
-
-	const openEmailCorrection = (userToEdit: User) => {
-		setSingleUser(userToEdit);
-		setEmailCorrectionValue(userToEdit.email || '');
-		setEmailCorrectionMessage('');
-		setEmailCorrectionCanMove(false);
-		setEmailCorrectionOpen(true);
-	};
-
-	const submitEmailCorrection = async (moveEnrollment = false) => {
-		if (!singleUser) return;
-		setEmailCorrectionSubmitting(true);
-		setEmailCorrectionMessage('');
-		try {
-			const response = await axios.post(`${base_url}/users/${singleUser._id}/correct-login-email`, {
-				email: emailCorrectionValue.trim(),
-				moveEnrollment,
-			});
-			if (!response.data?.moved) {
-				updateUser({ ...singleUser, email: response.data.email, isEmailVerified: true });
-			}
-			setEmailCorrectionOpen(false);
-		} catch (error: any) {
-			const data = error?.response?.data;
-			setEmailCorrectionMessage(data?.message || 'E-posta güncellenemedi.');
-			setEmailCorrectionCanMove(error?.response?.status === 409 || data?.code === 'EMAIL_IN_USE');
-		} finally {
-			setEmailCorrectionSubmitting(false);
-		}
-	};
 
 	const resetCreateAccountForm = () => {
 		setCreateFirstName('');
@@ -578,10 +552,29 @@ const AdminUsers = () => {
 		setIsUserEditModalOpen(newEditModalOpen);
 	};
 
-	const openEditUserModal = (index: number) => {
+	const openEditUserModal = async (index: number) => {
 		const userToEdit: User = paginatedUsers[index];
 		setSingleUser(userToEdit);
+		setEditUserMessage('');
+		setEditUserCanMove(false);
 		toggleUserEditModal(index);
+
+		if (!userToEdit?.firebaseUserId) return;
+		try {
+			const response = await axios.get(`${base_url}/users/${userToEdit.firebaseUserId}`);
+			const fullUser = response.data?.data?.[0];
+			if (!fullUser) return;
+			setSingleUser((prev) => {
+				if (!prev || prev._id !== userToEdit._id) return prev;
+				return {
+					...prev,
+					phone: fullUser.phone || prev.phone || '',
+					countryCode: fullUser.countryCode || prev.countryCode || '',
+				};
+			});
+		} catch (error) {
+			console.error('Load user contact details error:', error);
+		}
 	};
 
 	const closeUserEditModal = (index: number) => {
@@ -621,26 +614,73 @@ const AdminUsers = () => {
 		}
 	};
 
-	const handleUpdateUserRole = async (index: number) => {
+	const handleUpdateUserRole = async (index: number, moveEnrollment = false) => {
 		if (!singleUser?._id || !singleUser.role) return;
+		const original = paginatedUsers[index];
+		const nextEmail = (singleUser.email || '').trim();
+		const emailChanged = nextEmail.toLowerCase() !== (original?.email || '').toLowerCase();
+		const nextFirstName = (singleUser.firstName || '').trim();
+		const nextLastName = (singleUser.lastName || '').trim();
+		const nextUsername = (singleUser.username || '').trim();
+		const nextPhone = (singleUser.phone || '').trim();
+		const nextCountry = (singleUser.countryCode || '').trim().toUpperCase().slice(0, 2);
+
+		const payload: Record<string, string | boolean> = {};
+		if (nextFirstName !== (original?.firstName || '')) payload.firstName = nextFirstName;
+		if (nextLastName !== (original?.lastName || '')) payload.lastName = nextLastName;
+		if (nextUsername.toLowerCase() !== (original?.username || '').toLowerCase()) payload.username = nextUsername;
+		if (nextPhone !== (original?.phone || '')) payload.phone = nextPhone;
+		if (nextCountry !== (original?.countryCode || '').toUpperCase()) payload.countryCode = nextCountry;
+		if (singleUser.isActive !== original?.isActive) payload.isActive = singleUser.isActive;
+		if (!!singleUser.isEmailVerified !== !!original?.isEmailVerified) payload.isEmailVerified = !!singleUser.isEmailVerified;
+		if (!!singleUser.hasRegisteredCourse !== !!original?.hasRegisteredCourse) payload.hasRegisteredCourse = !!singleUser.hasRegisteredCourse;
+		if (singleUser.role !== original?.role) payload.role = singleUser.role;
+
+		setEditUserSubmitting(true);
+		setEditUserMessage('');
+		if (!moveEnrollment) setEditUserCanMove(false);
 
 		try {
-			await axios.patch(`${base_url}/users/${singleUser._id}`, {
-				role: singleUser.role,
-			});
+			let savedUser = {
+				...singleUser,
+				firstName: nextFirstName,
+				lastName: nextLastName,
+				username: nextUsername,
+				phone: nextPhone,
+				countryCode: nextCountry,
+			};
 
-			if (isUserHiddenFromViewer(singleUser.role, loggedInUser?.role)) {
-				removeUser(singleUser._id);
-				if (isSearchActive) {
-					removeFromSearchResults(singleUser._id);
+			if (Object.keys(payload).length > 0) {
+				await axios.patch(`${base_url}/users/${singleUser._id}`, payload);
+			}
+
+			if (emailChanged) {
+				const response = await axios.post(`${base_url}/users/${singleUser._id}/correct-login-email`, {
+					email: nextEmail,
+					moveEnrollment,
+				});
+				if (response.data?.moved) {
+					await fetchUsers();
+					closeUserEditModal(index);
+					return;
 				}
-			} else {
-				updateUser(singleUser);
+				savedUser = { ...savedUser, email: response.data.email, isEmailVerified: true };
+			}
+
+			if (isUserHiddenFromViewer(savedUser.role, loggedInUser?.role)) {
+				removeUser(savedUser._id);
+				if (isSearchActive) removeFromSearchResults(savedUser._id);
+			} else if (Object.keys(payload).length > 0 || emailChanged) {
+				updateUser(savedUser);
 			}
 
 			closeUserEditModal(index);
-		} catch (error) {
-			console.error('Update user role error:', error);
+		} catch (error: any) {
+			const data = error?.response?.data;
+			setEditUserMessage(data?.message || 'Could not save the user.');
+			setEditUserCanMove(data?.code === 'EMAIL_IN_USE');
+		} finally {
+			setEditUserSubmitting(false);
 		}
 	};
 
@@ -1017,14 +1057,6 @@ const AdminUsers = () => {
 													/>
 													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
 														<CustomActionBtn
-															title='Correct login email'
-															onClick={() => openEmailCorrection(user)}
-															icon={<AlternateEmail fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														/>
-													)}
-
-													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
-														<CustomActionBtn
 															title='User Courses'
 															disabled={!isLearnerRole(user?.role)}
 															onClick={() => {
@@ -1041,57 +1073,185 @@ const AdminUsers = () => {
 														closeModal={() => {
 															closeUserEditModal(index);
 														}}
-														maxWidth='xs'
-														title='Edit User Role'>
+														maxWidth='sm'
+														title='Edit User'>
 														<form
-															style={{ display: 'flex', flexDirection: 'column' }}
+															style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '0 1.5rem 0.25rem' }}
 															onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 																e.preventDefault();
 																handleUpdateUserRole(index);
 															}}>
-															<FormControl>
-																<Select
-																	size='small'
-																	value={singleUser?.role}
-																	onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
-																	required
-																	sx={{
-																		backgroundColor: theme.bgColor?.common,
-																		width: '13.25rem',
-																		mr: '0.75rem',
-																		ml: '1.5rem',
-																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																		textTransform: 'capitalize',
-																	}}>
-																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER, Roles.PRESENTATION]
-																		.filter((type) => {
-																			// Only owner can see super-admin role
-																			if (type === Roles.SUPER_ADMIN) {
-																				return loggedInUser?.role === Roles.OWNER;
-																			}
-																			return true;
-																		})
-																		.map((type) => (
-																			<MenuItem
-																				value={type}
-																				key={type}
-																				sx={{
-																					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																					textTransform: type === Roles.TEST_LEARNER || type === Roles.PRESENTATION ? 'none' : 'capitalize',
-																					padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-																					minHeight: '2rem',
-																				}}>
-																				{type === Roles.TEST_LEARNER ? 'Test Learner' : type === Roles.PRESENTATION ? 'Presentation' : type}
-																			</MenuItem>
-																		))}
-																</Select>
-															</FormControl>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='First name'
+																		value={singleUser?.firstName || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, firstName: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 50 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Last name'
+																		value={singleUser?.lastName || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, lastName: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 50 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Username'
+																		value={singleUser?.username || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, username: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 15 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Phone'
+																		type='tel'
+																		value={singleUser?.phone || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, phone: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 20 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Country'
+																		value={singleUser?.countryCode || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, countryCode: e.target.value.toUpperCase().slice(0, 2) } : prev))}
+																		InputProps={{ inputProps: { maxLength: 2 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Email'
+																		type='email'
+																		value={singleUser?.email || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => {
+																			setSingleUser((prev) => (prev ? { ...prev, email: e.target.value } : prev));
+																			setEditUserCanMove(false);
+																			setEditUserMessage('');
+																		}}
+																		InputProps={{ inputProps: { maxLength: 254 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Status</Typography>
+																	<Select
+																		value={singleUser?.isActive ? 'active' : 'deactivated'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, isActive: e.target.value === 'active' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='active' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Active</MenuItem>
+																		<MenuItem value='deactivated' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Deactivated</MenuItem>
+																	</Select>
+																</FormControl>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Email verified</Typography>
+																	<Select
+																		value={singleUser?.isEmailVerified ? 'yes' : 'no'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, isEmailVerified: e.target.value === 'yes' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='yes' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Yes</MenuItem>
+																		<MenuItem value='no' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>No</MenuItem>
+																	</Select>
+																</FormControl>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Registered course</Typography>
+																	<Select
+																		value={singleUser?.hasRegisteredCourse ? 'yes' : 'no'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, hasRegisteredCourse: e.target.value === 'yes' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='yes' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Yes</MenuItem>
+																		<MenuItem value='no' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>No</MenuItem>
+																	</Select>
+																</FormControl>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Role</Typography>
+																	<Select
+																		value={singleUser?.role}
+																		onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
+																		required
+																		disabled={editUserSubmitting}
+																		sx={{
+																			backgroundColor: theme.bgColor?.common,
+																			fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																			textTransform: 'capitalize',
+																		}}>
+																		{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER, Roles.PRESENTATION]
+																			.filter((type) => {
+																				if (type === Roles.SUPER_ADMIN) {
+																					return loggedInUser?.role === Roles.OWNER;
+																				}
+																				return true;
+																			})
+																			.map((type) => (
+																				<MenuItem
+																					value={type}
+																					key={type}
+																					sx={{
+																						fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																						textTransform: type === Roles.TEST_LEARNER || type === Roles.PRESENTATION ? 'none' : 'capitalize',
+																					}}>
+																					{type === Roles.TEST_LEARNER ? 'Test Learner' : type === Roles.PRESENTATION ? 'Presentation' : type}
+																				</MenuItem>
+																			))}
+																	</Select>
+																</FormControl>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Created</Typography>
+																	<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.35rem' }}>
+																		{singleUser?.createdAt ? dateFormatter(singleUser.createdAt) : '—'}
+																	</Typography>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }} />
+															</Box>
+															{editUserMessage && (
+																<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																	{editUserMessage}
+																</Typography>
+															)}
+															{editUserCanMove && (
+																<CustomCancelButton
+																	type='button'
+																	disabled={editUserSubmitting}
+																	onClick={() => handleUpdateUserRole(index, true)}
+																	sx={{ alignSelf: 'flex-start', margin: 0 }}>
+																	Move courses
+																</CustomCancelButton>
+															)}
 															<CustomDialogActions
 																onCancel={() => {
 																	closeUserEditModal(index);
 																}}
-																submitBtnText='Save'
-																actionSx={{ mt: '1rem', mb: '0.5rem' }}
+																disableBtn={editUserSubmitting}
+																submitBtnText={editUserSubmitting ? 'Saving...' : 'Save'}
+																actionSx={{ margin: '0 0rem 0rem 0' }}
 																submitBtnType='submit'
 															/>
 														</form>
@@ -1594,47 +1754,6 @@ const AdminUsers = () => {
 							</CustomDialog>
 						) : null;
 					})}
-				<CustomDialog
-					openModal={emailCorrectionOpen}
-					closeModal={() => setEmailCorrectionOpen(false)}
-					maxWidth='xs'
-					title='Correct login email'>
-					<DialogContent>
-						<TextField
-							fullWidth
-							size='small'
-							label='New email'
-							value={emailCorrectionValue}
-							onChange={(e) => {
-								setEmailCorrectionValue(e.target.value);
-								setEmailCorrectionCanMove(false);
-								setEmailCorrectionMessage('');
-							}}
-							sx={{ mt: 1 }}
-						/>
-						{emailCorrectionMessage && (
-							<Typography variant='body2' sx={{ mt: 1.5, color: 'error.main' }}>
-								{emailCorrectionMessage}
-							</Typography>
-						)}
-					</DialogContent>
-					<DialogActions>
-						{emailCorrectionCanMove && (
-							<CustomCancelButton
-								disabled={emailCorrectionSubmitting}
-								onClick={() => submitEmailCorrection(true)}
-								sx={{ margin: '0 0.5rem 0.5rem 0' }}>
-								Move courses
-							</CustomCancelButton>
-						)}
-						<CustomCancelButton
-							disabled={emailCorrectionSubmitting}
-							onClick={() => submitEmailCorrection(false)}
-							sx={{ margin: '0 1rem 0.5rem 0' }}>
-							{emailCorrectionSubmitting ? 'Saving...' : 'Save'}
-						</CustomCancelButton>
-					</DialogActions>
-				</CustomDialog>
 				<CustomDialog
 					openModal={createAccountOpen}
 					closeModal={() => setCreateAccountOpen(false)}
