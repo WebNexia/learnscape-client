@@ -4,7 +4,9 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail, PersonAdd } from '@mui/icons-material';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
@@ -25,6 +27,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../utils/dateFormatter';
 
 const isUserHiddenFromViewer = (userRole: string, viewerRole?: string): boolean => {
@@ -38,20 +41,20 @@ const isUserHiddenFromViewer = (userRole: string, viewerRole?: string): boolean 
 const getColumns = (isVerySmallScreen: boolean) => {
 	return isVerySmallScreen
 		? [
-				{ key: 'avatar', label: '' },
-				{ key: 'username', label: 'Username' },
-				{ key: 'email', label: 'Email Address' },
-				{ key: 'actions', label: 'Actions' },
-			]
+			{ key: 'avatar', label: '' },
+			{ key: 'username', label: 'Username' },
+			{ key: 'email', label: 'Email Address' },
+			{ key: 'actions', label: 'Actions' },
+		]
 		: [
-				{ key: 'avatar', label: '' },
-				{ key: 'fullName', label: 'Full Name' },
-				{ key: 'username', label: 'Username' },
-				{ key: 'email', label: 'Email Address' },
-				{ key: 'isActive', label: 'Status' },
-				{ key: 'role', label: 'Role' },
-				{ key: 'actions', label: 'Actions' },
-			];
+			{ key: 'avatar', label: '' },
+			{ key: 'fullName', label: 'Full Name' },
+			{ key: 'username', label: 'Username' },
+			{ key: 'email', label: 'Email Address' },
+			{ key: 'isActive', label: 'Status' },
+			{ key: 'role', label: 'Role' },
+			{ key: 'actions', label: 'Actions' },
+		];
 };
 
 const AdminUsers = () => {
@@ -61,7 +64,7 @@ const AdminUsers = () => {
 
 	const { userId, user: loggedInUser } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchMoreUsers, updateUser, removeUser, totalItems, loadedPages, setUsersPageNumber } =
+	const { users, loading, error, fetchUsers, fetchMoreUsers, updateUser, removeUser, totalItems, loadedPages, setUsersPageNumber } =
 		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -153,6 +156,24 @@ const AdminUsers = () => {
 	const [emailCorrectionMessage, setEmailCorrectionMessage] = useState('');
 	const [emailCorrectionCanMove, setEmailCorrectionCanMove] = useState(false);
 	const [emailCorrectionSubmitting, setEmailCorrectionSubmitting] = useState(false);
+	const [createAccountOpen, setCreateAccountOpen] = useState(false);
+	const [createFirstName, setCreateFirstName] = useState('');
+	const [createLastName, setCreateLastName] = useState('');
+	const [createEmail, setCreateEmail] = useState('');
+	const [createPhone, setCreatePhone] = useState('');
+	const [createCountryCode, setCreateCountryCode] = useState('TR');
+	const [createAccountError, setCreateAccountError] = useState('');
+	const [createAccountSuccess, setCreateAccountSuccess] = useState('');
+	const [createAccountSubmitting, setCreateAccountSubmitting] = useState(false);
+	const [createAccountFallback, setCreateAccountFallback] = useState<{ username: string; password: string } | null>(null);
+	const [enrollFormUserId, setEnrollFormUserId] = useState<string | null>(null);
+	const [courseOptions, setCourseOptions] = useState<Array<{ _id: string; title: string; isTestCourse?: boolean }>>([]);
+	const [courseOptionsLoading, setCourseOptionsLoading] = useState(false);
+	const [selectedEnrollCourseId, setSelectedEnrollCourseId] = useState('');
+	const [enrollGroups, setEnrollGroups] = useState<Array<{ _id: string; name: string }>>([]);
+	const [selectedEnrollGroupId, setSelectedEnrollGroupId] = useState('');
+	const [enrollError, setEnrollError] = useState('');
+	const [enrollSubmitting, setEnrollSubmitting] = useState(false);
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
@@ -190,6 +211,123 @@ const AdminUsers = () => {
 			setEmailCorrectionCanMove(error?.response?.status === 409 || data?.code === 'EMAIL_IN_USE');
 		} finally {
 			setEmailCorrectionSubmitting(false);
+		}
+	};
+
+	const resetCreateAccountForm = () => {
+		setCreateFirstName('');
+		setCreateLastName('');
+		setCreateEmail('');
+		setCreatePhone('');
+		setCreateCountryCode('TR');
+		setCreateAccountError('');
+		setCreateAccountSuccess('');
+		setCreateAccountFallback(null);
+	};
+
+	const submitCreateAccount = async () => {
+		setCreateAccountError('');
+		setCreateAccountSuccess('');
+		setCreateAccountFallback(null);
+		if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || createPhone.replace(/\D/g, '').length < 7) {
+			setCreateAccountError('First name, last name, email, country, and phone are required.');
+			return;
+		}
+		setCreateAccountSubmitting(true);
+		try {
+			const response = await axios.post(`${base_url}/users/admin-create`, {
+				firstName: createFirstName.trim(),
+				lastName: createLastName.trim(),
+				email: createEmail.trim(),
+				phone: createPhone,
+				countryCode: createCountryCode,
+			});
+			setCreateAccountSuccess(response.data?.message || 'Account created.');
+			if (response.data?.emailSent === false && response.data?.username && response.data?.password) {
+				setCreateAccountFallback({ username: response.data.username, password: response.data.password });
+			}
+			await fetchUsers();
+		} catch (error: any) {
+			setCreateAccountError(error?.response?.data?.message || 'Could not create the account.');
+		} finally {
+			setCreateAccountSubmitting(false);
+		}
+	};
+
+	const loadCourseOptions = async () => {
+		if (courseOptions.length > 0 || !orgId) return;
+		setCourseOptionsLoading(true);
+		try {
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?limit=200&sortBy=title&sortOrder=asc`);
+			const rows = (response.data?.data || []) as Array<{ _id: string; title: string; isTestCourse?: boolean }>;
+			setCourseOptions(rows.filter((course) => course._id && course.title));
+		} catch {
+			setEnrollError('Could not load courses.');
+		} finally {
+			setCourseOptionsLoading(false);
+		}
+	};
+
+	const openEnrollForm = async (targetUserId: string) => {
+		setEnrollFormUserId(targetUserId);
+		setSelectedEnrollCourseId('');
+		setSelectedEnrollGroupId('');
+		setEnrollGroups([]);
+		setEnrollError('');
+		await loadCourseOptions();
+	};
+
+	const selectEnrollCourse = async (courseId: string) => {
+		setSelectedEnrollCourseId(courseId);
+		setSelectedEnrollGroupId('');
+		setEnrollGroups([]);
+		setEnrollError('');
+		if (!courseId) return;
+		try {
+			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
+			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
+			setEnrollGroups(groups.filter((group): group is { _id: string; name: string } => Boolean(group._id && group.name)));
+		} catch {
+			setEnrollError('Could not load groups for this course.');
+		}
+	};
+
+	const submitManualEnrollment = async (targetUserId: string) => {
+		if (!selectedEnrollCourseId) {
+			setEnrollError('Select a course.');
+			return;
+		}
+		if (enrollGroups.length > 0 && !selectedEnrollGroupId) {
+			setEnrollError('Select a group.');
+			return;
+		}
+		setEnrollSubmitting(true);
+		setEnrollError('');
+		try {
+			const response = await axios.post(`${base_url}/userCourses/`, {
+				userId: targetUserId,
+				courseId: selectedEnrollCourseId,
+				orgId,
+				manualEnrollment: true,
+				...(selectedEnrollGroupId ? { groupId: selectedEnrollGroupId } : {}),
+			});
+			const coursesResponse = await axios.get(`${base_url}/userCourses/user/${targetUserId}/courses`);
+			setUserCoursesData((prev) => ({
+				...prev,
+				[targetUserId]: { courses: coursesResponse.data?.data?.courses || [], loading: false },
+			}));
+			if (response.data?.alreadyEnrolled) {
+				setEnrollError('This user is already enrolled in that course.');
+				return;
+			}
+			setEnrollFormUserId(null);
+			setSelectedEnrollCourseId('');
+			setSelectedEnrollGroupId('');
+			setEnrollGroups([]);
+		} catch (error: any) {
+			setEnrollError(error?.response?.data?.message || 'Could not add the course.');
+		} finally {
+			setEnrollSubmitting(false);
 		}
 	};
 
@@ -415,6 +553,11 @@ const AdminUsers = () => {
 		const newModalState = [...isUserCoursesModalOpen];
 		newModalState[index] = false;
 		setIsUserCoursesModalOpen(newModalState);
+		setEnrollFormUserId(null);
+		setEnrollError('');
+		setSelectedEnrollCourseId('');
+		setSelectedEnrollGroupId('');
+		setEnrollGroups([]);
 	};
 
 	const toggleCourseExpanded = (courseId: string) => {
@@ -487,6 +630,14 @@ const AdminUsers = () => {
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
 						actionButtons={[
+							{
+								label: isMobileSize ? 'Create' : 'Create account',
+								onClick: () => {
+									resetCreateAccountForm();
+									setCreateAccountOpen(true);
+								},
+								startIcon: <PersonAdd />,
+							},
 							{
 								label: isMobileSize ? 'Download' : `Download ${isSearchActive ? 'Filtered' : 'All'} Users`,
 								onClick: handleDownloadUsers,
@@ -688,7 +839,7 @@ const AdminUsers = () => {
 																openUserCoursesModal(index);
 															}}
 															icon={<Visibility
-																fontSize='small' 
+																fontSize='small'
 																sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														/>
 													)}
@@ -883,7 +1034,7 @@ const AdminUsers = () => {
 																disableCancelBtn={isDeletingLearningData}
 																actionSx={{ marginBottom: '0.5rem' }}
 															/>
-															</CustomDialog>
+														</CustomDialog>
 													)}
 
 													{loggedInUser?.role === Roles.OWNER && isDeleteUserModalOpen[index] && (
@@ -993,6 +1144,71 @@ const AdminUsers = () => {
 								title={`Courses - ${fullName}`}
 								maxWidth='sm'>
 								<DialogContent sx={{ p: '2rem' }}>
+									{enrollFormUserId === user._id && (
+										<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', mb: '1.25rem' }}>
+											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												Adds this student to a course. Closed registration and full capacity do not block this.
+											</Typography>
+											<FormControl fullWidth size='small'>
+												<Select
+													displayEmpty
+													value={selectedEnrollCourseId}
+													onChange={(event) => selectEnrollCourse(String(event.target.value))}
+													disabled={courseOptionsLoading || enrollSubmitting} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{courseOptionsLoading ? 'Loading courses...' : 'Select a course'}</MenuItem>
+													{courseOptions
+														.filter((course) => {
+															const alreadyEnrolled = (coursesData?.courses || []).some((row) => row.courseId === course._id);
+															if (alreadyEnrolled) return false;
+															if (course.isTestCourse && user.role !== Roles.TEST_LEARNER) return false;
+															return true;
+														})
+														.map((course) => (
+															<MenuItem key={course._id} value={course._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																{course.title}
+															</MenuItem>
+														))}
+												</Select>
+											</FormControl>
+											{enrollGroups.length > 0 && (
+												<FormControl fullWidth size='small'>
+													<Select
+														displayEmpty
+														value={selectedEnrollGroupId}
+														onChange={(event) => setSelectedEnrollGroupId(String(event.target.value))}
+														disabled={enrollSubmitting}>
+														<MenuItem value=''>Select a group</MenuItem>
+														{enrollGroups.map((group) => (
+															<MenuItem key={group._id} value={group._id}>
+																{group.name}
+															</MenuItem>
+														))}
+													</Select>
+												</FormControl>
+											)}
+											{enrollError && (
+												<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{enrollError}
+												</Typography>
+											)}
+											<Box sx={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+												<CustomCancelButton
+													disabled={enrollSubmitting}
+													onClick={() => {
+														setEnrollFormUserId(null);
+														setEnrollError('');
+													}}>
+													Cancel
+												</CustomCancelButton>
+												<CustomSubmitButton
+													type='button'
+													onClick={() => user._id && submitManualEnrollment(user._id)}
+													disabled={enrollSubmitting}>
+													{enrollSubmitting ? 'Adding...' : 'Add'}
+												</CustomSubmitButton>
+											</Box>
+										</Box>
+									)}
 									{coursesData?.loading ? (
 										<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
 											<CircularProgress size={40} />
@@ -1159,6 +1375,14 @@ const AdminUsers = () => {
 									)}
 								</DialogContent>
 								<DialogActions>
+									{enrollFormUserId !== user._id && (
+										<CustomSubmitButton
+											type='button'
+											sx={{ margin: '0 0.5rem 0.5rem 0' }}
+											onClick={() => user._id && openEnrollForm(user._id)}>
+											Add to course
+										</CustomSubmitButton>
+									)}
 									<CustomCancelButton sx={{ margin: '0 1.35rem 0.5rem 0' }} onClick={() => closeUserCoursesModal(index)}>
 										Close
 									</CustomCancelButton>
@@ -1205,6 +1429,78 @@ const AdminUsers = () => {
 							sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{emailCorrectionSubmitting ? 'Saving...' : 'Save'}
 						</CustomCancelButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={createAccountOpen}
+					closeModal={() => setCreateAccountOpen(false)}
+					maxWidth='xs'
+					title='Create account'>
+					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+						<CustomTextField
+							label='First name'
+							value={createFirstName}
+							onChange={(event) => setCreateFirstName(event.target.value)}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+							sx={{ mt: '0.5rem' }}
+						/>
+						<CustomTextField
+							label='Last name'
+							value={createLastName}
+							onChange={(event) => setCreateLastName(event.target.value)}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+						/>
+						<CustomTextField
+							label='Email'
+							type='email'
+							value={createEmail}
+							onChange={(event) => setCreateEmail(event.target.value)}
+							InputProps={{ inputProps: { maxLength: 254 } }}
+						/>
+						<Box>
+							<Typography variant='caption' sx={{ display: 'block', mb: '0.35rem' }}>
+								Country and phone
+							</Typography>
+							<PhoneInput
+								key={createAccountOpen ? 'create-account-phone' : 'create-account-phone-closed'}
+								country='tr'
+								enableSearch
+								countryCodeEditable={false}
+								specialLabel=''
+								value={createPhone}
+								onChange={(phoneNumber, countryData) => {
+									const formatted = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+									setCreatePhone(formatted);
+									const code =
+										countryData && typeof countryData === 'object' && 'countryCode' in countryData
+											? String(countryData.countryCode || '')
+											: '';
+									if (code) setCreateCountryCode(code.toUpperCase());
+								}}
+								inputStyle={{ width: '100%', height: '40px' }}
+							/>
+						</Box>
+						{createAccountError && (
+							<Typography variant='body2' sx={{ color: 'error.main' }}>
+								{createAccountError}
+							</Typography>
+						)}
+						{createAccountSuccess && <Typography variant='body2'>{createAccountSuccess}</Typography>}
+						{createAccountFallback && (
+							<Typography variant='body2'>
+								Username: {createAccountFallback.username}
+								<br />
+								Password: {createAccountFallback.password}
+							</Typography>
+						)}
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateAccountOpen(false)}>
+							Close
+						</CustomCancelButton>
+						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={submitCreateAccount} sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{createAccountSubmitting ? 'Creating...' : 'Create'}
+						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>
 			</DashboardPagesLayout>
