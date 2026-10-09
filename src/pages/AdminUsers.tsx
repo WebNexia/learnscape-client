@@ -1,10 +1,10 @@
-import { Box, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
+import { Alert, Box, Button, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail, PersonAdd } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail, PersonAdd, GroupAdd } from '@mui/icons-material';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -29,6 +29,67 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../utils/dateFormatter';
+
+const BULK_ACCOUNT_LIMIT = 50;
+
+type BulkAccountRow = {
+	line: number;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	countryCode: string;
+	error: string;
+};
+
+type BulkAccountResult = {
+	row: number;
+	email: string;
+	status: string;
+	message: string;
+	emailSent?: boolean;
+	username?: string;
+	password?: string;
+};
+
+const splitBulkLine = (line: string) => {
+	const delimiter = line.includes('\t') ? '\t' : line.includes(';') ? ';' : ',';
+	return line.split(delimiter).map((part) => part.trim().replace(/^["']|["']$/g, ''));
+};
+
+const parseBulkAccounts = (raw: string): { rows: BulkAccountRow[]; tooMany: boolean; wrongFormat: boolean } => {
+	const lines = raw
+		.replace(/^\uFEFF/, '')
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	if (lines.length === 0) return { rows: [], tooMany: false, wrongFormat: false };
+
+	const firstCell = splitBulkLine(lines[0])[0] || '';
+	const hasHeader = /^(ad|isim|first\s*name|firstname|name)$/i.test(firstCell);
+	const dataLines = hasHeader ? lines.slice(1) : lines;
+	const tooMany = dataLines.length > BULK_ACCOUNT_LIMIT;
+	const wrongFormat = dataLines.length > 0 && dataLines.every((line) => splitBulkLine(line).length < 4);
+	const limited = dataLines.slice(0, BULK_ACCOUNT_LIMIT);
+	const seen = new Set<string>();
+
+	const rows = limited.map((line, index) => {
+		const cells = splitBulkLine(line);
+		const [firstName = '', lastName = '', email = '', phone = '', country = ''] = cells;
+		const countryCode = (country || 'TR').trim().toUpperCase().slice(0, 2) || 'TR';
+		const normalizedEmail = email.trim().toLowerCase();
+		let error = '';
+		if (cells.length < 4) error = 'Ad, soyad, e-posta ve telefon gerekli.';
+		else if (!firstName || !lastName) error = 'Ad ve soyad gerekli.';
+		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) error = 'E-posta geçersiz.';
+		else if (phone.replace(/\D/g, '').length < 7) error = 'Telefon geçersiz.';
+		else if (seen.has(normalizedEmail)) error = 'Bu e-posta listede tekrar ediyor.';
+		if (normalizedEmail) seen.add(normalizedEmail);
+		return { line: index + 1, firstName, lastName, email: normalizedEmail, phone, countryCode, error };
+	});
+
+	return { rows, tooMany, wrongFormat };
+};
 
 const isUserHiddenFromViewer = (userRole: string, viewerRole?: string): boolean => {
 	if (viewerRole === Roles.OWNER) return false;
@@ -166,6 +227,16 @@ const AdminUsers = () => {
 	const [createAccountSuccess, setCreateAccountSuccess] = useState('');
 	const [createAccountSubmitting, setCreateAccountSubmitting] = useState(false);
 	const [createAccountFallback, setCreateAccountFallback] = useState<{ username: string; password: string } | null>(null);
+	const [bulkAccountOpen, setBulkAccountOpen] = useState(false);
+	const [bulkAccountText, setBulkAccountText] = useState('');
+	const [bulkAccountRows, setBulkAccountRows] = useState<BulkAccountRow[]>([]);
+	const [bulkAccountError, setBulkAccountError] = useState('');
+	const [bulkAccountSubmitting, setBulkAccountSubmitting] = useState(false);
+	const [bulkAccountResults, setBulkAccountResults] = useState<BulkAccountResult[] | null>(null);
+	const [bulkAccountTooMany, setBulkAccountTooMany] = useState(false);
+	const [bulkAccountWrongFormat, setBulkAccountWrongFormat] = useState(false);
+	const [bulkAccountFileName, setBulkAccountFileName] = useState('');
+	const [bulkAccountFileIssue, setBulkAccountFileIssue] = useState('');
 	const [enrollFormUserId, setEnrollFormUserId] = useState<string | null>(null);
 	const [courseOptions, setCourseOptions] = useState<Array<{ _id: string; title: string; isTestCourse?: boolean }>>([]);
 	const [courseOptionsLoading, setCourseOptionsLoading] = useState(false);
@@ -174,6 +245,8 @@ const AdminUsers = () => {
 	const [selectedEnrollGroupId, setSelectedEnrollGroupId] = useState('');
 	const [enrollError, setEnrollError] = useState('');
 	const [enrollSubmitting, setEnrollSubmitting] = useState(false);
+	const [paymentLinkSubmitting, setPaymentLinkSubmitting] = useState(false);
+	const [paymentLinkMessage, setPaymentLinkMessage] = useState('');
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
@@ -225,6 +298,80 @@ const AdminUsers = () => {
 		setCreateAccountFallback(null);
 	};
 
+	const resetBulkAccountForm = () => {
+		setBulkAccountText('');
+		setBulkAccountRows([]);
+		setBulkAccountError('');
+		setBulkAccountResults(null);
+		setBulkAccountTooMany(false);
+		setBulkAccountWrongFormat(false);
+		setBulkAccountFileName('');
+		setBulkAccountFileIssue('');
+		setBulkAccountSubmitting(false);
+	};
+
+	const previewBulkAccounts = (value: string, fileName = '') => {
+		setBulkAccountText(value);
+		setBulkAccountResults(null);
+		setBulkAccountFileName(fileName);
+		setBulkAccountFileIssue('');
+		const parsed = parseBulkAccounts(value);
+		setBulkAccountRows(parsed.rows);
+		setBulkAccountTooMany(parsed.tooMany);
+		setBulkAccountWrongFormat(parsed.wrongFormat);
+		setBulkAccountError('');
+	};
+
+	const loadBulkAccountFile = async (file: File | undefined) => {
+		if (!file) return;
+		const name = file.name.toLowerCase();
+		if (!name.endsWith('.csv') && !name.endsWith('.txt')) {
+			setBulkAccountText('');
+			setBulkAccountRows([]);
+			setBulkAccountResults(null);
+			setBulkAccountTooMany(false);
+			setBulkAccountWrongFormat(false);
+			setBulkAccountFileName(file.name);
+			setBulkAccountFileIssue(`"${file.name}" uygun değil. Yalnızca CSV yükleyin. Excel'de Farklı Kaydet ve CSV seçin.`);
+			return;
+		}
+		const text = await file.text();
+		previewBulkAccounts(text, file.name);
+	};
+
+	const submitBulkAccounts = async () => {
+		if (bulkAccountTooMany || bulkAccountWrongFormat || bulkAccountRows.some((row) => row.error)) return;
+		const ready = bulkAccountRows.filter((row) => !row.error);
+		if (ready.length === 0) {
+			setBulkAccountError('Add at least one valid person.');
+			return;
+		}
+		setBulkAccountSubmitting(true);
+		setBulkAccountError('');
+		try {
+			const response = await axios.post(`${base_url}/users/admin-create-bulk`, {
+				users: ready.map((row) => ({
+					row: row.line,
+					firstName: row.firstName,
+					lastName: row.lastName,
+					email: row.email,
+					phone: row.phone,
+					countryCode: row.countryCode,
+				})),
+			});
+			const createdResults = (response.data?.results || []) as BulkAccountResult[];
+			const invalidResults: BulkAccountResult[] = bulkAccountRows
+				.filter((row) => row.error)
+				.map((row) => ({ row: row.line, email: row.email, status: 'invalid', message: row.error }));
+			setBulkAccountResults([...createdResults, ...invalidResults].sort((a, b) => a.row - b.row));
+			if ((response.data?.created || 0) > 0) await fetchUsers();
+		} catch (error: any) {
+			setBulkAccountError(error?.response?.data?.message || 'Could not create the accounts.');
+		} finally {
+			setBulkAccountSubmitting(false);
+		}
+	};
+
 	const submitCreateAccount = async () => {
 		setCreateAccountError('');
 		setCreateAccountSuccess('');
@@ -274,6 +421,7 @@ const AdminUsers = () => {
 		setSelectedEnrollGroupId('');
 		setEnrollGroups([]);
 		setEnrollError('');
+		setPaymentLinkMessage('');
 		await loadCourseOptions();
 	};
 
@@ -282,6 +430,7 @@ const AdminUsers = () => {
 		setSelectedEnrollGroupId('');
 		setEnrollGroups([]);
 		setEnrollError('');
+		setPaymentLinkMessage('');
 		if (!courseId) return;
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
@@ -328,6 +477,28 @@ const AdminUsers = () => {
 			setEnrollError(error?.response?.data?.message || 'Could not add the course.');
 		} finally {
 			setEnrollSubmitting(false);
+		}
+	};
+
+	const submitCoursePaymentLink = async (targetUserId: string) => {
+		if (!selectedEnrollCourseId) {
+			setEnrollError('Select a course.');
+			return;
+		}
+		setPaymentLinkSubmitting(true);
+		setEnrollError('');
+		setPaymentLinkMessage('');
+		try {
+			const response = await axios.post(`${base_url}/payments/admin/course-link`, {
+				userId: targetUserId,
+				courseId: selectedEnrollCourseId,
+				...(selectedEnrollGroupId ? { groupId: selectedEnrollGroupId } : {}),
+			});
+			setPaymentLinkMessage(response.data?.message || 'Payment link sent.');
+		} catch (error: any) {
+			setEnrollError(error?.response?.data?.message || 'Could not send the payment link.');
+		} finally {
+			setPaymentLinkSubmitting(false);
 		}
 	};
 
@@ -590,6 +761,19 @@ const AdminUsers = () => {
 		}
 	};
 
+	const bulkInvalidCount = bulkAccountRows.filter((row) => row.error).length;
+	const bulkAccountSuitable = bulkAccountRows.length > 0 && !bulkAccountTooMany && !bulkAccountWrongFormat && bulkInvalidCount === 0 && !bulkAccountFileIssue;
+	const bulkAccountLabel = bulkAccountFileName ? `"${bulkAccountFileName}"` : 'Liste';
+	const bulkAccountNotice = bulkAccountWrongFormat
+		? `${bulkAccountLabel} uygun değil. Sütunlar Ad, Soyad, E-posta, Telefon, Ülke sırasında olmalı.`
+		: bulkAccountTooMany
+			? `${bulkAccountLabel} uygun değil. En fazla ${BULK_ACCOUNT_LIMIT} kişi olabilir.`
+			: bulkAccountRows.length === 0
+				? `${bulkAccountLabel} uygun değil. İçinde kişi satırı yok.`
+				: bulkInvalidCount > 0
+					? `${bulkAccountLabel} uygun değil. ${bulkInvalidCount} satır düzeltilmeli.`
+					: `${bulkAccountLabel} uygun. ${bulkAccountRows.length} kişi oluşturulabilir.`;
+
 	// Show loading state while users are being fetched or when data is empty and not loading yet
 	if (loading) {
 		return (
@@ -637,6 +821,14 @@ const AdminUsers = () => {
 									setCreateAccountOpen(true);
 								},
 								startIcon: <PersonAdd />,
+							},
+							{
+								label: isMobileSize ? 'Bulk' : 'Create accounts',
+								onClick: () => {
+									resetBulkAccountForm();
+									setBulkAccountOpen(true);
+								},
+								startIcon: <GroupAdd />,
 							},
 							{
 								label: isMobileSize ? 'Download' : `Download ${isSearchActive ? 'Filtered' : 'All'} Users`,
@@ -1147,7 +1339,7 @@ const AdminUsers = () => {
 									{enrollFormUserId === user._id && (
 										<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', mb: '1.25rem' }}>
 											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												Adds this student to a course. Closed registration and full capacity do not block this.
+												Add opens the course page now. Evergreen courses unlock lessons immediately. Cohort courses keep lessons locked until the start date. Send payment link emails a Stripe page; when they pay, the payment is saved for this user and course.
 											</Typography>
 											<FormControl fullWidth size='small'>
 												<Select
@@ -1176,10 +1368,10 @@ const AdminUsers = () => {
 														displayEmpty
 														value={selectedEnrollGroupId}
 														onChange={(event) => setSelectedEnrollGroupId(String(event.target.value))}
-														disabled={enrollSubmitting}>
-														<MenuItem value=''>Select a group</MenuItem>
+														disabled={enrollSubmitting} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Select a group</MenuItem>
 														{enrollGroups.map((group) => (
-															<MenuItem key={group._id} value={group._id}>
+															<MenuItem key={group._id} value={group._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																{group.name}
 															</MenuItem>
 														))}
@@ -1191,19 +1383,31 @@ const AdminUsers = () => {
 													{enrollError}
 												</Typography>
 											)}
-											<Box sx={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+											{paymentLinkMessage && (
+												<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{paymentLinkMessage}
+												</Typography>
+											)}
+											<Box sx={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
 												<CustomCancelButton
-													disabled={enrollSubmitting}
+													disabled={enrollSubmitting || paymentLinkSubmitting}
 													onClick={() => {
 														setEnrollFormUserId(null);
 														setEnrollError('');
+														setPaymentLinkMessage('');
 													}}>
 													Cancel
+												</CustomCancelButton>
+												<CustomCancelButton
+													type='button'
+													disabled={enrollSubmitting || paymentLinkSubmitting}
+													onClick={() => user._id && submitCoursePaymentLink(user._id)}>
+													{paymentLinkSubmitting ? 'Sending...' : 'Send payment link'}
 												</CustomCancelButton>
 												<CustomSubmitButton
 													type='button'
 													onClick={() => user._id && submitManualEnrollment(user._id)}
-													disabled={enrollSubmitting}>
+													disabled={enrollSubmitting || paymentLinkSubmitting}>
 													{enrollSubmitting ? 'Adding...' : 'Add'}
 												</CustomSubmitButton>
 											</Box>
@@ -1500,6 +1704,97 @@ const AdminUsers = () => {
 						</CustomCancelButton>
 						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={submitCreateAccount} sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{createAccountSubmitting ? 'Creating...' : 'Create'}
+						</CustomSubmitButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={bulkAccountOpen}
+					closeModal={() => setBulkAccountOpen(false)}
+					maxWidth='sm'
+					title='Create accounts'>
+					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+						<Typography variant='body2'>
+							CSV sütun sırası: Ad, Soyad, E-posta, Telefon, Ülke. Ülke boşsa TR olur. En fazla {BULK_ACCOUNT_LIMIT} kişi. Ayırıcı virgül veya noktalı virgül.
+						</Typography>
+						<Box sx={{ p: 1.25, borderRadius: 1, bgcolor: '#f8fafc', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', lineHeight: 1.6 }}>
+							Ad,Soyad,E-posta,Telefon,Ülke
+							<br />
+							Ayşe,Demir,ayse@ornek.com,+905551112233,TR
+						</Box>
+						<TextField
+							multiline
+							minRows={6}
+							maxRows={12}
+							value={bulkAccountText}
+							onChange={(event) => previewBulkAccounts(event.target.value)}
+							placeholder='First name, Last name, Email, Phone, Country'
+							disabled={bulkAccountSubmitting}
+						/>
+						<Button
+							component='label'
+							variant='outlined'
+							size='small'
+							disabled={bulkAccountSubmitting}
+							sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
+							Upload CSV
+							<input
+								hidden
+								type='file'
+								accept='.csv,.txt,text/csv,text/plain'
+								onChange={(event) => {
+									void loadBulkAccountFile(event.target.files?.[0]);
+									event.target.value = '';
+								}}
+							/>
+						</Button>
+						{bulkAccountError && (
+							<Typography variant='body2' sx={{ color: 'error.main' }}>
+								{bulkAccountError}
+							</Typography>
+						)}
+						{(bulkAccountFileIssue || bulkAccountText.trim()) && (
+							<Alert severity={bulkAccountSuitable ? 'success' : 'error'}>
+								{bulkAccountFileIssue || bulkAccountNotice}
+							</Alert>
+						)}
+						{bulkAccountRows.length > 0 && !bulkAccountResults && (
+							<Box>
+								<Typography variant='body2' sx={{ mb: 0.5 }}>
+									{bulkAccountRows.filter((row) => !row.error).length} hazır, {bulkAccountRows.filter((row) => row.error).length} düzeltilmeli
+								</Typography>
+								{bulkAccountRows.map((row) => (
+									<Typography key={row.line} variant='body2' sx={{ color: row.error ? 'error.main' : 'text.primary' }}>
+										{row.line}. {row.firstName} {row.lastName} {row.email ? `· ${row.email}` : ''} {row.error ? `— ${row.error}` : ''}
+									</Typography>
+								))}
+							</Box>
+						)}
+						{bulkAccountResults && (
+							<Box>
+								<Typography variant='body2' sx={{ mb: 0.5 }}>
+									{bulkAccountResults.filter((result) => result.status === 'created').length} created,{' '}
+									{bulkAccountResults.filter((result) => result.status !== 'created').length} not created
+								</Typography>
+								{bulkAccountResults.map((result) => (
+									<Typography key={`${result.row}-${result.email}`} variant='body2' sx={{ color: result.status === 'created' ? 'text.primary' : 'error.main' }}>
+										{result.row}. {result.email || '—'} — {result.message}
+										{result.username ? ` Username: ${result.username}.` : ''}
+										{result.password ? ` Password: ${result.password}` : ''}
+									</Typography>
+								))}
+							</Box>
+						)}
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setBulkAccountOpen(false)}>
+							Close
+						</CustomCancelButton>
+						<CustomSubmitButton
+							type='button'
+							disabled={bulkAccountSubmitting || !bulkAccountSuitable || Boolean(bulkAccountResults)}
+							onClick={submitBulkAccounts}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{bulkAccountSubmitting ? 'Creating...' : 'Create'}
 						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>
