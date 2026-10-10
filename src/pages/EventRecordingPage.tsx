@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { listEventYouTubeRecordings } from '../interfaces/event';
 import { Box, CircularProgress, Typography, Alert, Button, Paper } from '@mui/material';
 import axios from '@utils/axiosInstance';
 import axiosOriginal from 'axios';
@@ -24,6 +25,7 @@ interface EventRecordingData {
 
 const EventRecordingPage = () => {
 	const { eventId, recordingId } = useParams<{ eventId: string; recordingId: string }>();
+	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -45,15 +47,18 @@ const EventRecordingPage = () => {
 				// First, fetch event details to check for YouTube video
 				const eventResponse = await axios.get(`${base_url}/events/${eventId}`);
 				const event = eventResponse.data.data;
+				const uploaded = listEventYouTubeRecordings(event);
+				const requestedVideoId = searchParams.get('video');
+				const matched = uploaded.find((row) => row.youtubeVideoId === requestedVideoId) || uploaded[0];
 				setEventDetails({
-					youtubeVideoId: event?.youtubeVideoId,
+					youtubeVideoId: matched?.youtubeVideoId,
 					title: event?.title,
 				});
 
-				// If YouTube video exists, use that instead of Zoom recording
-				if (event?.youtubeVideoId) {
+				// If a YouTube video exists, use that instead of the Zoom recording
+				if (matched?.youtubeVideoId && !recordingId) {
 					setLoading(false);
-					return; // Will render YouTube embed
+					return;
 				}
 
 				// Otherwise, fetch Zoom recording (if recordingId provided)
@@ -100,7 +105,7 @@ const EventRecordingPage = () => {
 		};
 
 		fetchRecording();
-	}, [eventId, recordingId, base_url]);
+	}, [eventId, recordingId, base_url, searchParams]);
 
 	if (loading) {
 		return (

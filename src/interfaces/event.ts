@@ -64,10 +64,26 @@ export interface Event {
 	isZoomMeeting?: boolean; // Frontend-only: checkbox state
 	// Zoom recordings
 	hasRecordings?: boolean; // Frontend-only: indicates if recordings exist
-	// YouTube recording
-	youtubeVideoId?: string; // YouTube video ID if recording was uploaded to YouTube
+	// YouTube recordings. One event can have several when the same Zoom link is reused.
+	youtubeVideoId?: string;
+	youtubeRecordings?: EventYouTubeRecording[];
 	// Manual session recording URL (when Zoom is not configured)
 	sessionRecordingUrl?: string; // Manual recording link for non-Zoom meetings
+}
+
+export interface EventYouTubeRecording {
+	instanceUuid?: string;
+	youtubeVideoId: string;
+	recordingStart?: string | Date | null;
+}
+
+export function listEventYouTubeRecordings(
+	event: { youtubeVideoId?: string; youtubeRecordings?: EventYouTubeRecording[]; start?: Date | string | null } | null | undefined
+): EventYouTubeRecording[] {
+	const fromList = (event?.youtubeRecordings || []).filter((row) => row?.youtubeVideoId);
+	if (fromList.length > 0) return fromList;
+	if (event?.youtubeVideoId) return [{ youtubeVideoId: event.youtubeVideoId, recordingStart: event.start }];
+	return [];
 }
 
 export interface AttendeeInfo {

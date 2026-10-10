@@ -1,10 +1,10 @@
-import { Alert, Box, Button, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
+import { Alert, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, AlternateEmail, PersonAdd, GroupAdd } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd } from '@mui/icons-material';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -50,6 +50,7 @@ type BulkAccountResult = {
 	emailSent?: boolean;
 	username?: string;
 	password?: string;
+	userId?: string;
 };
 
 const splitBulkLine = (line: string) => {
@@ -212,11 +213,9 @@ const AdminUsers = () => {
 	const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
 	const [isDownloadingUsers, setIsDownloadingUsers] = useState<boolean>(false);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
-	const [emailCorrectionOpen, setEmailCorrectionOpen] = useState(false);
-	const [emailCorrectionValue, setEmailCorrectionValue] = useState('');
-	const [emailCorrectionMessage, setEmailCorrectionMessage] = useState('');
-	const [emailCorrectionCanMove, setEmailCorrectionCanMove] = useState(false);
-	const [emailCorrectionSubmitting, setEmailCorrectionSubmitting] = useState(false);
+	const [editUserMessage, setEditUserMessage] = useState('');
+	const [editUserCanMove, setEditUserCanMove] = useState(false);
+	const [editUserSubmitting, setEditUserSubmitting] = useState(false);
 	const [createAccountOpen, setCreateAccountOpen] = useState(false);
 	const [createFirstName, setCreateFirstName] = useState('');
 	const [createLastName, setCreateLastName] = useState('');
@@ -227,6 +226,11 @@ const AdminUsers = () => {
 	const [createAccountSuccess, setCreateAccountSuccess] = useState('');
 	const [createAccountSubmitting, setCreateAccountSubmitting] = useState(false);
 	const [createAccountFallback, setCreateAccountFallback] = useState<{ username: string; password: string } | null>(null);
+	const [createCourseId, setCreateCourseId] = useState('');
+	const [createGroupId, setCreateGroupId] = useState('');
+	const [createGroups, setCreateGroups] = useState<Array<{ _id: string; name: string }>>([]);
+	const [sendCreatePaymentLink, setSendCreatePaymentLink] = useState(false);
+	const [createConfirmMode, setCreateConfirmMode] = useState<'single' | 'bulk' | null>(null);
 	const [bulkAccountOpen, setBulkAccountOpen] = useState(false);
 	const [bulkAccountText, setBulkAccountText] = useState('');
 	const [bulkAccountRows, setBulkAccountRows] = useState<BulkAccountRow[]>([]);
@@ -249,6 +253,12 @@ const AdminUsers = () => {
 	const [paymentLinkMessage, setPaymentLinkMessage] = useState('');
 
 	useEffect(() => {
+		if (orgId) fetchUsers();
+		// Reload so email verification and course enrollment come from the current records.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [orgId]);
+
+	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
@@ -256,36 +266,6 @@ const AdminUsers = () => {
 		setIsDeleteUserModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserCoursesModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
-
-	const openEmailCorrection = (userToEdit: User) => {
-		setSingleUser(userToEdit);
-		setEmailCorrectionValue(userToEdit.email || '');
-		setEmailCorrectionMessage('');
-		setEmailCorrectionCanMove(false);
-		setEmailCorrectionOpen(true);
-	};
-
-	const submitEmailCorrection = async (moveEnrollment = false) => {
-		if (!singleUser) return;
-		setEmailCorrectionSubmitting(true);
-		setEmailCorrectionMessage('');
-		try {
-			const response = await axios.post(`${base_url}/users/${singleUser._id}/correct-login-email`, {
-				email: emailCorrectionValue.trim(),
-				moveEnrollment,
-			});
-			if (!response.data?.moved) {
-				updateUser({ ...singleUser, email: response.data.email, isEmailVerified: true });
-			}
-			setEmailCorrectionOpen(false);
-		} catch (error: any) {
-			const data = error?.response?.data;
-			setEmailCorrectionMessage(data?.message || 'E-posta güncellenemedi.');
-			setEmailCorrectionCanMove(error?.response?.status === 409 || data?.code === 'EMAIL_IN_USE');
-		} finally {
-			setEmailCorrectionSubmitting(false);
-		}
-	};
 
 	const resetCreateAccountForm = () => {
 		setCreateFirstName('');
@@ -296,6 +276,10 @@ const AdminUsers = () => {
 		setCreateAccountError('');
 		setCreateAccountSuccess('');
 		setCreateAccountFallback(null);
+		setCreateCourseId('');
+		setCreateGroupId('');
+		setCreateGroups([]);
+		setSendCreatePaymentLink(false);
 	};
 
 	const resetBulkAccountForm = () => {
@@ -308,6 +292,10 @@ const AdminUsers = () => {
 		setBulkAccountFileName('');
 		setBulkAccountFileIssue('');
 		setBulkAccountSubmitting(false);
+		setCreateCourseId('');
+		setCreateGroupId('');
+		setCreateGroups([]);
+		setSendCreatePaymentLink(false);
 	};
 
 	const previewBulkAccounts = (value: string, fileName = '') => {
@@ -339,11 +327,79 @@ const AdminUsers = () => {
 		previewBulkAccounts(text, file.name);
 	};
 
+	const selectCreateCourse = async (courseId: string) => {
+		setCreateCourseId(courseId);
+		setCreateGroupId('');
+		setCreateGroups([]);
+		if (!courseId) {
+			setSendCreatePaymentLink(false);
+			return;
+		}
+		try {
+			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
+			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
+			setCreateGroups(groups.filter((group): group is { _id: string; name: string } => Boolean(group._id && group.name)));
+		} catch {
+			setCreateGroups([]);
+		}
+	};
+
+	const enrollCreatedUser = async (userId: string) => {
+		await axios.post(`${base_url}/userCourses/`, {
+			userId,
+			courseId: createCourseId,
+			orgId,
+			manualEnrollment: true,
+			...(createGroupId ? { groupId: createGroupId } : {}),
+		});
+	};
+
+	const sendCreatedPaymentLink = async (userId: string) => {
+		await axios.post(`${base_url}/payments/admin/course-link`, {
+			userId,
+			courseId: createCourseId,
+			...(createGroupId ? { groupId: createGroupId } : {}),
+		});
+	};
+
+	const requestCreateConfirm = (mode: 'single' | 'bulk') => {
+		if (mode === 'single') {
+			setCreateAccountError('');
+			if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || createPhone.replace(/\D/g, '').length < 7) {
+				setCreateAccountError('First name, last name, email, country, and phone are required.');
+				return;
+			}
+		} else {
+			setBulkAccountError('');
+			if (bulkAccountRows.filter((row) => !row.error).length === 0) {
+				setBulkAccountError('Add at least one valid person.');
+				return;
+			}
+		}
+		if (sendCreatePaymentLink && !createCourseId) {
+			const message = 'Select a course to send the payment link.';
+			if (mode === 'single') setCreateAccountError(message);
+			else setBulkAccountError(message);
+			return;
+		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			const message = 'Select a group.';
+			if (mode === 'single') setCreateAccountError(message);
+			else setBulkAccountError(message);
+			return;
+		}
+		setCreateConfirmMode(mode);
+	};
+
 	const submitBulkAccounts = async () => {
 		if (bulkAccountTooMany || bulkAccountWrongFormat || bulkAccountRows.some((row) => row.error)) return;
 		const ready = bulkAccountRows.filter((row) => !row.error);
 		if (ready.length === 0) {
 			setBulkAccountError('Add at least one valid person.');
+			return;
+		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			setBulkAccountError('Select a group.');
 			return;
 		}
 		setBulkAccountSubmitting(true);
@@ -360,6 +416,24 @@ const AdminUsers = () => {
 				})),
 			});
 			const createdResults = (response.data?.results || []) as BulkAccountResult[];
+			if (createCourseId) {
+				for (const result of createdResults) {
+					if (result.status !== 'created' || !result.userId) continue;
+					try {
+						await enrollCreatedUser(result.userId);
+						result.message = `${result.message} Kursa eklendi.`;
+					} catch (error: any) {
+						result.message = `${result.message} Kursa eklenemedi: ${error?.response?.data?.message || 'enrollment failed.'}`;
+					}
+					if (!sendCreatePaymentLink) continue;
+					try {
+						await sendCreatedPaymentLink(result.userId);
+						result.message = `${result.message} Ödeme bağlantısı gönderildi.`;
+					} catch (error: any) {
+						result.message = `${result.message} Ödeme bağlantısı gönderilemedi: ${error?.response?.data?.message || 'payment link failed.'}`;
+					}
+				}
+			}
 			const invalidResults: BulkAccountResult[] = bulkAccountRows
 				.filter((row) => row.error)
 				.map((row) => ({ row: row.line, email: row.email, status: 'invalid', message: row.error }));
@@ -380,6 +454,10 @@ const AdminUsers = () => {
 			setCreateAccountError('First name, last name, email, country, and phone are required.');
 			return;
 		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			setCreateAccountError('Select a group.');
+			return;
+		}
 		setCreateAccountSubmitting(true);
 		try {
 			const response = await axios.post(`${base_url}/users/admin-create`, {
@@ -389,7 +467,25 @@ const AdminUsers = () => {
 				phone: createPhone,
 				countryCode: createCountryCode,
 			});
-			setCreateAccountSuccess(response.data?.message || 'Account created.');
+			let message = response.data?.message || 'Account created.';
+			const createdUserId = response.data?.user?._id;
+			if (createCourseId && createdUserId) {
+				try {
+					await enrollCreatedUser(createdUserId);
+					message = `${message} Kursa eklendi.`;
+				} catch (enrollError: any) {
+					message = `${message} Kursa eklenemedi: ${enrollError?.response?.data?.message || 'enrollment failed.'}`;
+				}
+				if (sendCreatePaymentLink) {
+					try {
+						await sendCreatedPaymentLink(createdUserId);
+						message = `${message} Ödeme bağlantısı e-postaya gönderildi.`;
+					} catch (linkError: any) {
+						message = `${message} Ödeme bağlantısı gönderilemedi: ${linkError?.response?.data?.message || 'payment link failed.'}`;
+					}
+				}
+			}
+			setCreateAccountSuccess(message);
 			if (response.data?.emailSent === false && response.data?.username && response.data?.password) {
 				setCreateAccountFallback({ username: response.data.username, password: response.data.password });
 			}
@@ -578,10 +674,29 @@ const AdminUsers = () => {
 		setIsUserEditModalOpen(newEditModalOpen);
 	};
 
-	const openEditUserModal = (index: number) => {
+	const openEditUserModal = async (index: number) => {
 		const userToEdit: User = paginatedUsers[index];
 		setSingleUser(userToEdit);
+		setEditUserMessage('');
+		setEditUserCanMove(false);
 		toggleUserEditModal(index);
+
+		if (!userToEdit?.firebaseUserId) return;
+		try {
+			const response = await axios.get(`${base_url}/users/${userToEdit.firebaseUserId}`);
+			const fullUser = response.data?.data?.[0];
+			if (!fullUser) return;
+			setSingleUser((prev) => {
+				if (!prev || prev._id !== userToEdit._id) return prev;
+				return {
+					...prev,
+					phone: fullUser.phone || prev.phone || '',
+					countryCode: fullUser.countryCode || prev.countryCode || '',
+				};
+			});
+		} catch (error) {
+			console.error('Load user contact details error:', error);
+		}
 	};
 
 	const closeUserEditModal = (index: number) => {
@@ -621,26 +736,73 @@ const AdminUsers = () => {
 		}
 	};
 
-	const handleUpdateUserRole = async (index: number) => {
+	const handleUpdateUserRole = async (index: number, moveEnrollment = false) => {
 		if (!singleUser?._id || !singleUser.role) return;
+		const original = paginatedUsers[index];
+		const nextEmail = (singleUser.email || '').trim();
+		const emailChanged = nextEmail.toLowerCase() !== (original?.email || '').toLowerCase();
+		const nextFirstName = (singleUser.firstName || '').trim();
+		const nextLastName = (singleUser.lastName || '').trim();
+		const nextUsername = (singleUser.username || '').trim();
+		const nextPhone = (singleUser.phone || '').trim();
+		const nextCountry = (singleUser.countryCode || '').trim().toUpperCase().slice(0, 2);
+
+		const payload: Record<string, string | boolean> = {};
+		if (nextFirstName !== (original?.firstName || '')) payload.firstName = nextFirstName;
+		if (nextLastName !== (original?.lastName || '')) payload.lastName = nextLastName;
+		if (nextUsername.toLowerCase() !== (original?.username || '').toLowerCase()) payload.username = nextUsername;
+		if (nextPhone !== (original?.phone || '')) payload.phone = nextPhone;
+		if (nextCountry !== (original?.countryCode || '').toUpperCase()) payload.countryCode = nextCountry;
+		if (singleUser.isActive !== original?.isActive) payload.isActive = singleUser.isActive;
+		if (!!singleUser.isEmailVerified !== !!original?.isEmailVerified) payload.isEmailVerified = !!singleUser.isEmailVerified;
+		if (!!singleUser.hasRegisteredCourse !== !!original?.hasRegisteredCourse) payload.hasRegisteredCourse = !!singleUser.hasRegisteredCourse;
+		if (singleUser.role !== original?.role) payload.role = singleUser.role;
+
+		setEditUserSubmitting(true);
+		setEditUserMessage('');
+		if (!moveEnrollment) setEditUserCanMove(false);
 
 		try {
-			await axios.patch(`${base_url}/users/${singleUser._id}`, {
-				role: singleUser.role,
-			});
+			let savedUser = {
+				...singleUser,
+				firstName: nextFirstName,
+				lastName: nextLastName,
+				username: nextUsername,
+				phone: nextPhone,
+				countryCode: nextCountry,
+			};
 
-			if (isUserHiddenFromViewer(singleUser.role, loggedInUser?.role)) {
-				removeUser(singleUser._id);
-				if (isSearchActive) {
-					removeFromSearchResults(singleUser._id);
+			if (Object.keys(payload).length > 0) {
+				await axios.patch(`${base_url}/users/${singleUser._id}`, payload);
+			}
+
+			if (emailChanged) {
+				const response = await axios.post(`${base_url}/users/${singleUser._id}/correct-login-email`, {
+					email: nextEmail,
+					moveEnrollment,
+				});
+				if (response.data?.moved) {
+					await fetchUsers();
+					closeUserEditModal(index);
+					return;
 				}
-			} else {
-				updateUser(singleUser);
+				savedUser = { ...savedUser, email: response.data.email, isEmailVerified: true };
+			}
+
+			if (isUserHiddenFromViewer(savedUser.role, loggedInUser?.role)) {
+				removeUser(savedUser._id);
+				if (isSearchActive) removeFromSearchResults(savedUser._id);
+			} else if (Object.keys(payload).length > 0 || emailChanged) {
+				updateUser(savedUser);
 			}
 
 			closeUserEditModal(index);
-		} catch (error) {
-			console.error('Update user role error:', error);
+		} catch (error: any) {
+			const data = error?.response?.data;
+			setEditUserMessage(data?.message || 'Could not save the user.');
+			setEditUserCanMove(data?.code === 'EMAIL_IN_USE');
+		} finally {
+			setEditUserSubmitting(false);
 		}
 	};
 
@@ -765,7 +927,7 @@ const AdminUsers = () => {
 	const bulkAccountSuitable = bulkAccountRows.length > 0 && !bulkAccountTooMany && !bulkAccountWrongFormat && bulkInvalidCount === 0 && !bulkAccountFileIssue;
 	const bulkAccountLabel = bulkAccountFileName ? `"${bulkAccountFileName}"` : 'Liste';
 	const bulkAccountNotice = bulkAccountWrongFormat
-		? `${bulkAccountLabel} uygun değil. Sütunlar Ad, Soyad, E-posta, Telefon, Ülke sırasında olmalı.`
+		? `${bulkAccountLabel} uygun değil. Sütunlar First name, Last name, Email, Phone, Country sırasında olmalı.`
 		: bulkAccountTooMany
 			? `${bulkAccountLabel} uygun değil. En fazla ${BULK_ACCOUNT_LIMIT} kişi olabilir.`
 			: bulkAccountRows.length === 0
@@ -815,18 +977,20 @@ const AdminUsers = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isMobileSize ? 'Create' : 'Create account',
+								label: isMobileSize ? 'Create' : 'Create User',
 								onClick: () => {
 									resetCreateAccountForm();
 									setCreateAccountOpen(true);
+									void loadCourseOptions();
 								},
 								startIcon: <PersonAdd />,
 							},
 							{
-								label: isMobileSize ? 'Bulk' : 'Create accounts',
+								label: isMobileSize ? 'Bulk' : 'Create Users',
 								onClick: () => {
 									resetBulkAccountForm();
 									setBulkAccountOpen(true);
+									void loadCourseOptions();
 								},
 								startIcon: <GroupAdd />,
 							},
@@ -1017,14 +1181,6 @@ const AdminUsers = () => {
 													/>
 													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
 														<CustomActionBtn
-															title='Correct login email'
-															onClick={() => openEmailCorrection(user)}
-															icon={<AlternateEmail fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														/>
-													)}
-
-													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.ADMIN || loggedInUser?.role === Roles.SUPER_ADMIN) && (
-														<CustomActionBtn
 															title='User Courses'
 															disabled={!isLearnerRole(user?.role)}
 															onClick={() => {
@@ -1041,57 +1197,185 @@ const AdminUsers = () => {
 														closeModal={() => {
 															closeUserEditModal(index);
 														}}
-														maxWidth='xs'
-														title='Edit User Role'>
+														maxWidth='sm'
+														title='Edit User'>
 														<form
-															style={{ display: 'flex', flexDirection: 'column' }}
+															style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '0 1.5rem 0.25rem' }}
 															onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 																e.preventDefault();
 																handleUpdateUserRole(index);
 															}}>
-															<FormControl>
-																<Select
-																	size='small'
-																	value={singleUser?.role}
-																	onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
-																	required
-																	sx={{
-																		backgroundColor: theme.bgColor?.common,
-																		width: '13.25rem',
-																		mr: '0.75rem',
-																		ml: '1.5rem',
-																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																		textTransform: 'capitalize',
-																	}}>
-																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER, Roles.PRESENTATION]
-																		.filter((type) => {
-																			// Only owner can see super-admin role
-																			if (type === Roles.SUPER_ADMIN) {
-																				return loggedInUser?.role === Roles.OWNER;
-																			}
-																			return true;
-																		})
-																		.map((type) => (
-																			<MenuItem
-																				value={type}
-																				key={type}
-																				sx={{
-																					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																					textTransform: type === Roles.TEST_LEARNER || type === Roles.PRESENTATION ? 'none' : 'capitalize',
-																					padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-																					minHeight: '2rem',
-																				}}>
-																				{type === Roles.TEST_LEARNER ? 'Test Learner' : type === Roles.PRESENTATION ? 'Presentation' : type}
-																			</MenuItem>
-																		))}
-																</Select>
-															</FormControl>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='First name'
+																		value={singleUser?.firstName || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, firstName: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 50 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Last name'
+																		value={singleUser?.lastName || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, lastName: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 50 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Username'
+																		value={singleUser?.username || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, username: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 15 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Phone'
+																		type='tel'
+																		value={singleUser?.phone || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, phone: e.target.value } : prev))}
+																		InputProps={{ inputProps: { maxLength: 20 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Country'
+																		value={singleUser?.countryCode || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, countryCode: e.target.value.toUpperCase().slice(0, 2) } : prev))}
+																		InputProps={{ inputProps: { maxLength: 2 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<CustomTextField
+																		label='Email'
+																		type='email'
+																		value={singleUser?.email || ''}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => {
+																			setSingleUser((prev) => (prev ? { ...prev, email: e.target.value } : prev));
+																			setEditUserCanMove(false);
+																			setEditUserMessage('');
+																		}}
+																		InputProps={{ inputProps: { maxLength: 254 } }}
+																		sx={{ marginBottom: 0 }}
+																	/>
+																</Box>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Status</Typography>
+																	<Select
+																		value={singleUser?.isActive ? 'active' : 'deactivated'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, isActive: e.target.value === 'active' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='active' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Active</MenuItem>
+																		<MenuItem value='deactivated' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Deactivated</MenuItem>
+																	</Select>
+																</FormControl>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Email verified</Typography>
+																	<Select
+																		value={singleUser?.isEmailVerified ? 'yes' : 'no'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, isEmailVerified: e.target.value === 'yes' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='yes' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Yes</MenuItem>
+																		<MenuItem value='no' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>No</MenuItem>
+																	</Select>
+																</FormControl>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Registered course</Typography>
+																	<Select
+																		value={singleUser?.hasRegisteredCourse ? 'yes' : 'no'}
+																		disabled={editUserSubmitting}
+																		onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, hasRegisteredCourse: e.target.value === 'yes' } : prev))}
+																		sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		<MenuItem value='yes' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Yes</MenuItem>
+																		<MenuItem value='no' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>No</MenuItem>
+																	</Select>
+																</FormControl>
+																<FormControl size='small' sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ mb: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Role</Typography>
+																	<Select
+																		value={singleUser?.role}
+																		onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
+																		required
+																		disabled={editUserSubmitting}
+																		sx={{
+																			backgroundColor: theme.bgColor?.common,
+																			fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																			textTransform: 'capitalize',
+																		}}>
+																		{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER, Roles.TEST_LEARNER, Roles.PRESENTATION]
+																			.filter((type) => {
+																				if (type === Roles.SUPER_ADMIN) {
+																					return loggedInUser?.role === Roles.OWNER;
+																				}
+																				return true;
+																			})
+																			.map((type) => (
+																				<MenuItem
+																					value={type}
+																					key={type}
+																					sx={{
+																						fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																						textTransform: type === Roles.TEST_LEARNER || type === Roles.PRESENTATION ? 'none' : 'capitalize',
+																					}}>
+																					{type === Roles.TEST_LEARNER ? 'Test Learner' : type === Roles.PRESENTATION ? 'Presentation' : type}
+																				</MenuItem>
+																			))}
+																	</Select>
+																</FormControl>
+															</Box>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+																<Box sx={{ flex: 1, minWidth: 0 }}>
+																	<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary' }}>Created</Typography>
+																	<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '0.35rem' }}>
+																		{singleUser?.createdAt ? dateFormatter(singleUser.createdAt) : '—'}
+																	</Typography>
+																</Box>
+																<Box sx={{ flex: 1, minWidth: 0 }} />
+															</Box>
+															{editUserMessage && (
+																<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																	{editUserMessage}
+																</Typography>
+															)}
+															{editUserCanMove && (
+																<CustomCancelButton
+																	type='button'
+																	disabled={editUserSubmitting}
+																	onClick={() => handleUpdateUserRole(index, true)}
+																	sx={{ alignSelf: 'flex-start', margin: 0 }}>
+																	Move courses
+																</CustomCancelButton>
+															)}
 															<CustomDialogActions
 																onCancel={() => {
 																	closeUserEditModal(index);
 																}}
-																submitBtnText='Save'
-																actionSx={{ mt: '1rem', mb: '0.5rem' }}
+																disableBtn={editUserSubmitting}
+																submitBtnText={editUserSubmitting ? 'Saving...' : 'Save'}
+																actionSx={{ margin: '0 0rem 0rem 0' }}
 																submitBtnType='submit'
 															/>
 														</form>
@@ -1595,51 +1879,10 @@ const AdminUsers = () => {
 						) : null;
 					})}
 				<CustomDialog
-					openModal={emailCorrectionOpen}
-					closeModal={() => setEmailCorrectionOpen(false)}
-					maxWidth='xs'
-					title='Correct login email'>
-					<DialogContent>
-						<TextField
-							fullWidth
-							size='small'
-							label='New email'
-							value={emailCorrectionValue}
-							onChange={(e) => {
-								setEmailCorrectionValue(e.target.value);
-								setEmailCorrectionCanMove(false);
-								setEmailCorrectionMessage('');
-							}}
-							sx={{ mt: 1 }}
-						/>
-						{emailCorrectionMessage && (
-							<Typography variant='body2' sx={{ mt: 1.5, color: 'error.main' }}>
-								{emailCorrectionMessage}
-							</Typography>
-						)}
-					</DialogContent>
-					<DialogActions>
-						{emailCorrectionCanMove && (
-							<CustomCancelButton
-								disabled={emailCorrectionSubmitting}
-								onClick={() => submitEmailCorrection(true)}
-								sx={{ margin: '0 0.5rem 0.5rem 0' }}>
-								Move courses
-							</CustomCancelButton>
-						)}
-						<CustomCancelButton
-							disabled={emailCorrectionSubmitting}
-							onClick={() => submitEmailCorrection(false)}
-							sx={{ margin: '0 1rem 0.5rem 0' }}>
-							{emailCorrectionSubmitting ? 'Saving...' : 'Save'}
-						</CustomCancelButton>
-					</DialogActions>
-				</CustomDialog>
-				<CustomDialog
 					openModal={createAccountOpen}
 					closeModal={() => setCreateAccountOpen(false)}
 					maxWidth='xs'
-					title='Create account'>
+					title='Create User'>
 					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 						<CustomTextField
 							label='First name'
@@ -1684,6 +1927,63 @@ const AdminUsers = () => {
 								inputStyle={{ width: '100%', height: '40px' }}
 							/>
 						</Box>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Add to course is optional. The course page opens as soon as the account is created.
+						</Typography>
+						<FormControl fullWidth size='small'>
+							<Select
+								displayEmpty
+								value={createCourseId}
+								onChange={(event) => void selectCreateCourse(String(event.target.value))}
+								disabled={createAccountSubmitting || courseOptionsLoading}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{courseOptionsLoading ? 'Loading courses...' : 'No course'}
+								</MenuItem>
+								{courseOptions
+									.filter((course) => !course.isTestCourse)
+									.map((course) => (
+										<MenuItem key={course._id} value={course._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{course.title}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+						{createGroups.length > 0 && (
+							<FormControl fullWidth size='small'>
+								<Select
+									displayEmpty
+									value={createGroupId}
+									onChange={(event) => setCreateGroupId(String(event.target.value))}
+									disabled={createAccountSubmitting}
+									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Select a group
+									</MenuItem>
+									{createGroups.map((group) => (
+										<MenuItem key={`single-${group._id}`} value={group._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{group.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
+						<FormControlLabel
+							sx={{ ml: 0 }}
+							control={
+								<Checkbox
+									size='small'
+									checked={sendCreatePaymentLink}
+									disabled={!createCourseId || createAccountSubmitting}
+									onChange={(event) => setSendCreatePaymentLink(event.target.checked)}
+								/>
+							}
+							label={
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Send payment link
+								</Typography>
+							}
+						/>
 						{createAccountError && (
 							<Typography variant='body2' sx={{ color: 'error.main' }}>
 								{createAccountError}
@@ -1702,7 +2002,7 @@ const AdminUsers = () => {
 						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateAccountOpen(false)}>
 							Close
 						</CustomCancelButton>
-						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={submitCreateAccount} sx={{ margin: '0 1rem 0.5rem 0' }}>
+						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={() => requestCreateConfirm('single')} sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{createAccountSubmitting ? 'Creating...' : 'Create'}
 						</CustomSubmitButton>
 					</DialogActions>
@@ -1711,16 +2011,76 @@ const AdminUsers = () => {
 					openModal={bulkAccountOpen}
 					closeModal={() => setBulkAccountOpen(false)}
 					maxWidth='sm'
-					title='Create accounts'>
+					title='Create Users'>
 					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 						<Typography variant='body2'>
-							CSV sütun sırası: Ad, Soyad, E-posta, Telefon, Ülke. Ülke boşsa TR olur. En fazla {BULK_ACCOUNT_LIMIT} kişi. Ayırıcı virgül veya noktalı virgül.
+							CSV sütun sırası: First name, Last name, Email, Phone, Country.
+						</Typography>
+						<Typography variant='body2'>
+							Ülke boşsa TR olur. En fazla {BULK_ACCOUNT_LIMIT} kişi. Ayırıcı virgül veya noktalı virgül.
 						</Typography>
 						<Box sx={{ p: 1.25, borderRadius: 1, bgcolor: '#f8fafc', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', lineHeight: 1.6 }}>
-							Ad,Soyad,E-posta,Telefon,Ülke
+							First name,Last name,Email,Phone,Country
 							<br />
-							Ayşe,Demir,ayse@ornek.com,+905551112233,TR
+							Ayşe,Duran,ayse@ornek.com,+905551112233,TR
 						</Box>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Add to course is optional and applies to every new account. The course page opens as soon as the account is created.
+						</Typography>
+						<FormControl fullWidth size='small'>
+							<Select
+								displayEmpty
+								value={createCourseId}
+								onChange={(event) => void selectCreateCourse(String(event.target.value))}
+								disabled={bulkAccountSubmitting || courseOptionsLoading}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{courseOptionsLoading ? 'Loading courses...' : 'No course'}
+								</MenuItem>
+								{courseOptions
+									.filter((course) => !course.isTestCourse)
+									.map((course) => (
+										<MenuItem key={course._id} value={course._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{course.title}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+						{createGroups.length > 0 && (
+							<FormControl fullWidth size='small'>
+								<Select
+									displayEmpty
+									value={createGroupId}
+									onChange={(event) => setCreateGroupId(String(event.target.value))}
+									disabled={bulkAccountSubmitting}
+									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Select a group
+									</MenuItem>
+									{createGroups.map((group) => (
+										<MenuItem key={`bulk-${group._id}`} value={group._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{group.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
+						<FormControlLabel
+							sx={{ ml: 0 }}
+							control={
+								<Checkbox
+									size='small'
+									checked={sendCreatePaymentLink}
+									disabled={!createCourseId || bulkAccountSubmitting}
+									onChange={(event) => setSendCreatePaymentLink(event.target.checked)}
+								/>
+							}
+							label={
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Send payment link to each new account
+								</Typography>
+							}
+						/>
 						<TextField
 							multiline
 							minRows={6}
@@ -1792,9 +2152,51 @@ const AdminUsers = () => {
 						<CustomSubmitButton
 							type='button'
 							disabled={bulkAccountSubmitting || !bulkAccountSuitable || Boolean(bulkAccountResults)}
-							onClick={submitBulkAccounts}
+							onClick={() => requestCreateConfirm('bulk')}
 							sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{bulkAccountSubmitting ? 'Creating...' : 'Create'}
+						</CustomSubmitButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={createConfirmMode !== null}
+					closeModal={() => setCreateConfirmMode(null)}
+					maxWidth='xs'
+					title='Are you sure?'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							{createConfirmMode === 'bulk'
+								? `Are you sure you want to create ${bulkAccountRows.filter((row) => !row.error).length} accounts?`
+								: 'Are you sure you want to create this account?'}
+						</Typography>
+						{createCourseId && (
+							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{createConfirmMode === 'bulk' ? 'Each new account will be added to ' : 'This account will be added to '}
+								{courseOptions.find((course) => course._id === createCourseId)?.title || 'the selected course'}.
+							</Typography>
+						)}
+						{sendCreatePaymentLink && (
+							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{createConfirmMode === 'bulk'
+									? 'A separate payment link email will be sent to each new account.'
+									: 'A payment link will be emailed to this account.'}
+							</Typography>
+						)}
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateConfirmMode(null)}>
+							Cancel
+						</CustomCancelButton>
+						<CustomSubmitButton
+							type='button'
+							onClick={() => {
+								const mode = createConfirmMode;
+								setCreateConfirmMode(null);
+								if (mode === 'single') void submitCreateAccount();
+								if (mode === 'bulk') void submitBulkAccounts();
+							}}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							Create
 						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>
