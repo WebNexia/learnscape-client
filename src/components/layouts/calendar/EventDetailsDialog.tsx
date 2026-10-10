@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Event } from '../../../interfaces/event';
+import { Event, listEventYouTubeRecordings } from '../../../interfaces/event';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../dialog/CustomDialog';
 import { Alert, Box, Button, DialogActions, DialogContent, Link, Snackbar, Tooltip, Typography } from '@mui/material';
@@ -264,7 +264,8 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					{/* Show recordings based on Zoom configuration */}
 					{(() => {
 						const hasZoomConfigured = organisation?.hasZoomConfigured;
-						const hasYouTube = !!selectedEvent?.youtubeVideoId;
+						const youtubeRecordings = listEventYouTubeRecordings(selectedEvent);
+						const hasYouTube = youtubeRecordings.length > 0;
 						const hasZoomRecordings = recordings.length > 0;
 						const hasSessionRecordingUrl = !!selectedEvent?.sessionRecordingUrl;
 
@@ -272,16 +273,16 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 
 						// If Zoom is configured for auto upload to YT:
 						if (hasZoomConfigured) {
-							// If YT video is available, show YT
-							if (hasYouTube) {
+							youtubeRecordings.forEach((recording) => {
+								const when = recording.recordingStart ? eventDateTimeFormatter(recording.recordingStart) : '';
 								recordingsToShow.push({
 									type: 'youtube',
-									label: 'Watch Recording (YouTube)',
-									onClick: () => navigate(`/event-recording/${selectedEvent?._id}`),
+									label: when ? `Watch Recording · ${when}` : 'Watch Recording',
+									onClick: () => navigate(`/event-recording/${selectedEvent?._id}?video=${recording.youtubeVideoId}`),
 								});
-							}
+							});
 							// If YT is not ready but Zoom recordings exist, show Zoom
-							else if (hasZoomRecordings) {
+							if (!hasYouTube && hasZoomRecordings) {
 								recordingsToShow.push({
 									type: 'zoom',
 									label: `Watch Recording (Zoom - ${eventDateTimeFormatter(recordings[0].recordingStart)})`,
@@ -314,7 +315,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						return (
 							<Box sx={{ mb: '0.75rem' }}>
 								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
-									{recordingsToShow.length > 1 ? 'Recordings:' : 'Recording:'}
+									{recordingsToShow.length > 1 ? 'Watch Recordings' : 'Recording:'}
 								</Typography>
 								{recordingsToShow.map((recording, index) =>
 									recording.onClick ? (
@@ -371,7 +372,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 
 					{/* For public events: show Join Meeting if registered and has Zoom, otherwise show Register */}
 					{/* Disable Join Meeting if recordings exist (YouTube or Zoom) */}
-					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
+					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && listEventYouTubeRecordings(selectedEvent).length === 0 && recordings.length === 0 && (
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, }}>
 							<CustomSubmitButton
 								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
@@ -407,7 +408,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						{selectedEvent?.isPublic &&
 							(!selectedEvent?.zoomJoinUrl || !isUserRegistered) &&
 							!isEventEnded(selectedEvent) &&
-							!selectedEvent?.youtubeVideoId &&
+							listEventYouTubeRecordings(selectedEvent).length === 0 &&
 							recordings.length === 0 && (
 								<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
 									{isRegisterForEventSending ? 'Registering...' : 'Register'}
@@ -415,7 +416,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							)}
 					</Box>
 					{/* For non-public events: show Join Meeting if Zoom exists and no recordings (YouTube or Zoom) */}
-					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
+					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && listEventYouTubeRecordings(selectedEvent).length === 0 && recordings.length === 0 && (
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
 							<CustomSubmitButton
 								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}

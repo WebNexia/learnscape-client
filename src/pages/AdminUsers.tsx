@@ -805,7 +805,7 @@ const AdminUsers = () => {
 	const bulkAccountSuitable = bulkAccountRows.length > 0 && !bulkAccountTooMany && !bulkAccountWrongFormat && bulkInvalidCount === 0 && !bulkAccountFileIssue;
 	const bulkAccountLabel = bulkAccountFileName ? `"${bulkAccountFileName}"` : 'Liste';
 	const bulkAccountNotice = bulkAccountWrongFormat
-		? `${bulkAccountLabel} uygun değil. Sütunlar Ad, Soyad, E-posta, Telefon, Ülke sırasında olmalı.`
+		? `${bulkAccountLabel} uygun değil. Sütunlar First name, Last name, Email, Phone, Country sırasında olmalı.`
 		: bulkAccountTooMany
 			? `${bulkAccountLabel} uygun değil. En fazla ${BULK_ACCOUNT_LIMIT} kişi olabilir.`
 			: bulkAccountRows.length === 0
@@ -855,7 +855,7 @@ const AdminUsers = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isMobileSize ? 'Create' : 'Create account',
+								label: isMobileSize ? 'Create' : 'Create User',
 								onClick: () => {
 									resetCreateAccountForm();
 									setCreateAccountOpen(true);
@@ -863,7 +863,7 @@ const AdminUsers = () => {
 								startIcon: <PersonAdd />,
 							},
 							{
-								label: isMobileSize ? 'Bulk' : 'Create accounts',
+								label: isMobileSize ? 'Bulk' : 'Create Users',
 								onClick: () => {
 									resetBulkAccountForm();
 									setBulkAccountOpen(true);
@@ -1758,7 +1758,7 @@ const AdminUsers = () => {
 					openModal={createAccountOpen}
 					closeModal={() => setCreateAccountOpen(false)}
 					maxWidth='xs'
-					title='Create account'>
+					title='Create User'>
 					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 						<CustomTextField
 							label='First name'
@@ -1830,15 +1830,18 @@ const AdminUsers = () => {
 					openModal={bulkAccountOpen}
 					closeModal={() => setBulkAccountOpen(false)}
 					maxWidth='sm'
-					title='Create accounts'>
+					title='Create Users'>
 					<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 						<Typography variant='body2'>
-							CSV sütun sırası: Ad, Soyad, E-posta, Telefon, Ülke. Ülke boşsa TR olur. En fazla {BULK_ACCOUNT_LIMIT} kişi. Ayırıcı virgül veya noktalı virgül.
+							CSV sütun sırası: First name, Last name, Email, Phone, Country.
+						</Typography>
+						<Typography variant='body2'>
+							Ülke boşsa TR olur. En fazla {BULK_ACCOUNT_LIMIT} kişi. Ayırıcı virgül veya noktalı virgül.
 						</Typography>
 						<Box sx={{ p: 1.25, borderRadius: 1, bgcolor: '#f8fafc', fontFamily: 'ui-monospace, monospace', fontSize: '0.8rem', lineHeight: 1.6 }}>
-							Ad,Soyad,E-posta,Telefon,Ülke
+							First name,Last name,Email,Phone,Country
 							<br />
-							Ayşe,Demir,ayse@ornek.com,+905551112233,TR
+							Ayşe,Duran,ayse@ornek.com,+905551112233,TR
 						</Box>
 						<TextField
 							multiline
