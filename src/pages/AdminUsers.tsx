@@ -1,4 +1,4 @@
-import { Alert, Box, Button, DialogContent, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
+import { Alert, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -50,6 +50,7 @@ type BulkAccountResult = {
 	emailSent?: boolean;
 	username?: string;
 	password?: string;
+	userId?: string;
 };
 
 const splitBulkLine = (line: string) => {
@@ -225,6 +226,11 @@ const AdminUsers = () => {
 	const [createAccountSuccess, setCreateAccountSuccess] = useState('');
 	const [createAccountSubmitting, setCreateAccountSubmitting] = useState(false);
 	const [createAccountFallback, setCreateAccountFallback] = useState<{ username: string; password: string } | null>(null);
+	const [createCourseId, setCreateCourseId] = useState('');
+	const [createGroupId, setCreateGroupId] = useState('');
+	const [createGroups, setCreateGroups] = useState<Array<{ _id: string; name: string }>>([]);
+	const [sendCreatePaymentLink, setSendCreatePaymentLink] = useState(false);
+	const [createConfirmMode, setCreateConfirmMode] = useState<'single' | 'bulk' | null>(null);
 	const [bulkAccountOpen, setBulkAccountOpen] = useState(false);
 	const [bulkAccountText, setBulkAccountText] = useState('');
 	const [bulkAccountRows, setBulkAccountRows] = useState<BulkAccountRow[]>([]);
@@ -270,6 +276,10 @@ const AdminUsers = () => {
 		setCreateAccountError('');
 		setCreateAccountSuccess('');
 		setCreateAccountFallback(null);
+		setCreateCourseId('');
+		setCreateGroupId('');
+		setCreateGroups([]);
+		setSendCreatePaymentLink(false);
 	};
 
 	const resetBulkAccountForm = () => {
@@ -282,6 +292,10 @@ const AdminUsers = () => {
 		setBulkAccountFileName('');
 		setBulkAccountFileIssue('');
 		setBulkAccountSubmitting(false);
+		setCreateCourseId('');
+		setCreateGroupId('');
+		setCreateGroups([]);
+		setSendCreatePaymentLink(false);
 	};
 
 	const previewBulkAccounts = (value: string, fileName = '') => {
@@ -313,11 +327,79 @@ const AdminUsers = () => {
 		previewBulkAccounts(text, file.name);
 	};
 
+	const selectCreateCourse = async (courseId: string) => {
+		setCreateCourseId(courseId);
+		setCreateGroupId('');
+		setCreateGroups([]);
+		if (!courseId) {
+			setSendCreatePaymentLink(false);
+			return;
+		}
+		try {
+			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
+			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
+			setCreateGroups(groups.filter((group): group is { _id: string; name: string } => Boolean(group._id && group.name)));
+		} catch {
+			setCreateGroups([]);
+		}
+	};
+
+	const enrollCreatedUser = async (userId: string) => {
+		await axios.post(`${base_url}/userCourses/`, {
+			userId,
+			courseId: createCourseId,
+			orgId,
+			manualEnrollment: true,
+			...(createGroupId ? { groupId: createGroupId } : {}),
+		});
+	};
+
+	const sendCreatedPaymentLink = async (userId: string) => {
+		await axios.post(`${base_url}/payments/admin/course-link`, {
+			userId,
+			courseId: createCourseId,
+			...(createGroupId ? { groupId: createGroupId } : {}),
+		});
+	};
+
+	const requestCreateConfirm = (mode: 'single' | 'bulk') => {
+		if (mode === 'single') {
+			setCreateAccountError('');
+			if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || createPhone.replace(/\D/g, '').length < 7) {
+				setCreateAccountError('First name, last name, email, country, and phone are required.');
+				return;
+			}
+		} else {
+			setBulkAccountError('');
+			if (bulkAccountRows.filter((row) => !row.error).length === 0) {
+				setBulkAccountError('Add at least one valid person.');
+				return;
+			}
+		}
+		if (sendCreatePaymentLink && !createCourseId) {
+			const message = 'Select a course to send the payment link.';
+			if (mode === 'single') setCreateAccountError(message);
+			else setBulkAccountError(message);
+			return;
+		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			const message = 'Select a group.';
+			if (mode === 'single') setCreateAccountError(message);
+			else setBulkAccountError(message);
+			return;
+		}
+		setCreateConfirmMode(mode);
+	};
+
 	const submitBulkAccounts = async () => {
 		if (bulkAccountTooMany || bulkAccountWrongFormat || bulkAccountRows.some((row) => row.error)) return;
 		const ready = bulkAccountRows.filter((row) => !row.error);
 		if (ready.length === 0) {
 			setBulkAccountError('Add at least one valid person.');
+			return;
+		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			setBulkAccountError('Select a group.');
 			return;
 		}
 		setBulkAccountSubmitting(true);
@@ -334,6 +416,24 @@ const AdminUsers = () => {
 				})),
 			});
 			const createdResults = (response.data?.results || []) as BulkAccountResult[];
+			if (createCourseId) {
+				for (const result of createdResults) {
+					if (result.status !== 'created' || !result.userId) continue;
+					try {
+						await enrollCreatedUser(result.userId);
+						result.message = `${result.message} Kursa eklendi.`;
+					} catch (error: any) {
+						result.message = `${result.message} Kursa eklenemedi: ${error?.response?.data?.message || 'enrollment failed.'}`;
+					}
+					if (!sendCreatePaymentLink) continue;
+					try {
+						await sendCreatedPaymentLink(result.userId);
+						result.message = `${result.message} Ödeme bağlantısı gönderildi.`;
+					} catch (error: any) {
+						result.message = `${result.message} Ödeme bağlantısı gönderilemedi: ${error?.response?.data?.message || 'payment link failed.'}`;
+					}
+				}
+			}
 			const invalidResults: BulkAccountResult[] = bulkAccountRows
 				.filter((row) => row.error)
 				.map((row) => ({ row: row.line, email: row.email, status: 'invalid', message: row.error }));
@@ -354,6 +454,10 @@ const AdminUsers = () => {
 			setCreateAccountError('First name, last name, email, country, and phone are required.');
 			return;
 		}
+		if (createCourseId && createGroups.length > 0 && !createGroupId) {
+			setCreateAccountError('Select a group.');
+			return;
+		}
 		setCreateAccountSubmitting(true);
 		try {
 			const response = await axios.post(`${base_url}/users/admin-create`, {
@@ -363,7 +467,25 @@ const AdminUsers = () => {
 				phone: createPhone,
 				countryCode: createCountryCode,
 			});
-			setCreateAccountSuccess(response.data?.message || 'Account created.');
+			let message = response.data?.message || 'Account created.';
+			const createdUserId = response.data?.user?._id;
+			if (createCourseId && createdUserId) {
+				try {
+					await enrollCreatedUser(createdUserId);
+					message = `${message} Kursa eklendi.`;
+				} catch (enrollError: any) {
+					message = `${message} Kursa eklenemedi: ${enrollError?.response?.data?.message || 'enrollment failed.'}`;
+				}
+				if (sendCreatePaymentLink) {
+					try {
+						await sendCreatedPaymentLink(createdUserId);
+						message = `${message} Ödeme bağlantısı e-postaya gönderildi.`;
+					} catch (linkError: any) {
+						message = `${message} Ödeme bağlantısı gönderilemedi: ${linkError?.response?.data?.message || 'payment link failed.'}`;
+					}
+				}
+			}
+			setCreateAccountSuccess(message);
 			if (response.data?.emailSent === false && response.data?.username && response.data?.password) {
 				setCreateAccountFallback({ username: response.data.username, password: response.data.password });
 			}
@@ -859,6 +981,7 @@ const AdminUsers = () => {
 								onClick: () => {
 									resetCreateAccountForm();
 									setCreateAccountOpen(true);
+									void loadCourseOptions();
 								},
 								startIcon: <PersonAdd />,
 							},
@@ -867,6 +990,7 @@ const AdminUsers = () => {
 								onClick: () => {
 									resetBulkAccountForm();
 									setBulkAccountOpen(true);
+									void loadCourseOptions();
 								},
 								startIcon: <GroupAdd />,
 							},
@@ -1803,6 +1927,63 @@ const AdminUsers = () => {
 								inputStyle={{ width: '100%', height: '40px' }}
 							/>
 						</Box>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Add to course is optional. The course page opens as soon as the account is created.
+						</Typography>
+						<FormControl fullWidth size='small'>
+							<Select
+								displayEmpty
+								value={createCourseId}
+								onChange={(event) => void selectCreateCourse(String(event.target.value))}
+								disabled={createAccountSubmitting || courseOptionsLoading}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{courseOptionsLoading ? 'Loading courses...' : 'No course'}
+								</MenuItem>
+								{courseOptions
+									.filter((course) => !course.isTestCourse)
+									.map((course) => (
+										<MenuItem key={course._id} value={course._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{course.title}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+						{createGroups.length > 0 && (
+							<FormControl fullWidth size='small'>
+								<Select
+									displayEmpty
+									value={createGroupId}
+									onChange={(event) => setCreateGroupId(String(event.target.value))}
+									disabled={createAccountSubmitting}
+									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Select a group
+									</MenuItem>
+									{createGroups.map((group) => (
+										<MenuItem key={`single-${group._id}`} value={group._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{group.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
+						<FormControlLabel
+							sx={{ ml: 0 }}
+							control={
+								<Checkbox
+									size='small'
+									checked={sendCreatePaymentLink}
+									disabled={!createCourseId || createAccountSubmitting}
+									onChange={(event) => setSendCreatePaymentLink(event.target.checked)}
+								/>
+							}
+							label={
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Send payment link
+								</Typography>
+							}
+						/>
 						{createAccountError && (
 							<Typography variant='body2' sx={{ color: 'error.main' }}>
 								{createAccountError}
@@ -1821,7 +2002,7 @@ const AdminUsers = () => {
 						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateAccountOpen(false)}>
 							Close
 						</CustomCancelButton>
-						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={submitCreateAccount} sx={{ margin: '0 1rem 0.5rem 0' }}>
+						<CustomSubmitButton type='button' disabled={createAccountSubmitting} onClick={() => requestCreateConfirm('single')} sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{createAccountSubmitting ? 'Creating...' : 'Create'}
 						</CustomSubmitButton>
 					</DialogActions>
@@ -1843,6 +2024,63 @@ const AdminUsers = () => {
 							<br />
 							Ayşe,Duran,ayse@ornek.com,+905551112233,TR
 						</Box>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Add to course is optional and applies to every new account. The course page opens as soon as the account is created.
+						</Typography>
+						<FormControl fullWidth size='small'>
+							<Select
+								displayEmpty
+								value={createCourseId}
+								onChange={(event) => void selectCreateCourse(String(event.target.value))}
+								disabled={bulkAccountSubmitting || courseOptionsLoading}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{courseOptionsLoading ? 'Loading courses...' : 'No course'}
+								</MenuItem>
+								{courseOptions
+									.filter((course) => !course.isTestCourse)
+									.map((course) => (
+										<MenuItem key={course._id} value={course._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{course.title}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+						{createGroups.length > 0 && (
+							<FormControl fullWidth size='small'>
+								<Select
+									displayEmpty
+									value={createGroupId}
+									onChange={(event) => setCreateGroupId(String(event.target.value))}
+									disabled={bulkAccountSubmitting}
+									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<MenuItem value='' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Select a group
+									</MenuItem>
+									{createGroups.map((group) => (
+										<MenuItem key={`bulk-${group._id}`} value={group._id} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{group.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
+						<FormControlLabel
+							sx={{ ml: 0 }}
+							control={
+								<Checkbox
+									size='small'
+									checked={sendCreatePaymentLink}
+									disabled={!createCourseId || bulkAccountSubmitting}
+									onChange={(event) => setSendCreatePaymentLink(event.target.checked)}
+								/>
+							}
+							label={
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Send payment link to each new account
+								</Typography>
+							}
+						/>
 						<TextField
 							multiline
 							minRows={6}
@@ -1914,9 +2152,51 @@ const AdminUsers = () => {
 						<CustomSubmitButton
 							type='button'
 							disabled={bulkAccountSubmitting || !bulkAccountSuitable || Boolean(bulkAccountResults)}
-							onClick={submitBulkAccounts}
+							onClick={() => requestCreateConfirm('bulk')}
 							sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{bulkAccountSubmitting ? 'Creating...' : 'Create'}
+						</CustomSubmitButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={createConfirmMode !== null}
+					closeModal={() => setCreateConfirmMode(null)}
+					maxWidth='xs'
+					title='Are you sure?'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							{createConfirmMode === 'bulk'
+								? `Are you sure you want to create ${bulkAccountRows.filter((row) => !row.error).length} accounts?`
+								: 'Are you sure you want to create this account?'}
+						</Typography>
+						{createCourseId && (
+							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{createConfirmMode === 'bulk' ? 'Each new account will be added to ' : 'This account will be added to '}
+								{courseOptions.find((course) => course._id === createCourseId)?.title || 'the selected course'}.
+							</Typography>
+						)}
+						{sendCreatePaymentLink && (
+							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{createConfirmMode === 'bulk'
+									? 'A separate payment link email will be sent to each new account.'
+									: 'A payment link will be emailed to this account.'}
+							</Typography>
+						)}
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateConfirmMode(null)}>
+							Cancel
+						</CustomCancelButton>
+						<CustomSubmitButton
+							type='button'
+							onClick={() => {
+								const mode = createConfirmMode;
+								setCreateConfirmMode(null);
+								if (mode === 'single') void submitCreateAccount();
+								if (mode === 'bulk') void submitBulkAccounts();
+							}}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							Create
 						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>
