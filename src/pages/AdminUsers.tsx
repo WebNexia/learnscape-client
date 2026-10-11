@@ -331,6 +331,7 @@ const AdminUsers = () => {
 	const [enrollGroups, setEnrollGroups] = useState<Array<{ _id: string; name: string }>>([]);
 	const [selectedEnrollGroupId, setSelectedEnrollGroupId] = useState('');
 	const [enrollError, setEnrollError] = useState('');
+	const [enrollCourseStatus, setEnrollCourseStatus] = useState<{ registrationClosed: boolean; courseFull: boolean } | null>(null);
 	const [enrollSubmitting, setEnrollSubmitting] = useState(false);
 	const [paymentLinkSubmitting, setPaymentLinkSubmitting] = useState(false);
 	const [paymentLinkCopying, setPaymentLinkCopying] = useState(false);
@@ -685,6 +686,7 @@ const AdminUsers = () => {
 		setSelectedEnrollGroupId('');
 		setEnrollGroups([]);
 		setEnrollError('');
+		setEnrollCourseStatus(null);
 		setPaymentLinkMessage('');
 		setPaymentLinkUrl('');
 		await loadCourseOptions();
@@ -695,6 +697,7 @@ const AdminUsers = () => {
 		setSelectedEnrollGroupId('');
 		setEnrollGroups([]);
 		setEnrollError('');
+		setEnrollCourseStatus(null);
 		setPaymentLinkMessage('');
 		setPaymentLinkUrl('');
 		setEnrollBalance(null);
@@ -714,8 +717,25 @@ const AdminUsers = () => {
 		}
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
-			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
+			const courseInfo = response.data?.data as
+				| {
+						groups?: Array<{ _id?: string; name?: string }>;
+						isRegistrationClosedByAdmin?: boolean;
+						isMarkedFullByAdmin?: boolean;
+						isCapacityFull?: boolean;
+						capacity?: number | null;
+						activeEnrollmentCount?: number;
+				  }
+				| undefined;
+			const groups = (courseInfo?.groups || []) as Array<{ _id?: string; name?: string }>;
 			setEnrollGroups(groups.filter((group): group is { _id: string; name: string } => Boolean(group._id && group.name)));
+			const capacity = courseInfo?.capacity !== undefined && courseInfo?.capacity !== null ? Number(courseInfo.capacity) : null;
+			const enrolledCount = typeof courseInfo?.activeEnrollmentCount === 'number' ? courseInfo.activeEnrollmentCount : 0;
+			const seatsFull = capacity !== null && Number.isFinite(capacity) && enrolledCount >= capacity;
+			setEnrollCourseStatus({
+				registrationClosed: Boolean(courseInfo?.isRegistrationClosedByAdmin),
+				courseFull: Boolean(courseInfo?.isMarkedFullByAdmin) || Boolean(courseInfo?.isCapacityFull) || seatsFull,
+			});
 		} catch {
 			setEnrollError('Could not load groups for this course.');
 		}
@@ -753,6 +773,7 @@ const AdminUsers = () => {
 			setSelectedEnrollCourseId('');
 			setSelectedEnrollGroupId('');
 			setEnrollGroups([]);
+			setEnrollCourseStatus(null);
 		} catch (error: any) {
 			setEnrollError(error?.response?.data?.message || 'Could not add the course.');
 		} finally {
@@ -1133,6 +1154,7 @@ const AdminUsers = () => {
 		setIsUserCoursesModalOpen(newModalState);
 		setEnrollFormUserId(null);
 		setEnrollError('');
+		setEnrollCourseStatus(null);
 		setSelectedEnrollCourseId('');
 		setSelectedEnrollGroupId('');
 		setEnrollGroups([]);
@@ -1868,6 +1890,9 @@ const AdminUsers = () => {
 						const coursesData = user._id ? userCoursesData[user._id] : undefined;
 						const selectedEnrollment = (coursesData?.courses || []).find((row) => row.courseId === selectedEnrollCourseId);
 						const selectedCoursePaid = Boolean(selectedEnrollment?.hasPaid);
+						const enrollNeedsOverride = Boolean(
+							selectedEnrollCourseId && !selectedEnrollment && (enrollCourseStatus?.registrationClosed || enrollCourseStatus?.courseFull)
+						);
 						return isUserCoursesModalOpen[index] ? (
 							<CustomDialog
 								key={`user-courses-${user._id || index}`}
@@ -1881,9 +1906,6 @@ const AdminUsers = () => {
 								<DialogContent sx={{ p: '2rem' }}>
 									{enrollFormUserId === user._id && (
 										<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', mb: '1.25rem' }}>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												Add opens the course page now. Evergreen courses unlock lessons immediately. Cohort courses keep lessons locked until the start date. Send payment link emails a Stripe page. Copy link puts the same page on the clipboard so you can send it yourself. When they pay, the payment is saved for this user and course.
-											</Typography>
 											<FormControl fullWidth size='small'>
 												<Select
 													displayEmpty
@@ -1926,24 +1948,33 @@ const AdminUsers = () => {
 												</Typography>
 											)}
 											{selectedEnrollCourseId && enrollBalance && !enrollBalance.settled && enrollBalance.price > 0 && (
-												<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+												<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', margin: '0.75rem 0' }}>
 													<PaymentBalanceSummary
 														price={enrollBalance.price}
 														paid={enrollBalance.paid}
 														remaining={enrollBalance.remaining}
 														currency={enrollBalance.currency}
 													/>
-													<TextField
+													<CustomTextField
 														size='small'
 														fullWidth
 														type='number'
+														required={false}
 														label={`Amount (${enrollBalance.currency.toUpperCase()})`}
 														value={enrollPaymentAmount}
 														onChange={(event) => setEnrollPaymentAmount(event.target.value)}
 														disabled={paymentLinkSubmitting || paymentLinkCopying}
-														inputProps={{ min: 0, step: '0.01' }}
+														InputProps={{ inputProps: { min: 0, step: '0.01' } }}
+														sx={{ margin: '0.75rem 0 0 0' }}
 													/>
 												</Box>
+											)}
+											{enrollNeedsOverride && (
+												<Alert severity='warning' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{enrollCourseStatus?.registrationClosed ? 'Registration for this course is closed.' : ''}
+													{enrollCourseStatus?.registrationClosed && enrollCourseStatus?.courseFull ? ' ' : ''}
+													{enrollCourseStatus?.courseFull ? 'This course is full.' : ''}
+												</Alert>
 											)}
 											{enrollError && (
 												<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -1968,6 +1999,7 @@ const AdminUsers = () => {
 													onClick={() => {
 														setEnrollFormUserId(null);
 														setEnrollError('');
+														setEnrollCourseStatus(null);
 														setPaymentLinkMessage('');
 														setPaymentLinkUrl('');
 													}}>
@@ -1989,7 +2021,7 @@ const AdminUsers = () => {
 													type='button'
 													onClick={() => user._id && submitManualEnrollment(user._id)}
 													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || Boolean(selectedEnrollment)}>
-													{enrollSubmitting ? 'Adding...' : 'Add'}
+													{enrollSubmitting ? 'Adding...' : enrollNeedsOverride ? 'Add Anyway' : 'Add'}
 												</CustomSubmitButton>
 											</Box>
 										</Box>
