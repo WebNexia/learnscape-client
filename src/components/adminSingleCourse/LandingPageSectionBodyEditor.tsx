@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import TinyMceEditor from '../richTextEditor/TinyMceEditor';
+import TinyMceEditor, { didUserFocusEditor } from '../richTextEditor/TinyMceEditor';
 
 type Props = {
 	editorId: string;
@@ -27,9 +27,11 @@ export default function LandingPageSectionBodyEditor({ editorId, maxLength, seed
 			imageScopedEntityId={imageScopedEntityId}
 			initialValue={initialSnapshot.current}
 			value={html}
-			handleEditorChange={(content) => {
+			handleEditorChange={(content, editor) => {
 				const trimmed = content.length > maxLength ? content.slice(0, maxLength) : content;
 				setHtml(trimmed);
+				// Init rewrites HTML and fires onEditorChange before the user focuses the editor.
+				if (!didUserFocusEditor(editor)) return;
 				onHtmlChange(trimmed);
 			}}
 		/>

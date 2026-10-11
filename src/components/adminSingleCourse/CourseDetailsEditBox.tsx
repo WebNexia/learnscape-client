@@ -436,7 +436,7 @@ const CourseDetailsEditBox = ({
 								introModal,
 							}).shouldOpen
 						}
-						onClick={() => setIsIntroModalPreviewOpen(true)}>
+						onClick={() => setIsIntroModalPreviewOpen(true)} sx={{ textTransform: 'capitalize' }}>
 						Preview modal
 					</Button>
 				</Box>
@@ -580,8 +580,9 @@ const CourseDetailsEditBox = ({
 								return { ...prev, landingPageSections: next };
 							});
 							setHasUnsavedChanges(true);
-						}}>
-						Add section
+						}}
+						sx={{ textTransform: 'capitalize' }}>
+						Add Section
 					</Button>
 				</Box>
 				<Collapse in={isLandingPageSectionsExpanded} timeout='auto' unmountOnExit>

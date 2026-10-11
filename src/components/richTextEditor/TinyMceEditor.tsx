@@ -9,7 +9,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 
 interface TinyMceEditorProps {
-	handleEditorChange: (content: string) => void;
+	handleEditorChange: (content: string, editor?: { hasFocus?: () => boolean }) => void;
 	initialValue?: string;
 	value?: string;
 	height?: string | number | undefined;
@@ -24,6 +24,13 @@ interface TinyMceEditorProps {
 	imageScopedEntityId?: string;
 	/** Bold, italic, underline, lists, and links only. */
 	simple?: boolean;
+}
+
+const initializingEditors = new WeakSet<object>();
+const userFocusedEditors = new WeakSet<object>();
+
+export function didUserFocusEditor(editor: object | null | undefined): boolean {
+	return !!editor && userFocusedEditors.has(editor);
 }
 
 const TinyMceEditor = ({
@@ -196,6 +203,11 @@ const TinyMceEditor = ({
 						if (editorRef && typeof editorRef === 'object') {
 							editorRef.current = editor;
 						}
+						initializingEditors.add(editor);
+						editor.on('focus', () => {
+							if (initializingEditors.has(editor)) return;
+							userFocusedEditors.add(editor);
+						});
 						if (isFITB) {
 							handleWordClick(editor);
 						}
@@ -225,17 +237,22 @@ const TinyMceEditor = ({
 						});
 						// Remove the fallback 'input' event that sets content as plain text
 					},
+					init_instance_callback: (editor) => {
+						initializingEditors.delete(editor);
+					},
 				}}
 				onEditorChange={(content, editor) => {
 					const MAX_LENGTH = maxLength;
 					const textContent = editor.getContent({ format: 'text' }) || '';
-					const handleChange = isFITB ? handleEditorChangeInternal : handleEditorChange;
 					if (textContent.length > MAX_LENGTH) {
 						// Do not set content as plain text; just ignore extra input
 						return;
-					} else {
-						handleChange(content); // content is HTML
 					}
+					if (isFITB) {
+						handleEditorChangeInternal(content);
+						return;
+					}
+					handleEditorChange(content, editor);
 				}}
 			/>
 			{allowImages && showImageDialog && (
