@@ -38,6 +38,7 @@ import { CoursesContext } from '../contexts/CoursesContextProvider';
 import theme from '../themes';
 import { SingleCourse } from '../interfaces/course';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import CourseWaitingListAdminPanel from '../components/adminSingleCourse/CourseWaitingListAdminPanel';
 import { useAuth } from '../hooks/useAuth';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -834,6 +835,7 @@ const CourseRoster = () => {
 								onChange={handlePageChange}
 							/>
 						</Box>
+						{hasAdminAccess && courseId ? <CourseWaitingListAdminPanel courseId={courseId} /> : null}
 					</Box>
 				)}
 

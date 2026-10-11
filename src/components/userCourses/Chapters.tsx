@@ -5,6 +5,7 @@ import Chapter, { ChapterRef } from './Chapter';
 import { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
+import { isChapterIndexOpen, openThroughLimit } from '../../utils/chapterRelease';
 
 interface ChaptersProps {
 	course: SingleCourse;
@@ -121,7 +122,7 @@ const Chapters = ({ course, isEnrolledStatus, staffPreviewMode = false, staffPre
 	}, [course, expandAndScrollToChapter]);
 
 	return (
-		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
+		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? (isMobileSize ? '4.5rem' : '6rem') : '2rem' }}>
 			{/* Chapter Controls Header */}
 			{validChapters.length > 1 && (
 				<Box sx={{ marginBottom: '1.25rem' }}>
@@ -190,15 +191,15 @@ const Chapters = ({ course, isEnrolledStatus, staffPreviewMode = false, staffPre
 				course?.chapters?.map((chapter, index) => {
 					if (chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) {
 						let nextChapterFirstLessonId: string = '';
-						// Find the first valid lesson in the next available chapter (skip empty/null chapters)
+						const releaseLimit = staffPreviewMode ? null : openThroughLimit(course);
 						for (let nextIndex = index + 1; nextIndex < course.chapters.length; nextIndex++) {
 							const nextChapter = course.chapters[nextIndex];
 							if (!nextChapter) continue;
 							const firstValidNextChapterLesson = nextChapter.lessons?.find((lesson) => lesson && lesson._id);
-							if (firstValidNextChapterLesson?._id) {
-								nextChapterFirstLessonId = firstValidNextChapterLesson._id;
-								break;
-							}
+							if (!firstValidNextChapterLesson?._id) continue;
+							if (!isChapterIndexOpen(releaseLimit, nextIndex)) break;
+							nextChapterFirstLessonId = firstValidNextChapterLesson._id;
+							break;
 						}
 						return (
 							<Chapter

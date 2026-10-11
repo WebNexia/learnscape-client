@@ -42,6 +42,77 @@ type BulkAccountRow = {
 	error: string;
 };
 
+type CoursePaymentBalance = {
+	currency: string;
+	price: number;
+	paid: number;
+	remaining: number;
+	settled: boolean;
+};
+
+const parsePaymentAmount = (value: string) => {
+	const parsed = Number(String(value).trim().replace(',', '.'));
+	return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : Number.NaN;
+};
+
+const formatMoney = (amount?: number, currency?: string) => {
+	if (amount == null || !currency) return '';
+	return `${amount.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ${currency.toUpperCase()}`;
+};
+
+const PaymentBalanceSummary = ({ price, paid, remaining, currency }: { price?: number; paid?: number; remaining?: number; currency?: string }) => {
+	const coursePrice = price || 0;
+	const paidAmount = paid || 0;
+	const remainingAmount = remaining ?? Math.max(0, coursePrice - paidAmount);
+	const progress = coursePrice > 0 ? Math.min(100, (paidAmount / coursePrice) * 100) : 0;
+	const accent = theme.bgColor?.adminHeader || '#009694';
+	const figures = [
+		{ label: 'Course price', value: formatMoney(coursePrice, currency) },
+		{ label: 'Paid', value: formatMoney(paidAmount, currency) },
+		{ label: 'Remaining', value: formatMoney(remainingAmount, currency), highlight: true },
+	];
+
+	return (
+		<Box
+			sx={{
+				border: `1px solid ${accent}33`,
+				borderRadius: '0.45rem',
+				backgroundColor: `${accent}0F`,
+				px: '0.7rem',
+				pt: '0.55rem',
+				pb: '0.6rem',
+			}}>
+			<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', mb: '0.5rem' }}>
+				{figures.map((figure) => (
+					<Box key={figure.label} sx={{ minWidth: 0 }}>
+						<Typography sx={{ fontSize: '0.68rem', color: 'text.secondary', lineHeight: 1.2, letterSpacing: '0.01em' }}>{figure.label}</Typography>
+						<Typography
+							sx={{
+								fontSize: { xs: '0.75rem', sm: '0.82rem' },
+								fontWeight: 700,
+								lineHeight: 1.35,
+								color: figure.highlight ? accent : 'text.primary',
+								wordBreak: 'break-word',
+							}}>
+							{figure.value}
+						</Typography>
+					</Box>
+				))}
+			</Box>
+			<LinearProgress
+				variant='determinate'
+				value={progress}
+				sx={{
+					height: 6,
+					borderRadius: 99,
+					backgroundColor: `${accent}26`,
+					'& .MuiLinearProgress-bar': { backgroundColor: accent, borderRadius: 99 },
+				}}
+			/>
+		</Box>
+	);
+};
+
 type BulkAccountResult = {
 	row: number;
 	email: string;
@@ -205,6 +276,10 @@ const AdminUsers = () => {
 				rank: number | null;
 				totalStudents: number;
 				hasPaid?: boolean;
+				coursePrice?: number;
+				paidAmount?: number;
+				remainingAmount?: number;
+				currency?: string;
 			}>;
 			loading: boolean;
 		};
@@ -233,6 +308,11 @@ const AdminUsers = () => {
 	const [sendCreatePaymentLink, setSendCreatePaymentLink] = useState(false);
 	const [copyCreatePaymentLink, setCopyCreatePaymentLink] = useState(false);
 	const [createPaymentLinkUrl, setCreatePaymentLinkUrl] = useState('');
+	const [createCourseQuote, setCreateCourseQuote] = useState<CoursePaymentBalance | null>(null);
+	const [createPaymentAmount, setCreatePaymentAmount] = useState('');
+	const [enrollBalance, setEnrollBalance] = useState<CoursePaymentBalance | null>(null);
+	const [enrollPaymentAmount, setEnrollPaymentAmount] = useState('');
+	const [enrolledLinkAmounts, setEnrolledLinkAmounts] = useState<Record<string, string>>({});
 	const [createConfirmMode, setCreateConfirmMode] = useState<'single' | 'bulk' | null>(null);
 	const [bulkAccountOpen, setBulkAccountOpen] = useState(false);
 	const [bulkAccountText, setBulkAccountText] = useState('');
@@ -292,6 +372,8 @@ const AdminUsers = () => {
 		setSendCreatePaymentLink(false);
 		setCopyCreatePaymentLink(false);
 		setCreatePaymentLinkUrl('');
+		setCreateCourseQuote(null);
+		setCreatePaymentAmount('');
 	};
 
 	const resetBulkAccountForm = () => {
@@ -310,6 +392,8 @@ const AdminUsers = () => {
 		setSendCreatePaymentLink(false);
 		setCopyCreatePaymentLink(false);
 		setCreatePaymentLinkUrl('');
+		setCreateCourseQuote(null);
+		setCreatePaymentAmount('');
 	};
 
 	const previewBulkAccounts = (value: string, fileName = '') => {
@@ -348,8 +432,11 @@ const AdminUsers = () => {
 		if (!courseId) {
 			setSendCreatePaymentLink(false);
 			setCopyCreatePaymentLink(false);
+			setCreateCourseQuote(null);
+			setCreatePaymentAmount('');
 			return;
 		}
+		void refreshCreateCourseQuote(courseId, createCountryCode);
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
 			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
@@ -369,11 +456,28 @@ const AdminUsers = () => {
 		});
 	};
 
-	const sendCreatedPaymentLink = async (userId: string, sendEmail = true) => {
+	const refreshCreateCourseQuote = async (courseId: string, countryCode: string) => {
+		if (!courseId) {
+			setCreateCourseQuote(null);
+			setCreatePaymentAmount('');
+			return;
+		}
+		try {
+			const response = await axios.get(`${base_url}/payments/admin/course-balance`, { params: { courseId, countryCode } });
+			const quote = response.data as CoursePaymentBalance;
+			setCreateCourseQuote(quote);
+			setCreatePaymentAmount(quote?.remaining > 0 ? String(quote.remaining) : '');
+		} catch {
+			setCreateCourseQuote(null);
+		}
+	};
+
+	const sendCreatedPaymentLink = async (userId: string, sendEmail = true, amount?: number) => {
 		const response = await axios.post(`${base_url}/payments/admin/course-link`, {
 			userId,
 			courseId: createCourseId,
 			sendEmail,
+			...(amount != null ? { amount } : {}),
 			...(createGroupId ? { groupId: createGroupId } : {}),
 		});
 		return (response.data?.checkoutUrl || '') as string;
@@ -403,6 +507,17 @@ const AdminUsers = () => {
 			else setBulkAccountError(message);
 			return;
 		}
+		if (mode === 'single' && (sendCreatePaymentLink || copyCreatePaymentLink)) {
+			const amount = parsePaymentAmount(createPaymentAmount);
+			if (!Number.isFinite(amount) || amount <= 0) {
+				setCreateAccountError('Enter a payment amount.');
+				return;
+			}
+			if (createCourseQuote && amount - createCourseQuote.remaining > 0.01) {
+				setCreateAccountError(`Amount cannot exceed ${formatMoney(createCourseQuote.remaining, createCourseQuote.currency)}.`);
+				return;
+			}
+		}
 		if (createCourseId && createGroups.length > 0 && !createGroupId) {
 			const message = 'Select a group.';
 			if (mode === 'single') setCreateAccountError(message);
@@ -413,14 +528,19 @@ const AdminUsers = () => {
 	};
 
 	const submitBulkAccounts = async () => {
-		if (bulkAccountTooMany || bulkAccountWrongFormat || bulkAccountRows.some((row) => row.error)) return;
+		if (bulkAccountTooMany || bulkAccountWrongFormat || bulkAccountRows.some((row) => row.error)) {
+			setCreateConfirmMode(null);
+			return;
+		}
 		const ready = bulkAccountRows.filter((row) => !row.error);
 		if (ready.length === 0) {
 			setBulkAccountError('Add at least one valid person.');
+			setCreateConfirmMode(null);
 			return;
 		}
 		if (createCourseId && createGroups.length > 0 && !createGroupId) {
 			setBulkAccountError('Select a group.');
+			setCreateConfirmMode(null);
 			return;
 		}
 		setBulkAccountSubmitting(true);
@@ -464,6 +584,7 @@ const AdminUsers = () => {
 			setBulkAccountError(error?.response?.data?.message || 'Could not create the accounts.');
 		} finally {
 			setBulkAccountSubmitting(false);
+			setCreateConfirmMode(null);
 		}
 	};
 
@@ -474,10 +595,12 @@ const AdminUsers = () => {
 		setCreatePaymentLinkUrl('');
 		if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || createPhone.replace(/\D/g, '').length < 7) {
 			setCreateAccountError('First name, last name, email, country, and phone are required.');
+			setCreateConfirmMode(null);
 			return;
 		}
 		if (createCourseId && createGroups.length > 0 && !createGroupId) {
 			setCreateAccountError('Select a group.');
+			setCreateConfirmMode(null);
 			return;
 		}
 		setCreateAccountSubmitting(true);
@@ -502,7 +625,7 @@ const AdminUsers = () => {
 				}
 				if (sendCreatePaymentLink || copyCreatePaymentLink) {
 					try {
-						const checkoutUrl = await sendCreatedPaymentLink(createdUserId, sendCreatePaymentLink);
+						const checkoutUrl = await sendCreatedPaymentLink(createdUserId, sendCreatePaymentLink, parsePaymentAmount(createPaymentAmount));
 						if (sendCreatePaymentLink) message = `${message} Ödeme bağlantısı e-postaya gönderildi.`;
 						if (copyCreatePaymentLink && checkoutUrl) {
 							try {
@@ -538,6 +661,7 @@ const AdminUsers = () => {
 			setCreateAccountError(error?.response?.data?.message || 'Could not create the account.');
 		} finally {
 			setCreateAccountSubmitting(false);
+			setCreateConfirmMode(null);
 		}
 	};
 
@@ -573,7 +697,21 @@ const AdminUsers = () => {
 		setEnrollError('');
 		setPaymentLinkMessage('');
 		setPaymentLinkUrl('');
+		setEnrollBalance(null);
+		setEnrollPaymentAmount('');
 		if (!courseId) return;
+		if (enrollFormUserId) {
+			try {
+				const balanceResponse = await axios.get(`${base_url}/payments/admin/course-balance`, {
+					params: { userId: enrollFormUserId, courseId },
+				});
+				const balance = balanceResponse.data as CoursePaymentBalance;
+				setEnrollBalance(balance);
+				setEnrollPaymentAmount(balance?.remaining > 0 ? String(balance.remaining) : '');
+			} catch {
+				setEnrollError('Could not load the course balance.');
+			}
+		}
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}/staff-info`);
 			const groups = (response.data?.data?.groups || []) as Array<{ _id?: string; name?: string }>;
@@ -633,10 +771,18 @@ const AdminUsers = () => {
 		setPaymentLinkMessage('');
 		setPaymentLinkUrl('');
 		try {
+			const amount = parsePaymentAmount(enrollPaymentAmount);
+			if (!Number.isFinite(amount) || amount <= 0) {
+				setEnrollError('Enter a payment amount.');
+				if (sendEmail) setPaymentLinkSubmitting(false);
+				else setPaymentLinkCopying(false);
+				return;
+			}
 			const response = await axios.post(`${base_url}/payments/admin/course-link`, {
 				userId: targetUserId,
 				courseId: selectedEnrollCourseId,
 				sendEmail,
+				amount,
 				...(selectedEnrollGroupId ? { groupId: selectedEnrollGroupId } : {}),
 			});
 			const checkoutUrl = response.data?.checkoutUrl || '';
@@ -659,17 +805,24 @@ const AdminUsers = () => {
 		}
 	};
 
-	const sendEnrolledCoursePaymentLink = async (targetUserId: string, courseId: string, sendEmail: boolean) => {
+	const sendEnrolledCoursePaymentLink = async (targetUserId: string, courseId: string, sendEmail: boolean, amountValue: string) => {
+		const amount = parsePaymentAmount(amountValue);
 		setEnrolledLinkCourseId(courseId);
 		setEnrolledLinkBusy(sendEmail ? 'send' : 'copy');
 		setEnrolledLinkMessage('');
 		setEnrolledLinkError('');
 		setEnrolledLinkUrl('');
+		if (!Number.isFinite(amount) || amount <= 0) {
+			setEnrolledLinkError('Enter a payment amount.');
+			setEnrolledLinkBusy(null);
+			return;
+		}
 		try {
 			const response = await axios.post(`${base_url}/payments/admin/course-link`, {
 				userId: targetUserId,
 				courseId,
 				sendEmail,
+				amount,
 			});
 			const checkoutUrl = response.data?.checkoutUrl || '';
 			setEnrolledLinkUrl(checkoutUrl);
@@ -1020,6 +1173,8 @@ const AdminUsers = () => {
 		}
 	};
 
+	const courseDialogBusy = enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || enrolledLinkBusy !== null;
+	const accountCreateBusy = createAccountSubmitting || bulkAccountSubmitting;
 	const bulkInvalidCount = bulkAccountRows.filter((row) => row.error).length;
 	const bulkAccountSuitable = bulkAccountRows.length > 0 && !bulkAccountTooMany && !bulkAccountWrongFormat && bulkInvalidCount === 0 && !bulkAccountFileIssue;
 	const bulkAccountLabel = bulkAccountFileName ? `"${bulkAccountFileName}"` : 'Liste';
@@ -1324,7 +1479,7 @@ const AdminUsers = () => {
 																	/>
 																</Box>
 															</Box>
-															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row' }}>
+															<Box sx={{ display: 'flex', gap: '0.75rem', flexDirection: isMobileSize ? 'column' : 'row', margin: '0.75rem 0' }}>
 																<Box sx={{ flex: 1, minWidth: 0 }}>
 																	<CustomTextField
 																		label='Username'
@@ -1565,6 +1720,7 @@ const AdminUsers = () => {
 																	closeDeleteLearningDataModal(index);
 																}
 															}}
+															disableDismiss={isDeletingLearningData}
 															title='Delete User Learning Data'
 															maxWidth='xs'>
 															<DialogContent>
@@ -1618,6 +1774,7 @@ const AdminUsers = () => {
 																	closeDeleteUserModal(index);
 																}
 															}}
+															disableDismiss={isDeletingUser}
 															title='Delete User Account'
 															maxWidth='xs'>
 															<DialogContent>
@@ -1715,7 +1872,10 @@ const AdminUsers = () => {
 							<CustomDialog
 								key={`user-courses-${user._id || index}`}
 								openModal={isUserCoursesModalOpen[index] || false}
-								closeModal={() => closeUserCoursesModal(index)}
+								closeModal={() => {
+									if (!courseDialogBusy) closeUserCoursesModal(index);
+								}}
+								disableDismiss={courseDialogBusy}
 								title={`Courses - ${fullName}`}
 								maxWidth='sm'>
 								<DialogContent sx={{ p: '2rem' }}>
@@ -1760,10 +1920,30 @@ const AdminUsers = () => {
 													</Select>
 												</FormControl>
 											)}
-											{selectedCoursePaid && (
+											{(selectedCoursePaid || enrollBalance?.settled) && (
 												<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 													This user has already paid for this course.
 												</Typography>
+											)}
+											{selectedEnrollCourseId && enrollBalance && !enrollBalance.settled && enrollBalance.price > 0 && (
+												<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+													<PaymentBalanceSummary
+														price={enrollBalance.price}
+														paid={enrollBalance.paid}
+														remaining={enrollBalance.remaining}
+														currency={enrollBalance.currency}
+													/>
+													<TextField
+														size='small'
+														fullWidth
+														type='number'
+														label={`Amount (${enrollBalance.currency.toUpperCase()})`}
+														value={enrollPaymentAmount}
+														onChange={(event) => setEnrollPaymentAmount(event.target.value)}
+														disabled={paymentLinkSubmitting || paymentLinkCopying}
+														inputProps={{ min: 0, step: '0.01' }}
+													/>
+												</Box>
 											)}
 											{enrollError && (
 												<Typography variant='body2' sx={{ color: 'error.main', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
@@ -1795,13 +1975,13 @@ const AdminUsers = () => {
 												</CustomCancelButton>
 												<CustomCancelButton
 													type='button'
-													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || selectedCoursePaid}
+													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || selectedCoursePaid || Boolean(enrollBalance?.settled)}
 													onClick={() => user._id && requestCoursePaymentLink(user._id, false)}>
 													{paymentLinkCopying ? 'Copying...' : 'Copy link'}
 												</CustomCancelButton>
 												<CustomCancelButton
 													type='button'
-													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || selectedCoursePaid}
+													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || selectedCoursePaid || Boolean(enrollBalance?.settled)}
 													onClick={() => user._id && requestCoursePaymentLink(user._id, true)}>
 													{paymentLinkSubmitting ? 'Sending...' : 'Send payment link'}
 												</CustomCancelButton>
@@ -1891,17 +2071,37 @@ const AdminUsers = () => {
 															</Typography>
 														) : (
 															<Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', mb: '0.5rem' }} onClick={(event) => event.stopPropagation()}>
+																{(course.coursePrice || 0) > 0 && (
+																	<PaymentBalanceSummary
+																		price={course.coursePrice}
+																		paid={course.paidAmount}
+																		remaining={course.remainingAmount}
+																		currency={course.currency}
+																	/>
+																)}
+																<CustomTextField
+																	size='small'
+																	fullWidth
+																	type='number'
+																	required={false}
+																	label={`Amount (${(course.currency || 'usd').toUpperCase()})`}
+																	value={enrolledLinkAmounts[course.courseId] ?? (course.remainingAmount != null ? String(course.remainingAmount) : '')}
+																	onChange={(event) => setEnrolledLinkAmounts((current) => ({ ...current, [course.courseId]: event.target.value }))}
+																	disabled={enrolledLinkBusy !== null}
+																	InputProps={{ inputProps: { min: 0, step: '0.01' } }}
+																	sx={{ margin: '0.75rem 0 0.75rem 0' }}
+																/>
 																<Box sx={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
 																	<CustomCancelButton
 																		type='button'
 																		disabled={enrolledLinkBusy !== null}
-																		onClick={() => user._id && sendEnrolledCoursePaymentLink(user._id, course.courseId, false)}>
+																		onClick={() => user._id && sendEnrolledCoursePaymentLink(user._id, course.courseId, false, enrolledLinkAmounts[course.courseId] ?? String(course.remainingAmount ?? ''))}>
 																		{enrolledLinkBusy === 'copy' && enrolledLinkCourseId === course.courseId ? 'Copying...' : 'Copy link'}
 																	</CustomCancelButton>
 																	<CustomCancelButton
 																		type='button'
 																		disabled={enrolledLinkBusy !== null}
-																		onClick={() => user._id && sendEnrolledCoursePaymentLink(user._id, course.courseId, true)}>
+																		onClick={() => user._id && sendEnrolledCoursePaymentLink(user._id, course.courseId, true, enrolledLinkAmounts[course.courseId] ?? String(course.remainingAmount ?? ''))}>
 																		{enrolledLinkBusy === 'send' && enrolledLinkCourseId === course.courseId ? 'Sending...' : 'Send payment link'}
 																	</CustomCancelButton>
 																</Box>
@@ -2020,12 +2220,18 @@ const AdminUsers = () => {
 									{enrollFormUserId !== user._id && (
 										<CustomSubmitButton
 											type='button'
+											disabled={courseDialogBusy}
 											sx={{ margin: '0 0.5rem 0.5rem 0' }}
 											onClick={() => user._id && openEnrollForm(user._id)}>
 											Add to course
 										</CustomSubmitButton>
 									)}
-									<CustomCancelButton sx={{ margin: '0 1.35rem 0.5rem 0' }} onClick={() => closeUserCoursesModal(index)}>
+									<CustomCancelButton
+										sx={{ margin: '0 1.35rem 0.5rem 0' }}
+										disabled={courseDialogBusy}
+										onClick={() => {
+											if (!courseDialogBusy) closeUserCoursesModal(index);
+										}}>
 										Close
 									</CustomCancelButton>
 								</DialogActions>
@@ -2079,7 +2285,11 @@ const AdminUsers = () => {
 										countryData && typeof countryData === 'object' && 'countryCode' in countryData
 											? String(countryData.countryCode || '')
 											: '';
-									if (code) setCreateCountryCode(code.toUpperCase());
+									if (code) {
+										const nextCountry = code.toUpperCase();
+										setCreateCountryCode(nextCountry);
+										if (createCourseId) void refreshCreateCourseQuote(createCourseId, nextCountry);
+									}
 								}}
 								inputStyle={{ width: '100%', height: '40px' }}
 							/>
@@ -2159,6 +2369,23 @@ const AdminUsers = () => {
 								}
 							/>
 						</Box>
+						{(sendCreatePaymentLink || copyCreatePaymentLink) && createCourseQuote && createCourseQuote.price > 0 && (
+							<Box>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>
+									Course price {formatMoney(createCourseQuote.price, createCourseQuote.currency)}. The link charges the amount below.
+								</Typography>
+								<TextField
+									size='small'
+									fullWidth
+									type='number'
+									label={`Amount (${createCourseQuote.currency.toUpperCase()})`}
+									value={createPaymentAmount}
+									onChange={(event) => setCreatePaymentAmount(event.target.value)}
+									disabled={createAccountSubmitting}
+									inputProps={{ min: 0, step: '0.01' }}
+								/>
+							</Box>
+						)}
 						{createAccountError && (
 							<Typography variant='body2' sx={{ color: 'error.main' }}>
 								{createAccountError}
@@ -2355,7 +2582,10 @@ const AdminUsers = () => {
 				</CustomDialog>
 				<CustomDialog
 					openModal={createConfirmMode !== null}
-					closeModal={() => setCreateConfirmMode(null)}
+					closeModal={() => {
+						if (!accountCreateBusy) setCreateConfirmMode(null);
+					}}
+					disableDismiss={accountCreateBusy}
 					maxWidth='xs'
 					title='Are you sure?'>
 					<DialogContent>
@@ -2377,6 +2607,11 @@ const AdminUsers = () => {
 									: 'A payment link will be emailed to this account.'}
 							</Typography>
 						)}
+						{createConfirmMode === 'single' && (sendCreatePaymentLink || copyCreatePaymentLink) && createCourseQuote && (
+							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								The payment link will charge {formatMoney(parsePaymentAmount(createPaymentAmount), createCourseQuote.currency)}.
+							</Typography>
+						)}
 						{createConfirmMode === 'single' && copyCreatePaymentLink && (
 							<Typography variant='body2' sx={{ mt: 1, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								The payment link will be copied so you can send it yourself.
@@ -2384,19 +2619,24 @@ const AdminUsers = () => {
 						)}
 					</DialogContent>
 					<DialogActions>
-						<CustomCancelButton sx={{ margin: '0 0.5rem 0.5rem 0' }} onClick={() => setCreateConfirmMode(null)}>
+						<CustomCancelButton
+							sx={{ margin: '0 0.5rem 0.5rem 0' }}
+							disabled={accountCreateBusy}
+							onClick={() => {
+								if (!accountCreateBusy) setCreateConfirmMode(null);
+							}}>
 							Cancel
 						</CustomCancelButton>
 						<CustomSubmitButton
 							type='button'
+							disabled={accountCreateBusy}
 							onClick={() => {
 								const mode = createConfirmMode;
-								setCreateConfirmMode(null);
 								if (mode === 'single') void submitCreateAccount();
 								if (mode === 'bulk') void submitBulkAccounts();
 							}}
 							sx={{ margin: '0 1rem 0.5rem 0' }}>
-							Create
+							{accountCreateBusy ? 'Creating...' : 'Create'}
 						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>

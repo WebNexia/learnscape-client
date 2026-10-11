@@ -9,6 +9,7 @@ import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
 import { useUserLessonsForCourse } from './useUserLessonsForCourse';
 import { learnerLessonQueryKey } from './useLearnerLesson';
 import { learnerUserAnswersByLessonQueryKey } from './useLearnerUserAnswersByLesson';
+import { isLessonChapterOpen, resolveNextLearnerLesson } from '../utils/chapterRelease';
 
 const getChapterIdFromChapter = (chapter: { _id?: string; chapterId?: string } | null | undefined) =>
 	String(chapter?._id ?? chapter?.chapterId ?? '');
@@ -27,33 +28,15 @@ export const useUserCourseLessonData = () => {
 	const { userCoursesData, singleCourseUser } = useContext(UserCourseLessonDataContext);
 	const queryClient = useQueryClient();
 
-	// Resolve next lesson: from URL or derive from course structure (so "Next Lesson" shows even without ?next= in URL)
-	const nextLessonId = useMemo(() => {
-		if (nextLessonIdFromUrl) return nextLessonIdFromUrl;
-		if (!singleCourseUser?.chapters?.length || !lessonId) return null;
-
-		const chapters = chapterIdFromUrl
-			? singleCourseUser.chapters.filter(
-					(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
-				)
-			: singleCourseUser.chapters;
-
-		for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
-			const chapter = chapters[chapterIndex];
-			if (!chapter?.lessons?.length) continue;
-			const validLessons = chapter.lessons.filter((l) => l && l._id);
-			const currentIndex = validLessons.findIndex((l) => l && l._id === lessonId);
-			if (currentIndex === -1) continue;
-			if (currentIndex < validLessons.length - 1) return validLessons[currentIndex + 1]._id;
-			if (chapterIdFromUrl) return null;
-			for (let j = chapterIndex + 1; j < singleCourseUser.chapters.length; j++) {
-				const first = singleCourseUser.chapters[j]?.lessons?.find((l) => l && l._id);
-				if (first?._id) return first._id;
-			}
-			return null;
+	const nextLessonResolution = useMemo(() => {
+		const structural = resolveNextLearnerLesson(singleCourseUser, lessonId, chapterIdFromUrl);
+		if (nextLessonIdFromUrl && isLessonChapterOpen(singleCourseUser, nextLessonIdFromUrl)) {
+			return { nextLessonId: nextLessonIdFromUrl, awaitingChapterRelease: false };
 		}
-		return null;
-	}, [nextLessonIdFromUrl, chapterIdFromUrl, singleCourseUser?.chapters, lessonId]);
+		return structural;
+	}, [nextLessonIdFromUrl, chapterIdFromUrl, singleCourseUser, lessonId]);
+	const nextLessonId = nextLessonResolution.nextLessonId;
+	const awaitingChapterRelease = nextLessonResolution.awaitingChapterRelease;
 
 	// Use context data for userCourseData, use hook for userLessonData
 	const parsedUserCourseData = useMemo(() => {
@@ -242,43 +225,10 @@ export const useUserCourseLessonData = () => {
 		try {
 			let resolvedNextLessonId: string | null = nextLessonId;
 
-			// Fallback: derive next lesson from course structure when query param is missing
 			if (!resolvedNextLessonId && singleCourseUser && lessonId) {
-				const chapters = chapterIdFromUrl
-					? singleCourseUser.chapters.filter(
-							(ch) => getChapterIdFromChapter(ch as { _id?: string; chapterId?: string }) === chapterIdFromUrl
-						)
-					: singleCourseUser.chapters || [];
-
-				for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
-					const chapter = chapters[chapterIndex];
-					if (!chapter?.lessons?.length) continue;
-
-					// Use only valid lessons to avoid null placeholders breaking next-lesson resolution
-					const validLessonsInChapter = chapter.lessons.filter((lesson) => lesson && lesson._id);
-					const currentLessonIndex = validLessonsInChapter.findIndex((lesson) => lesson && lesson._id === lessonId);
-					if (currentLessonIndex === -1) continue;
-
-					// Next lesson in same chapter
-					if (currentLessonIndex < validLessonsInChapter.length - 1) {
-						const nextLessonInChapter = validLessonsInChapter[currentLessonIndex + 1];
-						if (nextLessonInChapter?._id) {
-							resolvedNextLessonId = nextLessonInChapter._id;
-						}
-					} else if (!chapterIdFromUrl) {
-						// First lesson of next chapter that has lessons
-						const allChapters = singleCourseUser.chapters || [];
-						const currentChapterIndex = allChapters.indexOf(chapter);
-						for (let nextChapterIndex = currentChapterIndex + 1; nextChapterIndex < allChapters.length; nextChapterIndex++) {
-							const nextChapter = allChapters[nextChapterIndex];
-							const firstValidLesson = nextChapter?.lessons?.find((lesson) => lesson && lesson._id);
-							if (firstValidLesson?._id) {
-								resolvedNextLessonId = firstValidLesson._id;
-								break;
-							}
-						}
-					}
-					break;
+				const structural = resolveNextLearnerLesson(singleCourseUser, lessonId, chapterIdFromUrl);
+				if (!structural.awaitingChapterRelease) {
+					resolvedNextLessonId = structural.nextLessonId;
 				}
 			}
 
@@ -472,6 +422,7 @@ export const useUserCourseLessonData = () => {
 		handleNextLesson,
 		markCurrentLessonCompleted,
 		nextLessonId,
+		awaitingChapterRelease,
 		updateLastQuestion,
 		getLastQuestion,
 		parsedUserLessonData,

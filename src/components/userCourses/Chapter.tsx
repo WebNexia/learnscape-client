@@ -1,5 +1,5 @@
-import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox, DialogActions } from '@mui/material';
-import { ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
+import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox, DialogActions, Button } from '@mui/material';
+import { ExpandMore, PlayCircleOutline, Checklist, Lock } from '@mui/icons-material';
 import Lesson from './Lesson';
 import { LessonById } from '../../interfaces/lessons';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
@@ -18,6 +18,7 @@ import { SingleCourse } from '../../interfaces/course';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import CustomCancelButton from '../../components/forms/customButtons/CustomCancelButton';
+import { chapterIdOf, isChapterIndexOpen, openThroughLimit } from '../../utils/chapterRelease';
 
 interface ChapterProps {
 	chapter:
@@ -53,6 +54,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(
 	const { user } = useContext(UserAuthContext);
 	// Get courseId and userCourseId from URL params
 	const { courseId, userCourseId } = useParams();
+	const [isStartingChapter, setIsStartingChapter] = useState(false);
 
 	// Get userCoursesData from context to check if checklist is completed
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
@@ -364,6 +366,62 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(
 	}));
 
 	const validLessons = chapter?.lessons?.filter((lesson) => lesson !== null) || [];
+	const chapterIndex = (course?.chapters || []).findIndex((item) => chapterIdOf(item) !== '' && chapterIdOf(item) === chapterIdOf(chapter));
+	const chapterReleased = staffPreviewMode || chapterIndex < 0 || isChapterIndexOpen(openThroughLimit(course), chapterIndex);
+	const firstLesson = validLessons[0];
+	const firstLessonAlreadyOpen = Boolean(
+		firstLesson && parsedUserLessonData.some((data) => data.lessonId === firstLesson._id && data.courseId === courseId)
+	);
+	const previousChaptersCompleted = useMemo(() => {
+		if (chapterIndex <= 0) return chapterIndex === 0;
+		const earlierChapters = (course?.chapters || []).slice(0, chapterIndex);
+		return earlierChapters.every((earlierChapter) => {
+			const lessons = (earlierChapter?.lessons || []).filter((lesson) => lesson && lesson._id);
+			return lessons.every((lesson) =>
+				parsedUserLessonData.some((data) => data.lessonId === lesson._id && data.courseId === courseId && data.isCompleted)
+			);
+		});
+	}, [chapterIndex, course?.chapters, parsedUserLessonData, courseId]);
+	const canStartChapter =
+		!staffPreviewMode &&
+		isEnrolledStatus &&
+		chapterReleased &&
+		chapterIndex >= 0 &&
+		Boolean(firstLesson?._id) &&
+		!firstLessonAlreadyOpen &&
+		previousChaptersCompleted;
+
+	const startChapter = async (event: React.MouseEvent) => {
+		event.stopPropagation();
+		if (!canStartChapter || !firstLesson?._id || !courseId || !user?._id || isStartingChapter) return;
+
+		const enrollment = userCoursesData?.find((data) => data.courseId === courseId);
+		const validUserCourseId = enrollment?.userCourseId || userCourseId;
+		if (!validUserCourseId || validUserCourseId === 'none' || !/^[0-9a-fA-F]{24}$/.test(validUserCourseId)) return;
+
+		setIsStartingChapter(true);
+		setIsExpanded(true);
+		try {
+			await axios.post(`${base_url}/userlessons`, {
+				lessonId: firstLesson._id,
+				userId: user._id,
+				courseId,
+				userCourseId: validUserCourseId,
+				currentQuestion: 1,
+				isCompleted: false,
+				isInProgress: true,
+				orgId: course.orgId,
+				notes: '',
+				teacherFeedback: '',
+				isFeedbackGiven: false,
+			});
+			await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user._id]);
+		} catch (error) {
+			console.error('Failed to start chapter:', error);
+		} finally {
+			setIsStartingChapter(false);
+		}
+	};
 	const outlineFont = "'Varela Round', 'Segoe UI', Arial, sans-serif";
 	const isFullyComplete = progressData.percentage === 100 && progressData.total > 0;
 	const chapterAccent = '#01435A';
@@ -441,10 +499,40 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(
 						}}>
 						{chapter.title}
 					</Typography>
+					{!chapterReleased && (
+						<Tooltip title='This chapter is not open yet'>
+							<Box component='span' sx={{ display: 'inline-flex', ml: '0.45rem', flexShrink: 0 }}>
+								<Lock sx={{ color: 'white', fontSize: isMobileSize ? '1rem' : '1.15rem' }} />
+							</Box>
+						</Tooltip>
+					)}
 				</Box>
 
 				{/* Progress Indicators */}
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.45rem', position: 'relative', zIndex: 1, flexShrink: 0 }}>
+					{canStartChapter && (
+						<Button
+							type='button'
+							size='small'
+							disabled={isStartingChapter}
+							onClick={startChapter}
+							sx={{
+								color: '#01435A',
+								backgroundColor: 'white',
+								textTransform: 'none',
+								fontWeight: 700,
+								fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+								lineHeight: 1.2,
+								minWidth: 0,
+								px: isMobileSize ? '0.45rem' : '0.7rem',
+								py: '0.2rem',
+								borderRadius: '999px',
+								'&:hover': { backgroundColor: '#f8fafc' },
+								'&.Mui-disabled': { color: '#01435A', backgroundColor: 'rgba(255,255,255,0.7)' },
+							}}>
+							{isStartingChapter ? '...' : 'Start'}
+						</Button>
+					)}
 					{isEnrolledStatus && progressData.total > 0 && (
 						<>
 							<Box

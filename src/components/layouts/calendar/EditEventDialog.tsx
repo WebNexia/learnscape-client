@@ -66,6 +66,12 @@ type SelectedCourseGroup = {
 	courseTitle: string;
 };
 
+const asEventDate = (value: Date | string | null | undefined): Date | null => {
+	if (!value) return null;
+	const parsed = value instanceof Date ? value : new Date(value);
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const getDateTimeFormat = (locale: string) => {
 	switch (locale.toLowerCase()) {
 		case 'en-gb':
@@ -521,18 +527,23 @@ const EditEventDialog = ({
 			// Trigger dashboard sync when event is updated
 			dashboardSyncHelpers.onEventCreated(refreshDashboard);
 
-			const startDate = selectedEvent?.start?.toLocaleDateString(navigator.language || undefined, {
-				weekday: 'long',
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric',
-				timeZoneName: 'short',
-			});
-			const startTime = selectedEvent?.start?.toLocaleTimeString(navigator.language || undefined, {
-				hour: '2-digit',
-				minute: '2-digit',
-				timeZoneName: 'short',
-			});
+			const startAsDate = asEventDate(selectedEvent?.start);
+			const startDate = startAsDate
+				? startAsDate.toLocaleDateString(navigator.language || undefined, {
+						weekday: 'long',
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric',
+						timeZoneName: 'short',
+					})
+				: '';
+			const startTime = startAsDate
+				? startAsDate.toLocaleTimeString(navigator.language || undefined, {
+						hour: '2-digit',
+						minute: '2-digit',
+						timeZoneName: 'short',
+					})
+				: '';
 
 			// Send notifications using the utility function
 			void sendEventUpdatedNotifications({
@@ -793,7 +804,7 @@ const EditEventDialog = ({
 										setSelectedEvent((prevData) => {
 											if (prevData) {
 												const updatedStart = newValue ? newValue.toDate() : null;
-												let updatedEnd = prevData?.end;
+												let updatedEnd = asEventDate(prevData?.end);
 
 												// Check if the new start time is after the current end time
 												if (updatedStart && updatedEnd && updatedStart >= updatedEnd) {
@@ -867,13 +878,14 @@ const EditEventDialog = ({
 										const isAllDay = e.target.checked;
 										setSelectedEvent((prevData) => {
 											if (prevData) {
-												let updatedStart = prevData.start;
-												let updatedEnd = prevData.end;
+												let updatedStart = asEventDate(prevData.start);
+												let updatedEnd = asEventDate(prevData.end);
 
 												// If "All Day" is checked, set start and end to cover the full day
-												if (isAllDay && updatedStart && updatedEnd) {
-													updatedStart = new Date(updatedStart.setHours(0, 0, 0, 0));
-													updatedEnd = new Date(updatedStart); // Start with the same day
+												if (isAllDay && updatedStart) {
+													updatedStart = new Date(updatedStart);
+													updatedStart.setHours(0, 0, 0, 0);
+													updatedEnd = new Date(updatedStart);
 													updatedEnd.setHours(23, 59, 59, 999);
 												}
 												return {
@@ -969,12 +981,10 @@ const EditEventDialog = ({
 											}}
 										/>
 										{hasAdminAccess && (
-											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
-												<InfoOutlined
-													fontSize='small'
-													sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
-													onClick={() => setInstructorSearchInfoOpen(true)}
-												/>
+											<IconButton
+												sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}
+												onClick={() => setInstructorSearchInfoOpen(true)}>
+												<InfoOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 											</IconButton>
 										)}
 									</Box>
@@ -1113,12 +1123,10 @@ const EditEventDialog = ({
 											}}
 										/>
 										{hasAdminAccess && (
-											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
-												<InfoOutlined
-													fontSize='small'
-													sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
-													onClick={() => setLearnerSearchInfoOpen(true)}
-												/>
+											<IconButton
+												sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}
+												onClick={() => setLearnerSearchInfoOpen(true)}>
+												<InfoOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 											</IconButton>
 										)}
 									</Box>
@@ -1349,12 +1357,10 @@ const EditEventDialog = ({
 										}}
 									/>
 									{hasAdminAccess && (
-										<IconButton sx={{ 'ml': '0.25rem', 'mb': '2.15rem', '&:hover': { backgroundColor: 'transparent' } }}>
-											<InfoOutlined
-												fontSize='small'
-												sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
-												onClick={() => setCourseSearchInfoOpen(true)}
-											/>
+										<IconButton
+											sx={{ 'ml': '0.25rem', 'mb': '2.15rem', '&:hover': { backgroundColor: 'transparent' } }}
+											onClick={() => setCourseSearchInfoOpen(true)}>
+											<InfoOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 										</IconButton>
 									)}
 								</Box>
