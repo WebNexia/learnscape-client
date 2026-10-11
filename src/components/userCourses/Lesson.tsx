@@ -12,6 +12,7 @@ import { SingleCourse, Price } from '../../interfaces/course';
 import { LessonType } from '../../interfaces/enums';
 import LessonIconTile from '../lesson/LessonIconTile';
 import { isSubscriptionsProductEnabled } from '../../config/features';
+import { isChapterIndexOpen, openThroughLimit, chapterIdOf } from '../../utils/chapterRelease';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -157,6 +158,8 @@ const Lesson = ({
 		if (staffPreviewMode) return true;
 		if (!isEnrolledStatus || isProgressPending) return false;
 		if (isFreePlatformCourse && !hasSubscriptionAccess) return false;
+		const chapterIndex = (course?.chapters || []).findIndex((chapter) => chapterIdOf(chapter) === String(chapterId || ''));
+		if (chapterId && chapterIndex >= 0 && !isChapterIndexOpen(openThroughLimit(course), chapterIndex)) return false;
 		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
 	}, [
 		staffPreviewMode,
@@ -164,6 +167,8 @@ const Lesson = ({
 		isProgressPending,
 		isFreePlatformCourse,
 		hasSubscriptionAccess,
+		course,
+		chapterId,
 		isLessonRegisteredInThisCourse,
 		isLessonInProgress,
 		isLessonCompleted,

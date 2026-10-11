@@ -1,5 +1,5 @@
-import { Box, DialogContent, Typography, Link, Button } from '@mui/material';
-import { CloudUpload } from '@mui/icons-material';
+import { Box, Button, DialogContent, FormControlLabel, Link, Switch, Typography } from '@mui/material';
+import { CloudUpload, LockOutlined } from '@mui/icons-material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
@@ -390,6 +390,11 @@ const AdminCourseEditPage = () => {
 		}
 	}, [courseId]);
 
+	const setOpenThroughChapterCount = (value: number | null) => {
+		setSingleCourseBeforeSave((prev) => (prev ? { ...prev, openThroughChapterCount: value } : prev));
+		setHasUnsavedChanges(true);
+	};
+
 	const actuallyUpdateCourse = async () => {
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
@@ -562,6 +567,15 @@ const AdminCourseEditPage = () => {
 			const updatedDocumentIds = updatedDocuments?.map((doc) => doc?._id);
 
 			if (singleCourseBeforeSave) {
+				const chapterCountForRelease = updatedChapters?.length || 0;
+				const rawOpenThrough = singleCourseBeforeSave.openThroughChapterCount;
+				let openThroughChapterCount: number | null = null;
+				if (rawOpenThrough != null && chapterCountForRelease > 0) {
+					const parsedOpenThrough = Number(rawOpenThrough);
+					if (Number.isInteger(parsedOpenThrough) && parsedOpenThrough >= 1) {
+						openThroughChapterCount = Math.min(parsedOpenThrough, chapterCountForRelease);
+					}
+				}
 				const updatedCourse = {
 					...singleCourseBeforeSave,
 					chapters: updatedChapters,
@@ -571,12 +585,14 @@ const AdminCourseEditPage = () => {
 					isExpired: validUntil ? validUntil < new Date() : false,
 					groups: singleCourseBeforeSave.groups || [], // Explicitly include groups
 					videoURLs: singleCourseBeforeSave.videoURLs || [], // Explicitly include videoURLs
+					openThroughChapterCount,
 				};
 
 				// Minimal payload: send only IDs for chapters/documents to avoid PayloadTooLargeError
 				const { chapters: _ch, documents: _d, ...courseFields } = singleCourseBeforeSave as unknown as Record<string, unknown>;
 				const patchPayload = {
 					...courseFields,
+					openThroughChapterCount,
 					startingDate: singleCourseBeforeSave.startingDate ?? null,
 					durationWeeks: singleCourseBeforeSave.durationWeeks ?? null,
 					durationHours: singleCourseBeforeSave.durationHours ?? null,
@@ -629,6 +645,7 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourseBeforeSave({
 						...updatedCourse,
+						openThroughChapterCount,
 						startingDate: responseUpdatedData.startingDate ?? null,
 						durationWeeks: responseUpdatedData.durationWeeks ?? null,
 						durationHours: responseUpdatedData.durationHours ?? null,
@@ -1023,33 +1040,106 @@ const AdminCourseEditPage = () => {
 									{chapterLessonDataBeforeSave && chapterLessonDataBeforeSave.length === 0 ? (
 										<NoContentBoxAdmin content='No chapter for this course' />
 									) : (
-										<Reorder.Group
-											axis='y'
-											values={chapterLessonDataBeforeSave || []}
-											onReorder={(newChapters): void => {
-												setChapterLessonDataBeforeSave(newChapters);
-												setHasUnsavedChanges(true);
-											}}>
-											{chapterLessonDataBeforeSave &&
-												chapterLessonDataBeforeSave &&
-												chapterLessonDataBeforeSave.length !== 0 &&
-												chapterLessonDataBeforeSave?.map((chapter) => {
-													return (
-														<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
-															<AdminCourseEditChapter
-																key={chapter.chapterId}
-																chapter={chapter}
-																setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
-																setIsChapterUpdated={setIsChapterUpdated}
-																setIsMissingField={setIsMissingField}
-																isMissingField={isMissingField}
-																setDeletedChapterIds={setDeletedChapterIds}
-																setHasUnsavedChanges={setHasUnsavedChanges}
-															/>
-														</Reorder.Item>
-													);
-												})}
-										</Reorder.Group>
+										<>
+											<Box
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													alignItems: 'flex-start',
+													mb: '0.75rem',
+													px: '0.25rem',
+												}}>
+												<FormControlLabel
+													control={
+														<Switch
+															checked={singleCourseBeforeSave?.openThroughChapterCount == null}
+															onChange={(event) => {
+																setOpenThroughChapterCount(event.target.checked ? null : 1);
+															}}
+															color='primary'
+														/>
+													}
+													label='All chapters open'
+												/>
+												<Typography variant='body2' sx={{ color: 'text.secondary', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{singleCourseBeforeSave?.openThroughChapterCount == null
+														? 'Students can move through every chapter as they finish lessons.'
+														: `Students can enter the first ${singleCourseBeforeSave.openThroughChapterCount} chapter${singleCourseBeforeSave.openThroughChapterCount === 1 ? '' : 's'}. Chapters below that line stay locked.`}
+												</Typography>
+											</Box>
+											<Reorder.Group
+												axis='y'
+												values={chapterLessonDataBeforeSave || []}
+												onReorder={(newChapters): void => {
+													setChapterLessonDataBeforeSave(newChapters);
+													setSingleCourseBeforeSave((prev) => {
+														if (!prev || prev.openThroughChapterCount == null) return prev;
+														const nextCount = Math.min(prev.openThroughChapterCount, newChapters.length);
+														return {
+															...prev,
+															openThroughChapterCount: nextCount >= 1 ? nextCount : null,
+														};
+													});
+													setHasUnsavedChanges(true);
+												}}>
+												{chapterLessonDataBeforeSave &&
+													chapterLessonDataBeforeSave.length !== 0 &&
+													chapterLessonDataBeforeSave.map((chapter, index) => {
+														const openThrough = singleCourseBeforeSave?.openThroughChapterCount ?? null;
+														const chapterIsOpen = openThrough == null || index < openThrough;
+														const isReleaseBoundary = openThrough != null && index + 1 === openThrough;
+														return (
+															<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
+																<Box sx={{ opacity: chapterIsOpen ? 1 : 0.72 }}>
+																	{openThrough != null && (
+																		<Box
+																			sx={{
+																				display: 'flex',
+																				alignItems: 'center',
+																				justifyContent: 'space-between',
+																				gap: '0.5rem',
+																				px: '0.75rem',
+																				pt: '0.45rem',
+																			}}>
+																			<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+																				{!chapterIsOpen && <LockOutlined sx={{ fontSize: '1rem', color: 'text.secondary' }} />}
+																				<Typography variant='caption' sx={{ color: 'text.secondary' }}>
+																					{chapterIsOpen
+																						? isReleaseBoundary
+																							? 'Last chapter students can enter'
+																							: 'Open for students'
+																						: 'Locked for students'}
+																				</Typography>
+																			</Box>
+																			<Button
+																				type='button'
+																				size='small'
+																				variant={isReleaseBoundary ? 'contained' : 'text'}
+																				onClick={(event) => {
+																					event.stopPropagation();
+																					setOpenThroughChapterCount(index + 1);
+																				}}
+																				sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+																				Open through this chapter
+																			</Button>
+																		</Box>
+																	)}
+																	<AdminCourseEditChapter
+																		key={chapter.chapterId}
+																		chapter={chapter}
+																		setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
+																		setIsChapterUpdated={setIsChapterUpdated}
+																		setIsMissingField={setIsMissingField}
+																		isMissingField={isMissingField}
+																		setDeletedChapterIds={setDeletedChapterIds}
+																		setHasUnsavedChanges={setHasUnsavedChanges}
+																	/>
+																</Box>
+															</Reorder.Item>
+														);
+													})}
+											</Reorder.Group>
+										</>
 									)}
 								</Box>
 

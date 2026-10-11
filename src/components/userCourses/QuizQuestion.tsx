@@ -95,7 +95,7 @@ const QuizQuestion = ({
 }: QuizQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
+	const { userLessonId, handleNextLesson, nextLessonId, awaitingChapterRelease } = useUserCourseLessonData();
 	const effectiveNextLessonId = staffPreviewMode ? staffPreviewNextLessonId ?? null : nextLessonId;
 
 	const { lessonId, courseId, userCourseId } = useParams();
@@ -172,8 +172,8 @@ const QuizQuestion = ({
 	});
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
-	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null;
-	const isCompletingLesson: boolean = isLastQuestion && effectiveNextLessonId !== null;
+	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null && !awaitingChapterRelease;
+	const isCompletingLesson: boolean = isLastQuestion && (effectiveNextLessonId !== null || (awaitingChapterRelease && !isLessonCompleted));
 
 	const navigateToCourseHome = () => {
 		if (nextLessonId) {
@@ -1070,7 +1070,9 @@ const QuizQuestion = ({
 									? 'Next Lesson'
 									: 'Back to Course'
 								: ''
-							: isCompletingCourse
+							: isLessonCompleted && isLastQuestion && awaitingChapterRelease
+								? 'Next chapter is not open yet'
+								: isCompletingCourse
 								? 'Complete Course'
 								: isLessonCompleted && isLastQuestion
 									? 'Next Lesson'

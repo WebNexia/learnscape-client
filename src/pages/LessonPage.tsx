@@ -38,6 +38,7 @@ import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 import { UserQuestionData } from '../hooks/useFetchUserQuestion';
 import { useLearnerLesson } from '../hooks/useLearnerLesson';
+import { CHAPTER_RELEASE_HOLD_COPY, isChapterIndexOpen, isLessonChapterOpen, openThroughLimit } from '../utils/chapterRelease';
 import { useLearnerUserAnswersByLesson } from '../hooks/useLearnerUserAnswersByLesson';
 import { LessonType, Roles } from '../interfaces/enums';
 import theme from '../themes';
@@ -158,7 +159,7 @@ const LessonPage = () => {
 	const presentationMode = user?.role === Roles.PRESENTATION;
 	const presentationCoursePath =
 		presentationMode && courseId && userCourseId ? `/course/${courseId}/userCourseId/${userCourseId}` : undefined;
-	const { handleNextLesson, nextLessonId, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId, awaitingChapterRelease, isLessonCompleted, setIsLessonCompleted, userLessonId } = useUserCourseLessonData();
 	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
 
 	// Check if there are more lessons in the course (in any chapter)
@@ -193,6 +194,10 @@ const LessonPage = () => {
 		}
 		return false;
 	}, [singleCourseUser, lessonId]);
+
+	const lessonChapterLocked = Boolean(lessonId) && Boolean(singleCourseUser) && !isLessonChapterOpen(singleCourseUser, lessonId);
+	const showNextLesson = Boolean(nextLessonId) || (hasMoreLessonsInCourse && !awaitingChapterRelease);
+	const showChapterHold = awaitingChapterRelease && !nextLessonId;
 
 	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
@@ -235,7 +240,9 @@ const LessonPage = () => {
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessonData = useMemo(() => userLessonsData ?? [], [userLessonsData]);
 
-	const { data: lessonData, isLoading: isLessonLoading } = useLearnerLesson(lessonId || '', courseId);
+	const { data: lessonData, isLoading: isLessonLoading, error: lessonLoadError } = useLearnerLesson(lessonId || '', courseId, {
+		enabled: Boolean(lessonId) && !lessonChapterLocked,
+	});
 	const activeLesson = lessonData && String(lessonData._id) === String(lessonId) ? lessonData : null;
 	const lesson = activeLesson ?? EMPTY_LESSON;
 	const lessonType = lesson.type || '';
@@ -573,6 +580,44 @@ const LessonPage = () => {
 		});
 	};
 
+	const lessonErrorResponse = (lessonLoadError as { response?: { status?: number; data?: { code?: string } } } | null)?.response;
+	const lessonFetchBlocked = lessonErrorResponse?.status === 403 && lessonErrorResponse.data?.code === 'chapter_locked';
+
+	if (lessonChapterLocked || lessonFetchBlocked) {
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					minHeight: '100vh',
+					backgroundColor: theme.bgColor?.secondary,
+				}}>
+				<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1000 }}>
+					<DashboardHeader pageName={'Aden Academy'} />
+				</Box>
+				<Box sx={{ mt: '8rem', px: '1.5rem', maxWidth: '36rem', textAlign: 'center' }}>
+					<Lock sx={{ fontSize: '2rem', color: theme.palette.primary.main, mb: '0.75rem' }} />
+					<Typography variant='h6' sx={{ mb: '0.75rem' }}>
+						{CHAPTER_RELEASE_HOLD_COPY.title}
+					</Typography>
+					<Typography variant='body2' sx={{ mb: '0.5rem', lineHeight: 1.7 }}>
+						{CHAPTER_RELEASE_HOLD_COPY.en}
+					</Typography>
+					<Typography variant='body2' sx={{ mb: '1.25rem', lineHeight: 1.7, color: 'text.secondary' }}>
+						{CHAPTER_RELEASE_HOLD_COPY.tr}
+					</Typography>
+					<Button
+						variant='contained'
+						onClick={() => navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`)}
+						sx={{ textTransform: 'none' }}>
+						Back to course
+					</Button>
+				</Box>
+			</Box>
+		);
+	}
+
 	return (
 		<Box
 			sx={{
@@ -890,6 +935,10 @@ const LessonPage = () => {
 							.map((chapter, chapterIndex) => {
 								const chapterId = (chapter as any)?._id ?? (chapter as any)?.chapterId ?? '';
 								const validLessons = chapter.lessons?.filter((l) => l != null) ?? [];
+								const releaseIndex = (singleCourseUser?.chapters || []).findIndex(
+									(item) => String((item as { _id?: string; chapterId?: string })?._id ?? (item as { chapterId?: string })?.chapterId ?? '') === String(chapterId)
+								);
+								const chapterOpen = releaseIndex < 0 || isChapterIndexOpen(openThroughLimit(singleCourseUser), releaseIndex);
 								const containsCurrentLesson = validLessons.some((l) => l?._id === lessonId);
 								const isExpanded = drawerExpandedChapterIds.has(String(chapterId)) || containsCurrentLesson;
 								const isAlternateHeaderTone = chapterIndex % 2 === 1;
@@ -939,16 +988,17 @@ const LessonPage = () => {
 											<Typography sx={{ flex: 1, fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: 'white' }}>
 												{chapter.title}
 											</Typography>
+											{!chapterOpen && <Lock sx={{ color: 'white', fontSize: '1rem', mr: '0.35rem' }} />}
 										</Box>
 										<Collapse in={isExpanded} timeout='auto' unmountOnExit>
 											<Box sx={{ py: 0.5 }}>
 												{validLessons.map((lesson) => {
 													const isCurrent = lesson._id === lessonId;
 													const isCompleted = parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.isCompleted);
-													// Same as CoursePage Lesson: accessible only if user has a userLesson record (unlocked)
 													const isAccessible =
-														presentationMode ||
-														parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.courseId === courseId);
+														chapterOpen &&
+														(presentationMode ||
+															parsedUserLessonData.some((d) => d.lessonId === lesson._id && d.courseId === courseId));
 													return (
 														<Box
 															key={lesson._id}
@@ -1637,11 +1687,11 @@ const LessonPage = () => {
 			{isInstructionalLesson && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: isMobileSize ? '80%' : '85%', marginTop: 'auto', mb: '1rem' }}>
 					<CustomSubmitButton
-						endIcon={nextLessonId || hasMoreLessonsInCourse ? <KeyboardDoubleArrowRight /> : <DoneAll />}
+						endIcon={showNextLesson || showChapterHold ? <KeyboardDoubleArrowRight /> : <DoneAll />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
 						sx={{ marginTop: lesson?.documents && lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-						{nextLessonId || hasMoreLessonsInCourse ? 'Next Lesson' : 'Complete Course'}
+						{showChapterHold ? 'Back to course' : showNextLesson ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
@@ -1652,20 +1702,26 @@ const LessonPage = () => {
 						disableDismiss
 						maxWidth='xs'
 						title={
-							nextLessonId || hasMoreLessonsInCourse
-								? 'Lesson Completed / Ders Tamamlandı'
-								: 'Course Completed / Kurs Tamamlandı'
+							showChapterHold
+								? CHAPTER_RELEASE_HOLD_COPY.title
+								: showNextLesson
+									? 'Lesson Completed / Ders Tamamlandı'
+									: 'Course Completed / Kurs Tamamlandı'
 						}>
 						<DialogContent sx={{ mb: '-0.5rem' }}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
-								{`You have completed this ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}.`}
+								{showChapterHold
+									? CHAPTER_RELEASE_HOLD_COPY.en
+									: `You have completed this ${showNextLesson ? 'lesson' : 'course'}. Proceed to the next ${showNextLesson ? 'lesson' : 'course'}.`}
 							</Typography>
 							<Typography
 								variant='body2'
 								sx={{ mt: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, color: 'text.secondary' }}>
-								{nextLessonId || hasMoreLessonsInCourse
-									? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
-									: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
+								{showChapterHold
+									? CHAPTER_RELEASE_HOLD_COPY.tr
+									: showNextLesson
+										? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
+										: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
 							</Typography>
 						</DialogContent>
 						<CustomDialogActions

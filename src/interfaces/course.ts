@@ -122,6 +122,8 @@ export interface SingleCourse extends BaseCourse {
 	durationHours: number | null;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
+	/** null or omitted: all chapters are open. N: learners can enter only the first N chapters. */
+	openThroughChapterCount?: number | null;
 	/** Total lessons in course outline (learner courses list includes this when chapters are omitted) */
 	lessonCount?: number;
 	orgId: string;

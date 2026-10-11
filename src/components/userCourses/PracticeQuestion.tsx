@@ -17,6 +17,7 @@ import { LoadingButton } from '@mui/lab';
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
+import { CHAPTER_RELEASE_HOLD_COPY } from '../../utils/chapterRelease';
 import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
@@ -132,7 +133,7 @@ const PracticeQuestion = ({
 }: PracticeQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion, awaitingChapterRelease } = useUserCourseLessonData();
 	const { aiResponse, handleInitialSubmit, isLoadingAiResponse } = useAiResponse();
 	const effectivePracticeAgainMode = staffPreviewMode || practiceAgainMode;
 	const effectiveIsLessonCompleted = staffPreviewMode ? true : isLessonCompleted;
@@ -224,7 +225,7 @@ const PracticeQuestion = ({
 	const prevQuestionKeyRef = useRef<string>('');
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
-	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null && effectiveIsLessonCompleted;
+	const isCompletingCourse: boolean = isLastQuestion && effectiveNextLessonId === null && effectiveIsLessonCompleted && !awaitingChapterRelease;
 	const isCompletingLesson: boolean = isLastQuestion && effectiveNextLessonId !== null && effectiveIsLessonCompleted;
 
 	const [questionPrompt, setQuestionPrompt] = useState<QuestionPrompt>({
@@ -1448,7 +1449,9 @@ const PracticeQuestion = ({
 								? effectiveNextLessonId
 									? 'Next Lesson'
 									: 'Back to Course'
-								: isCompletingCourse
+								: isLessonCompleted && isLastQuestion && awaitingChapterRelease
+									? 'Next chapter is not open yet'
+									: isCompletingCourse
 									? 'Complete Course'
 									: isLessonCompleted && isLastQuestion
 										? 'Next Lesson'
@@ -1504,17 +1507,27 @@ const PracticeQuestion = ({
 					closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
 					disableDismiss
 					maxWidth='xs'
-					title={nextLessonId ? 'Lesson Completed / Ders Tamamlandı' : 'Course Completed / Kurs Tamamlandı'}>
+					title={
+						awaitingChapterRelease
+							? CHAPTER_RELEASE_HOLD_COPY.title
+							: nextLessonId
+								? 'Lesson Completed / Ders Tamamlandı'
+								: 'Course Completed / Kurs Tamamlandı'
+					}>
 					<DialogContent sx={{ mb: '-0.5rem' }}>
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
-							{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+							{awaitingChapterRelease
+								? CHAPTER_RELEASE_HOLD_COPY.en
+								: `You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
 						</Typography>
 						<Typography
 							variant='body2'
 							sx={{ mt: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, color: 'text.secondary' }}>
-							{nextLessonId
-								? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
-								: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
+							{awaitingChapterRelease
+								? CHAPTER_RELEASE_HOLD_COPY.tr
+								: nextLessonId
+									? 'Bu dersi tamamladınız. Bir sonraki derse geçin.'
+									: 'Bu kursu tamamladınız. Bir sonraki kursa geçin.'}
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
