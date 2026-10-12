@@ -41,6 +41,7 @@ const Courses = () => {
 	const customFilterFn = (course: SingleCourse, filterValue: string): boolean => {
 		// Base filter: ALWAYS show only active (published) courses for learners
 		if (!course.isActive) return false;
+		if (course.isDetailPageOnly && !enrolledCourseIds.includes(course._id)) return false;
 
 		// Apply specific filter logic
 		switch (filterValue) {

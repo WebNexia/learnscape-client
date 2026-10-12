@@ -3,5 +3,6 @@ export interface Organisation {
 	logoUrl: string;
 	orgCode: string;
 	orgName: string;
+	showHomeTestimonials?: boolean;
 	hasZoomConfigured?: boolean;
 }

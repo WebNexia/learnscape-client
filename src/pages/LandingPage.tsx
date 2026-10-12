@@ -1,5 +1,5 @@
 import 'react-phone-input-2/lib/material.css';
-import { useRef } from 'react';
+import { useContext, useRef } from 'react';
 import { Box } from '@mui/material';
 import LondonBg from '../assets/london-bg.jpg';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
@@ -17,9 +17,12 @@ import LandingPageFAQ from '../components/landingPage/LandingPageFAQ';
 import { SEO, StructuredData } from '../components/seo';
 import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useIsLpQaPreview } from '../hooks/useIsLpQaPreview';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
+	const { organisation } = useContext(OrganisationContext);
+	const showHomeTestimonials = organisation?.showHomeTestimonials !== false;
 	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 	const isQaPreview = useIsLpQaPreview();
 
@@ -127,8 +130,8 @@ const LandingPage = () => {
 						<LandingPagePrivateLessons />
 						<LandingPageLatestDocuments />
 						<FeaturesSection />
-						{/* <StatisticsSection />
-						<TestimonialsSection /> */}
+						{showHomeTestimonials ? <TestimonialsSection /> : null}
+						{/* <StatisticsSection /> */}
 
 						<UpcomingEvents />
 						{/* <LandingPageFAQ /> */}

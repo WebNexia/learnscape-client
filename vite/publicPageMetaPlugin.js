@@ -154,7 +154,7 @@ export function publicPageMetaPlugin() {
                 var page = pages_1[_i];
                 if (page.path === '/')
                     continue;
-                var filePath = path.resolve(path.dirname(builtIndexPath), page.path.slice(1), 'index.html');
+                var filePath = path.resolve(path.dirname(builtIndexPath), "".concat(page.path.slice(1), ".html"));
                 fs.mkdirSync(path.dirname(filePath), { recursive: true });
                 fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl));
             }

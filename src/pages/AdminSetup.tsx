@@ -8,7 +8,9 @@ import {
 	MenuItem,
 	Select,
 	FormControl,
+	FormControlLabel,
 	InputLabel,
+	Switch,
 	Tooltip,
 	IconButton,
 	Dialog,
@@ -29,6 +31,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import theme from '../themes';
 import axios from '@utils/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
@@ -64,6 +67,9 @@ const AdminSetup = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const { canAccessPayments } = useAuth(); // Only owner/super-admin can access
+	const { orgId, organisation, fetchOrganisationData } = useContext(OrganisationContext);
+	const [showHomeTestimonials, setShowHomeTestimonials] = useState(true);
+	const [homeTestimonialsSaving, setHomeTestimonialsSaving] = useState(false);
 
 	const [activeTab, setActiveTab] = useState<string>('zoom');
 	const [loading, setLoading] = useState<boolean>(false);
@@ -93,6 +99,28 @@ const AdminSetup = () => {
 			},
 		},
 	});
+
+	useEffect(() => {
+		if (organisation) setShowHomeTestimonials(organisation.showHomeTestimonials !== false);
+	}, [organisation]);
+
+	const saveHomeTestimonials = async (next: boolean) => {
+		const previous = showHomeTestimonials;
+		setShowHomeTestimonials(next);
+		if (!orgId) return;
+		setHomeTestimonialsSaving(true);
+		setError(undefined);
+		try {
+			await axios.patch(`/organisations/${orgId}`, { showHomeTestimonials: next });
+			await fetchOrganisationData(orgId);
+			setSuccess(true);
+		} catch {
+			setShowHomeTestimonials(previous);
+			setError('Could not update homepage testimonials.');
+		} finally {
+			setHomeTestimonialsSaving(false);
+		}
+	};
 
 	const [stripeConnectStatus, setStripeConnectStatus] = useState<{
 		connected: boolean;
@@ -489,6 +517,40 @@ const AdminSetup = () => {
 					width: '100%',
 				}}
 			/>
+
+			<Box sx={{ width: '100%', maxWidth: '800px', margin: '0 auto', px: isVerySmallScreen ? '1.5rem' : '2rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						gap: 2,
+						p: '0.85rem 1rem',
+						borderRadius: '0.75rem',
+						backgroundColor: '#fff',
+						border: '1px solid rgba(0, 76, 153, 0.12)',
+					}}>
+					<Box>
+						<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 700, fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+							Homepage testimonials
+						</Typography>
+						<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: isMobileSize ? '0.72rem' : '0.8rem' }}>
+							Shown on the public homepage. Each course has its own switch on the course edit page.
+						</Typography>
+					</Box>
+					<FormControlLabel
+						sx={{ mr: 0 }}
+						control={
+							<Switch
+								checked={showHomeTestimonials}
+								disabled={homeTestimonialsSaving}
+								onChange={(event) => void saveHomeTestimonials(event.target.checked)}
+							/>
+						}
+						label={showHomeTestimonials ? 'On' : 'Off'}
+					/>
+				</Box>
+			</Box>
 
 			{/* Content */}
 			<Box

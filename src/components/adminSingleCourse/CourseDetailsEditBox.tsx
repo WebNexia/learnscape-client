@@ -1496,6 +1496,36 @@ const CourseDetailsEditBox = ({
 									}}
 								/>
 							</Tooltip>
+							<Tooltip
+								title='Student quotes on this course detail page. The homepage testimonials switch is separate, in Account Setup.'
+								placement='left'
+								arrow>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={singleCourseBeforeSave?.showTestimonials !== false}
+											onChange={(e) => {
+												setSingleCourseBeforeSave((prev) => {
+													if (!prev) return prev;
+													return { ...prev, showTestimonials: e.target.checked };
+												});
+												setHasUnsavedChanges(true);
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isMobileSize ? '1rem' : '1.25rem',
+												},
+											}}
+										/>
+									}
+									label='Show testimonials on this course page'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										},
+									}}
+								/>
+							</Tooltip>
 						</Box>
 					</Box>
 				</Box>

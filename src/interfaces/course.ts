@@ -70,6 +70,7 @@ export interface BaseCourse {
 	isTestCourse?: boolean;
 	/** Listed nowhere on the landing site; the detail URL still works when published. */
 	isDetailPageOnly?: boolean;
+	showTestimonials?: boolean;
 	activeEnrollmentCount?: number;
 	clonedFromId?: string;
 	clonedFromTitle?: string;
