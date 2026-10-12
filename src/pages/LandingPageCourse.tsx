@@ -25,6 +25,7 @@ import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import LandingPageCourseDetailSections from '../components/landingPage/LandingPageCourseDetailSections';
 import LandingPageCourseEnrollCta from '../components/landingPage/LandingPageCourseEnrollCta';
+import TestimonialsSection from '../components/landingPage/TestimonialsSection';
 import { SEO, StructuredData } from '../components/seo';
 import axios from 'axios';
 import { useQuery } from 'react-query';
@@ -418,6 +419,7 @@ const LandingPageCourse = () => {
 									sections={(course.landingPageSections || []).map(({ title, body, imageUrl }) => ({ title, body, imageUrl }))}
 									course={course}
 								/>
+								{course.showTestimonials !== false ? <TestimonialsSection variant='course' /> : null}
 								<LandingPageCourseEnrollCta course={course} />
 							</>
 						)}

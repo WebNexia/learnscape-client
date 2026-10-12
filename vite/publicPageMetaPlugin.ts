@@ -116,7 +116,9 @@ export function publicPageMetaPlugin(): Plugin {
 			const source = fs.readFileSync(builtIndexPath, 'utf8');
 			for (const page of pages) {
 				if (page.path === '/') continue;
-				const filePath = path.resolve(path.dirname(builtIndexPath), page.path.slice(1), 'index.html');
+				// Flat file, not path/index.html. Netlify 301s /path to /path/ when the
+				// page is a directory index, and that page's canonical points back at /path.
+				const filePath = path.resolve(path.dirname(builtIndexPath), `${page.path.slice(1)}.html`);
 				fs.mkdirSync(path.dirname(filePath), { recursive: true });
 				fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl));
 			}

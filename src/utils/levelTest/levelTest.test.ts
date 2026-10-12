@@ -30,7 +30,31 @@ describe("level-test content and scoring", () => {
     expect(readingLevelContent.map((entry) => entry.level)).toEqual([
       ...CEFR_LEVELS,
     ]);
-    expect(READING_TEST_CONTENT_VERSION).toBe("2026-10-reading-band");
+    expect(READING_TEST_CONTENT_VERSION).toBe("2026-10-12-item-standards");
+  });
+
+  it("balances choice keys and keeps four distinct options", () => {
+    const choices = readingLevelContent.flatMap((entry) =>
+      [...entry.primaryPassages, ...entry.verificationPassages].flatMap(
+        (passage) =>
+          passage.questions.filter((question) => question.options.length > 0),
+      ),
+    );
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+    for (const question of choices) {
+      expect(question.options.map((option) => option.id)).toEqual([
+        "A",
+        "B",
+        "C",
+        "D",
+      ]);
+      expect(new Set(question.options.map((option) => option.text)).size).toBe(
+        4,
+      );
+      expect(["A", "B", "C", "D"]).toContain(question.correctAnswer);
+      counts[question.correctAnswer as "A" | "B" | "C" | "D"] += 1;
+    }
+    expect(counts).toEqual({ A: 13, B: 13, C: 13, D: 14 });
   });
 
   it("keeps canonical form sizes and listening steps", () => {
