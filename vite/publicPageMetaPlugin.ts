@@ -7,6 +7,7 @@ type PublicPageMeta = {
 	path: string;
 	seoTitle: string;
 	description: string;
+	paragraphs?: string[];
 };
 
 function fullSeoTitle(seoTitle: string) {
@@ -40,9 +41,30 @@ function escapeHtml(value: string) {
 	return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
+function pageUrl(page: PublicPageMeta, siteUrl: string) {
+	return page.path === '/' ? `${siteUrl}/` : `${siteUrl}${page.path}`;
+}
+
+function staticBody(page: PublicPageMeta, siteUrl: string, pages: PublicPageMeta[]) {
+	const paragraphs = [page.description, ...(page.paragraphs ?? [])].filter((text, index, all) => all.indexOf(text) === index);
+	const links = pages
+		.filter((item) => item.path !== page.path)
+		.map((item) => `<li><a href="${escapeHtml(pageUrl(item, siteUrl))}">${escapeHtml(item.seoTitle)}</a></li>`)
+		.join('');
+	return [
+		'<main>',
+		`<h1>${escapeHtml(page.seoTitle)}</h1>`,
+		...paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`),
+		'<nav aria-label="Aden Academy">',
+		`<ul>${links}</ul>`,
+		'</nav>',
+		'</main>',
+	].join('\n\t\t\t');
+}
+
 function seoBlock(page: PublicPageMeta, siteUrl: string) {
 	const title = fullSeoTitle(page.seoTitle);
-	const url = page.path === '/' ? `${siteUrl}/` : `${siteUrl}${page.path}`;
+	const url = pageUrl(page, siteUrl);
 	return [
 		'<!-- public-seo -->',
 		`<link rel="canonical" href="${escapeHtml(url)}" />`,
@@ -56,7 +78,15 @@ function seoBlock(page: PublicPageMeta, siteUrl: string) {
 	].join('\n\t\t');
 }
 
-export function applyPublicPageMeta(html: string, page: PublicPageMeta, siteUrl: string) {
+function withStaticBody(html: string, page: PublicPageMeta, siteUrl: string, pages: PublicPageMeta[]) {
+	const block = `<!-- public-body -->\n\t\t\t${staticBody(page, siteUrl, pages)}\n\t\t\t<!-- /public-body -->`;
+	if (html.includes('<!-- public-body -->')) {
+		return html.replace(/<!-- public-body -->[\s\S]*?<!-- \/public-body -->/, block);
+	}
+	return html.replace('<div id="root"></div>', `<div id="root">\n\t\t\t${block}\n\t\t</div>`);
+}
+
+export function applyPublicPageMeta(html: string, page: PublicPageMeta, siteUrl: string, pages: PublicPageMeta[] = [page]) {
 	const title = fullSeoTitle(page.seoTitle);
 	const withTitle = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
 	const withDescription = withTitle.replace(
@@ -64,10 +94,10 @@ export function applyPublicPageMeta(html: string, page: PublicPageMeta, siteUrl:
 		`<meta name="description" content="${escapeHtml(page.description)}" />`,
 	);
 	const block = seoBlock(page, siteUrl);
-	if (withDescription.includes('<!-- public-seo -->')) {
-		return withDescription.replace(/<!-- public-seo -->[\s\S]*?<!-- \/public-seo -->/, block);
-	}
-	return withDescription.replace('</head>', `\t\t${block}\n\t</head>`);
+	const withHead = withDescription.includes('<!-- public-seo -->')
+		? withDescription.replace(/<!-- public-seo -->[\s\S]*?<!-- \/public-seo -->/, block)
+		: withDescription.replace('</head>', `\t\t${block}\n\t</head>`);
+	return withStaticBody(withHead, page, siteUrl, pages);
 }
 
 export function publicPageMetaPlugin(): Plugin {
@@ -90,7 +120,7 @@ export function publicPageMetaPlugin(): Plugin {
 			handler(html, ctx) {
 				const home = pages.find((page) => page.path === '/') ?? pages[0];
 				const page = pageForPath(pages, ctx.path || ctx.filename || '/') ?? home;
-				return applyPublicPageMeta(html, page, siteUrl);
+				return applyPublicPageMeta(html, page, siteUrl, pages);
 			},
 		},
 		configureServer(server) {
@@ -120,7 +150,7 @@ export function publicPageMetaPlugin(): Plugin {
 				// page is a directory index, and that page's canonical points back at /path.
 				const filePath = path.resolve(path.dirname(builtIndexPath), `${page.path.slice(1)}.html`);
 				fs.mkdirSync(path.dirname(filePath), { recursive: true });
-				fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl));
+				fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl, pages));
 			}
 		},
 	};

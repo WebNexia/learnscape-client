@@ -4,6 +4,7 @@ export type PublicPageMeta = {
 	path: string;
 	seoTitle: string;
 	description: string;
+	paragraphs?: string[];
 };
 
 export const PUBLIC_PAGE_META = pageMeta;
