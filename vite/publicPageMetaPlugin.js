@@ -66,9 +66,28 @@ function pageForPath(pages, pathname) {
 function escapeHtml(value) {
     return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
+function pageUrl(page, siteUrl) {
+    return page.path === '/' ? "".concat(siteUrl, "/") : "".concat(siteUrl).concat(page.path);
+}
+function staticBody(page, siteUrl, pages) {
+    var paragraphs = [page.description].concat(page.paragraphs || []).filter(function (text, index, all) { return all.indexOf(text) === index; });
+    var links = pages
+        .filter(function (item) { return item.path !== page.path; })
+        .map(function (item) { return "<li><a href=\"".concat(escapeHtml(pageUrl(item, siteUrl)), "\">").concat(escapeHtml(item.seoTitle), "</a></li>"); })
+        .join('');
+    return [
+        '<main>',
+        "<h1>".concat(escapeHtml(page.seoTitle), "</h1>"),
+    ].concat(paragraphs.map(function (text) { return "<p>".concat(escapeHtml(text), "</p>"); }), [
+        '<nav aria-label="Aden Academy">',
+        "<ul>".concat(links, "</ul>"),
+        '</nav>',
+        '</main>',
+    ]).join('\n\t\t\t');
+}
 function seoBlock(page, siteUrl) {
     var title = fullSeoTitle(page.seoTitle);
-    var url = page.path === '/' ? "".concat(siteUrl, "/") : "".concat(siteUrl).concat(page.path);
+    var url = pageUrl(page, siteUrl);
     return [
         '<!-- public-seo -->',
         "<link rel=\"canonical\" href=\"".concat(escapeHtml(url), "\" />"),
@@ -81,15 +100,23 @@ function seoBlock(page, siteUrl) {
         '<!-- /public-seo -->',
     ].join('\n\t\t');
 }
-export function applyPublicPageMeta(html, page, siteUrl) {
+function withStaticBody(html, page, siteUrl, pages) {
+    var block = "<!-- public-body -->\n\t\t\t".concat(staticBody(page, siteUrl, pages), "\n\t\t\t<!-- /public-body -->");
+    if (html.includes('<!-- public-body -->')) {
+        return html.replace(/<!-- public-body -->[\s\S]*?<!-- \/public-body -->/, block);
+    }
+    return html.replace('<div id="root"></div>', "<div id=\"root\">\n\t\t\t".concat(block, "\n\t\t</div>"));
+}
+export function applyPublicPageMeta(html, page, siteUrl, pages) {
+    if (pages === void 0) { pages = [page]; }
     var title = fullSeoTitle(page.seoTitle);
     var withTitle = html.replace(/<title>[\s\S]*?<\/title>/, "<title>".concat(escapeHtml(title), "</title>"));
     var withDescription = withTitle.replace(/<meta\b[^>]*\bname="description"[^>]*>/, "<meta name=\"description\" content=\"".concat(escapeHtml(page.description), "\" />"));
     var block = seoBlock(page, siteUrl);
-    if (withDescription.includes('<!-- public-seo -->')) {
-        return withDescription.replace(/<!-- public-seo -->[\s\S]*?<!-- \/public-seo -->/, block);
-    }
-    return withDescription.replace('</head>', "\t\t".concat(block, "\n\t</head>"));
+    var withHead = withDescription.includes('<!-- public-seo -->')
+        ? withDescription.replace(/<!-- public-seo -->[\s\S]*?<!-- \/public-seo -->/, block)
+        : withDescription.replace('</head>', "\t\t".concat(block, "\n\t</head>"));
+    return withStaticBody(withHead, page, siteUrl, pages);
 }
 export function publicPageMetaPlugin() {
     var siteUrl = 'https://adenacademy.co.uk';
@@ -111,7 +138,7 @@ export function publicPageMetaPlugin() {
                 var _a, _b;
                 var home = (_a = pages.find(function (page) { return page.path === '/'; })) !== null && _a !== void 0 ? _a : pages[0];
                 var page = (_b = pageForPath(pages, ctx.path || ctx.filename || '/')) !== null && _b !== void 0 ? _b : home;
-                return applyPublicPageMeta(html, page, siteUrl);
+                return applyPublicPageMeta(html, page, siteUrl, pages);
             },
         },
         configureServer: function (server) {
@@ -156,7 +183,7 @@ export function publicPageMetaPlugin() {
                     continue;
                 var filePath = path.resolve(path.dirname(builtIndexPath), "".concat(page.path.slice(1), ".html"));
                 fs.mkdirSync(path.dirname(filePath), { recursive: true });
-                fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl));
+                fs.writeFileSync(filePath, applyPublicPageMeta(source, page, siteUrl, pages));
             }
         },
     };

@@ -2,7 +2,12 @@
 	"home": {
 		"path": "/",
 		"seoTitle": "Aden Academy | Online İngilizce Kursları",
-		"description": "Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin."
+		"description": "Aden Academy ile online İngilizce eğitiminin ayrıcalıklarını keşfedin. Uzman eğitmenler ve esnek programlarla İngilizce becerilerinizi hızla geliştirin.",
+		"paragraphs": [
+			"Ezber değil, akıcı iletişim.",
+			"Size hayal satmıyoruz. İngilizceyi öğrenirken karşınıza çıkan zorlukları ve problemleri biliyoruz.",
+			"Bu problemleri çözecek, sizi İngilizce düşündürecek ve akıcı konuşmanızı sağlayacak kurslar geliştirdik."
+		]
 	},
 	"courses": {
 		"path": "/landing-page-courses",
@@ -12,26 +17,42 @@
 	"books": {
 		"path": "/landing-page-resources",
 		"seoTitle": "Kitaplar",
-		"description": "Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz."
+		"description": "Aden Academy ücretsiz kaynakları, rehberleri ve ders kitaplarına buradan ulaşın. Ücretsiz ve ücretli kitapları arayıp indirebilirsiniz.",
+		"paragraphs": [
+			"Ders notları, çalışma materyalleri ve rehber dokümanlara buradan ulaşın. Ücretsiz ve ücretli kitapları indirebilirsiniz."
+		]
 	},
 	"consultations": {
 		"path": "/landing-page-consultations",
 		"seoTitle": "Danışmanlık",
-		"description": "Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın."
+		"description": "Uzman danışmanlarımızla bire bir görüşme randevusu alın. Online danışmanlık seansları ile hedeflerinize ulaşın.",
+		"paragraphs": [
+			"Uzman danışmanlarımızla bire bir online görüşme randevusu alın. Seans süresi ve ücreti danışmanlık türüne göre değişmektedir."
+		]
 	},
 	"clubs": {
 		"path": "/landing-page-clubs",
 		"seoTitle": "Kulüpler",
-		"description": "Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun."
+		"description": "Haftalık Zoom kulüp oturumlarına katılın. Konuşma pratiği için kişi sayısını ve oturumları seçip kayıt olun.",
+		"paragraphs": [
+			"Kulüp detayını inceleyin, kişi sayısını ve katılacağınız oturumları seçip satın alın. Zoom linkleri e-postanıza gelir."
+		]
 	},
 	"about": {
 		"path": "/about-us",
 		"seoTitle": "Hakkımızda",
-		"description": "Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz."
+		"description": "Aden Academy'ye hoş geldiniz. Kaliteli ve erişilebilir İngilizce eğitimi için yenilikçi, etkileşimli öğrenme deneyimleri sunuyoruz.",
+		"paragraphs": [
+			"Herkesin kaliteli eğitime ulaşabilmesi için yenilikçi, erişilebilir ve etkileşimli öğrenme deneyimleri sunmak.",
+			"Dijital eğitimde öncü olarak, bireylerin yaşam boyu öğrenme yolculuklarında ilham kaynağı olmak."
+		]
 	},
 	"contact": {
 		"path": "/contact-us",
 		"seoTitle": "İletişim",
-		"description": "Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın."
+		"description": "Aden Academy ile iletişime geçin. Kurslar, kayıt ve destek için formu doldurun veya info@adenacademy.co.uk adresine yazın.",
+		"paragraphs": [
+			"Bize ulaşmak için aşağıdaki formu doldurun. Size en kısa sürede geri döneceğiz."
+		]
 	}
 }
