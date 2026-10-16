@@ -30,7 +30,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 
 interface DocumentCardProps {
-	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrls' | 'documentUrl' | 'orgId' | 'pageCount'>;
+	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrls' | 'documentUrl' | 'orgId' | 'pageCount' | 'processingFeePercent'>;
 	userCurrency: string;
 	fromHomePage?: boolean;
 	onAddedToCart?: () => void;
@@ -75,6 +75,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage, onAddedToCart }: D
 			title: document.name || 'Kitap',
 			amount: price.amount,
 			currency: price.currency,
+			processingFeePercent: document.processingFeePercent,
 			imageUrl: document.imageUrl,
 		});
 		onAddedToCart?.();

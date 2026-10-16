@@ -38,6 +38,7 @@ export interface Document {
 	documentUrl: string;
 	imageUrl: string;
 	prices: Price[];
+	processingFeePercent?: number | null;
 	description: string;
 	createdAt: string;
 	updatedAt: string;

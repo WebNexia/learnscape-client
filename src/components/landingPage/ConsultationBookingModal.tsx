@@ -28,6 +28,7 @@ import { FeedbackForm, FeedbackFormField } from '../../interfaces/feedbackForm';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import { applyProcessingFee, formatMoneyAmount } from '../../utils/processingFee';
 import { format, addDays, isBefore, startOfToday } from 'date-fns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -345,6 +346,7 @@ export default function ConsultationBookingModal({
 			consultantId: selectedConsultant._id,
 			consultantName: [selectedConsultant.firstName, selectedConsultant.lastName].filter(Boolean).join(' ') || 'Danışman',
 			price: { currency: priceObj.currency, amount: priceObj.amount },
+			processingFeePercent: consultation.processingFeePercent,
 			formSubmissionId: formSubmissionId ?? undefined,
 		});
 		onAddedToCart?.();
@@ -545,11 +547,19 @@ export default function ConsultationBookingModal({
 
 		// Summary step (step 3 – before Form when requireForm)
 		if (activeStep === 3) {
+			const symbol = setCurrencySymbol(priceObj?.currency ?? 'try');
+			const feeQuote = !isFree && priceObj ? applyProcessingFee(Number(priceObj.amount), consultation?.processingFeePercent) : null;
 			const rows: { label: string; value: string }[] = [
 				{ label: 'Tarih / Oturum', value: selectedSlot ? format(new Date(selectedSlot.slotStart), 'dd.MM.yyyy HH:mm') : '—' },
 				{ label: 'Danışman', value: selectedConsultant ? [selectedConsultant.firstName, selectedConsultant.lastName].filter(Boolean).join(' ') || '—' : '—' },
 				{ label: 'Süre', value: `${selectedSlot?.duration ?? consultation?.duration ?? 60} dk` },
-				{ label: 'Tutar', value: priceObj ? (priceObj.amount === '0' ? 'Ücretsiz' : `${setCurrencySymbol(priceObj.currency ?? 'try')}${priceObj.amount}`) : '—' },
+				...(feeQuote
+					? [
+							{ label: 'Danışmanlık ücreti', value: `${symbol}${formatMoneyAmount(feeQuote.baseAmount)}` },
+							{ label: 'İşlem ücreti', value: `${symbol}${formatMoneyAmount(feeQuote.processingFee)}` },
+							{ label: 'Toplam', value: `${symbol}${formatMoneyAmount(feeQuote.total)}` },
+						]
+					: [{ label: 'Tutar', value: 'Ücretsiz' }]),
 				{ label: 'İletişim', value: isFree ? 'Aşağıda girin' : 'Ödeme sayfasında girilecek' },
 			];
 			return (

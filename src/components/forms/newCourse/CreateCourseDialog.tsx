@@ -1,5 +1,6 @@
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
+import ProcessingFeePercentField from '../customFields/ProcessingFeePercentField';
 import { Tooltip } from '@mui/material';
 import { Box, FormControlLabel, Checkbox, Typography } from '@mui/material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
@@ -31,6 +32,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 	const [USD, setUSD] = useState<Price | null>(null);
 	const [EUR, setEUR] = useState<Price | null>(null);
 	const [TRY, setTRY] = useState<Price | null>(null);
+	const [processingFeePercent, setProcessingFeePercent] = useState('');
 
 	const [checked, setChecked] = useState<boolean>(false);
 	const [isExternal, setIsExternal] = useState<boolean>(false);
@@ -52,6 +54,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 			setUSD({ amount: '', currency: 'usd' });
 			setEUR({ amount: '', currency: 'eur' });
 			setTRY({ amount: '', currency: 'try' });
+			setProcessingFeePercent('');
 		}
 	}, [isCourseCreateModalOpen]);
 
@@ -108,6 +111,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 					externalUrl: '',
 					externalNotes: '',
 				},
+				...(processingFeePercent !== '' ? { processingFeePercent: Number(processingFeePercent) } : {}),
 				instructor: {
 					name: `${(user?.firstName ?? '').charAt(0).toUpperCase()}${(user?.firstName ?? '').slice(1)} ${(user?.lastName ?? '').charAt(0).toUpperCase()}${(user?.lastName ?? '').slice(1)}`,
 					userId: user?._id,
@@ -267,6 +271,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 								}}
 							/>
 						</Box>
+						<ProcessingFeePercentField value={processingFeePercent} onChange={setProcessingFeePercent} disabled={checked} />
 					</Box>
 				)}
 

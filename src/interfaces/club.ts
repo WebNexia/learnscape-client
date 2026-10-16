@@ -32,6 +32,7 @@ export interface Club {
 	schedule: ClubSchedule;
 	scheduleSummary?: string;
 	defaultCapacity: number;
+	processingFeePercent?: number | null;
 	/** First calendar day used when generating weekly sessions */
 	startsOn?: string | null;
 	hostUserId?: string;

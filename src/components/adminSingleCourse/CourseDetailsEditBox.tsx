@@ -1,5 +1,6 @@
 import { Box, Button, Checkbox, FormControlLabel, Tooltip, Typography, IconButton, DialogContent, Collapse } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
+import ProcessingFeePercentField from '../forms/customFields/ProcessingFeePercentField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { CourseIntroModal, CourseLandingPageSection, SingleCourse, CourseGroup } from '../../interfaces/course';
 import theme from '../../themes';
@@ -1028,6 +1029,20 @@ const CourseDetailsEditBox = ({
 								}}
 							/>
 						</Box>
+						<ProcessingFeePercentField
+							value={singleCourseBeforeSave?.processingFeePercent == null ? '' : String(singleCourseBeforeSave.processingFeePercent)}
+							onChange={(value) => {
+								setSingleCourseBeforeSave((prev) =>
+									prev
+										? {
+												...prev,
+												processingFeePercent: value === '' ? null : Number(value),
+											}
+										: prev,
+								);
+								setHasUnsavedChanges(true);
+							}}
+						/>
 						{isMissingField && singleCourseBeforeSave?.prices?.some((price) => price.amount === '') && (
 							<CustomErrorMessage>Enter price amount</CustomErrorMessage>
 						)}

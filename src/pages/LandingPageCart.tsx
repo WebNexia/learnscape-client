@@ -10,6 +10,7 @@ import { feedbackFormsService } from '../services/feedbackFormsService';
 import CartPaymentDialogWrapper from '../components/landingPage/CartPaymentDialogWrapper';
 import type { CartPaymentItem } from '../components/landingPage/CartPaymentDialog';
 import { setCurrencySymbol } from '../utils/setCurrencySymbol';
+import { applyProcessingFee, formatMoneyAmount } from '../utils/processingFee';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale/tr';
 import axios from 'axios';
@@ -40,18 +41,22 @@ function parseAmount(amount: string): number {
 }
 
 function getCartTotals(
-	documentItems: Array<{ amount: string; currency: string }>,
-	consultationItems: Array<{ price: { amount: string; currency: string } }>
-): Record<string, number> {
-	const totals: Record<string, number> = {};
-	documentItems.forEach((item) => {
-		const c = (item.currency || 'usd').toLowerCase();
-		totals[c] = (totals[c] ?? 0) + parseAmount(item.amount);
-	});
-	consultationItems.forEach((item) => {
-		const c = (item.price?.currency || 'usd').toLowerCase();
-		totals[c] = (totals[c] ?? 0) + parseAmount(item.price?.amount ?? '0');
-	});
+	documentItems: Array<{ amount: string; currency: string; processingFeePercent?: number | null }>,
+	consultationItems: Array<{ price: { amount: string; currency: string }; processingFeePercent?: number | null }>
+): Record<string, { base: number; fee: number; total: number }> {
+	const totals: Record<string, { base: number; fee: number; total: number }> = {};
+	const add = (currency: string, amount: string, percent?: number | null) => {
+		const c = (currency || 'usd').toLowerCase();
+		const quote = applyProcessingFee(parseAmount(amount), percent);
+		const current = totals[c] || { base: 0, fee: 0, total: 0 };
+		totals[c] = {
+			base: Math.round((current.base + quote.baseAmount) * 100) / 100,
+			fee: Math.round((current.fee + quote.processingFee) * 100) / 100,
+			total: Math.round((current.total + quote.total) * 100) / 100,
+		};
+	};
+	documentItems.forEach((item) => add(item.currency, item.amount, item.processingFeePercent));
+	consultationItems.forEach((item) => add(item.price?.currency || 'usd', item.price?.amount ?? '0', item.processingFeePercent));
 	return totals;
 }
 
@@ -140,7 +145,7 @@ export default function LandingPageCart() {
 			return;
 		}
 		const currencyKeys = Object.entries(getCartTotals(documentItems, consultationItems))
-			.filter(([, amount]) => amount > 0)
+			.filter(([, totals]) => totals.total > 0)
 			.map(([currency]) => currency);
 		if (currencyKeys.length > 1) {
 			setError(
@@ -331,7 +336,7 @@ export default function LandingPageCart() {
 	const totalCount = consultationItems.length + documentItems.length;
 	const isEmpty = totalCount === 0 && !cartPaymentOpen;
 	const cartTotals = getCartTotals(documentItems, consultationItems);
-	const totalCurrencies = Object.entries(cartTotals).filter(([, v]) => v > 0);
+	const totalCurrencies = Object.entries(cartTotals).filter(([, v]) => v.total > 0);
 	const hasMixedCurrencies = totalCurrencies.length > 1;
 
 	if (isEmpty) {
@@ -870,7 +875,7 @@ export default function LandingPageCart() {
 														</Typography>
 													</Box>
 													{totalCurrencies.length > 0 ? (
-														totalCurrencies.map(([currency, amount]) => (
+														totalCurrencies.map(([currency, totals]) => (
 															<Box
 																key={currency}
 																sx={{
@@ -884,12 +889,20 @@ export default function LandingPageCart() {
 																	border: '1px solid rgba(255, 107, 61, 0.12)',
 																}}
 															>
-																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, color: '#0A1A2F', fontSize: isMobileSize ? '0.9rem' : '0.95rem' }}>
-																	Toplam ({currency.toUpperCase()})
-																</Typography>
-																<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: isMobileSize ? '0.95rem' : '1.05rem', color: '#0A1A2F', letterSpacing: '-0.02em' }}>
-																	{amount === 0 ? 'Ücretsiz' : `${setCurrencySymbol(currency)}${amount.toFixed(2)}`}
-																</Typography>
+																<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '100%' }}>
+																	<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+																		<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.85rem' }}>Ürün ücreti</Typography>
+																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.85rem' }}>{setCurrencySymbol(currency)}{formatMoneyAmount(totals.base)}</Typography>
+																	</Box>
+																	<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+																		<Typography sx={{ fontFamily: 'Varela Round', color: 'text.secondary', fontSize: '0.85rem' }}>İşlem ücreti</Typography>
+																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 600, fontSize: '0.85rem' }}>{setCurrencySymbol(currency)}{formatMoneyAmount(totals.fee)}</Typography>
+																	</Box>
+																	<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, color: '#0A1A2F', fontSize: isMobileSize ? '0.9rem' : '0.95rem' }}>Toplam ({currency.toUpperCase()})</Typography>
+																		<Typography sx={{ fontFamily: 'Varela Round', fontWeight: 800, fontSize: isMobileSize ? '0.95rem' : '1.05rem', color: '#0A1A2F' }}>{totals.total === 0 ? 'Ücretsiz' : `${setCurrencySymbol(currency)}${formatMoneyAmount(totals.total)}`}</Typography>
+																	</Box>
+																</Box>
 															</Box>
 														))
 													) : (

@@ -18,7 +18,8 @@ import {
 } from '../../../utils/hostedCheckout';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import theme from '../../../themes';
-import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
+import { applyProcessingFee } from '../../../utils/processingFee';
+import PaymentAmountBreakdown from '../payment/PaymentAmountBreakdown';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getListPriceIfDifferent, getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
@@ -197,7 +198,7 @@ const PaymentDialog = ({
 		let redirecting = false;
 
 		// Lock the price during payment processing to prevent changes
-		const lockedAmount = discountedAmount;
+		const lockedAmount = applyProcessingFee(discountedAmount, course.processingFeePercent).total;
 
 		// Validate agreement to User Agreement and Privacy Policy
 		if (!agreed) {
@@ -1006,34 +1007,23 @@ const PaymentDialog = ({
 									fontFamily: DIALOG_FONT,
 									mt: '2rem',
 								}}>
-								<Typography
-									variant={isMobileSize ? 'body2' : 'h6'}
+								<Box
 									sx={{
 										boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
 										borderRadius: INPUT_BORDERRADIUS,
 										padding: isMobileSize ? '0.5rem' : '0.75rem',
-										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-										color: '#223354',
+										flex: 1,
+										minWidth: 0,
 									}}>
-									{isTrUi ? 'Toplam Tutar: ' : 'Total Amount: '}
-									{listPrice && String(discountedAmount) !== String(listPrice.amount) ? (
-										<Box
-											component='span'
-											sx={{
-												fontWeight: 700,
-												color: '#475569',
-												textDecoration: 'line-through',
-												textDecorationThickness: '2px',
-												mr: 1,
-												fontSize: isMobileSize ? '0.85em' : '0.9em',
-											}}>
-											{setCurrencySymbol(listPrice.currency)}
-											{listPrice.amount}
-										</Box>
-									) : null}
-									{setCurrencySymbol(sellingPrice?.currency ?? '')}
-									{discountedAmount}
-								</Typography>
+									<PaymentAmountBreakdown
+										baseAmount={discountedAmount}
+										currency={sellingPrice?.currency || 'try'}
+										processingFeePercent={course?.processingFeePercent}
+										productLabel={isTrUi ? 'Kurs ücreti' : 'Course fee'}
+										fontFamily={fromHomePage ? DIALOG_FONT : theme.fontFamily?.main}
+										isTr={isTrUi}
+									/>
+								</Box>
 								{isPromoCodeApplied && (
 									<Typography
 										variant='body2'

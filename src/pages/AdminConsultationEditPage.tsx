@@ -7,6 +7,7 @@ import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Consultation, ConsultationPrice } from '../interfaces/consultation';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
+import ProcessingFeePercentField from '../components/forms/customFields/ProcessingFeePercentField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import ConsultationPaper from '../components/adminSingleConsultation/ConsultationPaper';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -286,6 +287,7 @@ const AdminConsultationEditPage = () => {
 				description: singleConsultationBeforeSave.description?.trim() || '',
 				duration: singleConsultationBeforeSave.duration ?? 60,
 				prices,
+				processingFeePercent: singleConsultationBeforeSave.processingFeePercent ?? null,
 				coverImageUrl: singleConsultationBeforeSave.coverImageUrl?.trim() || '',
 				tags,
 				feedbackFormId: feedbackFormIdString ?? null,
@@ -740,6 +742,17 @@ const AdminConsultationEditPage = () => {
 											/>
 										</Grid>
 									</Grid>
+									<ProcessingFeePercentField
+										value={singleConsultationBeforeSave?.processingFeePercent == null ? '' : String(singleConsultationBeforeSave.processingFeePercent)}
+										onChange={(value) => {
+											setSingleConsultationBeforeSave((prev) =>
+												prev
+													? { ...prev, processingFeePercent: value === '' ? null : Number(value) }
+													: prev,
+											);
+											setHasUnsavedChanges(true);
+										}}
+									/>
 								</Box>
 
 								{/* Tags */}

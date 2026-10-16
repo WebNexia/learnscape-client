@@ -321,6 +321,7 @@ const AdminDocuments = () => {
 				prices,
 				description: singleDocument?.description,
 				pageCount: singleDocument?.pageCount,
+				processingFeePercent: singleDocument?.processingFeePercent ?? null,
 			});
 
 			const documentResponseData = documentResponse.data;
@@ -446,6 +447,7 @@ const AdminDocuments = () => {
 					prices,
 					description: singleDocument.description || '',
 					pageCount: singleDocument.pageCount || 0,
+					processingFeePercent: singleDocument.processingFeePercent ?? null,
 				};
 
 				const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${singleDocument._id}`, updateData);

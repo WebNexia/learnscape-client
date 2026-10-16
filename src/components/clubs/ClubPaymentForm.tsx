@@ -14,6 +14,8 @@ import { Link } from 'react-router-dom';
 import { Club, ClubPurchaseSession } from '../../interfaces/club';
 import { clubsService } from '../../services/clubsService';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import { applyProcessingFee } from '../../utils/processingFee';
+import PaymentAmountBreakdown from '../layouts/payment/PaymentAmountBreakdown';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import { useIsLpQaPreview } from '../../hooks/useIsLpQaPreview';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -142,7 +144,7 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 				personCount,
 				sessionIds: selectedSessions.map((s) => s._id),
 				currency: quote.currency,
-				amount: quote.amount,
+				amount: applyProcessingFee(Number(quote.amount), club.processingFeePercent).total,
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				email: email.trim(),
@@ -580,20 +582,14 @@ const ClubPaymentForm = ({ club, onCancel }: Props) => {
 										gap: 1,
 										flexWrap: 'wrap',
 									}}>
-									<Typography sx={{ fontFamily: FONT, fontSize: '0.9rem', color: 'text.secondary' }}>Toplam</Typography>
 									{quote.ok ? (
-										<Typography
-											sx={{
-												fontFamily: FONT,
-												fontWeight: 800,
-												fontSize: isMobileSize ? '1.05rem' : '1.25rem',
-												color: '#0A1A2F',
-												letterSpacing: '-0.03em',
-												lineHeight: 1.2,
-											}}>
-											{setCurrencySymbol(quote.currency)}
-											{quote.amount}
-										</Typography>
+										<PaymentAmountBreakdown
+											baseAmount={Number(quote.amount)}
+											currency={quote.currency}
+											processingFeePercent={club.processingFeePercent}
+											productLabel='Kulüp ücreti'
+											fontFamily={FONT}
+										/>
 									) : (
 										<Typography sx={{ fontFamily: FONT, fontSize: '0.85rem', color: '#b45309' }}>{quote.message}</Typography>
 									)}

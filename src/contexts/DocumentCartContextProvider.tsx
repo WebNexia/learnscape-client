@@ -28,6 +28,7 @@ export interface DocumentCartItem {
 	title: string;
 	amount: string;
 	currency: string;
+	processingFeePercent?: number | null;
 	imageUrl?: string;
 }
 
