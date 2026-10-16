@@ -6,6 +6,7 @@ import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageU
 import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
 import SamplePageImagesUpload from '../forms/uploadImageVideoDocument/SamplePageImagesUpload';
 import CustomTextField from '../forms/customFields/CustomTextField';
+import ProcessingFeePercentField from '../forms/customFields/ProcessingFeePercentField';
 import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -293,6 +294,13 @@ const EditDocumentDialog = ({
 								/>
 							</Grid>
 						</Grid>
+						<ProcessingFeePercentField
+							value={document?.processingFeePercent == null ? '' : String(document.processingFeePercent)}
+							disabled={isInstructor}
+							onChange={(value) =>
+								setDocument(document ? { ...document, processingFeePercent: value === '' ? null : Number(value) } : document)
+							}
+						/>
 					</Box>
 					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined, width: isMobileSize ? '100%' : undefined }}>
 						<CustomTextField

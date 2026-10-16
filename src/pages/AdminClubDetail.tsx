@@ -30,6 +30,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
+import ProcessingFeePercentField from '../components/forms/customFields/ProcessingFeePercentField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -113,6 +114,7 @@ const AdminClubDetail = () => {
 	const [editTimezone, setEditTimezone] = useState('Europe/Istanbul');
 	const [editStartsOn, setEditStartsOn] = useState('');
 	const [editDefaultCapacity, setEditDefaultCapacity] = useState(12);
+	const [editProcessingFeePercent, setEditProcessingFeePercent] = useState('');
 	const [editDetailBlocks, setEditDetailBlocks] = useState<DocumentDetailBlock[]>([]);
 	const [enterCoverUrl, setEnterCoverUrl] = useState(true);
 	const [isSavingLanding, setIsSavingLanding] = useState(false);
@@ -169,6 +171,7 @@ const AdminClubDetail = () => {
 		setEditTimezone(found.schedule?.timezone || 'Europe/Istanbul');
 		setEditStartsOn(toDateInputValue(found.startsOn));
 		setEditDefaultCapacity(found.defaultCapacity || 12);
+		setEditProcessingFeePercent(found.processingFeePercent == null ? '' : String(found.processingFeePercent));
 		setEditDetailBlocks(ensureBlockKeys(found.detailBlocks));
 	};
 
@@ -222,6 +225,7 @@ const AdminClubDetail = () => {
 				isActive: editIsActive,
 				startsOn: editStartsOn || null,
 				defaultCapacity: Math.max(1, Math.min(500, editDefaultCapacity || 12)),
+				processingFeePercent: editProcessingFeePercent === '' ? null : Number(editProcessingFeePercent),
 				detailBlocks: serializeDetailBlocksForApi(editDetailBlocks),
 				schedule: {
 					daysOfWeek: editDaysOfWeek,
@@ -637,6 +641,7 @@ const AdminClubDetail = () => {
 										sx={{ backgroundColor: '#fff' }}
 										InputLabelProps={{ sx: { fontSize: '0.8rem' } }}
 									/>
+									<ProcessingFeePercentField value={editProcessingFeePercent} onChange={setEditProcessingFeePercent} />
 									<CustomTextField
 										label='Default capacity'
 										type='number'

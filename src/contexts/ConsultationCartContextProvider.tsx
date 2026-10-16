@@ -38,6 +38,7 @@ export interface ConsultationCartItem {
 	consultantId: string;
 	consultantName: string;
 	price: { currency: string; amount: string };
+	processingFeePercent?: number | null;
 	formSubmissionId?: string;
 }
 

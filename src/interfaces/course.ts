@@ -45,6 +45,8 @@ export interface BaseCourse {
 	title: string;
 	description: string;
 	prices: Price[];
+	/** Empty means 4% is added at checkout. 0 means no processing fee. */
+	processingFeePercent?: number | null;
 	/** Display-only list / "normal" prices. Checkout still uses `prices`. */
 	originalPrices?: Price[];
 	imageUrl: string;

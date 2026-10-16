@@ -11,6 +11,7 @@ export interface Consultation {
 	description?: string;
 	duration: number; // in minutes (30, 45, 60, 75, 90)
 	prices: ConsultationPrice[];
+	processingFeePercent?: number | null;
 	isActive: boolean;
 	orgId: string;
 	createdBy: string | {

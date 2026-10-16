@@ -200,6 +200,7 @@ const AdminConsultations = () => {
 				title: singleConsultation.title.trim(),
 				description: singleConsultation.description.trim(),
 				prices,
+				processingFeePercent: singleConsultation.processingFeePercent ?? null,
 			});
 
 			const consultationResponseData = consultationResponse.data;

@@ -2,6 +2,7 @@ import { Box, Typography, Grid, FormControlLabel, Checkbox, Tooltip } from '@mui
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomTextField from '../forms/customFields/CustomTextField';
+import ProcessingFeePercentField from '../forms/customFields/ProcessingFeePercentField';
 import { Consultation, ConsultationPrice } from '../../interfaces/consultation';
 import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -233,6 +234,16 @@ const CreateConsultationDialog = ({
 							/>
 						</Grid>
 					</Grid>
+					<ProcessingFeePercentField
+						value={singleConsultation?.processingFeePercent == null ? '' : String(singleConsultation.processingFeePercent)}
+						onChange={(value) =>
+							setSingleConsultation(
+								singleConsultation
+									? { ...singleConsultation, processingFeePercent: value === '' ? null : Number(value) }
+									: singleConsultation,
+							)
+						}
+					/>
 				</Box>
 
 

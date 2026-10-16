@@ -35,7 +35,7 @@ import { DocumentDetailBlock } from '../interfaces/document';
 
 type PublicDocumentDetail = Pick<
 	Document,
-	'_id' | 'name' | 'description' | 'imageUrl' | 'samplePageImageUrls' | 'detailIntroText' | 'detailImageUrls' | 'detailBlocks' | 'prices' | 'pageCount' | 'orgId'
+	'_id' | 'name' | 'description' | 'imageUrl' | 'samplePageImageUrls' | 'detailIntroText' | 'detailImageUrls' | 'detailBlocks' | 'prices' | 'pageCount' | 'orgId' | 'processingFeePercent'
 > & {
 	createdAt?: string;
 	updatedAt?: string;
@@ -126,6 +126,7 @@ const LandingPageDocument = () => {
 			title: document.name || 'Kitap',
 			amount: price.amount,
 			currency: price.currency,
+			processingFeePercent: document.processingFeePercent,
 			imageUrl: document.imageUrl,
 		});
 	};

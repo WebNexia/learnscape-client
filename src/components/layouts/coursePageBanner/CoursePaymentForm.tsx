@@ -30,7 +30,8 @@ import {
 import { Link } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import theme from '../../../themes';
-import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
+import { applyProcessingFee } from '../../../utils/processingFee';
+import PaymentAmountBreakdown from '../payment/PaymentAmountBreakdown';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getListPriceIfDifferent, getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { resolvePricingCountryCode } from '../../../utils/resolvePricingCountryCode';
@@ -206,7 +207,7 @@ export default function CoursePaymentForm({
 		setIsProcessing(true);
 		setIsSubmitted(true);
 		clearCheckoutError();
-		const lockedAmount = discountedAmount;
+		const lockedAmount = applyProcessingFee(discountedAmount, course.processingFeePercent).total;
 
 		const stillCurrent = () => requestId === paymentRequestIdRef.current;
 
@@ -867,29 +868,17 @@ export default function CoursePaymentForm({
 										gap: 1,
 										flexWrap: 'wrap',
 									}}>
-									<Typography sx={{ fontFamily: FONT, fontSize: '0.9rem', color: 'text.secondary' }}>Toplam</Typography>
-									<Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.25, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-										{listPrice && String(discountedAmount) !== String(listPrice.amount) ? (
-											<Typography
-												component='span'
-												sx={{
-													fontFamily: FONT,
-													fontWeight: 700,
-													fontSize: isMobileSize ? '0.9rem' : '1.05rem',
-													color: '#475569',
-													textDecoration: 'line-through',
-													textDecorationThickness: '2px',
-													letterSpacing: '-0.02em',
-													lineHeight: 1.2,
-												}}>
-												{setCurrencySymbol(listPrice.currency)}
-												{listPrice.amount}
-											</Typography>
-										) : null}
-										<Typography sx={{ fontFamily: FONT, fontWeight: 800, fontSize: isMobileSize ? '1.05rem' : '1.25rem', color: '#0A1A2F', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-											{setCurrencySymbol(sellingPrice.currency)}
-											{discountedAmount}
-										</Typography>
+									{isCourseFree ? (
+										<Typography sx={{ fontFamily: FONT, fontWeight: 800, fontSize: '1rem', color: '#0A1A2F' }}>Ücretsiz</Typography>
+									) : (
+										<PaymentAmountBreakdown
+											baseAmount={discountedAmount}
+											currency={sellingPrice?.currency || 'try'}
+											processingFeePercent={course.processingFeePercent}
+											productLabel='Kurs ücreti'
+											fontFamily={FONT}
+										/>
+									)}
 										{isPromoCodeApplied && (
 											<Typography
 												variant="body2"
@@ -908,7 +897,6 @@ export default function CoursePaymentForm({
 										)}
 									</Box>
 								</Box>
-							</Box>
 
 							{!isCourseFree && (
 								<Typography sx={{ fontFamily: FONT, fontSize: isMobileSize ? '0.72rem' : '0.8rem', color: 'text.secondary', lineHeight: 1.5, mt: 2, mb: 1 }}>
