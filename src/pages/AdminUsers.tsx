@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
+import { Alert, Autocomplete, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -29,6 +29,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../utils/dateFormatter';
+import { COUNTRY_LIST } from '../data/countries';
 
 const BULK_ACCOUNT_LIMIT = 50;
 
@@ -594,7 +595,7 @@ const AdminUsers = () => {
 		setCreateAccountSuccess('');
 		setCreateAccountFallback(null);
 		setCreatePaymentLinkUrl('');
-		if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || createPhone.replace(/\D/g, '').length < 7) {
+		if (!createFirstName.trim() || !createLastName.trim() || !createEmail.trim() || !createCountryCode || createPhone.replace(/\D/g, '').length < 7) {
 			setCreateAccountError('First name, last name, email, country, and phone are required.');
 			setCreateConfirmMode(null);
 			return;
@@ -2301,7 +2302,7 @@ const AdminUsers = () => {
 						/>
 						<Box>
 							<Typography variant='caption' sx={{ display: 'block', mb: '0.35rem' }}>
-								Country and phone
+								Phone
 							</Typography>
 							<PhoneInput
 								key={createAccountOpen ? 'create-account-phone' : 'create-account-phone-closed'}
@@ -2310,22 +2311,32 @@ const AdminUsers = () => {
 								countryCodeEditable={false}
 								specialLabel=''
 								value={createPhone}
-								onChange={(phoneNumber, countryData) => {
+								onChange={(phoneNumber) => {
 									const formatted = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
 									setCreatePhone(formatted);
-									const code =
-										countryData && typeof countryData === 'object' && 'countryCode' in countryData
-											? String(countryData.countryCode || '')
-											: '';
-									if (code) {
-										const nextCountry = code.toUpperCase();
-										setCreateCountryCode(nextCountry);
-										if (createCourseId) void refreshCreateCourseQuote(createCourseId, nextCountry);
-									}
 								}}
 								inputStyle={{ width: '100%', height: '40px' }}
 							/>
 						</Box>
+						<Autocomplete
+							options={COUNTRY_LIST}
+							value={COUNTRY_LIST.find((country) => country.code === createCountryCode) ?? null}
+							onChange={(_, newValue) => {
+								const nextCountry = newValue?.code || '';
+								setCreateCountryCode(nextCountry);
+								if (nextCountry && createCourseId) void refreshCreateCourseQuote(createCourseId, nextCountry);
+							}}
+							disabled={createAccountSubmitting}
+							getOptionLabel={(option) => `${option.label} (${option.code})`}
+							isOptionEqualToValue={(option, value) => option.code === value.code}
+							noOptionsText='No country found'
+							renderInput={(params) => <TextField {...params} label='Country' required size='small' />}
+							ListboxProps={{ sx: { maxHeight: 280, '& .MuiAutocomplete-option': { fontSize: '0.85rem' } } }}
+							filterOptions={(options, { inputValue }) => {
+								const query = inputValue.trim().toLowerCase();
+								return options.filter((option) => option.label.toLowerCase().includes(query) || option.code.toLowerCase().includes(query));
+							}}
+						/>
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 							Add to course is optional. The course page opens as soon as the account is created.
 						</Typography>
