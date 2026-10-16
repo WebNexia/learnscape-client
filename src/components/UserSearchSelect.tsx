@@ -312,13 +312,17 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 							onClick={() => handleUserSelect(user)}>
 							<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
 								<img
-									src={user.imageUrl}
-									alt='profile_img'
+									src={user.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+									alt=''
+									onError={(event) => {
+										event.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+									}}
 									style={{
 										height: '2rem',
 										width: '2rem',
 										borderRadius: '100%',
 										border: 'solid lightgray 0.1rem',
+										objectFit: 'cover',
 									}}
 								/>
 							</Box>
