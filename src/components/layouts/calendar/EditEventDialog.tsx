@@ -66,6 +66,9 @@ type SelectedCourseGroup = {
 	courseTitle: string;
 };
 
+/** In-app host start stays in the code, but desktop Zoom is the path used for now. */
+const IN_APP_HOST_START_ENABLED = false;
+
 const asEventDate = (value: Date | string | null | undefined): Date | null => {
 	if (!value) return null;
 	const parsed = value instanceof Date ? value : new Date(value);
@@ -113,7 +116,7 @@ const EditEventDialog = ({
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [isStartingMeeting, setIsStartingMeeting] = useState<boolean>(false);
-	const [copyStartLinkSuccess, setCopyStartLinkSuccess] = useState<boolean>(false);
+	const [copyJoinLinkSuccess, setCopyJoinLinkSuccess] = useState<boolean>(false);
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
@@ -298,6 +301,46 @@ const EditEventDialog = ({
 		}
 
 		return !hasErrors;
+	};
+
+	const copyStudentJoinLink = () => {
+		const joinUrl = selectedEvent?.zoomJoinUrl;
+		if (!joinUrl) return;
+		navigator.clipboard.writeText(joinUrl).then(() => {
+			setCopyJoinLinkSuccess(true);
+			setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
+		});
+	};
+
+	const startMeeting = async () => {
+		if (!selectedEvent?._id) return;
+		if (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) {
+			setUrlErrorMessage('You do not have permission to start this Zoom meeting.');
+			setIsUrlErrorOpen(true);
+			return;
+		}
+
+		try {
+			setIsStartingMeeting(true);
+			if (IN_APP_HOST_START_ENABLED) {
+				const url = `${window.location.origin}/zoom-meeting/${selectedEvent._id}?autojoin=1&host=1`;
+				window.open(url, '_blank', 'noopener,noreferrer');
+				return;
+			}
+
+			const response = await axios.get(`${base_url}/events/${selectedEvent._id}/zoom-start-url`);
+			const startUrl = response.data?.data?.startUrl;
+			if (!startUrl) {
+				throw new Error('Zoom host link is not available.');
+			}
+			window.open(startUrl, '_blank', 'noopener,noreferrer');
+		} catch (error: any) {
+			const msg = error?.response?.data?.message || error?.message || 'Failed to start Zoom meeting. Please try again.';
+			setUrlErrorMessage(msg);
+			setIsUrlErrorOpen(true);
+		} finally {
+			setIsStartingMeeting(false);
+		}
 	};
 
 	// Set isZoomMeeting flag when Zoom fields exist on the loaded event
@@ -530,19 +573,19 @@ const EditEventDialog = ({
 			const startAsDate = asEventDate(selectedEvent?.start);
 			const startDate = startAsDate
 				? startAsDate.toLocaleDateString(navigator.language || undefined, {
-						weekday: 'long',
-						year: 'numeric',
-						month: 'long',
-						day: 'numeric',
-						timeZoneName: 'short',
-					})
+					weekday: 'long',
+					year: 'numeric',
+					month: 'long',
+					day: 'numeric',
+					timeZoneName: 'short',
+				})
 				: '';
 			const startTime = startAsDate
 				? startAsDate.toLocaleTimeString(navigator.language || undefined, {
-						hour: '2-digit',
-						minute: '2-digit',
-						timeZoneName: 'short',
-					})
+					hour: '2-digit',
+					minute: '2-digit',
+					timeZoneName: 'short',
+				})
 				: '';
 
 			// Send notifications using the utility function
@@ -611,7 +654,7 @@ const EditEventDialog = ({
 					setIsEventUpdated(false);
 				}
 			}}
-			title={`Edit Event${selectedEvent?.createdByName ? ` - (Added by ${selectedEvent.createdByName})` : ''}`}
+			title={`Edit Event${(hasAdminAccess || isInstructor) && selectedEvent?.createdByName ? ` - (Added by ${selectedEvent.createdByName})` : ''}`}
 			maxWidth='sm'>
 			<form
 				onSubmit={(e) => {
@@ -1441,56 +1484,27 @@ const EditEventDialog = ({
 						(() => {
 							const hasZoomMeeting = !!(selectedEvent?.zoomMeetingId || selectedEvent?.zoomMeetingNumber || selectedEvent?.zoomJoinUrl);
 							if (hasZoomMeeting) {
-								const startUrlToCopy = selectedEvent?.zoomStartUrl || selectedEvent?.zoomJoinUrl;
 								return (
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: '0.75rem' }}>
-										{startUrlToCopy && (
-											<Tooltip title={copyStartLinkSuccess ? 'Copied!' : 'Copy start link (opens in Zoom app)'} arrow placement='top'>
+										{selectedEvent?.zoomJoinUrl && (
+											<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy the student join link'} arrow placement='top'>
 												<Button
 													variant='outlined'
 													size='small'
 													startIcon={<ContentCopy fontSize='small' />}
-													onClick={() => {
-														if (!startUrlToCopy) return;
-														navigator.clipboard.writeText(startUrlToCopy).then(() => {
-															setCopyStartLinkSuccess(true);
-															setTimeout(() => setCopyStartLinkSuccess(false), 2000);
-														});
-													}}
+													onClick={copyStudentJoinLink}
 													sx={{
-														textTransform: 'capitalize',
+														textTransform: 'none',
 														fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 													}}>
-													{copyStartLinkSuccess ? 'Copied' : 'Copy Link'}
+													{copyJoinLinkSuccess ? 'Copied' : 'Student Join Link'}
 												</Button>
 											</Tooltip>
 										)}
 										<Button
 											variant='contained'
 											disabled={!selectedEvent?._id || (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) || isStartingMeeting}
-											onClick={async () => {
-												if (!selectedEvent?._id) return;
-												if (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) {
-													setUrlErrorMessage('You do not have permission to start this Zoom meeting.');
-													setIsUrlErrorOpen(true);
-													return;
-												}
-
-												try {
-													setIsStartingMeeting(true);
-													// Start as host via Meeting SDK (no Zoom login required in browser)
-													const url = `${window.location.origin}/zoom-meeting/${selectedEvent._id}?autojoin=1&host=1`;
-													window.open(url, '_blank', 'noopener,noreferrer');
-												} catch (error: any) {
-													const msg =
-														error?.response?.data?.message ||
-														'Failed to start Zoom meeting. If this is an older meeting, the host start link may have expired—try recreating the Zoom meeting.';
-													setUrlErrorMessage(msg);
-													setIsUrlErrorOpen(true);
-												} finally {
-													setIsStartingMeeting(false);
-												}
-											}}
+											onClick={() => void startMeeting()}
 											sx={{
 												'backgroundColor': '#2D8CFF',
 												'textTransform': 'capitalize',

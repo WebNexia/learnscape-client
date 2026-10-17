@@ -14,6 +14,7 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import { eventDateTimeFormatter } from '../../../utils/dateFormatter';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface EventDetailsDialogProps {
 	eventDetailsModalOpen: boolean;
@@ -30,6 +31,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess, isInstructor } = useAuth();
 
 	const navigate = useNavigate();
 	const [isRegisterForEventSuccess, setIsRegisterForEventSuccess] = useState<boolean>(false);
@@ -250,7 +252,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						</Box>
 					)}
 
-					{selectedEvent?.createdBy && (
+					{(hasAdminAccess || isInstructor) && selectedEvent?.createdBy && (
 						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
 								Added By:
