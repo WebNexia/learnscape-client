@@ -69,19 +69,12 @@ function escapeHtml(value) {
 function pageUrl(page, siteUrl) {
     return page.path === '/' ? "".concat(siteUrl, "/") : "".concat(siteUrl).concat(page.path);
 }
-function staticBody(page, siteUrl, pages) {
+function staticBody(page) {
     var paragraphs = [page.description].concat(page.paragraphs || []).filter(function (text, index, all) { return all.indexOf(text) === index; });
-    var links = pages
-        .filter(function (item) { return item.path !== page.path; })
-        .map(function (item) { return "<li><a href=\"".concat(escapeHtml(pageUrl(item, siteUrl)), "\">").concat(escapeHtml(item.seoTitle), "</a></li>"); })
-        .join('');
     return [
         '<main>',
         "<h1>".concat(escapeHtml(page.seoTitle), "</h1>"),
     ].concat(paragraphs.map(function (text) { return "<p>".concat(escapeHtml(text), "</p>"); }), [
-        '<nav aria-label="Aden Academy">',
-        "<ul>".concat(links, "</ul>"),
-        '</nav>',
         '</main>',
     ]).join('\n\t\t\t');
 }
@@ -101,7 +94,7 @@ function seoBlock(page, siteUrl) {
     ].join('\n\t\t');
 }
 function withStaticBody(html, page, siteUrl, pages) {
-    var block = "<!-- public-body -->\n\t\t\t".concat(staticBody(page, siteUrl, pages), "\n\t\t\t<!-- /public-body -->");
+    var block = "<!-- public-body -->\n\t\t\t".concat(staticBody(page), "\n\t\t\t<!-- /public-body -->");
     if (html.includes('<!-- public-body -->')) {
         return html.replace(/<!-- public-body -->[\s\S]*?<!-- \/public-body -->/, block);
     }
