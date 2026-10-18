@@ -1,5 +1,6 @@
 import { QuestionInterface } from '../interfaces/question';
 import { QuestionType } from '../interfaces/enums';
+import { blankAnswersMatch } from './blankAnswerMatch';
 
 export const getQuestionResult = (response: any, fetchQuestionTypeName: (question: QuestionInterface) => string) => {
 	const questionType = fetchQuestionTypeName(response.questionId);
@@ -32,7 +33,7 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 			response.userBlankValuePairAnswers?.every(
 				(userAnswer: any) =>
 					response.questionId.blankValuePairs?.some(
-						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value
+						(correctPair: any) => correctPair.id === userAnswer.id && blankAnswersMatch(correctPair.value, userAnswer.value)
 					) || false
 			) || false;
 		return isAllCorrect ? true : false;
