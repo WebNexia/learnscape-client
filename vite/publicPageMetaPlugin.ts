@@ -45,19 +45,12 @@ function pageUrl(page: PublicPageMeta, siteUrl: string) {
 	return page.path === '/' ? `${siteUrl}/` : `${siteUrl}${page.path}`;
 }
 
-function staticBody(page: PublicPageMeta, siteUrl: string, pages: PublicPageMeta[]) {
+function staticBody(page: PublicPageMeta) {
 	const paragraphs = [page.description, ...(page.paragraphs ?? [])].filter((text, index, all) => all.indexOf(text) === index);
-	const links = pages
-		.filter((item) => item.path !== page.path)
-		.map((item) => `<li><a href="${escapeHtml(pageUrl(item, siteUrl))}">${escapeHtml(item.seoTitle)}</a></li>`)
-		.join('');
 	return [
 		'<main>',
 		`<h1>${escapeHtml(page.seoTitle)}</h1>`,
 		...paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`),
-		'<nav aria-label="Aden Academy">',
-		`<ul>${links}</ul>`,
-		'</nav>',
 		'</main>',
 	].join('\n\t\t\t');
 }
@@ -79,7 +72,7 @@ function seoBlock(page: PublicPageMeta, siteUrl: string) {
 }
 
 function withStaticBody(html: string, page: PublicPageMeta, siteUrl: string, pages: PublicPageMeta[]) {
-	const block = `<!-- public-body -->\n\t\t\t${staticBody(page, siteUrl, pages)}\n\t\t\t<!-- /public-body -->`;
+	const block = `<!-- public-body -->\n\t\t\t${staticBody(page)}\n\t\t\t<!-- /public-body -->`;
 	if (html.includes('<!-- public-body -->')) {
 		return html.replace(/<!-- public-body -->[\s\S]*?<!-- \/public-body -->/, block);
 	}
