@@ -18,6 +18,7 @@ import { useWordAssist, wrapWordsForHover } from '../../../hooks/useWordAssist';
 import { LEARNER_TEXT_FONT_FAMILY } from '../../../utils/learnerTypography';
 import FitbInteractionModeBadge from '../fitb/FitbInteractionModeBadge';
 import { getWordBankHint } from '../../../utils/fitbWordBankHint';
+import { blankAnswersMatch } from '../../../utils/blankAnswerMatch';
 
 const questionTextColor = theme.palette.primary.main;
 
@@ -220,7 +221,7 @@ const FillInTheBlanksTyping = ({
 
 			userBlankValuePairsAfterSubmission?.forEach((pair) => {
 				submittedAnswers[pair.id] = pair.value;
-				status[pair.id] = blankValuePairs?.find((bvp) => bvp.id === pair.id)?.value === pair.value;
+				status[pair.id] = blankAnswersMatch(blankValuePairs?.find((bvp) => bvp.id === pair.id)?.value, pair.value);
 			});
 
 			setUserAnswers(submittedAnswers);
@@ -340,7 +341,7 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
-			const allCorrect = blankValuePairs?.every((pair) => pair.value === userAnswers[pair.id]) || false;
+			const allCorrect = blankValuePairs?.every((pair) => blankAnswersMatch(pair.value, userAnswers[pair.id])) || false;
 			if (onComplete) onComplete(allCorrect);
 
 			if (setAllPairsMatchedFITBTyping) {
@@ -375,7 +376,7 @@ const FillInTheBlanksTyping = ({
 
 		if (inputValue === '') {
 			newStatus[id] = null;
-		} else if (blankValuePairs?.find((pair) => pair.id === id)?.value === inputValue.trim()) {
+		} else if (blankAnswersMatch(blankValuePairs?.find((pair) => pair.id === id)?.value, inputValue)) {
 			newStatus[id] = true;
 			// Play success sound only when complete correct word is typed
 			if (onCorrectMatch) {
