@@ -142,11 +142,12 @@ const EditEventDialog = ({
 		// Check if user is already selected
 		const isAlreadySelected = selectedEvent?.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected && selectedEvent) {
+			setIsEventUpdated(true);
 			setSelectedEvent((prevData) => {
 				if (prevData) {
 					return {
 						...prevData,
-						attendees: [...prevData.attendees, attendee],
+						attendees: [...(prevData.attendees || []), attendee],
 					};
 				}
 				return prevData;
@@ -161,11 +162,12 @@ const EditEventDialog = ({
 		// Check if instructor is already selected
 		const isAlreadySelected = selectedEvent?.attendees?.some((existing) => existing._id === attendee._id);
 		if (!isAlreadySelected && selectedEvent) {
+			setIsEventUpdated(true);
 			setSelectedEvent((prevData) => {
 				if (prevData) {
 					return {
 						...prevData,
-						attendees: [...prevData.attendees, attendee],
+						attendees: [...(prevData.attendees || []), attendee],
 					};
 				}
 				return prevData;
