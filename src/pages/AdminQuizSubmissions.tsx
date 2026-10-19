@@ -140,7 +140,14 @@ const AdminQuizSubmissions = () => {
 					isSticky={true}
 				/>
 
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						width: '100%',
+						padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					}}>
 					<Table
 						sx={{
 							'mb': '2rem',
