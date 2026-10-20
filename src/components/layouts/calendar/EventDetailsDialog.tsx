@@ -31,7 +31,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { hasAdminAccess, isInstructor } = useAuth();
+	const { hasAdminAccess, isInstructor, isLearner } = useAuth();
 
 	const navigate = useNavigate();
 	const [isRegisterForEventSuccess, setIsRegisterForEventSuccess] = useState<boolean>(false);
@@ -379,7 +379,10 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && listEventYouTubeRecordings(selectedEvent).length === 0 && recordings.length === 0 && (
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, }}>
 							<CustomSubmitButton
-								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
+								onClick={() => {
+									const url = isLearner ? selectedEvent.zoomJoinUrl : `/zoom-meeting/${selectedEvent._id}?autojoin=1`;
+									if (url) window.open(url, '_blank', 'noopener,noreferrer');
+								}}
 								sx={{
 									'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
 									'backgroundColor': 'transparent !important',
@@ -390,22 +393,24 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 								}}>
 								Join Meeting
 							</CustomSubmitButton>
-							<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'}>
-								<Button
-									variant='outlined'
-									size='small'
-									startIcon={<ContentCopy fontSize='small' />}
-									onClick={() => {
-										if (!selectedEvent?.zoomJoinUrl) return;
-										navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
-											setCopyJoinLinkSuccess(true);
-											setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
-										});
-									}}
-									sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-									{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
-								</Button>
-							</Tooltip>
+							{!isLearner && (
+								<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'}>
+									<Button
+										variant='outlined'
+										size='small'
+										startIcon={<ContentCopy fontSize='small' />}
+										onClick={() => {
+											if (!selectedEvent?.zoomJoinUrl) return;
+											navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
+												setCopyJoinLinkSuccess(true);
+												setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
+											});
+										}}
+										sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+										{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
+									</Button>
+								</Tooltip>
+							)}
 						</Box>
 					)}
 					<Box>
@@ -423,7 +428,10 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && listEventYouTubeRecordings(selectedEvent).length === 0 && recordings.length === 0 && (
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
 							<CustomSubmitButton
-								onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
+								onClick={() => {
+									const url = isLearner ? selectedEvent.zoomJoinUrl : `/zoom-meeting/${selectedEvent._id}?autojoin=1`;
+									if (url) window.open(url, '_blank', 'noopener,noreferrer');
+								}}
 								sx={{
 									'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
 									'backgroundColor': 'transparent !important',
@@ -434,22 +442,24 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 								}}>
 								Join Meeting
 							</CustomSubmitButton>
-							<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'} arrow placement='top'>
-								<Button
-									variant='outlined'
-									size='small'
-									startIcon={<ContentCopy fontSize='small' />}
-									onClick={() => {
-										if (!selectedEvent?.zoomJoinUrl) return;
-										navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
-											setCopyJoinLinkSuccess(true);
-											setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
-										});
-									}}
-									sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-									{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
-								</Button>
-							</Tooltip>
+							{!isLearner && (
+								<Tooltip title={copyJoinLinkSuccess ? 'Copied!' : 'Copy join link (opens in Zoom app)'} arrow placement='top'>
+									<Button
+										variant='outlined'
+										size='small'
+										startIcon={<ContentCopy fontSize='small' />}
+										onClick={() => {
+											if (!selectedEvent?.zoomJoinUrl) return;
+											navigator.clipboard.writeText(selectedEvent.zoomJoinUrl).then(() => {
+												setCopyJoinLinkSuccess(true);
+												setTimeout(() => setCopyJoinLinkSuccess(false), 2000);
+											});
+										}}
+										sx={{ textTransform: 'capitalize', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+										{copyJoinLinkSuccess ? 'Copied' : 'Copy Link'}
+									</Button>
+								</Tooltip>
+							)}
 						</Box>
 					)}
 					<Box>
