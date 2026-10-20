@@ -283,12 +283,14 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 									onClick: () => navigate(`/event-recording/${selectedEvent?._id}?video=${recording.youtubeVideoId}`),
 								});
 							});
-							// If YT is not ready but Zoom recordings exist, show Zoom
 							if (!hasYouTube && hasZoomRecordings) {
-								recordingsToShow.push({
-									type: 'zoom',
-									label: `Watch Recording (Zoom - ${eventDateTimeFormatter(recordings[0].recordingStart)})`,
-									onClick: () => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`),
+								recordings.forEach((recording) => {
+									const when = recording.recordingStart ? eventDateTimeFormatter(recording.recordingStart) : '';
+									recordingsToShow.push({
+										type: 'zoom',
+										label: when ? `Watch Recording (Zoom) · ${when}` : 'Watch Recording (Zoom)',
+										onClick: () => navigate(`/event-recording/${selectedEvent?._id}/${recording.recordingId}`),
+									});
 								});
 							}
 
