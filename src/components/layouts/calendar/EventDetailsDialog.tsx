@@ -5,6 +5,7 @@ import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../dialog/CustomDialog';
 import { Alert, Box, Button, DialogActions, DialogContent, Link, Snackbar, Tooltip, Typography } from '@mui/material';
 import ContentCopy from '@mui/icons-material/ContentCopy';
+import PlayArrow from '@mui/icons-material/PlayArrow';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import theme from '../../../themes';
@@ -276,19 +277,17 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						// If Zoom is configured for auto upload to YT:
 						if (hasZoomConfigured) {
 							youtubeRecordings.forEach((recording) => {
-								const when = recording.recordingStart ? eventDateTimeFormatter(recording.recordingStart) : '';
 								recordingsToShow.push({
 									type: 'youtube',
-									label: when ? `Watch Recording · ${when}` : 'Watch Recording',
+									label: 'Watch Recording',
 									onClick: () => navigate(`/event-recording/${selectedEvent?._id}?video=${recording.youtubeVideoId}`),
 								});
 							});
 							if (!hasYouTube && hasZoomRecordings) {
 								recordings.forEach((recording) => {
-									const when = recording.recordingStart ? eventDateTimeFormatter(recording.recordingStart) : '';
 									recordingsToShow.push({
 										type: 'zoom',
-										label: when ? `Watch Recording (Zoom) · ${when}` : 'Watch Recording (Zoom)',
+										label: 'Watch Recording',
 										onClick: () => navigate(`/event-recording/${selectedEvent?._id}/${recording.recordingId}`),
 									});
 								});
@@ -321,47 +320,47 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
 									{recordingsToShow.length > 1 ? 'Watch Recordings' : 'Recording:'}
 								</Typography>
-								{recordingsToShow.map((recording, index) =>
-									recording.onClick ? (
-										<Link
-											key={index}
-											onClick={recording.onClick}
-											sx={{
-												'display': 'block',
-												'cursor': 'pointer',
-												'color': theme.palette.primary.main,
-												'textDecoration': 'none',
-												'mb': index < recordingsToShow.length - 1 ? '0.5rem' : '0',
-												'&:hover': {
-													textDecoration: 'underline',
-												},
-											}}>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+									{recordingsToShow.map((recording, index) => {
+										const drawerBlue = hasAdminAccess
+											? theme.bgColor?.adminSidebar
+											: isInstructor
+												? theme.bgColor?.instructorSidebar
+												: theme.bgColor?.learnerSidebar;
+										return (
+											<CustomSubmitButton
+												key={index}
+												type='button'
+												startIcon={<PlayArrow />}
+												capitalize={false}
+												onClick={() => {
+													if (recording.onClick) {
+														recording.onClick();
+														return;
+													}
+													if (recording.href) window.open(recording.href, '_blank', 'noopener,noreferrer');
+												}}
+												sx={{
+													backgroundColor: drawerBlue,
+													color: '#fff',
+													height: 'auto',
+													minHeight: isMobileSize ? '1.75rem' : '2rem',
+													whiteSpace: 'normal',
+													textAlign: 'left',
+													lineHeight: 1.3,
+													px: '0.9rem',
+													py: '0.45rem',
+													':hover': {
+														backgroundColor: drawerBlue,
+														filter: 'brightness(1.12)',
+														boxShadow: 'none',
+													},
+												}}>
 												{recording.label}
-											</Typography>
-										</Link>
-									) : (
-										<Link
-											key={index}
-											href={recording.href}
-											target='_blank'
-											rel='noopener noreferrer'
-											sx={{
-												'display': 'block',
-												'cursor': 'pointer',
-												'color': theme.palette.primary.main,
-												'textDecoration': 'none',
-												'mb': index < recordingsToShow.length - 1 ? '0.5rem' : '0',
-												'&:hover': {
-													textDecoration: 'underline',
-												},
-											}}>
-											<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												{recording.label}
-											</Typography>
-										</Link>
-									)
-								)}
+											</CustomSubmitButton>
+										);
+									})}
+								</Box>
 							</Box>
 						);
 					})()}
