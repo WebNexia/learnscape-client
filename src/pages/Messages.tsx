@@ -34,6 +34,7 @@ import { useChatNavigation } from '../hooks/useChatNavigation';
 import { useAuth } from '../hooks/useAuth';
 import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
 import { cleanupGroupChatImages, generateGroupChatId } from '../utils/groupImageStorage';
+import { canManageGroupChat, isSoleGroupAdmin } from '../utils/groupAdmins';
 import { LEARNER_SAAS } from '../constants/learnerSaasUi';
 
 export interface Message {
@@ -81,6 +82,7 @@ export interface Chat {
 	groupName?: string;
 	groupImageUrl?: string;
 	createdBy?: string;
+	adminIds?: string[];
 }
 
 const Messages = () => {
@@ -278,7 +280,7 @@ const Messages = () => {
 	});
 
 	const confirmDeleteGroupChat = async () => {
-		if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
+		if (!activeChat || !canManageGroupChat(activeChat, user?.firebaseUserId, hasAdminAccess)) return;
 
 		try {
 			await deleteGroupChat(activeChat.chatId);
@@ -786,15 +788,15 @@ const Messages = () => {
 					onRemoveExistingMember={removeExistingGroupMember}
 					onRestoreExistingMember={restoreExistingGroupMember}
 					onGroupSearchChange={setGroupSearchValue}
-					onUpdateGroupChat={() => {
+					onUpdateGroupChat={(adminIds) => {
 						if (!groupName.trim() || !activeChat || !isGroupChat(activeChat)) return;
-						updateGroupChat(activeChat.chatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers, removedMembers);
+						updateGroupChat(activeChat.chatId, groupName.trim(), groupImageUrl.trim() || '', selectedGroupUsers, removedMembers, adminIds);
 						// Reset form/UI
 						resetGroupChatEditForm();
 						setEditGroupModalOpen(false);
 					}}
 					onDeleteGroupChat={() => {
-						if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
+						if (!activeChat || !canManageGroupChat(activeChat, user?.firebaseUserId, hasAdminAccess)) return;
 						setIsDeleteGroupDialogOpen(true);
 					}}
 				/>
@@ -856,59 +858,72 @@ const Messages = () => {
 								)}
 							</Box>
 
-							{/* Leave Chat Option - Available for learners, not for admins in group chats */}
 							{(() => {
 								const chatToDelete = chatList?.find((chat) => chat.chatId === chatIdToDelete);
-								const isGroupChat = chatToDelete?.chatType === 'group';
-								// Show leave option for learners, or for admins/owner/super-admin in 1-1 chats
-								if (!hasAdminAccess || !isGroupChat) {
+								const isGroupChatToRemove = chatToDelete?.chatType === 'group';
+								const soleAdmin = isSoleGroupAdmin(chatToDelete, user?.firebaseUserId);
+								if (soleAdmin) {
 									return (
 										<Box
 											sx={{
-												'p': 2,
-												'border': '1px solid rgba(255, 107, 107, 0.5)',
-												'borderRadius': '0.75rem',
-												'cursor': 'pointer',
-												'transition': 'background-color 0.2s ease',
-												'&:hover': {
-													backgroundColor: 'rgba(255, 107, 107, 0.08)',
-												},
-											}}
-											onClick={async () => {
-												if (!user?.firebaseUserId) return;
-												try {
-													await handleLeaveChat(chatIdToDelete);
-												} catch (err) {
-													console.error('Error leaving chat:', err);
-													alert('Failed to leave chat. Please try again.');
-												}
-												setIsDeleteChatDialogOpen(false);
-												setChatIdToDelete('');
+												p: 2,
+												border: '1px solid rgba(1, 67, 90, 0.1)',
+												borderRadius: '0.75rem',
 											}}>
-											<Typography variant='h6' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+											<Typography variant='h6' sx={{ mb: 1, color: 'primary.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
 												Leave Chat Permanently
 											</Typography>
 											<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-												You will be removed from this conversation. You won't receive future messages from this chat.
+												You are the only group admin. Make another member an admin before leaving.
 											</Typography>
-											{!isGroupChat && (
-												<Typography
-													variant='caption'
-													sx={{
-														mt: 2,
-														color: 'text.secondary',
-														textAlign: 'center',
-														display: 'block',
-														lineHeight: '1.7',
-														fontSize: isMobileSize ? '0.65rem' : undefined,
-													}}>
-													Note: You can start a new conversation with this person later if neither of you has blocked the other.
-												</Typography>
-											)}
 										</Box>
 									);
 								}
-								return null;
+								return (
+									<Box
+										sx={{
+											'p': 2,
+											'border': '1px solid rgba(255, 107, 107, 0.5)',
+											'borderRadius': '0.75rem',
+											'cursor': 'pointer',
+											'transition': 'background-color 0.2s ease',
+											'&:hover': {
+												backgroundColor: 'rgba(255, 107, 107, 0.08)',
+											},
+										}}
+										onClick={async () => {
+											if (!user?.firebaseUserId) return;
+											try {
+												await handleLeaveChat(chatIdToDelete);
+											} catch (err) {
+												console.error('Error leaving chat:', err);
+												alert('Failed to leave chat. Please try again.');
+											}
+											setIsDeleteChatDialogOpen(false);
+											setChatIdToDelete('');
+										}}>
+										<Typography variant='h6' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+											Leave Chat Permanently
+										</Typography>
+										<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+											You will be removed from this conversation. You won't receive future messages from this chat.
+										</Typography>
+										{!isGroupChatToRemove && (
+											<Typography
+												variant='caption'
+												sx={{
+													mt: 2,
+													color: 'text.secondary',
+													textAlign: 'center',
+													display: 'block',
+													lineHeight: '1.7',
+													fontSize: isMobileSize ? '0.65rem' : undefined,
+												}}>
+												Note: You can start a new conversation with this person later if neither of you has blocked the other.
+											</Typography>
+										)}
+									</Box>
+								);
 							})()}
 						</Box>
 					</Box>

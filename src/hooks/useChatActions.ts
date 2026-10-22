@@ -5,6 +5,7 @@ import { deleteFirebaseStorageUrls } from '../utils/deleteFirebaseStorageUrls';
 import { cleanupGroupChatImages } from '../utils/groupImageStorage';
 import { User } from '../interfaces/user';
 import { Chat, Message } from '../pages/Messages';
+import { getGroupAdminIds } from '../utils/groupAdmins';
 
 interface UseChatActionsProps {
 	user: User | null;
@@ -43,7 +44,14 @@ interface UseChatActionsReturn {
 	handleBlockUnblockUser: (firebaseUserId: string) => Promise<void>;
 
 	// Group management
-	updateGroupChat: (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[], removedMembers: string[]) => Promise<void>;
+	updateGroupChat: (
+		chatId: string,
+		groupName: string,
+		groupImageUrl: string,
+		selectedUsers: User[],
+		removedMembers: string[],
+		adminIds?: string[]
+	) => Promise<void>;
 	deleteGroupChat: (chatId: string) => Promise<void>;
 
 	// Modal states
@@ -206,6 +214,7 @@ export const useChatActions = ({
 					groupName: groupName.trim(),
 					groupImageUrl: trimmedGroupImageUrl,
 					createdBy: currentUserId,
+					adminIds: [currentUserId],
 					lastMessage: {
 						text: 'Group chat created',
 						timestamp: new Date(),
@@ -238,6 +247,7 @@ export const useChatActions = ({
 					groupImageUrl: trimmedGroupImageUrl,
 					chatType: 'group',
 					createdBy: currentUserId,
+					adminIds: [currentUserId],
 					lastMessage: {
 						text: 'Group chat created',
 						timestamp: new Date(),
@@ -266,7 +276,7 @@ export const useChatActions = ({
 
 	// Update group chat
 	const updateGroupChat = useCallback(
-		async (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[], removedMembers: string[]) => {
+		async (chatId: string, groupName: string, groupImageUrl: string, selectedUsers: User[], removedMembers: string[], adminIds?: string[]) => {
 			if (!user?.firebaseUserId || !activeChat) return;
 
 			try {
@@ -283,21 +293,35 @@ export const useChatActions = ({
 				const allParticipants = [...new Set([...(currentParticipants || []), ...newParticipants])];
 
 				const updatedRemovedParticipants = activeChat.removedParticipants?.filter((id) => !newParticipants.includes(id)) || [];
+				const callerIsAdmin = getGroupAdminIds(activeChat).includes(user.firebaseUserId);
+				const nextAdminIds = callerIsAdmin
+					? [...new Set((adminIds || getGroupAdminIds(activeChat)).filter((id) => allParticipants.includes(id)))]
+					: getGroupAdminIds(activeChat).filter((id) => allParticipants.includes(id));
 
-				// ✅ Update main chat data in batch
-				batch.update(chatRef, {
+				if (activeChat.chatType === 'group' && nextAdminIds.length === 0) return;
+
+				const chatUpdate: {
+					participants: string[];
+					removedParticipants: string[];
+					groupName: string;
+					groupImageUrl: string;
+					adminIds?: string[];
+				} = {
 					participants: allParticipants,
 					removedParticipants: updatedRemovedParticipants,
 					groupName: groupName.trim(),
 					groupImageUrl: newGroupImageUrl,
-				});
+				};
+				if (callerIsAdmin) chatUpdate.adminIds = nextAdminIds;
+
+				batch.update(chatRef, chatUpdate);
 
 				// ✅ Add system messages for NEW members — but still in the same batch (1 write total!)
 				usersToAdd.forEach((newUser) => {
 					const messageRef = doc(collection(db, 'chats', chatId, 'messages'));
 					batch.set(messageRef, {
 						id: newUser.firebaseUserId + '_joined',
-						senderId: 'system',
+						senderId: user.firebaseUserId,
 						text: `${newUser.username} joined the chat`,
 						timestamp: new Date(),
 						isRead: false,
@@ -337,6 +361,7 @@ export const useChatActions = ({
 					groupImageUrl: newGroupImageUrl,
 					participants: uniqueParticipantObjects,
 					removedParticipants: updatedRemovedParticipants,
+					adminIds: activeChat.chatType === 'group' ? (callerIsAdmin ? nextAdminIds : activeChat.adminIds) : activeChat.adminIds,
 				};
 
 				setActiveChat(updatedChat);
@@ -348,7 +373,7 @@ export const useChatActions = ({
 				console.error('Error updating group chat:', error);
 			}
 		},
-		[user?.firebaseUserId, refreshChatList]
+		[user?.firebaseUserId, activeChat, refreshChatList]
 	);
 
 	// Permanently delete a chat doc + messages + related Storage files
@@ -488,6 +513,18 @@ export const useChatActions = ({
 
 				const activeUsers = participantIds.filter((uid) => !removedUsers.includes(uid));
 				const activeAfter = activeUsers.filter((uid) => uid !== user.firebaseUserId);
+				const adminIds = getGroupAdminIds({
+					chatType: chatData.chatType,
+					adminIds: chatData.adminIds,
+					createdBy: chatData.createdBy,
+				}).filter((id) => activeUsers.includes(id));
+				const leavingIsAdmin = adminIds.includes(user.firebaseUserId);
+				const adminsAfter = adminIds.filter((id) => id !== user.firebaseUserId);
+
+				if (chatData.chatType === 'group' && leavingIsAdmin && adminsAfter.length === 0 && activeAfter.length > 0) {
+					alert('Make another member a group admin before leaving.');
+					return;
+				}
 
 				// ✅ CASE 1: LAST active user → MUST DELETE ALL MESSAGES FIRST (rule-safe)
 				if (activeAfter.length === 0) {
@@ -495,16 +532,22 @@ export const useChatActions = ({
 				} else {
 					// ✅ CASE 2: Other users still active → leave normally
 					const batch = writeBatch(db);
-
-					batch.update(chatRef, {
+					const leaveUpdate: {
+						participants: ReturnType<typeof arrayRemove>;
+						removedParticipants: ReturnType<typeof arrayUnion>;
+						adminIds?: string[];
+					} = {
 						participants: arrayRemove(user.firebaseUserId),
 						removedParticipants: arrayUnion(user.firebaseUserId),
-					});
+					};
+					if (leavingIsAdmin) leaveUpdate.adminIds = adminsAfter;
+
+					batch.update(chatRef, leaveUpdate);
 
 					const sysMsgRef = doc(messagesRef);
 					batch.set(sysMsgRef, {
 						id: sysMsgRef.id,
-						senderId: 'system',
+						senderId: user.firebaseUserId,
 						text: `${user.username} left the chat`,
 						isSystemMessage: true,
 						systemMessageType: 'user_left',

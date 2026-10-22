@@ -15,6 +15,7 @@ import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useAuth } from '../../hooks/useAuth';
+import { canManageGroupChat, getGroupAdminIds } from '../../utils/groupAdmins';
 
 const DEFAULT_AVATAR = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
 
@@ -56,7 +57,7 @@ interface GroupChatEditModalProps {
 	onRemoveExistingMember: (userId: string) => void;
 	onRestoreExistingMember: (userId: string) => void;
 	onGroupSearchChange: (value: string) => void;
-	onUpdateGroupChat: () => void;
+	onUpdateGroupChat: (adminIds?: string[]) => void;
 	onDeleteGroupChat?: () => void;
 }
 
@@ -85,10 +86,29 @@ const GroupChatEditModal = ({
 	if (!activeChat) return null;
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [adminIds, setAdminIds] = useState<string[]>(() => getGroupAdminIds(activeChat));
 
 	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const callerIsAdmin = !!user?.firebaseUserId && getGroupAdminIds(activeChat).includes(user.firebaseUserId);
+	const canManageGroup = canManageGroupChat(activeChat, user?.firebaseUserId, hasAdminAccess);
+	const stayingMemberIds = (activeChat.participants || [])
+		.map((participant) => participant.firebaseUserId)
+		.filter((id) => !removedMembers?.includes(id));
+	const activeAdminIds = adminIds.filter((id) => stayingMemberIds.includes(id));
+
+	const promoteAdmin = (firebaseUserId: string) => {
+		setAdminIds((current) => (current.includes(firebaseUserId) ? current : [...current, firebaseUserId]));
+	};
+
+	const demoteAdmin = (firebaseUserId: string) => {
+		setAdminIds((current) => {
+			const next = current.filter((id) => id !== firebaseUserId);
+			const stillActive = next.filter((id) => stayingMemberIds.includes(id));
+			return stillActive.length > 0 ? next : current;
+		});
+	};
 
 	const handleSearchUserSelection = (selectedUser: SearchUser) => {
 		// Convert SearchUser to User format
@@ -200,15 +220,33 @@ const GroupChatEditModal = ({
 										gap: 1,
 									}}>
 									<MemberAvatar src={participant.imageUrl} />
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
-										{participant.username}
-										{participant.firebaseUserId === activeChat.createdBy && (
-											<Typography component='span' sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8, color: '#fff' }}>
-												(Group Admin)
+									<Box sx={{ display: 'flex', flexDirection: 'column' }}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
+											{participant.username}
+											{activeAdminIds.includes(participant.firebaseUserId) && (
+												<Typography component='span' sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8, color: '#fff' }}>
+													(Group Admin)
+												</Typography>
+											)}
+										</Typography>
+										{callerIsAdmin && !activeAdminIds.includes(participant.firebaseUserId) && (
+											<Typography
+												component='span'
+												onClick={() => promoteAdmin(participant.firebaseUserId)}
+												sx={{ fontSize: '0.65rem', color: '#fff', textDecoration: 'underline', cursor: 'pointer', width: 'fit-content' }}>
+												Make admin
 											</Typography>
 										)}
-									</Typography>
-									{participant.firebaseUserId !== activeChat.createdBy && (
+										{callerIsAdmin && activeAdminIds.includes(participant.firebaseUserId) && activeAdminIds.length > 1 && (
+											<Typography
+												component='span'
+												onClick={() => demoteAdmin(participant.firebaseUserId)}
+												sx={{ fontSize: '0.65rem', color: '#fff', textDecoration: 'underline', cursor: 'pointer', width: 'fit-content' }}>
+												Remove admin
+											</Typography>
+										)}
+									</Box>
+									{!(activeAdminIds.length === 1 && activeAdminIds[0] === participant.firebaseUserId) && (
 										<IconButton
 											size='small'
 											onClick={() => onRemoveExistingMember(participant.firebaseUserId)}
@@ -249,7 +287,7 @@ const GroupChatEditModal = ({
 										<MemberAvatar src={participant.imageUrl} />
 										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
 											{participant.username}
-											{participant.firebaseUserId === activeChat.createdBy && (
+											{adminIds.includes(participant.firebaseUserId) && (
 												<Typography component='span' sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8, color: '#fff' }}>
 													(Admin)
 												</Typography>
@@ -345,7 +383,7 @@ const GroupChatEditModal = ({
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1.5rem', mt: '-1rem', px: 2 }}>
 				{/* Delete Button for Admin */}
 				<Box sx={{ ml: '-0.75rem' }}>
-					{(hasAdminAccess || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onDeleteGroupChat && (
+					{canManageGroup && onDeleteGroupChat && (
 						<CustomDeleteButton onClick={onDeleteGroupChat} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 							Delete Group
 						</CustomDeleteButton>
@@ -357,7 +395,10 @@ const GroupChatEditModal = ({
 					<CustomCancelButton onClick={onCloseModal} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 						Cancel
 					</CustomCancelButton>
-					<CustomSubmitButton onClick={onUpdateGroupChat} disabled={!groupName.trim()} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+					<CustomSubmitButton
+						onClick={() => onUpdateGroupChat(callerIsAdmin ? activeAdminIds : undefined)}
+						disabled={!groupName.trim() || activeAdminIds.length === 0}
+						sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 						Update Group Chat
 					</CustomSubmitButton>
 				</Box>
