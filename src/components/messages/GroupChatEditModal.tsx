@@ -16,6 +16,27 @@ import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useAuth } from '../../hooks/useAuth';
 
+const DEFAULT_AVATAR = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+
+const memberAvatarStyle = {
+	height: '1.5rem',
+	width: '1.5rem',
+	borderRadius: '100%',
+	border: 'solid white 0.1rem',
+	objectFit: 'cover' as const,
+};
+
+const MemberAvatar = ({ src }: { src?: string }) => (
+	<img
+		src={src || DEFAULT_AVATAR}
+		alt='profile_img'
+		onError={(event) => {
+			event.currentTarget.src = DEFAULT_AVATAR;
+		}}
+		style={memberAvatarStyle}
+	/>
+);
+
 interface GroupChatEditModalProps {
 	editGroupModalOpen: boolean;
 	activeChat: Chat | null;
@@ -178,16 +199,7 @@ const GroupChatEditModal = ({
 										color: '#fff',
 										gap: 1,
 									}}>
-									<img
-										src={participant.imageUrl}
-										alt='profile_img'
-										style={{
-											height: '1.5rem',
-											width: '1.5rem',
-											borderRadius: '100%',
-											border: 'solid white 0.1rem',
-										}}
-									/>
+									<MemberAvatar src={participant.imageUrl} />
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
 										{participant.username}
 										{participant.firebaseUserId === activeChat.createdBy && (
@@ -234,16 +246,7 @@ const GroupChatEditModal = ({
 											color: '#fff',
 											gap: 1,
 										}}>
-										<img
-											src={participant.imageUrl}
-											alt='profile_img'
-											style={{
-												height: '1.5rem',
-												width: '1.5rem',
-												borderRadius: '100%',
-												border: 'solid white 0.1rem',
-											}}
-										/>
+										<MemberAvatar src={participant.imageUrl} />
 										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
 											{participant.username}
 											{participant.firebaseUserId === activeChat.createdBy && (
@@ -287,16 +290,7 @@ const GroupChatEditModal = ({
 										color: '#fff',
 										gap: 1,
 									}}>
-									<img
-										src={selectedUser.imageUrl}
-										alt='profile_img'
-										style={{
-											height: '1.5rem',
-											width: '1.5rem',
-											borderRadius: '100%',
-											border: 'solid white 0.1rem',
-										}}
-									/>
+									<MemberAvatar src={selectedUser.imageUrl} />
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff' }}>
 										{selectedUser.username}
 									</Typography>

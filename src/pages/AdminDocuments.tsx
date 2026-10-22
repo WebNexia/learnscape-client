@@ -64,26 +64,26 @@ const AdminDocuments = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'name', label: isMobileSize ? 'Name' : 'Document Name' },
-					{ key: 'documentUrl', label: isMobileSize ? 'URL' : 'Document URL' },
-					{ key: 'actions', label: 'Actions' },
-				]
+				{ key: 'name', label: isMobileSize ? 'Name' : 'Document Name' },
+				{ key: 'documentUrl', label: isMobileSize ? 'URL' : 'Document URL' },
+				{ key: 'actions', label: 'Actions' },
+			]
 			: isInstructor
 				? [
-						{ key: 'name', label: 'Document Name' },
-						{ key: 'documentUrl', label: 'Document URL' },
-						{ key: 'createdAt', label: 'Created On' },
-						{ key: 'updatedAt', label: 'Updated On' },
-						{ key: 'actions', label: 'Actions' },
-					]
+					{ key: 'name', label: 'Document Name' },
+					{ key: 'documentUrl', label: 'Document URL' },
+					{ key: 'createdAt', label: 'Created On' },
+					{ key: 'updatedAt', label: 'Updated On' },
+					{ key: 'actions', label: 'Actions' },
+				]
 				: [
-						{ key: 'isOnLandingPage', label: 'Landing Page' },
-						{ key: 'name', label: 'Document Name' },
-						{ key: 'documentUrl', label: 'Document URL' },
-						{ key: 'createdByName', label: 'Created By' },
-						{ key: 'updatedAt', label: 'Updated On' },
-						{ key: 'actions', label: 'Actions' },
-					];
+					{ key: 'isOnLandingPage', label: 'Landing Page' },
+					{ key: 'name', label: 'Document Name' },
+					{ key: 'documentUrl', label: 'Document URL' },
+					{ key: 'createdByName', label: 'Created By' },
+					{ key: 'updatedAt', label: 'Updated On' },
+					{ key: 'actions', label: 'Actions' },
+				];
 	};
 
 	const pageSize = 50;
