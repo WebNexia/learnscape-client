@@ -54,5 +54,44 @@
 		"paragraphs": [
 			"Bize ulaşmak için aşağıdaki formu doldurun. Size en kısa sürede geri döneceğiz."
 		]
+	},
+	"levelTest": {
+		"path": "/level-test",
+		"seoTitle": "Ücretsiz İngilizce Seviye Testi (A1–C2)",
+		"description": "Kısa okuma ve dinleme bölümlerinden oluşan ücretsiz uyarlanabilir İngilizce seviye testiyle tahmini CEFR seviyeni öğren.",
+		"paragraphs": [
+			"Test, okuma ve dinleme adımlarıyla tahmini CEFR seviyenizi gösterir. Sonuç kayıt olmadan da görülebilir."
+		]
+	},
+	"terms": {
+		"path": "/terms",
+		"seoTitle": "Kullanıcı Sözleşmesi",
+		"description": "Aden Academy kullanıcı sözleşmesi: NEXTEDU LTD ile platform kullanımı, online kurslar, dijital içerik, ödeme, cayma hakkı ve hesap koşulları.",
+		"paragraphs": [
+			"Bu Kullanıcı Sözleşmesi, Aden Academy platformunu kullanırken sizin ile NEXTEDU LTD arasındaki hak ve yükümlülükleri düzenler. Kayıt olarak, hesap oluşturarak, satın alma yaparak veya hizmetleri kullanmaya devam ederek bu sözleşmeyi kabul etmiş sayılırsınız.",
+			"Sözleşme online kurslar, canlı dersler, dijital kitaplar, danışmanlık randevuları, kulüp oturumları ve topluluk hizmetlerini kapsar. Hizmetler 18 yaş ve üzeri kullanıcılar içindir.",
+			"Sürekli erişimli kurslarda erişim satın alma ile başlar ve 1 yıl sürer. Planlı kurslarda hizmet, duyurulan başlangıç tarihinde başlar; başlangıçtan önce ve sözleşmeden itibaren 14 gün içinde iptal hakkı saklıdır.",
+			"Kişisel veriler Gizlilik Politikası kapsamında işlenir. Sözleşme Birleşik Krallık hukukuna tabidir. Sorularınız için info@adenacademy.co.uk adresine yazabilirsiniz."
+		]
+	},
+	"privacy": {
+		"path": "/privacy-policy",
+		"seoTitle": "Gizlilik Politikası",
+		"description": "Aden Academy gizlilik politikası: kişisel verilerin toplanması, kullanılması, saklanması ve UK GDPR, EU GDPR ile KVKK kapsamındaki haklarınız.",
+		"paragraphs": [
+			"Bu Gizlilik Politikası, Aden Academy üzerinden hizmet alan kullanıcıların kişisel verilerinin nasıl toplandığını, kullanıldığını, saklandığını ve korunduğunu açıklar.",
+			"Politika Birleşik Krallık, Avrupa Birliği ve Türkiye’deki kullanıcılar için UK GDPR, EU GDPR ve KVKK ile uyumlu olacak şekilde hazırlanmıştır.",
+			"Verilerinizle ilgili talepler ve sorular için info@adenacademy.co.uk adresinden NEXTEDU LTD ile iletişime geçebilirsiniz."
+		]
+	},
+	"cookies": {
+		"path": "/cookie-policy",
+		"seoTitle": "Çerez Politikası",
+		"description": "Aden Academy çerez politikası: sitede kullanılan çerez türleri, amaçları ve çerez tercihlerinizi nasıl yönetebileceğiniz.",
+		"paragraphs": [
+			"Bu Çerez Politikası, Aden Academy sitesinde hangi çerezlerin kullanıldığını, hangi amaçla işlendiğini ve tercihlerinizi nasıl değiştirebileceğinizi açıklar.",
+			"Zorunlu çerezler sitenin çalışması için gerekir. Analitik ve tercih çerezleri ise çerez bildirimindeki seçiminize bağlıdır.",
+			"Çerezlerle ilgili sorularınız için info@adenacademy.co.uk adresine yazabilirsiniz."
+		]
 	}
 }

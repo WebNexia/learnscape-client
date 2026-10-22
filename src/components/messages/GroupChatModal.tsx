@@ -164,13 +164,17 @@ const GroupChatModal = ({
 										gap: 1,
 									}}>
 									<img
-										src={selectedUser.imageUrl}
+										src={selectedUser.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 										alt='profile_img'
+										onError={(event) => {
+											event.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+										}}
 										style={{
 											height: '1.5rem',
 											width: '1.5rem',
 											borderRadius: '100%',
 											border: 'solid white 0.1rem',
+											objectFit: 'cover',
 										}}
 									/>
 									<Typography variant='body2' sx={{ fontSize: '0.8rem', color: '#fff' }}>

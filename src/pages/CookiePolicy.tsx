@@ -11,6 +11,8 @@ import {
 	COMPANY_REGISTRATION_TR,
 	formatLegalLastUpdated,
 } from '../constants/legalConstants';
+import { SEO } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -357,8 +359,17 @@ const CookiePolicy = () => {
 
 	const currentContent = content[language];
 
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
+
 	return (
-		<LandingPageLayout>
+		<>
+			<SEO
+				title={PUBLIC_PAGE_META.cookies.seoTitle}
+				description={PUBLIC_PAGE_META.cookies.description}
+				keywords='çerez politikası, cookie policy, Aden Academy'
+				url={`${baseUrl}/cookie-policy`}
+			/>
+			<LandingPageLayout>
 			<Container maxWidth='md' sx={{ mt: isMobileSize ? '6rem' : '8rem', mb: '4rem', px: isMobileSize ? '1rem' : '2rem' }}>
 				<Paper
 					elevation={3}
@@ -590,6 +601,7 @@ const CookiePolicy = () => {
 				</Paper>
 			</Container>
 		</LandingPageLayout>
+		</>
 	);
 };
 

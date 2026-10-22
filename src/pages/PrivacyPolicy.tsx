@@ -12,6 +12,8 @@ import {
 	COMPANY_REGISTRATION_TR,
 	formatLegalLastUpdated,
 } from '../constants/legalConstants';
+import { SEO } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -574,8 +576,17 @@ const PrivacyPolicy = () => {
 	const listSx = { pl: '1.5rem', mb: '1rem' };
 	const listItemSx = { ...bodySx, mb: '0.5rem' };
 
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
+
 	return (
-		<LandingPageLayout>
+		<>
+			<SEO
+				title={PUBLIC_PAGE_META.privacy.seoTitle}
+				description={PUBLIC_PAGE_META.privacy.description}
+				keywords='gizlilik politikası, privacy policy, KVKK, GDPR, Aden Academy'
+				url={`${baseUrl}/privacy-policy`}
+			/>
+			<LandingPageLayout>
 			<Container maxWidth='md' sx={{ mt: isMobileSize ? '6rem' : '8rem', mb: '4rem', px: isMobileSize ? '1rem' : '2rem' }}>
 				<Paper
 					elevation={3}
@@ -770,6 +781,7 @@ const PrivacyPolicy = () => {
 				</Paper>
 			</Container>
 		</LandingPageLayout>
+		</>
 	);
 };
 

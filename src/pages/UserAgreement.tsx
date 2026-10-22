@@ -12,6 +12,8 @@ import {
 	COMPANY_REGISTRATION_TR,
 	formatLegalLastUpdated,
 } from '../constants/legalConstants';
+import { SEO } from '../components/seo';
+import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 
 const CONTACT_EMAIL = 'info@adenacademy.co.uk';
 
@@ -156,6 +158,7 @@ const UserAgreement = () => {
 	};
 
 	const currentContent = content[language];
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://adenacademy.co.uk';
 
 	const bodySx = {
 		fontSize: isMobileSize ? '0.75rem' : '0.9rem',
@@ -173,7 +176,14 @@ const UserAgreement = () => {
 	};
 
 	return (
-		<LandingPageLayout>
+		<>
+			<SEO
+				title={PUBLIC_PAGE_META.terms.seoTitle}
+				description={PUBLIC_PAGE_META.terms.description}
+				keywords='kullanıcı sözleşmesi, user agreement, terms, Aden Academy, NEXTEDU'
+				url={`${baseUrl}/terms`}
+			/>
+			<LandingPageLayout>
 			<Container maxWidth='md' sx={{ mt: isMobileSize ? '6rem' : '8rem', mb: '4rem', px: isMobileSize ? '1rem' : '2rem' }}>
 				<Paper
 					elevation={3}
@@ -294,6 +304,7 @@ const UserAgreement = () => {
 				</Paper>
 			</Container>
 		</LandingPageLayout>
+		</>
 	);
 };
 
