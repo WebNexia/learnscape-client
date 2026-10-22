@@ -5,6 +5,7 @@ import theme from '../../themes';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { activeGroupAdminIds } from '../../utils/groupAdmins';
 
 interface GroupMembersModalProps {
 	membersModalOpen: boolean;
@@ -17,6 +18,7 @@ const GroupMembersModal = ({ membersModalOpen, activeChat, onCloseModal }: Group
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const adminIds = activeGroupAdminIds(activeChat);
 
 	return (
 		<CustomDialog openModal={membersModalOpen} closeModal={onCloseModal} title='Group Members' maxWidth='xs'>
@@ -83,7 +85,7 @@ const GroupMembersModal = ({ membersModalOpen, activeChat, onCloseModal }: Group
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: '#fff', mr: '0.25rem' }}>
 										{participant.username}
 									</Typography>
-									{participant.firebaseUserId === activeChat.createdBy && (
+									{adminIds.includes(participant.firebaseUserId) && (
 										<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.7rem', opacity: 0.8 }}>
 											(Group Admin)
 										</Typography>

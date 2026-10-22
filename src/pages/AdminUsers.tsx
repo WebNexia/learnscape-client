@@ -4,7 +4,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd } from '@mui/icons-material';
+import { Edit, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd } from '@mui/icons-material';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -256,7 +256,6 @@ const AdminUsers = () => {
 	const paginatedUsers = sortedUsers;
 
 	// Modal states
-	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
 	const [isUserEditModalOpen, setIsUserEditModalOpen] = useState<boolean[]>([]);
 	const [isZoomHostModalOpen, setIsZoomHostModalOpen] = useState<boolean[]>([]);
 	const [isDeleteLearningDataModalOpen, setIsDeleteLearningDataModalOpen] = useState<boolean[]>([]);
@@ -343,6 +342,13 @@ const AdminUsers = () => {
 	const [enrolledLinkMessage, setEnrolledLinkMessage] = useState('');
 	const [enrolledLinkError, setEnrolledLinkError] = useState('');
 	const [enrolledLinkUrl, setEnrolledLinkUrl] = useState('');
+	const [sendPaymentLinkConfirm, setSendPaymentLinkConfirm] = useState<null | {
+		userId: string;
+		courseId: string;
+		amount: string;
+		courseTitle: string;
+	}>(null);
+	const [addCourseConfirm, setAddCourseConfirm] = useState<null | { userId: string; courseTitle: string }>(null);
 
 	useEffect(() => {
 		if (orgId) fetchUsers();
@@ -351,7 +357,6 @@ const AdminUsers = () => {
 	}, [orgId]);
 
 	useEffect(() => {
-		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsDeleteLearningDataModalOpen(Array(paginatedUsers.length).fill(false));
@@ -865,23 +870,6 @@ const AdminUsers = () => {
 		}
 	};
 
-	const toggleStatusUpdateEditModal = (index: number) => {
-		const newEditModalOpen = [...isUserStatusUpdateModalOpen];
-		newEditModalOpen[index] = !newEditModalOpen[index];
-		setIsUserStatusUpdateModalOpen(newEditModalOpen);
-	};
-
-	const openStatusUpdateUserModal = (index: number) => {
-		const userToEdit: User = paginatedUsers[index];
-		setSingleUser(userToEdit);
-		toggleStatusUpdateEditModal(index);
-	};
-	const closeStatusUpdateUserModal = (index: number) => {
-		const updatedState = [...isUserStatusUpdateModalOpen];
-		updatedState[index] = false;
-		setIsUserStatusUpdateModalOpen(updatedState);
-	};
-
 	const handleDownloadUsers = async () => {
 		setIsDownloadingUsers(true);
 		try {
@@ -918,20 +906,6 @@ const AdminUsers = () => {
 			console.error('Download error:', error);
 		} finally {
 			setIsDownloadingUsers(false);
-		}
-	};
-
-	const handleUserStatus = async (index: number): Promise<void> => {
-		if (!singleUser?._id) return;
-
-		try {
-			await axios.patch(`${base_url}/users/${singleUser._id}`, {
-				isActive: !singleUser.isActive,
-			});
-			updateUser({ ...singleUser, isActive: !singleUser.isActive });
-			closeStatusUpdateUserModal(index);
-		} catch (error) {
-			console.error('Toggle user status error:', error);
 		}
 	};
 
@@ -1656,7 +1630,11 @@ const AdminUsers = () => {
 														</form>
 													</CustomDialog>}
 
-													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.SUPER_ADMIN) && (
+													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.SUPER_ADMIN) &&
+														(user.role === Roles.OWNER ||
+															user.role === Roles.ADMIN ||
+															user.role === Roles.SUPER_ADMIN ||
+															user.role === Roles.INSTRUCTOR) && (
 														<>
 															<CustomActionBtn
 																title='Zoom Host'
@@ -1719,21 +1697,6 @@ const AdminUsers = () => {
 															/>
 														</>
 													)}
-
-													<CustomActionBtn
-														title={user?.isActive ? 'Deactivate' : 'Activate'}
-														onClick={() => {
-															openStatusUpdateUserModal(index);
-														}}
-														icon={
-															user?.isActive ? (
-																<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-															) : (
-																<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-															)
-														}
-														disabled={user._id === userId}
-													/>
 
 													{loggedInUser?.role === Roles.OWNER && isDeleteLearningDataModalOpen[index] && (
 														<CustomDialog
@@ -1843,28 +1806,6 @@ const AdminUsers = () => {
 														</CustomDialog>
 													)}
 
-													{isUserStatusUpdateModalOpen[index] && (
-														<CustomDialog
-															openModal={isUserStatusUpdateModalOpen[index]}
-															closeModal={() => closeStatusUpdateUserModal(index)}
-															title={user?.isActive ? 'Deactivate User' : 'Activate User'}
-															content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} ${user?.firstName} ${user?.lastName} (${user?.username})?`}
-															maxWidth='xs'>
-															<CustomDialogActions
-																onCancel={() => closeStatusUpdateUserModal(index)}
-																deleteBtn={user?.isActive}
-																deleteBtnText='Deactivate'
-																onDelete={async () => {
-																	await handleUserStatus(index);
-																}}
-																onSubmit={async () => {
-																	await handleUserStatus(index);
-																}}
-																submitBtnText='Activate'
-																actionSx={{ mb: '0.5rem' }}
-															/>
-														</CustomDialog>
-													)}
 												</TableCell>
 											</TableRow>
 										);
@@ -2020,7 +1961,22 @@ const AdminUsers = () => {
 												</CustomCancelButton>
 												<CustomSubmitButton
 													type='button'
-													onClick={() => user._id && submitManualEnrollment(user._id)}
+													onClick={() => {
+														if (!user._id) return;
+														if (!selectedEnrollCourseId) {
+															setEnrollError('Select a course.');
+															return;
+														}
+														if (enrollGroups.length > 0 && !selectedEnrollGroupId) {
+															setEnrollError('Select a group.');
+															return;
+														}
+														setEnrollError('');
+														setAddCourseConfirm({
+															userId: user._id,
+															courseTitle: courseOptions.find((course) => course._id === selectedEnrollCourseId)?.title || '',
+														});
+													}}
 													disabled={enrollSubmitting || paymentLinkSubmitting || paymentLinkCopying || Boolean(selectedEnrollment)}>
 													{enrollSubmitting ? 'Adding...' : enrollNeedsOverride ? 'Add Anyway' : 'Add'}
 												</CustomSubmitButton>
@@ -2134,7 +2090,15 @@ const AdminUsers = () => {
 																	<CustomCancelButton
 																		type='button'
 																		disabled={enrolledLinkBusy !== null}
-																		onClick={() => user._id && sendEnrolledCoursePaymentLink(user._id, course.courseId, true, enrolledLinkAmounts[course.courseId] ?? String(course.remainingAmount ?? ''))}>
+																		onClick={() => {
+																			if (!user._id) return;
+																			setSendPaymentLinkConfirm({
+																				userId: user._id,
+																				courseId: course.courseId,
+																				amount: enrolledLinkAmounts[course.courseId] ?? String(course.remainingAmount ?? ''),
+																				courseTitle: course.courseTitle,
+																			});
+																		}}>
 																		{enrolledLinkBusy === 'send' && enrolledLinkCourseId === course.courseId ? 'Sending...' : 'Send payment link'}
 																	</CustomCancelButton>
 																</Box>
@@ -2680,6 +2644,76 @@ const AdminUsers = () => {
 							}}
 							sx={{ margin: '0 1rem 0.5rem 0' }}>
 							{accountCreateBusy ? 'Creating...' : 'Create'}
+						</CustomSubmitButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={sendPaymentLinkConfirm !== null}
+					closeModal={() => {
+						if (enrolledLinkBusy !== 'send') setSendPaymentLinkConfirm(null);
+					}}
+					disableDismiss={enrolledLinkBusy === 'send'}
+					maxWidth='xs'
+					title='Are you sure?'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Are you sure you want to send the payment link
+							{sendPaymentLinkConfirm?.courseTitle ? ` for ${sendPaymentLinkConfirm.courseTitle}` : ''}?
+						</Typography>
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton
+							sx={{ margin: '0 0.5rem 0.5rem 0' }}
+							disabled={enrolledLinkBusy === 'send'}
+							onClick={() => setSendPaymentLinkConfirm(null)}>
+							Cancel
+						</CustomCancelButton>
+						<CustomSubmitButton
+							type='button'
+							disabled={enrolledLinkBusy === 'send' || !sendPaymentLinkConfirm}
+							onClick={() => {
+								const pending = sendPaymentLinkConfirm;
+								if (!pending) return;
+								setSendPaymentLinkConfirm(null);
+								void sendEnrolledCoursePaymentLink(pending.userId, pending.courseId, true, pending.amount);
+							}}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{enrolledLinkBusy === 'send' ? 'Sending...' : 'Send'}
+						</CustomSubmitButton>
+					</DialogActions>
+				</CustomDialog>
+				<CustomDialog
+					openModal={addCourseConfirm !== null}
+					closeModal={() => {
+						if (!enrollSubmitting) setAddCourseConfirm(null);
+					}}
+					disableDismiss={enrollSubmitting}
+					maxWidth='xs'
+					title='Are you sure?'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Are you sure you want to add this user
+							{addCourseConfirm?.courseTitle ? ` to ${addCourseConfirm.courseTitle}` : ''}?
+						</Typography>
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton
+							sx={{ margin: '0 0.5rem 0.5rem 0' }}
+							disabled={enrollSubmitting}
+							onClick={() => setAddCourseConfirm(null)}>
+							Cancel
+						</CustomCancelButton>
+						<CustomSubmitButton
+							type='button'
+							disabled={enrollSubmitting || !addCourseConfirm}
+							onClick={() => {
+								const pending = addCourseConfirm;
+								if (!pending) return;
+								setAddCourseConfirm(null);
+								void submitManualEnrollment(pending.userId);
+							}}
+							sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{enrollSubmitting ? 'Adding...' : 'Add'}
 						</CustomSubmitButton>
 					</DialogActions>
 				</CustomDialog>

@@ -6,6 +6,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { useAuth } from '../../hooks/useAuth';
 import { LEARNER_SAAS } from '../../constants/learnerSaasUi';
+import { canManageGroupChat } from '../../utils/groupAdmins';
 
 interface ChatHeaderProps {
 	activeChat: ChatType | null;
@@ -210,7 +211,7 @@ const ChatHeader = ({
 										</IconButton>
 									</Tooltip>
 								)}
-								{(hasAdminAccess || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onEditGroupChat && (
+								{canManageGroupChat(activeChat, user?.firebaseUserId, hasAdminAccess) && onEditGroupChat && (
 									<Tooltip title='Edit Group' placement='top' arrow>
 										<IconButton size='small' onClick={onEditGroupChat} sx={{ '&:hover': { backgroundColor: 'rgba(1, 67, 90, 0.1)' } }}>
 											<Edit fontSize='small' />
