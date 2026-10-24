@@ -258,6 +258,14 @@ const AdminDocuments = () => {
 				}
 			}
 
+			if (singleDocument?.answerKeyUrl?.trim()) {
+				const answerKeyValidation = await validateDocumentUrl(singleDocument.answerKeyUrl.trim());
+				if (!answerKeyValidation.isValid) {
+					errorMessages.push(`Answer Key URL: ${answerKeyValidation.error}`);
+					hasUrlErrors = true;
+				}
+			}
+
 			// Validate image URL if provided
 			if (singleDocument?.imageUrl?.trim()) {
 				const imageValidation = await validateImageUrl(singleDocument.imageUrl.trim());
@@ -313,6 +321,7 @@ const AdminDocuments = () => {
 			const documentResponse = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 				name: singleDocument?.name.trim(),
 				documentUrl: singleDocument?.documentUrl,
+				answerKeyUrl: singleDocument?.answerKeyUrl || '',
 				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
@@ -333,6 +342,7 @@ const AdminDocuments = () => {
 				_id: documentResponseData._id,
 				name: singleDocument?.name.trim(),
 				documentUrl: singleDocument?.documentUrl,
+				answerKeyUrl: singleDocument?.answerKeyUrl || '',
 				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
@@ -376,6 +386,14 @@ const AdminDocuments = () => {
 					const docValidation = await validateDocumentUrl(singleDocument.documentUrl.trim());
 					if (!docValidation.isValid) {
 						errorMessages.push(`Document URL: ${docValidation.error}`);
+						hasUrlErrors = true;
+					}
+				}
+
+				if (singleDocument.answerKeyUrl?.trim()) {
+					const answerKeyValidation = await validateDocumentUrl(singleDocument.answerKeyUrl.trim());
+					if (!answerKeyValidation.isValid) {
+						errorMessages.push(`Answer Key URL: ${answerKeyValidation.error}`);
 						hasUrlErrors = true;
 					}
 				}
@@ -449,6 +467,7 @@ const AdminDocuments = () => {
 				const updateData = {
 					name: singleDocument.name.trim(),
 					documentUrl: singleDocument.documentUrl,
+					answerKeyUrl: singleDocument.answerKeyUrl || '',
 					imageUrl: singleDocument.imageUrl || '',
 					samplePageImageUrls: singleDocument.samplePageImageUrls ?? [],
 					detailIntroText: singleDocument.detailIntroText || '',

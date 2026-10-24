@@ -38,6 +38,8 @@ export interface Document {
 	orgId: string;
 	userId: string;
 	documentUrl: string;
+	/** Companion file sent with the purchase email. Not shown on the public page. */
+	answerKeyUrl?: string;
 	imageUrl: string;
 	prices: Price[];
 	processingFeePercent?: number | null;

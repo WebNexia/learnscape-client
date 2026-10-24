@@ -12,6 +12,7 @@ import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import DocumentDetailBlocksEditor from './DocumentDetailBlocksEditor';
+import AnswerKeyUpload from './AnswerKeyUpload';
 
 interface CreateNewDocumentDialogProps {
 	isOpen: boolean;
@@ -91,6 +92,7 @@ const CreateNewDocumentDialog = ({
 						}}
 						setFileUploaded={setFileUploaded}
 					/>
+					<AnswerKeyUpload document={singleDocument} setDocument={setSingleDocument} />
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
 					<Box

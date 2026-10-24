@@ -12,6 +12,7 @@ import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import DocumentDetailBlocksEditor from './DocumentDetailBlocksEditor';
+import AnswerKeyUpload from './AnswerKeyUpload';
 import PromoBannerFields from '../promo/PromoBannerFields';
 import { coercePromoBanner } from '../../utils/promoBanner';
 
@@ -95,6 +96,7 @@ const EditDocumentDialog = ({
 						initialDocumentUrl={document?.documentUrl}
 						initialDocumentName={document?.name}
 					/>
+					<AnswerKeyUpload document={document} setDocument={setDocument} />
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
 					<Box
