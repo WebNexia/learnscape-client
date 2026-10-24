@@ -12,6 +12,8 @@ import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import DocumentDetailBlocksEditor from './DocumentDetailBlocksEditor';
+import PromoBannerFields from '../promo/PromoBannerFields';
+import { coercePromoBanner } from '../../utils/promoBanner';
 
 interface EditDocumentDialogProps {
 	isOpen: boolean;
@@ -377,6 +379,26 @@ const EditDocumentDialog = ({
 						</Box>
 					</Box>
 				</Box>
+				{!isInstructor && (
+					<Box
+						sx={{
+							mt: '1rem',
+							mx: isMobileSize ? 0 : '1rem',
+							p: isMobileSize ? '0.75rem' : '1rem',
+							border: '1px solid rgba(0, 76, 153, 0.16)',
+							borderRadius: '0.75rem',
+							backgroundColor: '#f8fafc',
+						}}>
+						<Typography sx={{ fontWeight: 700, fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: 0.5 }}>Detail page announcement</Typography>
+						<PromoBannerFields
+							value={coercePromoBanner(document?.promoBanner)}
+							onChange={(promoBanner) => {
+								if (document) setDocument({ ...document, promoBanner });
+							}}
+							description='Shown once per visit on this book’s public page. The books list has a separate announcement, edited with Page announcement on the Documents page.'
+						/>
+					</Box>
+				)}
 				<CustomDialogActions
 					onCancel={onClose}
 					disableCancelBtn={isUpdating}
