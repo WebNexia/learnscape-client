@@ -11,6 +11,9 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { SEO, StructuredData } from '../components/seo';
 import { PUBLIC_PAGE_META } from '../seo/publicPageMeta';
 import { useGeoLocation } from '../hooks/useGeoLocation';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import PromoBannerModal from '../components/landingPage/PromoBannerModal';
+import { usePromoBannerOpen } from '../hooks/usePromoBannerOpen';
 
 const landingHeaderStickyTop = {
 	xs: '3.25rem',
@@ -38,6 +41,8 @@ const LandingPageResources = () => {
 	} = useContext(LandingPageResourcesContext);
 	const location = useLocation();
 	const geoLocation = useGeoLocation();
+	const { organisation } = useContext(OrganisationContext);
+	const booksPageAnnouncement = usePromoBannerOpen('lp-resources', organisation?.lpResourcesBanner);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -349,6 +354,11 @@ const LandingPageResources = () => {
 					</LandingPageLayout>
 				</Box>
 			</Box>
+			<PromoBannerModal
+				banner={organisation?.lpResourcesBanner}
+				open={booksPageAnnouncement.open}
+				onClose={booksPageAnnouncement.close}
+			/>
 		</>
 	);
 };

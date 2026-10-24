@@ -4,7 +4,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit, Info } from '@mui/icons-material';
+import { CampaignOutlined, Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -29,6 +29,8 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { DocumentDetailBlock } from '../interfaces/document';
+import PromoBannerEditorDialog from '../components/promo/PromoBannerEditorDialog';
+import { coercePromoBanner, promoBannerError, PromoBanner } from '../utils/promoBanner';
 
 const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) =>
 	(blocks || []).map((b) => {
@@ -39,7 +41,7 @@ const serializeDetailBlocksForApi = (blocks: DocumentDetailBlock[] | undefined) 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation, fetchOrganisationData } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor } = useAuth();
 	const {
@@ -140,6 +142,7 @@ const AdminDocuments = () => {
 	const [editDocumentModalOpen, setEditDocumentModalOpen] = useState<boolean[]>([]);
 	const [isDocumentInfoModalOpen, setIsDocumentInfoModalOpen] = useState<boolean[]>([]);
 	const [isDocumentCreateModalOpen, setIsDocumentCreateModalOpen] = useState<boolean>(false);
+	const [isBooksPageAnnouncementOpen, setIsBooksPageAnnouncementOpen] = useState(false);
 
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
 	/** Sample page URLs when dialog was opened (for cleanup on close without save) */
@@ -435,6 +438,14 @@ const AdminDocuments = () => {
 					return false;
 				}
 
+				const promoBanner = coercePromoBanner(singleDocument.promoBanner);
+				const promoError = promoBannerError(promoBanner);
+				if (promoError) {
+					setUrlErrorMessage(promoError);
+					setIsUrlErrorOpen(true);
+					return false;
+				}
+
 				const updateData = {
 					name: singleDocument.name.trim(),
 					documentUrl: singleDocument.documentUrl,
@@ -448,6 +459,7 @@ const AdminDocuments = () => {
 					description: singleDocument.description || '',
 					pageCount: singleDocument.pageCount || 0,
 					processingFeePercent: singleDocument.processingFeePercent ?? null,
+					promoBanner,
 				};
 
 				const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${singleDocument._id}`, updateData);
@@ -656,6 +668,15 @@ const AdminDocuments = () => {
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
 						actionButtons={[
+							...(!isInstructor
+								? [
+										{
+											label: isMobileSize ? 'Banner' : 'Page announcement',
+											startIcon: <CampaignOutlined />,
+											onClick: () => setIsBooksPageAnnouncementOpen(true),
+										},
+									]
+								: []),
 							{
 								label: isMobileSize ? 'New' : 'New Document',
 								onClick: () => {
@@ -1015,6 +1036,18 @@ const AdminDocuments = () => {
 							)
 					)}
 
+					<PromoBannerEditorDialog
+						isOpen={isBooksPageAnnouncementOpen}
+						banner={organisation?.lpResourcesBanner}
+						onClose={() => setIsBooksPageAnnouncementOpen(false)}
+						onSave={async (banner: PromoBanner) => {
+							await axios.patch(`${base_url}/organisations/${orgId}`, { lpResourcesBanner: banner });
+							await fetchOrganisationData(orgId);
+							setSnackbarMessage('Books page announcement saved');
+							setSnackbarSeverity('success');
+							setSnackbarOpen(true);
+						}}
+					/>
 					{/* URL validation error SnackBar */}
 					<Snackbar
 						open={isUrlErrorOpen}

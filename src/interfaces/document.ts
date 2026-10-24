@@ -1,3 +1,5 @@
+import { PromoBanner } from '../utils/promoBanner';
+
 export interface Price {
 	currency: string;
 	amount: string;
@@ -54,6 +56,8 @@ export interface Document {
 	/** Ordered marketing blocks for the public detail page */
 	detailBlocks?: DocumentDetailBlock[];
 	isOnLandingPage: boolean;
+	/** Announcement modal on this book's public detail page. */
+	promoBanner?: PromoBanner;
 	isArchived: boolean;
 	createdBy: string;
 	updatedBy: string;

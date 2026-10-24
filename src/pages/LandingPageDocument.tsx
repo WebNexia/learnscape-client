@@ -32,10 +32,24 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import LandingPageDocumentDetailBlocks, { resolvePublicDetailBlocks } from '../components/landingPage/LandingPageDocumentDetailBlocks';
 import { DocumentDetailBlock } from '../interfaces/document';
+import PromoBannerModal from '../components/landingPage/PromoBannerModal';
+import { usePromoBannerOpen } from '../hooks/usePromoBannerOpen';
 
 type PublicDocumentDetail = Pick<
 	Document,
-	'_id' | 'name' | 'description' | 'imageUrl' | 'samplePageImageUrls' | 'detailIntroText' | 'detailImageUrls' | 'detailBlocks' | 'prices' | 'pageCount' | 'orgId' | 'processingFeePercent'
+	| '_id'
+	| 'name'
+	| 'description'
+	| 'imageUrl'
+	| 'samplePageImageUrls'
+	| 'detailIntroText'
+	| 'detailImageUrls'
+	| 'detailBlocks'
+	| 'promoBanner'
+	| 'prices'
+	| 'pageCount'
+	| 'orgId'
+	| 'processingFeePercent'
 > & {
 	createdAt?: string;
 	updatedAt?: string;
@@ -91,6 +105,8 @@ const LandingPageDocument = () => {
 			staleTime: 60_000,
 		}
 	);
+
+	const bookAnnouncement = usePromoBannerOpen(document?._id ? `document:${document._id}` : 'document', document?.promoBanner);
 
 	const showLoader = !orgId || !documentId || (!document && (isLoading || isFetching));
 	const showError = Boolean(orgId && documentId && isError);
@@ -756,6 +772,7 @@ const LandingPageDocument = () => {
 					)}
 				</DialogActions>
 			</Dialog>
+			<PromoBannerModal banner={document?.promoBanner} open={bookAnnouncement.open} onClose={bookAnnouncement.close} />
 		</>
 	);
 };
