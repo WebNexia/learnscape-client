@@ -42,6 +42,8 @@ interface HandleDocUploadURLProps {
 	maxSizeMB?: number; // Optional file size limit override (default 10MB)
 	/** Document Mongo id — uploads to Materials/{id}/ like DocumentImages */
 	scopedEntityId?: string;
+	/** Hides the name field and does not block the parent form when empty. */
+	optional?: boolean;
 }
 
 const HandleDocUploadURL = ({
@@ -67,6 +69,7 @@ const HandleDocUploadURL = ({
 	setHasUnsavedChanges,
 	maxSizeMB,
 	scopedEntityId,
+	optional = false,
 }: HandleDocUploadURLProps) => {
 	const { isOwner, isSuperAdmin } = useAuth();
 	const resolvedMaxSizeMB = Math.max(
@@ -117,6 +120,16 @@ const HandleDocUploadURL = ({
 		}
 		setActiveDocumentUrl(url);
 		if (setDocumentUrl) setDocumentUrl(url);
+	};
+
+	const clearDocumentUrl = async () => {
+		const previousUrl = activeDocumentUrl?.trim();
+		if (previousUrl && !scopedEntityId) {
+			await deleteFirebaseStorageUrls([previousUrl]);
+		}
+		setActiveDocumentUrl('');
+		setManualDocUrl('');
+		if (setDocumentUrl) setDocumentUrl('');
 	};
 
 	// Debounced URL validation
@@ -251,34 +264,46 @@ const HandleDocUploadURL = ({
 								setHasUnsavedChanges={setHasUnsavedChanges}
 							/>
 						)}
+						{optional && activeDocumentUrl ? (
+							<Typography
+								variant='body2'
+								sx={{ cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem', ml: 1.5, color: 'error.main' }}
+								onClick={() => {
+									void clearDocumentUrl();
+								}}>
+								Remove
+							</Typography>
+						) : null}
 					</Box>
 				</Box>
 
 				<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-					<CustomTextField
-						placeholder='Doc Name'
-						required={true}
-						sx={{ width: fromAdminDocs ? '37.5%' : '42.5%', marginTop: '0.5rem' }}
-						value={docName}
-						onChange={(e) => {
-							setDocName(e.target.value);
-							if (setDocumentName && fromAdminDocs) {
-								setDocumentName(e.target.value);
-							}
-						}}
-						InputProps={{
-							inputProps: {
-								maxLength: 50,
-							},
-						}}
-					/>
+					{!optional && (
+						<CustomTextField
+							placeholder='Doc Name'
+							required={true}
+							sx={{ width: fromAdminDocs ? '37.5%' : '42.5%', marginTop: '0.5rem' }}
+							value={docName}
+							onChange={(e) => {
+								setDocName(e.target.value);
+								if (setDocumentName && fromAdminDocs) {
+									setDocumentName(e.target.value);
+								}
+							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 50,
+								},
+							}}
+						/>
+					)}
 
 					{!enterDocUrl && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', width: fromAdminDocs ? '60%' : '55%', alignItems: 'flex-start' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', width: optional ? '100%' : fromAdminDocs ? '60%' : '55%', alignItems: 'flex-start' }}>
 							<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
 								<Input
 									type='file'
-									required={enterDocUrl ? false : true}
+									required={!optional && !enterDocUrl}
 									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 										handleDocChange(e);
 									}}
@@ -313,12 +338,12 @@ const HandleDocUploadURL = ({
 					)}
 
 					{enterDocUrl && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', width: fromAdminDocs ? '60%' : '55%' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', width: optional ? '100%' : fromAdminDocs ? '60%' : '55%' }}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 								<Tooltip title='Click the upload button to enter/update the document URL' placement='top' arrow>
 									<CustomTextField
 										placeholder='Doc URL'
-										required={enterDocUrl ? true : false}
+										required={optional ? false : enterDocUrl}
 										sx={{ width: fromAdminDocs ? '80%' : '82.5%', marginTop: '0.5rem' }}
 										value={manualDocUrl}
 										onChange={(e) => {
