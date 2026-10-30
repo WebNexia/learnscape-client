@@ -271,6 +271,9 @@ const AdminUsers = () => {
 				progressPercentage: number;
 				completedLessons: number;
 				totalLessons: number;
+				completedChapters?: number;
+				totalChapters?: number;
+				completedChapterTitles?: string[];
 				totalEarnedScore: number;
 				totalPossibleScore: number;
 				rank: number | null;
@@ -2175,6 +2178,24 @@ const AdminUsers = () => {
 																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																		{course.completedLessons || 0} of {course.totalLessons || 0} lessons completed ({course.progressPercentage || 0}%)
 																	</Typography>
+																</Box>
+
+																<Box>
+																	<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.8rem' : '0.9rem', mb: '0.5rem' }}>
+																		Chapters:
+																	</Typography>
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																		{course.completedChapters || 0} of {course.totalChapters || 0} chapters completed
+																	</Typography>
+																	{(course.completedChapterTitles || []).length > 0 && (
+																		<Box component='ul' sx={{ m: '0.35rem 0 0', pl: '1.1rem' }}>
+																			{course.completedChapterTitles?.map((title, titleIndex) => (
+																				<Typography component='li' key={`${title}-${titleIndex}`} variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+																					{title}
+																				</Typography>
+																			))}
+																		</Box>
+																	)}
 																</Box>
 
 																{/* Total Score */}

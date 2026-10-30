@@ -25,6 +25,7 @@ export interface UserCourseAnalytics {
 	totalPossibleScore: number;
 	totalEarnedScore: number;
 	percent: number | null;
+	lessonCompletionPoints?: number;
 }
 
 export interface CourseStudentAnalyticsItem {
@@ -36,6 +37,8 @@ export interface CourseStudentAnalyticsItem {
 	totalEarnedScore: number;
 	percent: number | null;
 	rank: number;
+	completedChapters?: number;
+	completedLessons?: number;
 }
 
 export interface CourseStudentsAnalytics {
@@ -46,6 +49,8 @@ export interface CourseStudentsAnalytics {
 		imageUrl: string | null;
 	};
 	totalPossibleScore: number;
+	totalChapters?: number;
+	totalLessons?: number;
 	completedStudentsCount: number;
 	students: CourseStudentAnalyticsItem[];
 }
@@ -67,11 +72,15 @@ export interface CourseLeaderboardItem {
 	percent: number | null;
 	rank: number;
 	isCurrentUser: boolean;
+	completedChapters?: number;
+	completedLessons?: number;
 }
 
 export interface CourseLeaderboard {
 	courseId: string;
 	totalPossibleScore: number;
+	totalChapters?: number;
+	totalLessons?: number;
 	totalStudents: number;
 	leaderboard: CourseLeaderboardItem[];
 }

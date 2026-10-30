@@ -211,7 +211,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 									</Box>
 								);
 							}
-							
+
 							// Group options
 							if (course.groups && course.groups.length > 0) {
 								course.groups.forEach((group) => {

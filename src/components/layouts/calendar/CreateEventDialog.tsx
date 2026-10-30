@@ -298,7 +298,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					if (hasMainCourse) {
 						// Main course selected → all course (no groupNames parameter)
 						try {
-							const res = await axios.get(`${base_url}/usercourses/course/${courseId}`);
+							const res = await axios.get(`${base_url}/usercourses/course/${courseId}?includeTestLearners=true&limit=5000`);
 							courseParticipants.push(...res.data.users);
 						} catch (error) {
 							console.log(error);
@@ -309,7 +309,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						if (validGroupNames.length > 0) {
 							try {
 								const res = await axios.get(
-									`${base_url}/usercourses/course/${courseId}?groupNames=${validGroupNames.join(',')}`
+									`${base_url}/usercourses/course/${courseId}?groupNames=${validGroupNames.join(',')}&includeTestLearners=true&limit=5000`
 								);
 								courseParticipants.push(...res.data.users);
 							} catch (error) {
@@ -870,10 +870,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					{!newEvent.isPublic && !isLearner && (
 						<>
 							{/* Show selected learners above learner search */}
-							{newEvent.attendees && newEvent.attendees.filter((attendee) => attendee.role === 'learner').length > 0 && (
+							{newEvent.attendees && newEvent.attendees.filter((attendee) => (attendee.role === 'learner' || attendee.role === 'test-learner')).length > 0 && (
 								<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 									{newEvent.attendees
-										?.filter((attendee) => attendee.role === 'learner')
+										?.filter((attendee) => (attendee.role === 'learner' || attendee.role === 'test-learner'))
 										.map((attendee) => {
 											return (
 												<Box

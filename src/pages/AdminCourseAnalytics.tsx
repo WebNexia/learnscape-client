@@ -9,6 +9,7 @@ import {
 	TableCell,
 	TableHead,
 	TableRow,
+	TableSortLabel,
 	Typography,
 	Alert,
 	Button,
@@ -21,10 +22,43 @@ import { useCourseStudentsAnalytics } from '../hooks/useCourseStudentsAnalytics'
 import theme from '../themes';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { useAuth } from '../hooks/useAuth';
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axiosInstance from '../utils/axiosInstance';
+
+type StudentSortKey = 'rank' | 'chapters' | 'lessons' | 'percent' | 'score';
+
+const TURKISH_FILENAME_CHARS: Record<string, string> = {
+	ç: 'c',
+	Ç: 'c',
+	ğ: 'g',
+	Ğ: 'g',
+	ı: 'i',
+	İ: 'i',
+	ö: 'o',
+	Ö: 'o',
+	ş: 's',
+	Ş: 's',
+	ü: 'u',
+	Ü: 'u',
+	â: 'a',
+	Â: 'a',
+	î: 'i',
+	Î: 'i',
+	û: 'u',
+	Û: 'u',
+};
+
+/** PDF download names stay ASCII: akıcılık → akicilik. */
+const courseReportFilenameSlug = (title?: string) => {
+	const folded = (title || 'Course')
+		.replace(/[çÇğĞıİöÖşŞüÜâÂîÎûÛ]/g, (char) => TURKISH_FILENAME_CHARS[char] || char)
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '');
+	return folded.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'Course';
+};
 
 const AdminCourseAnalytics = () => {
 	const { courseId } = useParams<{ courseId: string }>();
@@ -34,6 +68,45 @@ const AdminCourseAnalytics = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const [isDownloading, setIsDownloading] = useState(false);
+	const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+	const [sortKey, setSortKey] = useState<StudentSortKey>('rank');
+	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+	const handleSort = (key: StudentSortKey) => {
+		if (sortKey === key) {
+			setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'));
+			return;
+		}
+		setSortKey(key);
+		setSortDir(key === 'rank' ? 'asc' : 'desc');
+	};
+
+	const sortedStudents = useMemo(() => {
+		const students = [...(data?.students ?? [])];
+		const direction = sortDir === 'asc' ? 1 : -1;
+		const totalLessons = data?.totalLessons ?? 0;
+		const completion = (completedLessons?: number) => (totalLessons > 0 ? (completedLessons ?? 0) / totalLessons : -1);
+		students.sort((a, b) => {
+			if (sortKey === 'chapters') {
+				const chapterDiff = (a.completedChapters ?? 0) - (b.completedChapters ?? 0);
+				if (chapterDiff !== 0) return chapterDiff * direction;
+				const lessonDiff = (a.completedLessons ?? 0) - (b.completedLessons ?? 0);
+				if (lessonDiff !== 0) return lessonDiff * direction;
+			} else if (sortKey === 'lessons' || sortKey === 'percent') {
+				const lessonDiff = completion(a.completedLessons) - completion(b.completedLessons);
+				if (lessonDiff !== 0) return lessonDiff * direction;
+				const scoreDiff = (a.totalEarnedScore ?? 0) - (b.totalEarnedScore ?? 0);
+				if (scoreDiff !== 0) return scoreDiff * direction;
+			} else if (sortKey === 'score') {
+				const scoreDiff = (a.totalEarnedScore ?? 0) - (b.totalEarnedScore ?? 0);
+				if (scoreDiff !== 0) return scoreDiff * direction;
+				const lessonDiff = completion(a.completedLessons) - completion(b.completedLessons);
+				if (lessonDiff !== 0) return lessonDiff * direction;
+			}
+			return (a.rank - b.rank) * (sortKey === 'rank' ? direction : 1);
+		});
+		return students;
+	}, [data?.students, data?.totalLessons, sortKey, sortDir]);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -64,6 +137,34 @@ const AdminCourseAnalytics = () => {
 			console.error('Failed to download enrolled students list:', err);
 		} finally {
 			setIsDownloading(false);
+		}
+	};
+
+	const handleDownloadClassReport = async () => {
+		if (!courseId) return;
+
+		try {
+			setIsDownloadingPdf(true);
+			const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/export-pdf`, {
+				responseType: 'blob',
+			});
+
+			const blob = new Blob([response.data], { type: 'application/pdf' });
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			const titleSlug = courseReportFilenameSlug(data?.title);
+			const today = new Date().toISOString().split('T')[0];
+			link.href = url;
+			link.setAttribute('download', `${titleSlug}_Class_Report_${today}.pdf`);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to download class report:', err);
+		} finally {
+			setIsDownloadingPdf(false);
 		}
 	};
 
@@ -246,26 +347,86 @@ const AdminCourseAnalytics = () => {
 									overflow: 'hidden',
 									mb: '3rem',
 								}}>
+								<Box
+									sx={{
+										display: 'flex',
+										justifyContent: 'flex-end',
+										alignItems: 'center',
+										px: 2,
+										py: 1.25,
+										backgroundColor: theme.bgColor?.secondary,
+									}}>
+									<Button
+										variant='contained'
+										size='small'
+										startIcon={isDownloadingPdf ? <CircularProgress size={14} color='inherit' /> : <PictureAsPdfOutlinedIcon />}
+										onClick={handleDownloadClassReport}
+										disabled={isDownloadingPdf}
+										sx={{ textTransform: 'none', fontFamily: theme.fontFamily?.main, borderRadius: '999px' }}>
+										{isMobileSize ? 'PDF' : 'Class report'}
+									</Button>
+								</Box>
 								<Table>
 									<TableHead sx={{ backgroundColor: theme.bgColor?.secondary }}>
 										<TableRow>
-											<TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Rank</TableCell>
-											<TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Student</TableCell>
-											<TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Email</TableCell>
-											<TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>{isMobileSize ? 'Score' : 'Total Score'}</TableCell>
-											{!isMobileSize && <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Percent</TableCell>}
+											{(
+												[
+													['rank', 'Rank'],
+													['student', 'Student'],
+													['chapters', isMobileSize ? 'Ch.' : 'Chapters'],
+													['lessons', isMobileSize ? 'Les.' : 'Lessons'],
+													...(!isMobileSize ? [['percent', 'Percent'] as const] : []),
+													['score', isMobileSize ? 'Score' : 'Total Score'],
+												] as [StudentSortKey | 'student', string][]
+											).map(([key, label]) => {
+												const sortable = key !== 'student';
+												return (
+													<TableCell
+														key={key}
+														sortDirection={sortable && sortKey === key ? sortDir : false}
+														sx={{ fontWeight: 600, textAlign: 'center' }}>
+														{sortable ? (
+															<TableSortLabel
+																active={sortKey === key}
+																direction={sortKey === key ? sortDir : 'desc'}
+																onClick={() => handleSort(key)}
+																sx={{
+																	color: 'inherit',
+																	fontWeight: 600,
+																	'&.Mui-active': { color: 'inherit' },
+																	'& .MuiTableSortLabel-icon': { color: 'inherit !important' },
+																}}>
+																{label}
+															</TableSortLabel>
+														) : (
+															label
+														)}
+													</TableCell>
+												);
+											})}
 										</TableRow>
 									</TableHead>
 									<TableBody sx={{ textAlign: 'center' }}>
-										{data.students.map((student) => (
+										{sortedStudents.map((student) => (
 											<TableRow key={student.userId}>
 												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>{student.rank}</TableCell>
 												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>{student.name}</TableCell>
-												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>{student.email || '-'}</TableCell>
-												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>{student.totalEarnedScore}</TableCell>
+												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+													{student.completedChapters ?? 0} / {data.totalChapters ?? 0}
+												</TableCell>
+												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+													{student.completedLessons ?? 0} / {data.totalLessons ?? 0}
+												</TableCell>
 												{!isMobileSize && (
-													<TableCell sx={{ textAlign: 'center' }}>{student.percent !== null ? `${student.percent}%` : 'N/A'}</TableCell>
+													<TableCell sx={{ textAlign: 'center' }}>
+														{(data.totalLessons ?? 0) > 0
+															? `${Math.round(((student.completedLessons ?? 0) / (data.totalLessons ?? 1)) * 100)}%`
+															: 'N/A'}
+													</TableCell>
 												)}
+												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+													{student.totalEarnedScore}/{data.totalPossibleScore}
+												</TableCell>
 											</TableRow>
 										))}
 									</TableBody>

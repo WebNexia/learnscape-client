@@ -37,8 +37,7 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useStickyPaper } from '../hooks/useStickyPaper';
 import { useAuth } from '../hooks/useAuth';
-import { LessonType } from '../interfaces/enums';
-import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
+import { calculateCourseTotalPossibleScore } from '../utils/calculateQuizTotalScoreFromScores';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -288,20 +287,10 @@ const AdminCourseEditPage = () => {
 		setHasUnsavedChanges(true);
 	};
 
-	// Total possible score for the whole course (sum of all graded quizzes) - EDIT view
-	const totalPossibleScoreForCourseEdit = chapterLessonDataBeforeSave.reduce((courseTotal, chapter) => {
-		if (!chapter?.lessons) return courseTotal;
-
-		const chapterTotal = chapter.lessons
-			.filter((lesson) => lesson !== null)
-			.reduce((sum, lesson) => {
-				const isGradedQuiz = lesson.isGraded && lesson.type === LessonType.QUIZ;
-				if (!isGradedQuiz) return sum;
-				return sum + calculateQuizTotalScoreFromScores(lesson);
-			}, 0);
-
-		return courseTotal + chapterTotal;
-	}, 0);
+	const totalPossibleScoreForCourseEdit = calculateCourseTotalPossibleScore(
+		chapterLessonDataBeforeSave,
+		singleCourseBeforeSave?.lessonCompletionPoints,
+	);
 
 	const createChapterTemplate = () => {
 		try {
@@ -596,6 +585,7 @@ const AdminCourseEditPage = () => {
 					startingDate: singleCourseBeforeSave.startingDate ?? null,
 					durationWeeks: singleCourseBeforeSave.durationWeeks ?? null,
 					durationHours: singleCourseBeforeSave.durationHours ?? null,
+					lessonCompletionPoints: singleCourseBeforeSave.lessonCompletionPoints ?? 0,
 					chapterIds: updatedChapters?.map((chapter) => chapter?.chapterId),
 					documentIds: updatedDocumentIds,
 					// BE needs chapters with lessonIds for usedInCourses sync - send minimal structure only
@@ -643,9 +633,13 @@ const AdminCourseEditPage = () => {
 							}
 						: singleCourseBeforeSave.introModal;
 
+					const savedLessonCompletionPoints =
+						responseUpdatedData.lessonCompletionPoints ?? singleCourseBeforeSave.lessonCompletionPoints ?? 0;
+
 					setSingleCourseBeforeSave({
 						...updatedCourse,
 						openThroughChapterCount,
+						lessonCompletionPoints: savedLessonCompletionPoints,
 						startingDate: responseUpdatedData.startingDate ?? null,
 						durationWeeks: responseUpdatedData.durationWeeks ?? null,
 						durationHours: responseUpdatedData.durationHours ?? null,
@@ -659,6 +653,7 @@ const AdminCourseEditPage = () => {
 
 					updateCourse({
 						...updatedCourse,
+						lessonCompletionPoints: savedLessonCompletionPoints,
 						...(landingPageSectionsAfterSave !== undefined ? { landingPageSections: landingPageSectionsAfterSave.map(({ title, body, imageUrl }) => ({ title, body, imageUrl })) } : {}),
 						...(introModalAfterSave !== undefined ? { introModal: introModalAfterSave } : {}),
 						updatedAt: responseUpdatedData.updatedAt,
@@ -687,6 +682,7 @@ const AdminCourseEditPage = () => {
 
 					setSingleCourse({
 						...updatedCourse,
+						lessonCompletionPoints: savedLessonCompletionPoints,
 						startingDate: responseUpdatedData.startingDate ?? null,
 						durationWeeks: responseUpdatedData.durationWeeks ?? null,
 						durationHours: responseUpdatedData.durationHours ?? null,
@@ -1044,28 +1040,56 @@ const AdminCourseEditPage = () => {
 											<Box
 												sx={{
 													display: 'flex',
-													flexDirection: 'column',
-													alignItems: 'flex-start',
+													flexDirection: isMobileSize ? 'column' : 'row',
+													justifyContent: 'space-between',
+													alignItems: isMobileSize ? 'stretch' : 'flex-start',
+													gap: '1rem',
 													mb: '0.75rem',
 													px: '0.25rem',
 												}}>
-												<FormControlLabel
-													control={
-														<Switch
-															checked={singleCourseBeforeSave?.openThroughChapterCount == null}
-															onChange={(event) => {
-																setOpenThroughChapterCount(event.target.checked ? null : 1);
-															}}
-															color='primary'
-														/>
-													}
-													label='All chapters open'
-												/>
-												<Typography variant='body2' sx={{ color: 'text.secondary', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-													{singleCourseBeforeSave?.openThroughChapterCount == null
-														? 'Students can move through every chapter as they finish lessons.'
-														: `Students can enter the first ${singleCourseBeforeSave.openThroughChapterCount} chapter${singleCourseBeforeSave.openThroughChapterCount === 1 ? '' : 's'}. Chapters below that line stay locked.`}
-												</Typography>
+												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+													<FormControlLabel
+														control={
+															<Switch
+																checked={singleCourseBeforeSave?.openThroughChapterCount == null}
+																onChange={(event) => {
+																	setOpenThroughChapterCount(event.target.checked ? null : 1);
+																}}
+																color='primary'
+															/>
+														}
+														label='All chapters open'
+													/>
+													<Typography variant='body2' sx={{ color: 'text.secondary', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														{singleCourseBeforeSave?.openThroughChapterCount == null
+															? 'Students can move through every chapter as they finish lessons.'
+															: `Students can enter the first ${singleCourseBeforeSave.openThroughChapterCount} chapter${singleCourseBeforeSave.openThroughChapterCount === 1 ? '' : 's'}. Chapters below that line stay locked.`}
+													</Typography>
+												</Box>
+												<Box sx={{ width: isMobileSize ? '100%' : '11rem', flexShrink: 0 }}>
+													<CustomTextField
+														label='Points per lesson'
+														required={false}
+														fullWidth
+														value={singleCourseBeforeSave?.lessonCompletionPoints ?? 0}
+														onChange={(e) => {
+															const raw = e.target.value;
+															setSingleCourseBeforeSave((prev) => {
+																if (!prev) return prev;
+																return {
+																	...prev,
+																	lessonCompletionPoints: raw === '' ? 0 : Math.max(0, Math.floor(Number(raw) || 0)),
+																};
+															});
+															setHasUnsavedChanges(true);
+														}}
+														type='number'
+														placeholder='0'
+													/>
+													<Typography variant='caption' sx={{ display: 'block', mt: '0.35rem', color: 'text.secondary' }}>
+														0 if left empty. Quizzes keep their own scores.
+													</Typography>
+												</Box>
 											</Box>
 											<Reorder.Group
 												axis='y'
