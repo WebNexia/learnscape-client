@@ -43,6 +43,10 @@ const CourseAnalytics = () => {
 	const postPercent = post?.scorePercent ?? null;
 
 	const improvement = prePercent !== null && postPercent !== null ? Math.round((postPercent as number) - (prePercent as number)) : null;
+	const scoreCaption =
+		courseAnalytics?.lessonCompletionPoints && courseAnalytics.lessonCompletionPoints > 0
+			? `Overall progress in graded quizzes, plus ${courseAnalytics.lessonCompletionPoints} points for each completed lesson`
+			: 'Overall progress in graded quizzes';
 
 	const formatScore = (attempt: typeof pre) => {
 		if (!attempt) return 'N/A';
@@ -378,7 +382,7 @@ const CourseAnalytics = () => {
 											{courseAnalytics.totalEarnedScore} / {courseAnalytics.totalPossibleScore}
 										</Typography>
 										<Typography variant='body2' sx={{ color: theme.textColor?.secondary?.main || 'text.secondary' }}>
-											Overall progress in graded quizzes
+											{scoreCaption}
 										</Typography>
 									</Paper>
 
@@ -465,7 +469,7 @@ const CourseAnalytics = () => {
 											{courseAnalytics.totalEarnedScore} / {courseAnalytics.totalPossibleScore}
 										</Typography>
 										<Typography variant='body2' sx={{ color: theme.textColor?.secondary?.main || 'text.secondary', textAlign: 'center', mt: '2rem' }}>
-											Overall progress in graded quizzes
+											{scoreCaption}
 										</Typography>
 									</Paper>
 									<Paper
@@ -519,7 +523,7 @@ const CourseAnalytics = () => {
 					)}
 
 					{!isLeaderboardLoading && !leaderboardError && leaderboardData && leaderboardData.leaderboard.length > 0 && (
-						<Box sx={{ width: isMobileSize ? '100%' : '60%', margin: isMobileSize ? '2rem auto 4rem auto' : '3rem auto 4rem auto' }}>
+						<Box sx={{ width: isMobileSize ? '100%' : '92%', maxWidth: 960, margin: isMobileSize ? '2rem auto 4rem auto' : '3rem auto 4rem auto' }}>
 							<Typography
 								variant='body1'
 								sx={{
@@ -536,8 +540,48 @@ const CourseAnalytics = () => {
 								sx={{
 									borderRadius: 3,
 									backgroundColor: 'transparent',
-									overflow: 'hidden',
+									overflow: 'auto',
 								}}>
+								{(() => {
+									const leaderboardColumns = isMobileSize
+										? 'minmax(9rem, 1.5fr) 1fr 1fr 1.15fr 0.7fr'
+										: 'minmax(14rem, 1.7fr) 1fr 1fr 1.15fr 0.7fr';
+									const headerSx = {
+										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+										fontWeight: 600,
+										letterSpacing: '0.04em',
+										textTransform: 'uppercase' as const,
+										color: theme.textColor?.secondary?.main || 'text.secondary',
+										textAlign: 'center' as const,
+										whiteSpace: 'nowrap' as const,
+									};
+									const cellSx = {
+										fontVariantNumeric: 'tabular-nums' as const,
+										textAlign: 'center' as const,
+										whiteSpace: 'nowrap' as const,
+										color: theme.textColor?.secondary?.main || 'text.secondary',
+									};
+
+									return (
+										<>
+											<Box
+												sx={{
+													display: 'grid',
+													gridTemplateColumns: leaderboardColumns,
+													alignItems: 'center',
+													columnGap: 1,
+													px: 2,
+													py: 1.25,
+													borderBottom: '1px solid rgba(148, 163, 184, 0.35)',
+													backgroundColor: 'rgba(248, 250, 252, 1)',
+													minWidth: isMobileSize ? 520 : undefined,
+												}}>
+												<Typography sx={{ ...headerSx, textAlign: 'left' }}>Learner</Typography>
+												<Typography sx={headerSx}>{isMobileSize ? 'Ch.' : 'Chapters'}</Typography>
+												<Typography sx={headerSx}>{isMobileSize ? 'Les.' : 'Lessons'}</Typography>
+												<Typography sx={headerSx}>Score</Typography>
+												<Typography sx={headerSx}>%</Typography>
+											</Box>
 								{leaderboardData.leaderboard.slice(0, 3).map((item, index) => {
 									const isMe = item.isCurrentUser;
 									const isTop3 = item.rank <= 3;
@@ -547,16 +591,18 @@ const CourseAnalytics = () => {
 										<Box
 											key={item.userId}
 											sx={{
-												display: 'flex',
+												display: 'grid',
+												gridTemplateColumns: leaderboardColumns,
 												alignItems: 'center',
-												justifyContent: 'space-between',
-												px: isMe ? 2.5 : 2,
+												columnGap: 1,
+												px: 2,
 												py: isMe ? 1.75 : 1.25,
+												minWidth: isMobileSize ? 520 : undefined,
 												borderBottom: isLastItem ? 'none' : '1px solid rgba(148, 163, 184, 0.25)',
 												backgroundColor: isMe && item.isCurrentUser ? 'rgba(34, 197, 94, 0.10)' : 'rgba(255, 255, 255, 1)',
 												boxShadow: isMe && item.isCurrentUser ? '0 10px 24px rgba(22, 163, 74, 0.25)' : 'none',
 											}}>
-											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
 												<Typography
 													variant='body2'
 													sx={{
@@ -585,6 +631,7 @@ const CourseAnalytics = () => {
 												<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 													<Typography
 														variant='body2'
+														noWrap
 														sx={{
 															fontWeight: isMe ? 700 : 500,
 															fontSize: isMe ? (isMobileSize ? '0.9rem' : '1rem') : isMobileSize ? '0.8rem' : '0.9rem',
@@ -595,25 +642,30 @@ const CourseAnalytics = () => {
 												</Box>
 											</Box>
 
-											<Box>
-												<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.secondary?.main || 'text.secondary' }}>
-													{item.totalEarnedScore} / {leaderboardData.totalPossibleScore}
-												</Typography>
-											</Box>
-
-											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-												<Typography
-													variant={isMobileSize ? 'body2' : 'body1'}
-													sx={{
-														fontWeight: 600,
-														color: isTop3 ? theme.textColor?.primary.main : theme.textColor?.secondary?.main,
-													}}>
-													{item.percent !== null ? `${item.percent}%` : 'N/A'}
-												</Typography>
-											</Box>
+											<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={cellSx}>
+												{item.completedChapters ?? 0} / {leaderboardData.totalChapters ?? 0}
+											</Typography>
+											<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={cellSx}>
+												{item.completedLessons ?? 0} / {leaderboardData.totalLessons ?? 0}
+											</Typography>
+											<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={cellSx}>
+												{item.totalEarnedScore} / {leaderboardData.totalPossibleScore}
+											</Typography>
+											<Typography
+												variant={isMobileSize ? 'body2' : 'body1'}
+												sx={{
+													...cellSx,
+													fontWeight: 600,
+													color: isTop3 ? theme.textColor?.primary.main : theme.textColor?.secondary?.main,
+												}}>
+												{item.percent !== null ? `${item.percent}%` : 'N/A'}
+											</Typography>
 										</Box>
 									);
 								})}
+										</>
+									);
+								})()}
 							</Paper>
 						</Box>
 					)}

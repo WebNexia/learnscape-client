@@ -35,7 +35,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { LessonType } from '../../interfaces/enums';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
+import { calculateCourseTotalPossibleScore, calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
 import LessonIconTile from '../lesson/LessonIconTile';
 import { getVideoThumbnailUrl } from '../../utils/videoUrlUtils';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
@@ -112,25 +112,10 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 		return stats;
 	}, [chapters]);
 
-	// Total possible score for the whole course (sum of all graded quizzes)
-	const totalPossibleScoreForCourse = useMemo(() => {
-		let total = 0;
-
-		chapters?.forEach((chapter) => {
-			if (!chapter?.lessons) return;
-
-			chapter.lessons
-				.filter((lesson) => lesson !== null)
-				.forEach((lesson) => {
-					const isGradedQuiz = lesson.isGraded && lesson.type === LessonType.QUIZ;
-					if (isGradedQuiz) {
-						total += calculateQuizTotalScoreFromScores(lesson);
-					}
-				});
-		});
-
-		return total;
-	}, [chapters]);
+	const totalPossibleScoreForCourse = useMemo(
+		() => calculateCourseTotalPossibleScore(chapters, singleCourse?.lessonCompletionPoints),
+		[chapters, singleCourse?.lessonCompletionPoints],
+	);
 
 	return (
 		<Box

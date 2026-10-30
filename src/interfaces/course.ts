@@ -123,6 +123,8 @@ export interface SingleCourse extends BaseCourse {
 	format: string;
 	durationWeeks: number | null;
 	durationHours: number | null;
+	/** Points added for each completed lesson that is not a quiz. */
+	lessonCompletionPoints?: number;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
 	/** null or omitted: all chapters are open. N: learners can enter only the first N chapters. */
