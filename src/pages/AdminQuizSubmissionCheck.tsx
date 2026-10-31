@@ -664,11 +664,40 @@ const AdminQuizSubmissionCheck = () => {
 								)}
 
 								{selectedQuestionType === QuestionType.OPEN_ENDED && (
-									<Box sx={{ width: '90%', margin: '1rem auto' }}>
-										<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+									<Box sx={{ width: '90%', margin: '1.25rem auto 0.5rem' }}>
+										<Typography
+											sx={{
+												mb: '0.55rem',
+												fontSize: isMobileSize ? '0.68rem' : '0.75rem',
+												fontWeight: 700,
+												letterSpacing: '0.06em',
+												textTransform: 'uppercase',
+												color: theme.bgColor?.greenPrimary,
+											}}>
 											Student's Answer
 										</Typography>
-										<Typography sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>{userResponseToFeedback.userAnswer}</Typography>
+										<Box
+											sx={{
+												background: 'linear-gradient(180deg, #F3FCF8 0%, #FFFFFF 100%)',
+												border: '1px solid #C9F3E4',
+												borderLeft: `4px solid ${theme.bgColor?.greenPrimary}`,
+												borderRadius: '14px',
+												px: isMobileSize ? 1.5 : 2.25,
+												py: isMobileSize ? 1.35 : 1.85,
+												boxShadow: '0 10px 28px rgba(30, 194, 139, 0.1)',
+											}}>
+											<Typography
+												sx={{
+													fontSize: isMobileSize ? '0.9rem' : '1.05rem',
+													lineHeight: 1.8,
+													color: '#12313F',
+													fontWeight: 500,
+													whiteSpace: 'pre-wrap',
+													wordBreak: 'break-word',
+												}}>
+												{userResponseToFeedback.userAnswer}
+											</Typography>
+										</Box>
 									</Box>
 								)}
 
