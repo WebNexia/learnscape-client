@@ -14,6 +14,10 @@ import {
 	Alert,
 	Button,
 	Tooltip,
+	DialogContent,
+	Accordion,
+	AccordionSummary,
+	AccordionDetails,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -23,6 +27,11 @@ import theme from '../themes';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { assessmentService, StudentCompletedProgress } from '../services/assessmentService';
 import { useAuth } from '../hooks/useAuth';
 import { useContext, useMemo, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -60,6 +69,8 @@ const courseReportFilenameSlug = (title?: string) => {
 	return folded.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'Course';
 };
 
+const CHAPTER_HEADER_COLORS = ['#009694', '#01435A', '#1B6CA8', '#0F766E', '#C45C26'];
+
 const AdminCourseAnalytics = () => {
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
@@ -71,6 +82,12 @@ const AdminCourseAnalytics = () => {
 	const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 	const [sortKey, setSortKey] = useState<StudentSortKey>('rank');
 	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+	const [progressStudentName, setProgressStudentName] = useState('');
+	const [downloadingStudentId, setDownloadingStudentId] = useState('');
+	const [progressOpen, setProgressOpen] = useState(false);
+	const [progressLoading, setProgressLoading] = useState(false);
+	const [progressError, setProgressError] = useState('');
+	const [progress, setProgress] = useState<StudentCompletedProgress | null>(null);
 
 	const handleSort = (key: StudentSortKey) => {
 		if (sortKey === key) {
@@ -109,6 +126,58 @@ const AdminCourseAnalytics = () => {
 	}, [data?.students, data?.totalLessons, sortKey, sortDir]);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const openStudentProgress = async (userId: string, name: string) => {
+		if (!courseId) return;
+		setProgressStudentName(name);
+		setProgress(null);
+		setProgressError('');
+		setProgressOpen(true);
+		setProgressLoading(true);
+		try {
+			const detail = await assessmentService.getStudentCompletedProgress(courseId, userId);
+			setProgress(detail);
+		} catch (err) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to load completed chapters:', err);
+			setProgressError('Could not load this learner’s chapters.');
+		} finally {
+			setProgressLoading(false);
+		}
+	};
+
+	const closeStudentProgress = () => {
+		setProgressOpen(false);
+	};
+
+	const handleDownloadStudentReport = async (userId: string, name: string) => {
+		if (!courseId || !userId) return;
+
+		try {
+			setDownloadingStudentId(userId);
+			const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/${userId}/export-pdf`, {
+				responseType: 'blob',
+			});
+
+			const blob = new Blob([response.data], { type: 'application/pdf' });
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			const titleSlug = courseReportFilenameSlug(data?.title);
+			const nameSlug = courseReportFilenameSlug(name);
+			const today = new Date().toISOString().split('T')[0];
+			link.href = url;
+			link.setAttribute('download', `${titleSlug}_${nameSlug}_Report_${today}.pdf`);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to download learner report:', err);
+		} finally {
+			setDownloadingStudentId('');
+		}
+	};
 
 	const handleDownloadEnrolledStudents = async () => {
 		if (!courseId || !data?.students?.length) return;
@@ -404,6 +473,7 @@ const AdminCourseAnalytics = () => {
 													</TableCell>
 												);
 											})}
+											<TableCell sx={{ width: 88 }} />
 										</TableRow>
 									</TableHead>
 									<TableBody sx={{ textAlign: 'center' }}>
@@ -427,11 +497,136 @@ const AdminCourseAnalytics = () => {
 												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 													{student.totalEarnedScore}/{data.totalPossibleScore}
 												</TableCell>
+												<TableCell sx={{ textAlign: 'center', width: 88, padding: '0.15rem', whiteSpace: 'nowrap' }}>
+													<Tooltip title='Learner report' placement='top' arrow>
+														<IconButton
+															size='small'
+															aria-label={`Download report for ${student.name}`}
+															disabled={downloadingStudentId === student.userId}
+															onClick={() => handleDownloadStudentReport(student.userId, student.name)}
+															sx={{ color: theme.textColor?.primary.main }}>
+															{downloadingStudentId === student.userId ? (
+																<CircularProgress size={16} />
+															) : (
+																<PictureAsPdfOutlinedIcon fontSize='small' />
+															)}
+														</IconButton>
+													</Tooltip>
+													<Tooltip title='Completed chapters' placement='top' arrow>
+														<IconButton
+															size='small'
+															aria-label={`View completed chapters for ${student.name}`}
+															onClick={() => openStudentProgress(student.userId, student.name)}
+															sx={{ color: theme.textColor?.primary.main }}>
+															<VisibilityOutlinedIcon fontSize='small' />
+														</IconButton>
+													</Tooltip>
+												</TableCell>
 											</TableRow>
 										))}
 									</TableBody>
 								</Table>
 							</Paper>
+
+							<CustomDialog
+								openModal={progressOpen}
+								closeModal={closeStudentProgress}
+								title={progressStudentName}
+								maxWidth='sm'
+								titleSx={{ fontFamily: theme.fontFamily?.main }}>
+								<DialogContent sx={{ pt: 0.5, pb: 1 }}>
+									{progressLoading && (
+										<Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+											<CircularProgress size={28} />
+										</Box>
+									)}
+									{progressError && (
+										<Alert severity='error' sx={{ my: 1 }}>
+											{progressError}
+										</Alert>
+									)}
+									{!progressLoading && !progressError && progress && progress.chapters.length === 0 && (
+										<Typography variant='body2' sx={{ py: 2, color: 'text.secondary' }}>
+											No completed lessons yet.
+										</Typography>
+									)}
+									{!progressLoading &&
+										!progressError &&
+										progress?.chapters.map((chapter, chapterIndex) => {
+											const headerColor = CHAPTER_HEADER_COLORS[chapterIndex % CHAPTER_HEADER_COLORS.length];
+											return (
+												<Accordion
+													key={chapter.id}
+													disableGutters
+													elevation={0}
+													sx={{
+														borderRadius: '8px !important',
+														mb: 1,
+														'&:before': { display: 'none' },
+														overflow: 'hidden',
+													}}>
+													<AccordionSummary
+														expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />}
+														sx={{
+															minHeight: 48,
+															backgroundColor: headerColor,
+															color: '#fff',
+															'& .MuiAccordionSummary-content': { my: 1 },
+														}}>
+														<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 1, gap: 1 }}>
+															<Typography sx={{ fontWeight: 600, fontSize: isMobileSize ? '0.8rem' : '0.9rem', color: '#fff' }}>{chapter.title}</Typography>
+															<Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', flexShrink: 0 }}>
+																{chapter.lessons.length}/{chapter.totalLessons ?? chapter.lessons.length}{' '}
+																{(chapter.totalLessons ?? chapter.lessons.length) === 1 ? 'lesson' : 'lessons'}
+															</Typography>
+														</Box>
+													</AccordionSummary>
+													<AccordionDetails sx={{ pt: 1, px: 1.25, pb: 1.25, backgroundColor: '#F8FBFC' }}>
+														{chapter.lessons.map((lesson) => {
+															const isScoredQuiz = lesson.isQuiz && lesson.scoreEarned != null && lesson.scorePossible != null;
+															return (
+																<Box
+																	key={lesson.id}
+																	sx={{
+																		display: 'flex',
+																		alignItems: 'center',
+																		justifyContent: 'space-between',
+																		gap: 2,
+																		py: 0.75,
+																		px: 1.25,
+																		mb: 0.5,
+																		borderRadius: '6px',
+																		backgroundColor: isScoredQuiz ? '#FFF1E8' : '#E7F6F6',
+																		borderLeft: '3px solid',
+																		borderLeftColor: isScoredQuiz ? '#FF6B3D' : headerColor,
+																	}}>
+																	<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: '#01435A' }}>{lesson.title}</Typography>
+																	{isScoredQuiz && (
+																		<Typography
+																			sx={{
+																				fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																				fontVariantNumeric: 'tabular-nums',
+																				fontWeight: 700,
+																				flexShrink: 0,
+																				color: '#C45C26',
+																				backgroundColor: '#fff',
+																				borderRadius: '999px',
+																				px: 1,
+																				py: 0.25,
+																			}}>
+																			{lesson.scoreEarned}/{lesson.scorePossible}
+																		</Typography>
+																	)}
+																</Box>
+															);
+														})}
+													</AccordionDetails>
+												</Accordion>
+											);
+										})}
+								</DialogContent>
+								<CustomDialogActions onCancel={closeStudentProgress} cancelBtnText='Close' hideSubmit actionSx={{ margin: 'auto 1rem' }} />
+							</CustomDialog>
 						</>
 					)}
 				</Box>
