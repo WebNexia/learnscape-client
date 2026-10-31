@@ -152,7 +152,7 @@ const ReportHoverActions = ({ onPreview, onDownload, downloadBusy = false, child
 				onClick={() => {
 					if (window.matchMedia('(hover: none)').matches) setOpen((value) => !value);
 				}}
-				sx={{ display: 'inline-flex' }}>
+				sx={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}>
 				{children}
 			</Box>
 			<Popper
@@ -689,7 +689,8 @@ const AdminCourseAnalytics = () => {
 												<TableCell sx={{ textAlign: 'center', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 													{student.totalEarnedScore}/{data.totalPossibleScore}
 												</TableCell>
-												<TableCell sx={{ textAlign: 'center', width: 88, padding: '0.15rem', whiteSpace: 'nowrap' }}>
+												<TableCell sx={{ width: 88, padding: '0.15rem', verticalAlign: 'middle' }}>
+													<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 													<ReportHoverActions
 														onPreview={() => {
 															const report = learnerReportFile(student.userId, student.name);
@@ -700,7 +701,7 @@ const AdminCourseAnalytics = () => {
 														<IconButton
 															size='small'
 															aria-label={`Learner report for ${student.name}`}
-															sx={{ color: theme.textColor?.primary.main }}>
+															sx={{ color: theme.textColor?.primary.main, width: 34, height: 34 }}>
 															{downloadingStudentId === student.userId ? (
 																<CircularProgress size={16} />
 															) : (
@@ -713,10 +714,11 @@ const AdminCourseAnalytics = () => {
 															size='small'
 															aria-label={`View completed chapters for ${student.name}`}
 															onClick={() => openStudentProgress(student.userId, student.name)}
-															sx={{ color: theme.textColor?.primary.main }}>
+															sx={{ color: theme.textColor?.primary.main, width: 34, height: 34 }}>
 															<VisibilityOutlinedIcon fontSize='small' />
 														</IconButton>
 													</Tooltip>
+													</Box>
 												</TableCell>
 											</TableRow>
 										))}
