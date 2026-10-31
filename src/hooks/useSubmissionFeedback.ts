@@ -13,6 +13,8 @@ export interface SubmissionFeedbackUserQuestion {
 	audioRecordUrl?: string;
 	teacherFeedback?: string;
 	teacherAudioFeedbackUrl?: string;
+	draftTeacherFeedback?: string | null;
+	draftTeacherAudioFeedbackUrl?: string | null;
 	pointsEarned?: number;
 	pointsPossible?: number;
 	isAutoGraded?: boolean;

@@ -41,6 +41,27 @@ export interface CourseStudentAnalyticsItem {
 	completedLessons?: number;
 }
 
+export interface StudentCompletedLesson {
+	id: string;
+	title: string;
+	isQuiz?: boolean;
+	scoreEarned?: number;
+	scorePossible?: number;
+}
+
+export interface StudentCompletedChapter {
+	id: string;
+	title: string;
+	totalLessons?: number;
+	lessons: StudentCompletedLesson[];
+}
+
+export interface StudentCompletedProgress {
+	userId: string;
+	name: string;
+	chapters: StudentCompletedChapter[];
+}
+
 export interface CourseStudentsAnalytics {
 	courseId: string;
 	title?: string;
@@ -109,5 +130,10 @@ export const assessmentService = {
 	getCourseStudentsAnalytics: async (courseId: string): Promise<CourseStudentsAnalytics> => {
 		const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students`);
 		return response.data.data as CourseStudentsAnalytics;
+	},
+
+	getStudentCompletedProgress: async (courseId: string, userId: string): Promise<StudentCompletedProgress> => {
+		const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/${userId}/progress`);
+		return response.data.data as StudentCompletedProgress;
 	},
 };

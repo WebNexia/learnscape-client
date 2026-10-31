@@ -17,8 +17,9 @@ import { sanitizeHtml } from '../utils/sanitizeHtml';
 import theme from '../themes';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 import { getFeedbackModalQuestionTitle } from '../utils/quizSubmissionDisplay';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
@@ -44,6 +45,7 @@ export interface QuestionFeedbackData {
 	teacherAudioFeedbackUrl: string;
 	originalTeacherAudioFeedbackUrl: string;
 	isFeedbackGiven: boolean;
+	hasUnpublishedDraft: boolean;
 }
 
 const AdminQuizSubmissionCheck = () => {
@@ -80,6 +82,10 @@ const AdminQuizSubmissionCheck = () => {
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 	const [manualScore, setManualScore] = useState<number | undefined>(undefined);
 	const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
+	const [isDraftingAiFeedback, setIsDraftingAiFeedback] = useState<boolean>(false);
+	const [aiDraftError, setAiDraftError] = useState<string>('');
+	const [isSavingQuestionFeedback, setIsSavingQuestionFeedback] = useState<boolean>(false);
+	const [questionSaveError, setQuestionSaveError] = useState<string>('');
 	const initializedForRef = useRef<string | null>(null);
 
 	const username = feedbackData?.student?.username || '';
@@ -110,7 +116,17 @@ const AdminQuizSubmissionCheck = () => {
 		initializedForRef.current = syncKey;
 
 		const userCourseQuizData = feedbackData.response;
-		setUserResponseData(userCourseQuizData);
+		setUserResponseData(
+			userCourseQuizData.map((data) => {
+				const hasTextDraft = data.draftTeacherFeedback != null;
+				const hasAudioDraft = data.draftTeacherAudioFeedbackUrl != null;
+				return {
+					...data,
+					teacherFeedback: hasTextDraft ? data.draftTeacherFeedback || '' : data.teacherFeedback || '',
+					teacherAudioFeedbackUrl: hasAudioDraft ? data.draftTeacherAudioFeedbackUrl || '' : data.teacherAudioFeedbackUrl || '',
+				};
+			})
+		);
 		setQuizFeedback(feedbackData.teacherFeedback);
 
 		const first = userCourseQuizData[0];
@@ -121,14 +137,19 @@ const AdminQuizSubmissionCheck = () => {
 
 		setUserQuestionsFeedbacks(
 			userCourseQuizData.map((data) => {
-				const teacherAudioFeedbackUrl = data.teacherAudioFeedbackUrl || '';
+				const hasTextDraft = data.draftTeacherFeedback != null;
+				const hasAudioDraft = data.draftTeacherAudioFeedbackUrl != null;
+				const publishedAudio = data.teacherAudioFeedbackUrl || '';
+				const teacherAudioFeedbackUrl = hasAudioDraft ? data.draftTeacherAudioFeedbackUrl || '' : publishedAudio;
+				const feedback = hasTextDraft ? data.draftTeacherFeedback || '' : data.teacherFeedback || '';
 				return {
 					userQuestionId: data._id,
-					feedback: data.teacherFeedback || '',
+					feedback,
 					isUpdated: false,
 					teacherAudioFeedbackUrl,
-					originalTeacherAudioFeedbackUrl: teacherAudioFeedbackUrl,
-					isFeedbackGiven: Boolean(data.teacherFeedback || teacherAudioFeedbackUrl),
+					originalTeacherAudioFeedbackUrl: publishedAudio,
+					isFeedbackGiven: Boolean(feedback || teacherAudioFeedbackUrl),
+					hasUnpublishedDraft: hasTextDraft || hasAudioDraft,
 				};
 			})
 		);
@@ -139,6 +160,8 @@ const AdminQuizSubmissionCheck = () => {
 		setUserResponseToFeedback(response);
 		setCurrentResponseIndex(index);
 		setManualScore(response?.pointsEarned);
+		setAiDraftError('');
+		setQuestionSaveError('');
 	}, []);
 
 	const handlePreviousResponse = () => {
@@ -148,6 +171,8 @@ const AdminQuizSubmissionCheck = () => {
 			setCurrentResponseIndex(prevIndex);
 			setUserResponseToFeedback(userResponseData[prevIndex]);
 			setManualScore(userResponseData[prevIndex]?.pointsEarned);
+			setAiDraftError('');
+			setQuestionSaveError('');
 		}
 	};
 
@@ -158,11 +183,12 @@ const AdminQuizSubmissionCheck = () => {
 			setCurrentResponseIndex(nextIndex);
 			setUserResponseToFeedback(userResponseData[nextIndex]);
 			setManualScore(userResponseData[nextIndex]?.pointsEarned);
+			setAiDraftError('');
+			setQuestionSaveError('');
 		}
 	};
 
-	const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const updatedFeedback = e.target.value;
+	const applyQuestionFeedback = (updatedFeedback: string) => {
 		const updatedFeedbacks =
 			userQuestionsFeedbacks?.map((feedback) =>
 				feedback.userQuestionId === userResponseToFeedback._id
@@ -182,6 +208,46 @@ const AdminQuizSubmissionCheck = () => {
 		setUserResponseToFeedback((prev: any) => ({ ...prev, teacherFeedback: updatedFeedback }));
 	};
 
+	const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setAiDraftError('');
+		applyQuestionFeedback(e.target.value);
+	};
+
+	const draftWritingFeedback = async () => {
+		const studentAnswer = String(userResponseToFeedback?.userAnswer || '').trim();
+		const question = String(userResponseToFeedback?.questionId?.question || '').trim();
+		if (!studentAnswer || !question) {
+			setAiDraftError('There is no student writing to comment on.');
+			return;
+		}
+
+		setIsDraftingAiFeedback(true);
+		setAiDraftError('');
+		try {
+			const response = await axios.post(`${base_url}/ai/writing-feedback`, {
+				question,
+				studentAnswer,
+				chapterName,
+			});
+			const draft = String(response.data?.data || '').trim().slice(0, 1000);
+			if (!draft) {
+				setAiDraftError('AI did not return feedback.');
+				return;
+			}
+			applyQuestionFeedback(draft);
+		} catch (error: any) {
+			const status = error?.response?.status;
+			const message = error?.response?.data?.message;
+			if (status === 429) {
+				setAiDraftError('AI is busy. Wait a minute and try again.');
+			} else {
+				setAiDraftError(message || 'Could not draft feedback.');
+			}
+		} finally {
+			setIsDraftingAiFeedback(false);
+		}
+	};
+
 	const resetFeedback = () => {
 		const resetFeedbacks =
 			userQuestionsFeedbacks?.map((feedback) =>
@@ -195,6 +261,54 @@ const AdminQuizSubmissionCheck = () => {
 			(prevResponses: any) =>
 				prevResponses?.map((response: any) => (response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: '' } : response)) || []
 		);
+	};
+
+	const saveQuestionFeedback = async () => {
+		if (!userResponseToFeedback?._id) return;
+		const current = userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback._id);
+		if (!current) return;
+
+		setIsSavingQuestionFeedback(true);
+		setQuestionSaveError('');
+		try {
+			const nextFeedback = current.feedback.trim();
+			const nextAudioUrl = current.teacherAudioFeedbackUrl.trim();
+			await axios.patch(`${base_url}/userquestions/${current.userQuestionId}`, {
+				draftTeacherFeedback: nextFeedback,
+				draftTeacherAudioFeedbackUrl: nextAudioUrl,
+			});
+			setUserQuestionsFeedbacks((prevFeedbacks) =>
+				prevFeedbacks.map((feedback) =>
+					feedback.userQuestionId === current.userQuestionId
+						? {
+								...feedback,
+								feedback: nextFeedback,
+								teacherAudioFeedbackUrl: nextAudioUrl,
+								isFeedbackGiven: Boolean(nextFeedback || nextAudioUrl),
+								isUpdated: false,
+								hasUnpublishedDraft: true,
+							}
+						: feedback
+				)
+			);
+			const feedbackKey = submissionFeedbackQueryKey(userLessonId, submissionId);
+			const previousFeedback = queryClient.getQueryData<SubmissionFeedbackData>(feedbackKey);
+			if (previousFeedback) {
+				queryClient.setQueryData(feedbackKey, {
+					...previousFeedback,
+					response: previousFeedback.response.map((response) =>
+						response._id === current.userQuestionId
+							? { ...response, draftTeacherFeedback: nextFeedback, draftTeacherAudioFeedbackUrl: nextAudioUrl }
+							: response
+					),
+				});
+			}
+		} catch (error) {
+			console.error(error);
+			setQuestionSaveError('Could not save this feedback.');
+		} finally {
+			setIsSavingQuestionFeedback(false);
+		}
 	};
 
 	const uploadAudio = async (blob: Blob) => {
@@ -239,19 +353,15 @@ const AdminQuizSubmissionCheck = () => {
 				});
 			}
 
-			const updatedQuestionFeedbacks = userQuestionsFeedbacks.filter((feedback) => feedback.isUpdated);
+			const updatedQuestionFeedbacks = userQuestionsFeedbacks.filter((feedback) => feedback.isUpdated || feedback.hasUnpublishedDraft);
 			await Promise.all(
 				updatedQuestionFeedbacks.map((feedback) => {
 					const nextFeedback = feedback.feedback.trim();
 					const nextAudioUrl = feedback.teacherAudioFeedbackUrl.trim();
-					const payload: { teacherFeedback: string; teacherAudioFeedbackUrl?: string } = {
+					return axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
 						teacherFeedback: nextFeedback,
-					};
-					// Only send audio when it changed — BE validates every supplied URL remotely.
-					if (nextAudioUrl !== (feedback.originalTeacherAudioFeedbackUrl || '').trim()) {
-						payload.teacherAudioFeedbackUrl = nextAudioUrl;
-					}
-					return axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, payload);
+						teacherAudioFeedbackUrl: nextAudioUrl,
+					});
 				})
 			);
 			if (updatedQuestionFeedbacks.length > 0) {
@@ -264,6 +374,7 @@ const AdminQuizSubmissionCheck = () => {
 								originalTeacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
 								isFeedbackGiven: Boolean(feedback.feedback.trim() || feedback.teacherAudioFeedbackUrl.trim()),
 								isUpdated: false,
+								hasUnpublishedDraft: false,
 							}
 							: feedback
 					)
@@ -299,6 +410,8 @@ const AdminQuizSubmissionCheck = () => {
 							...response,
 							teacherFeedback: localFeedback?.feedback ?? response.teacherFeedback,
 							teacherAudioFeedbackUrl: localFeedback?.teacherAudioFeedbackUrl ?? response.teacherAudioFeedbackUrl,
+							draftTeacherFeedback: null,
+							draftTeacherAudioFeedbackUrl: null,
 						};
 					}),
 				});
@@ -789,9 +902,25 @@ const AdminQuizSubmissionCheck = () => {
 									})()}
 
 								<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
-									<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
-										Feedback for Question
-									</Typography>
+									<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', mb: '1rem' }}>
+										<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+											Feedback for Question
+										</Typography>
+										{selectedQuestionType === QuestionType.OPEN_ENDED && (
+											<CustomSubmitButton
+												type='button'
+												onClick={draftWritingFeedback}
+												disabled={isDraftingAiFeedback || !String(userResponseToFeedback?.userAnswer || '').trim()}
+												sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
+												{isDraftingAiFeedback ? 'Writing...' : 'Draft with AI'}
+											</CustomSubmitButton>
+										)}
+									</Box>
+									{aiDraftError && (
+										<Typography sx={{ color: '#ef5350', fontSize: isMobileSize ? '0.7rem' : '0.8rem', mb: '0.75rem' }}>
+											{aiDraftError}
+										</Typography>
+									)}
 									<CustomTextField
 										multiline
 										resizable
@@ -809,15 +938,28 @@ const AdminQuizSubmissionCheck = () => {
 									</Typography>
 								</Box>
 
-								<CustomDialogActions
-									onCancel={() => setOpenQuestionFeedbackModal(false)}
-									deleteBtn={true}
-									cancelBtnText='Close'
-									deleteBtnText='Reset'
-									submitBtnType='button'
-									actionSx={{ width: '94%', margin: '0 auto 1rem auto' }}
-									onDelete={resetFeedback}
-								/>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '94%', margin: '0 auto 1rem auto', gap: '0.5rem' }}>
+									{questionSaveError && (
+										<Typography sx={{ color: '#ef5350', fontSize: isMobileSize ? '0.7rem' : '0.8rem', mr: 'auto' }}>
+											{questionSaveError}
+										</Typography>
+									)}
+									<CustomDeleteButton type='button' onClick={resetFeedback} disabled={isSavingQuestionFeedback}>
+										Reset
+									</CustomDeleteButton>
+									<CustomCancelButton type='button' onClick={() => setOpenQuestionFeedbackModal(false)} disabled={isSavingQuestionFeedback}>
+										Close
+									</CustomCancelButton>
+									{isSavingQuestionFeedback ? (
+										<LoadingButton loading variant='contained' sx={{ textTransform: 'capitalize', height: isMobileSize ? '1.5rem' : '1.75rem' }}>
+											Save
+										</LoadingButton>
+									) : (
+										<CustomSubmitButton type='button' onClick={saveQuestionFeedback}>
+											Save
+										</CustomSubmitButton>
+									)}
+								</Box>
 							</CustomDialog>
 						</>
 					)}
