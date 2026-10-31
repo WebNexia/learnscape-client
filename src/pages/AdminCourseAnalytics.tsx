@@ -4,6 +4,7 @@ import {
 	CircularProgress,
 	IconButton,
 	Paper,
+	Popper,
 	Table,
 	TableBody,
 	TableCell,
@@ -33,7 +34,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { assessmentService, StudentCompletedProgress } from '../services/assessmentService';
 import { useAuth } from '../hooks/useAuth';
-import { useContext, useMemo, useState } from 'react';
+import { ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -71,6 +72,157 @@ const courseReportFilenameSlug = (title?: string) => {
 
 const CHAPTER_HEADER_COLORS = ['#009694', '#01435A', '#1B6CA8', '#0F766E', '#C45C26'];
 
+type ReportHoverActionsProps = {
+	onPreview: () => void;
+	onDownload: () => void;
+	downloadBusy?: boolean;
+	children: ReactNode;
+};
+
+const fetchPdfBlob = async (path: string) => {
+	const response = await axiosInstance.get(path, { responseType: 'blob' });
+	return new Blob([response.data], { type: 'application/pdf' });
+};
+
+const savePdf = (blob: Blob, filename: string) => {
+	const url = window.URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.setAttribute('download', filename);
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
+	window.URL.revokeObjectURL(url);
+};
+
+/** Hover (or tap, when the device has no hover) reveals Preview and Download. */
+const ReportHoverActions = ({ onPreview, onDownload, downloadBusy = false, children }: ReportHoverActionsProps) => {
+	const anchorRef = useRef<HTMLDivElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const hideTimer = useRef<number>();
+	const [open, setOpen] = useState(false);
+
+	const show = () => {
+		window.clearTimeout(hideTimer.current);
+		setOpen(true);
+	};
+
+	const hideSoon = () => {
+		window.clearTimeout(hideTimer.current);
+		hideTimer.current = window.setTimeout(() => setOpen(false), 180);
+	};
+
+	useEffect(() => {
+		return () => window.clearTimeout(hideTimer.current);
+	}, []);
+
+	useEffect(() => {
+		if (!open) return;
+		const onPointerDown = (event: PointerEvent) => {
+			const target = event.target as Node | null;
+			if (!target) return;
+			if (anchorRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+			setOpen(false);
+		};
+		document.addEventListener('pointerdown', onPointerDown);
+		return () => document.removeEventListener('pointerdown', onPointerDown);
+	}, [open]);
+
+	const run = (action: () => void) => {
+		setOpen(false);
+		action();
+	};
+
+	const staysOpen = (next: EventTarget | null) => {
+		if (!(next instanceof Node)) return false;
+		return Boolean(anchorRef.current?.contains(next) || menuRef.current?.contains(next));
+	};
+
+	return (
+		<>
+			<Box
+				ref={anchorRef}
+				onMouseEnter={show}
+				onMouseLeave={hideSoon}
+				onFocus={show}
+				onBlur={(event) => {
+					if (staysOpen(event.relatedTarget)) return;
+					hideSoon();
+				}}
+				onClick={() => {
+					if (window.matchMedia('(hover: none)').matches) setOpen((value) => !value);
+				}}
+				sx={{ display: 'inline-flex' }}>
+				{children}
+			</Box>
+			<Popper
+				open={open}
+				anchorEl={anchorRef.current}
+				placement='top'
+				modifiers={[{ name: 'offset', options: { offset: [0, 8] } }]}
+				sx={{ zIndex: 1200 }}>
+				<Box
+					ref={menuRef}
+					onMouseEnter={show}
+					onMouseLeave={hideSoon}
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'stretch',
+						gap: 0.5,
+						p: 0.5,
+						minWidth: 132,
+						borderRadius: '12px',
+						backgroundColor: '#fff',
+						border: '1px solid #E2E8F0',
+						boxShadow: '0 8px 24px rgba(1, 67, 90, 0.18)',
+					}}>
+					<Button
+						size='small'
+						variant='contained'
+						startIcon={<VisibilityOutlinedIcon sx={{ fontSize: 16 }} />}
+						onClick={() => run(onPreview)}
+						sx={{
+							textTransform: 'none',
+							fontFamily: theme.fontFamily?.main,
+							backgroundColor: '#009694',
+							color: '#fff',
+							borderRadius: '8px',
+							px: 1.25,
+							justifyContent: 'flex-start',
+							fontSize: '0.8rem',
+							boxShadow: 'none',
+							'&:hover': { backgroundColor: '#007E7C', boxShadow: 'none' },
+						}}>
+						Preview
+					</Button>
+					<Button
+						size='small'
+						variant='contained'
+						disabled={downloadBusy}
+						startIcon={downloadBusy ? <CircularProgress size={14} color='inherit' /> : <DownloadIcon sx={{ fontSize: 16 }} />}
+						onClick={() => run(onDownload)}
+						sx={{
+							textTransform: 'none',
+							fontFamily: theme.fontFamily?.main,
+							backgroundColor: '#C45C26',
+							color: '#fff',
+							borderRadius: '8px',
+							px: 1.25,
+							justifyContent: 'flex-start',
+							fontSize: '0.8rem',
+							boxShadow: 'none',
+							'&:hover': { backgroundColor: '#A34A1C', boxShadow: 'none' },
+							'&.Mui-disabled': { backgroundColor: '#E8C3B0', color: '#fff' },
+						}}>
+						Download
+					</Button>
+				</Box>
+			</Popper>
+		</>
+	);
+};
+
 const AdminCourseAnalytics = () => {
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
@@ -80,6 +232,9 @@ const AdminCourseAnalytics = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const [isDownloading, setIsDownloading] = useState(false);
 	const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+	const [reportPreview, setReportPreview] = useState<{ title: string; url: string; loading: boolean; error: string } | null>(null);
+	const previewUrlRef = useRef('');
+	const previewRequestRef = useRef(0);
 	const [sortKey, setSortKey] = useState<StudentSortKey>('rank');
 	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 	const [progressStudentName, setProgressStudentName] = useState('');
@@ -126,6 +281,62 @@ const AdminCourseAnalytics = () => {
 	}, [data?.students, data?.totalLessons, sortKey, sortDir]);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const todayStamp = () => new Date().toISOString().split('T')[0];
+
+	const classReportFile = () => {
+		const titleSlug = courseReportFilenameSlug(data?.title);
+		return {
+			path: `${base_url}/courses/${courseId}/analytics/students/export-pdf`,
+			filename: `${titleSlug}_Class_Report_${todayStamp()}.pdf`,
+			title: 'Class Report',
+		};
+	};
+
+	const learnerReportFile = (userId: string, name: string) => {
+		const titleSlug = courseReportFilenameSlug(data?.title);
+		const nameSlug = courseReportFilenameSlug(name);
+		return {
+			path: `${base_url}/courses/${courseId}/analytics/students/${userId}/export-pdf`,
+			filename: `${titleSlug}_${nameSlug}_Report_${todayStamp()}.pdf`,
+			title: `Learner Report · ${name}`,
+		};
+	};
+
+	const closeReportPreview = () => {
+		previewRequestRef.current += 1;
+		if (previewUrlRef.current) {
+			window.URL.revokeObjectURL(previewUrlRef.current);
+			previewUrlRef.current = '';
+		}
+		setReportPreview(null);
+	};
+
+	useEffect(() => {
+		return () => {
+			if (previewUrlRef.current) window.URL.revokeObjectURL(previewUrlRef.current);
+		};
+	}, []);
+
+	const openReportPreview = async (path: string, title: string) => {
+		const requestId = ++previewRequestRef.current;
+		if (previewUrlRef.current) {
+			window.URL.revokeObjectURL(previewUrlRef.current);
+			previewUrlRef.current = '';
+		}
+		setReportPreview({ title, url: '', loading: true, error: '' });
+		try {
+			const blob = await fetchPdfBlob(path);
+			if (requestId !== previewRequestRef.current) return;
+			const url = window.URL.createObjectURL(blob);
+			previewUrlRef.current = url;
+			setReportPreview({ title, url, loading: false, error: '' });
+		} catch (err) {
+			if (requestId !== previewRequestRef.current) return;
+			// eslint-disable-next-line no-console
+			console.error('Failed to preview report:', err);
+			setReportPreview({ title, url: '', loading: false, error: 'Could not load this report.' });
+		}
+	};
 
 	const openStudentProgress = async (userId: string, name: string) => {
 		if (!courseId) return;
@@ -151,26 +362,13 @@ const AdminCourseAnalytics = () => {
 	};
 
 	const handleDownloadStudentReport = async (userId: string, name: string) => {
-		if (!courseId || !userId) return;
+		if (!courseId || !userId || downloadingStudentId) return;
 
 		try {
 			setDownloadingStudentId(userId);
-			const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/${userId}/export-pdf`, {
-				responseType: 'blob',
-			});
-
-			const blob = new Blob([response.data], { type: 'application/pdf' });
-			const url = window.URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			const titleSlug = courseReportFilenameSlug(data?.title);
-			const nameSlug = courseReportFilenameSlug(name);
-			const today = new Date().toISOString().split('T')[0];
-			link.href = url;
-			link.setAttribute('download', `${titleSlug}_${nameSlug}_Report_${today}.pdf`);
-			document.body.appendChild(link);
-			link.click();
-			link.remove();
-			window.URL.revokeObjectURL(url);
+			const report = learnerReportFile(userId, name);
+			const blob = await fetchPdfBlob(report.path);
+			savePdf(blob, report.filename);
 		} catch (err) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to download learner report:', err);
@@ -210,25 +408,13 @@ const AdminCourseAnalytics = () => {
 	};
 
 	const handleDownloadClassReport = async () => {
-		if (!courseId) return;
+		if (!courseId || isDownloadingPdf) return;
 
 		try {
 			setIsDownloadingPdf(true);
-			const response = await axiosInstance.get(`${base_url}/courses/${courseId}/analytics/students/export-pdf`, {
-				responseType: 'blob',
-			});
-
-			const blob = new Blob([response.data], { type: 'application/pdf' });
-			const url = window.URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			const titleSlug = courseReportFilenameSlug(data?.title);
-			const today = new Date().toISOString().split('T')[0];
-			link.href = url;
-			link.setAttribute('download', `${titleSlug}_Class_Report_${today}.pdf`);
-			document.body.appendChild(link);
-			link.click();
-			link.remove();
-			window.URL.revokeObjectURL(url);
+			const report = classReportFile();
+			const blob = await fetchPdfBlob(report.path);
+			savePdf(blob, report.filename);
 		} catch (err) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to download class report:', err);
@@ -425,15 +611,21 @@ const AdminCourseAnalytics = () => {
 										py: 1.25,
 										backgroundColor: theme.bgColor?.secondary,
 									}}>
-									<Button
-										variant='contained'
-										size='small'
-										startIcon={isDownloadingPdf ? <CircularProgress size={14} color='inherit' /> : <PictureAsPdfOutlinedIcon />}
-										onClick={handleDownloadClassReport}
-										disabled={isDownloadingPdf}
-										sx={{ textTransform: 'none', fontFamily: theme.fontFamily?.main, borderRadius: '999px' }}>
-										{isMobileSize ? 'PDF' : 'Class report'}
-									</Button>
+									<ReportHoverActions
+										onPreview={() => {
+											const report = classReportFile();
+											void openReportPreview(report.path, report.title);
+										}}
+										onDownload={() => void handleDownloadClassReport()}
+										downloadBusy={isDownloadingPdf}>
+										<Button
+											variant='contained'
+											size='small'
+											startIcon={isDownloadingPdf ? <CircularProgress size={14} color='inherit' /> : <PictureAsPdfOutlinedIcon />}
+											sx={{ textTransform: 'none', fontFamily: theme.fontFamily?.main, borderRadius: '999px' }}>
+											{isMobileSize ? 'PDF' : 'Class report'}
+										</Button>
+									</ReportHoverActions>
 								</Box>
 								<Table>
 									<TableHead sx={{ backgroundColor: theme.bgColor?.secondary }}>
@@ -498,12 +690,16 @@ const AdminCourseAnalytics = () => {
 													{student.totalEarnedScore}/{data.totalPossibleScore}
 												</TableCell>
 												<TableCell sx={{ textAlign: 'center', width: 88, padding: '0.15rem', whiteSpace: 'nowrap' }}>
-													<Tooltip title='Learner report' placement='top' arrow>
+													<ReportHoverActions
+														onPreview={() => {
+															const report = learnerReportFile(student.userId, student.name);
+															void openReportPreview(report.path, report.title);
+														}}
+														onDownload={() => void handleDownloadStudentReport(student.userId, student.name)}
+														downloadBusy={downloadingStudentId === student.userId}>
 														<IconButton
 															size='small'
-															aria-label={`Download report for ${student.name}`}
-															disabled={downloadingStudentId === student.userId}
-															onClick={() => handleDownloadStudentReport(student.userId, student.name)}
+															aria-label={`Learner report for ${student.name}`}
 															sx={{ color: theme.textColor?.primary.main }}>
 															{downloadingStudentId === student.userId ? (
 																<CircularProgress size={16} />
@@ -511,7 +707,7 @@ const AdminCourseAnalytics = () => {
 																<PictureAsPdfOutlinedIcon fontSize='small' />
 															)}
 														</IconButton>
-													</Tooltip>
+													</ReportHoverActions>
 													<Tooltip title='Completed chapters' placement='top' arrow>
 														<IconButton
 															size='small'
@@ -527,6 +723,48 @@ const AdminCourseAnalytics = () => {
 									</TableBody>
 								</Table>
 							</Paper>
+
+							<CustomDialog
+								openModal={Boolean(reportPreview)}
+								closeModal={closeReportPreview}
+								title={reportPreview?.title || 'Report'}
+								maxWidth='lg'
+								titleSx={{ fontFamily: theme.fontFamily?.main, pb: 1 }}
+								PaperProps={{
+									sx: {
+										height: '92vh',
+										maxHeight: '92vh',
+									},
+								}}>
+								<DialogContent sx={{ display: 'flex', flexDirection: 'column', pt: 0, pb: 1, minHeight: 0, flex: 1 }}>
+									{reportPreview?.loading && (
+										<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '60vh' }}>
+											<CircularProgress size={32} />
+										</Box>
+									)}
+									{reportPreview?.error && (
+										<Alert severity='error' sx={{ my: 1 }}>
+											{reportPreview.error}
+										</Alert>
+									)}
+									{reportPreview?.url && (
+										<Box
+											component='iframe'
+											title={reportPreview.title}
+											src={reportPreview.url}
+											sx={{
+												flex: 1,
+												width: '100%',
+												minHeight: isMobileSize ? '68vh' : '74vh',
+												border: 0,
+												borderRadius: '8px',
+												backgroundColor: '#f8fafc',
+											}}
+										/>
+									)}
+								</DialogContent>
+								<CustomDialogActions onCancel={closeReportPreview} cancelBtnText='Close' hideSubmit actionSx={{ margin: 'auto 1rem' }} />
+							</CustomDialog>
 
 							<CustomDialog
 								openModal={progressOpen}
