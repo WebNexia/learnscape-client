@@ -1,10 +1,10 @@
-import { Alert, Autocomplete, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField } from '@mui/material';
+import { Alert, Autocomplete, Box, Button, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Avatar, IconButton, Collapse, LinearProgress, CircularProgress, DialogActions, TextField, Snackbar } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd } from '@mui/icons-material';
+import { Edit, Videocam, DeleteForever, Visibility, ExpandMore, ExpandLess, PersonAdd, GroupAdd, Login } from '@mui/icons-material';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -196,7 +196,7 @@ const AdminUsers = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { userId, user: loggedInUser } = useContext(UserAuthContext);
+	const { userId, user: loggedInUser, startImpersonation } = useContext(UserAuthContext);
 
 	const { users, loading, error, fetchUsers, fetchMoreUsers, updateUser, removeUser, totalItems, loadedPages, setUsersPageNumber } =
 		useContext(UsersContext);
@@ -295,6 +295,8 @@ const AdminUsers = () => {
 	const [editUserMessage, setEditUserMessage] = useState('');
 	const [editUserCanMove, setEditUserCanMove] = useState(false);
 	const [editUserSubmitting, setEditUserSubmitting] = useState(false);
+	const [impersonateUserId, setImpersonateUserId] = useState<string | null>(null);
+	const [impersonateError, setImpersonateError] = useState('');
 	const [createAccountOpen, setCreateAccountOpen] = useState(false);
 	const [createFirstName, setCreateFirstName] = useState('');
 	const [createLastName, setCreateLastName] = useState('');
@@ -1177,6 +1179,21 @@ const AdminUsers = () => {
 	const accountCreateBusy = createAccountSubmitting || bulkAccountSubmitting;
 	const bulkInvalidCount = bulkAccountRows.filter((row) => row.error).length;
 	const bulkAccountSuitable = bulkAccountRows.length > 0 && !bulkAccountTooMany && !bulkAccountWrongFormat && bulkInvalidCount === 0 && !bulkAccountFileIssue;
+	const handleImpersonate = async (target: User) => {
+		if (!target._id || impersonateUserId) return;
+		setImpersonateError('');
+		setImpersonateUserId(target._id);
+		try {
+			const response = await axios.post(`${base_url}/users/${target._id}/impersonate`);
+			await startImpersonation(response.data.token);
+		} catch (error: unknown) {
+			const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+			setImpersonateError(message || 'Could not sign in as this user.');
+		} finally {
+			setImpersonateUserId(null);
+		}
+	};
+
 	const bulkAccountLabel = bulkAccountFileName ? `"${bulkAccountFileName}"` : 'Liste';
 	const bulkAccountNotice = bulkAccountWrongFormat
 		? `${bulkAccountLabel} uygun değil. Sütunlar First name, Last name, Email, Phone, Country sırasında olmalı.`
@@ -1255,6 +1272,15 @@ const AdminUsers = () => {
 						]}
 						isSticky={true}
 					/>
+					<Snackbar
+						open={!!impersonateError}
+						autoHideDuration={6000}
+						onClose={() => setImpersonateError('')}
+						anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+						<Alert severity='error' onClose={() => setImpersonateError('')} sx={{ width: '100%' }}>
+							{impersonateError}
+						</Alert>
+					</Snackbar>
 					<Box
 						sx={{
 							display: 'flex',
@@ -1441,6 +1467,22 @@ const AdminUsers = () => {
 															icon={<Visibility
 																fontSize='small'
 																sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													)}
+													{loggedInUser?.role === Roles.OWNER && isLearnerRole(user?.role) && (
+														<CustomActionBtn
+															title={user.isActive ? 'Log in as user' : 'Inactive account'}
+															disabled={!user.isActive || impersonateUserId === user._id}
+															onClick={() => {
+																void handleImpersonate(user);
+															}}
+															icon={
+																impersonateUserId === user._id ? (
+																	<CircularProgress size={16} color='inherit' />
+																) : (
+																	<Login fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+																)
+															}
 														/>
 													)}
 

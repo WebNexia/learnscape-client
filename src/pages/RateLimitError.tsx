@@ -16,6 +16,32 @@ const RateLimitError = () => {
 	const [remainingTime, setRemainingTime] = useState<number>(0);
 
 	useEffect(() => {
+		if (rateLimitInfo?.type !== 'ip_blocked') return;
+
+		let cancelled = false;
+		const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
+		fetch(`${baseUrl}/organisations`)
+			.then(async (response) => {
+				if (cancelled || response.status !== 403) {
+					if (!cancelled && response.status !== 403) {
+						localStorage.removeItem('rateLimitInfo');
+						navigate(-1);
+					}
+					return;
+				}
+				const body = await response.json().catch(() => null);
+				if (cancelled || body?.type === 'ip_blocked') return;
+				localStorage.removeItem('rateLimitInfo');
+				navigate(-1);
+			})
+			.catch(() => {});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [rateLimitInfo, navigate]);
+
+	useEffect(() => {
 		const storedInfo = localStorage.getItem('rateLimitInfo');
 		if (storedInfo) {
 			try {

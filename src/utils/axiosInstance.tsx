@@ -7,6 +7,8 @@ declare global {
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { InternalAxiosRequestConfig } from 'axios';
+import { impersonationAuth } from '../firebase';
+import { isImpersonationSessionActive } from './impersonationSession';
 import {
 	emitLearnerSessionSuperseded,
 	getLearnerSessionId,
@@ -27,9 +29,10 @@ const axiosInstance = axios.create({
 
 // Add Firebase ID token before every request
 axiosInstance.interceptors.request.use(async (config) => {
+	const impersonating = isImpersonationSessionActive() && !!impersonationAuth.currentUser;
+
 	try {
-		const auth = getAuth();
-		const user = auth.currentUser;
+		const user = impersonating ? impersonationAuth.currentUser : getAuth().currentUser;
 
 		if (user) {
 			const token = await user.getIdToken();
@@ -39,13 +42,16 @@ axiosInstance.interceptors.request.use(async (config) => {
 		// Instagram / in-app browsers can block Firebase storage; public pages must still load.
 	}
 
-	try {
-		const learnerSessionId = getLearnerSessionId();
-		if (learnerSessionId) {
-			config.headers['X-Learner-Session-Id'] = learnerSessionId;
+	// Never send the learner device-session header while an owner is viewing that account.
+	if (!impersonating) {
+		try {
+			const learnerSessionId = getLearnerSessionId();
+			if (learnerSessionId) {
+				config.headers['X-Learner-Session-Id'] = learnerSessionId;
+			}
+		} catch {
+			/* ignore */
 		}
-	} catch {
-		/* ignore */
 	}
 
 	return config;
@@ -93,7 +99,7 @@ axiosInstance.interceptors.response.use(
 		}
 
 		if (error.response?.data?.code === 'SESSION_SUPERSEDED') {
-			if (!shouldSuppressLearnerSessionSuperseded()) {
+			if (!isImpersonationSessionActive() && !shouldSuppressLearnerSessionSuperseded()) {
 				emitLearnerSessionSuperseded();
 			}
 			return Promise.reject(error);
