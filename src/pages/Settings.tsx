@@ -26,6 +26,7 @@ import { useAuth } from '../hooks/useAuth';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import uploadImage from '../utils/imageUpload';
 import { withTimeout } from '../utils/withTimeout';
+import { isImpersonationSessionActive } from '../utils/impersonationSession';
 
 const DEFAULT_PROFILE_AVATAR =
 	'data:image/svg+xml,' +
@@ -421,6 +422,11 @@ const Settings = () => {
 	const errorMessage = <CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>;
 
 	const handlePasswordUpdate = async () => {
+		if (isImpersonationSessionActive()) {
+			setErrorMsg(PasswordUpdateErrorMessages.IMPERSONATION);
+			return;
+		}
+
 		const passwordValidationError = validatePassword(password);
 		if (passwordValidationError) {
 			setErrorMsg(passwordValidationError);
@@ -472,6 +478,10 @@ const Settings = () => {
 
 	const handleDialogSubmit = async () => {
 		setDialogError(undefined);
+		if (isImpersonationSessionActive()) {
+			setDialogError('Email cannot be changed while viewing another account.');
+			return;
+		}
 		const auth = getAuth();
 		const firebaseUser = auth.currentUser;
 		if (!firebaseUser || !emailToUpdate) return;
@@ -1027,6 +1037,7 @@ const Settings = () => {
 										[PasswordUpdateErrorMessages.PASSWORD_NO_NUMBER]: errorMessage,
 										[PasswordUpdateErrorMessages.PASSWORD_TOO_SHORT]: errorMessage,
 										[PasswordUpdateErrorMessages.SAME_PASSWORD]: errorMessage,
+										[PasswordUpdateErrorMessages.IMPERSONATION]: errorMessage,
 									}[errorMsg]}
 							</Box>
 							<Box sx={{ width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', mt: '1rem' }}>

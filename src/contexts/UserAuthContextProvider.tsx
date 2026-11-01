@@ -2,7 +2,18 @@ import { createContext, ReactNode, useEffect, useState, useRef } from 'react';
 import { useQueryClient, useQuery } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, impersonationAuth } from '../firebase';
+import {
+	ensureImpersonationPersistence,
+	impersonationAuthReady,
+	isImpersonationSessionActive,
+	isImpersonationStartInProgress,
+	markImpersonationAuthReady,
+	setImpersonationSessionActive,
+	setImpersonationStartInProgress,
+	signInImpersonation,
+	signOutImpersonation,
+} from '../utils/impersonationSession';
 import { User } from '../interfaces/user';
 import { Roles, isLearnerRole } from '../interfaces/enums';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -28,6 +39,9 @@ interface UserAuthContextTypes {
 	signOut: () => Promise<void>;
 	setSkipFetchDuringSignup: (skip: boolean) => void;
 	userCourseData: UserCoursesIdsWithCourseIds[] | undefined;
+	isImpersonating: boolean;
+	startImpersonation: (customToken: string) => Promise<void>;
+	stopImpersonation: () => Promise<void>;
 }
 
 export interface UserAuthContextProviderProps {
@@ -45,6 +59,9 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 	signOut: async () => {},
 	setSkipFetchDuringSignup: () => {},
 	userCourseData: undefined,
+	isImpersonating: false,
+	startImpersonation: async () => {},
+	stopImpersonation: async () => {},
 });
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
@@ -56,6 +73,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
 	const [isAuthReady, setIsAuthReady] = useState(false);
+	const [isImpersonating, setIsImpersonating] = useState(false);
 	const [userCourseData, setUserCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>(undefined);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
@@ -64,6 +82,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const lastAuthHandlerUidRef = useRef<string | null>(null);
 	const lastAuthHandlerAtRef = useRef<number>(0);
 	const queryClient = useQueryClient();
+	const fetchUserDataRef = useRef<(firebaseUserId: string, skipIfSignup?: boolean) => Promise<void>>(async () => {});
+	const stopImpersonationRef = useRef(false);
 
 	// Custom function to update ref
 	const setSkipFetchDuringSignupWithRef = (skip: boolean) => {
@@ -91,6 +111,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+			await Promise.race([
+				impersonationAuthReady,
+				new Promise((resolve) => setTimeout(resolve, 4000)),
+			]);
+			// A restored impersonation session owns the UI. The owner stays signed in underneath it.
+			if (isImpersonationSessionActive()) {
+				return;
+			}
+
 			if (currentUser) {
 				// Block unverified email/password sessions from becoming an app login.
 				// (Verification link flow uses oobCode and does not need a persisted session.)
@@ -153,7 +182,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				try {
 					// Only fetch user data if we don't already have it for this Firebase user
 					if (!user || user.firebaseUserId !== currentUser.uid) {
-						await fetchUserData(currentUser.uid, skipFetchDuringSignupRef.current);
+						await fetchUserDataRef.current(currentUser.uid, skipFetchDuringSignupRef.current);
 					}
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
@@ -237,7 +266,12 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 					const userData = responseUserData.data.data[0];
 
 					if (userData && userData._id) {
-						if (isLearnerRole(userData.role) && (shouldForceNewLearnerSession() || !getLearnerSessionId())) {
+						// Impersonation must not replace the learner's single-device session.
+						if (
+							!isImpersonationSessionActive() &&
+							isLearnerRole(userData.role) &&
+							(shouldForceNewLearnerSession() || !getLearnerSessionId())
+						) {
 							await registerLearnerSessionOnServer();
 						}
 
@@ -287,7 +321,101 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		}
 	};
 
+	fetchUserDataRef.current = fetchUserData;
+
+	useEffect(() => {
+		let unsubscribe = () => {};
+		let cancelled = false;
+
+		(async () => {
+			try {
+				await ensureImpersonationPersistence();
+			} catch (error) {
+				console.error('Impersonation auth persistence failed:', error);
+			}
+			if (cancelled) {
+				markImpersonationAuthReady();
+				return;
+			}
+
+			unsubscribe = onAuthStateChanged(impersonationAuth, async (impersonatedUser) => {
+				const restoredSession = !!impersonatedUser && !isImpersonationStartInProgress();
+				if (restoredSession) {
+					setImpersonationSessionActive(true);
+					setIsImpersonating(true);
+				}
+				markImpersonationAuthReady();
+				if (!restoredSession) return;
+
+				try {
+					await fetchUserDataRef.current(impersonatedUser.uid);
+				} catch (error) {
+					console.error('Failed to open impersonated account:', error);
+					await signOutImpersonation().catch(() => undefined);
+					setIsImpersonating(false);
+					const owner = auth.currentUser;
+					if (owner) {
+						await fetchUserDataRef.current(owner.uid);
+					}
+				} finally {
+					setIsAuthReady(true);
+				}
+			});
+		})();
+
+		return () => {
+			cancelled = true;
+			unsubscribe();
+		};
+	}, []);
+
+	const startImpersonation = async (customToken: string) => {
+		setImpersonationStartInProgress(true);
+		try {
+			const impersonatedUser = await signInImpersonation(customToken);
+			setIsImpersonating(true);
+			queryClient.clear();
+			setUserCourseData(undefined);
+			await fetchUserData(impersonatedUser.uid);
+			navigate('/courses', { replace: true });
+		} catch (error) {
+			setImpersonationSessionActive(false);
+			setIsImpersonating(false);
+			await signOutImpersonation().catch(() => undefined);
+			const owner = auth.currentUser;
+			if (owner) {
+				await fetchUserData(owner.uid).catch(() => undefined);
+			}
+			throw error;
+		} finally {
+			setImpersonationStartInProgress(false);
+		}
+	};
+
+	const stopImpersonation = async () => {
+		if (stopImpersonationRef.current) return;
+		stopImpersonationRef.current = true;
+		try {
+			await signOutImpersonation();
+			setIsImpersonating(false);
+			queryClient.clear();
+			setUserCourseData(undefined);
+			const owner = auth.currentUser;
+			if (owner) {
+				await fetchUserData(owner.uid);
+				navigate('/admin/users', { replace: true });
+			} else {
+				navigate('/auth', { replace: true });
+			}
+		} finally {
+			stopImpersonationRef.current = false;
+		}
+	};
+
 	const signOutUser = async () => {
+		setImpersonationSessionActive(false);
+		setIsImpersonating(false);
+		await signOutImpersonation().catch(() => undefined);
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
 		clearLearnerSessionId();
@@ -313,6 +441,9 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				signOut: signOutUser,
 				setSkipFetchDuringSignup: setSkipFetchDuringSignupWithRef,
 				userCourseData,
+				isImpersonating,
+				startImpersonation,
+				stopImpersonation,
 			}}>
 			<LearnerSessionSupersededDialog />
 			{props.children}

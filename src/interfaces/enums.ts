@@ -47,6 +47,7 @@ export const enum PasswordUpdateErrorMessages {
 	INVALID_CURRENT_PASSWORD = 'Invalid current password',
 	SAME_PASSWORD = 'Enter a different password',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
+	IMPERSONATION = 'Password cannot be changed while viewing another account',
 }
 
 export const enum Mode {

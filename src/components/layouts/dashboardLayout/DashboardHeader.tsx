@@ -27,7 +27,7 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
-	const { signOut, user, setUser } = useContext(UserAuthContext);
+	const { signOut, user, setUser, isImpersonating, stopImpersonation } = useContext(UserAuthContext);
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 
 	const navigate = useNavigate();
@@ -94,6 +94,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState<boolean>(false);
 	const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState<boolean>(false);
 	const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+	const [isReturningFromImpersonation, setIsReturningFromImpersonation] = useState(false);
 
 	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
 	const notificationsButtonRef = useRef<HTMLButtonElement>(null); // Create a ref for the notifications button
@@ -138,8 +139,22 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		}
 	}, [signOut, updateInProgressLessons, clearAllQuizData, navigate]);
 
+	const impersonatedName = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() || user?.username || 'learner';
+
+	const handleReturnFromImpersonation = useCallback(async () => {
+		if (isReturningFromImpersonation) return;
+		setIsReturningFromImpersonation(true);
+		try {
+			await stopImpersonation();
+		} catch (error) {
+			console.error('Error returning from impersonation:', error);
+		} finally {
+			setIsReturningFromImpersonation(false);
+		}
+	}, [isReturningFromImpersonation, stopImpersonation]);
+
 	useEffect(() => {
-		if (!user?.firebaseUserId) return;
+		if (!user?.firebaseUserId || isImpersonating) return;
 
 		// Real-time listener for unread notifications count
 		const notificationsRef = collection(db, 'notifications', user?.firebaseUserId, 'userNotifications');
@@ -151,7 +166,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		});
 
 		return () => unsubscribe();
-	}, [user?.firebaseUserId]);
+	}, [user?.firebaseUserId, isImpersonating]);
 
 	const markAllAsRead = useCallback(async (userFirebaseId: string) => {
 		if (!userFirebaseId) return;
@@ -277,6 +292,27 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				<CustomDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} hasUnreadMessages={hasUnreadMessages}></CustomDrawer>
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					{isImpersonating && (
+						<Button
+							onClick={() => {
+								void handleReturnFromImpersonation();
+							}}
+							disabled={isReturningFromImpersonation}
+							sx={{
+								color: headerContentColor,
+								textTransform: 'none',
+								fontSize: isVerySmallScreen ? '0.7rem' : '0.8rem',
+								mr: 1,
+								whiteSpace: 'nowrap',
+								minWidth: 0,
+							}}>
+							{isReturningFromImpersonation
+								? 'Returning…'
+								: isVerySmallScreen
+									? 'Return'
+									: `Return · ${impersonatedName}`}
+						</Button>
+					)}
 					{/* Subscribe/Unsubscribe Button */}
 					{isSubscriptionsProductEnabled && isLearnerRole(user?.role) && !hasPlatformAccess && (
 						<>
