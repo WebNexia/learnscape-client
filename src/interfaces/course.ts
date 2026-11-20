@@ -4,6 +4,9 @@ import { Document } from './document';
 /** evergreen: start lessons right after enroll. cohort: lessons stay locked until course startingDate. */
 export type CourseAccessTiming = 'evergreen' | 'cohort';
 
+export const COURSE_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
+export type CourseLevel = (typeof COURSE_LEVELS)[number];
+
 /**
  * Ownership proof sent with landing page enrollment, which runs without a session.
  * The server accepts the account email for free courses and a Stripe payment
@@ -90,6 +93,8 @@ export interface BaseCourse {
 	courseManagement: CourseManagement;
 	/** Defaults to evergreen when omitted (legacy API payloads). */
 	courseAccessTiming?: CourseAccessTiming;
+	/** CEFR levels. Empty or omitted means the course has no level set. */
+	levels?: CourseLevel[];
 }
 
 export interface Course extends BaseCourse {

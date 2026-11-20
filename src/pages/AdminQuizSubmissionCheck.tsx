@@ -228,13 +228,22 @@ const AdminQuizSubmissionCheck = () => {
 				question,
 				studentAnswer,
 				chapterName,
+				courseId: feedbackData?.courseId || undefined,
+				pointsPossible: userResponseToFeedback?.pointsPossible ?? 0,
 			});
-			const draft = String(response.data?.data || '').trim().slice(0, 1000);
+			const payload = response.data?.data;
+			const draft = (typeof payload === 'string' ? payload : String(payload?.feedback || '')).trim().slice(0, 1000);
 			if (!draft) {
 				setAiDraftError('AI did not return feedback.');
 				return;
 			}
 			applyQuestionFeedback(draft);
+			const suggestedScore = typeof payload === 'object' && payload ? Number(payload.score) : NaN;
+			const maxScore = userResponseToFeedback?.pointsPossible ?? 0;
+			if (Number.isFinite(suggestedScore)) {
+				const nextScore = Math.min(Math.max(Math.round(suggestedScore), 0), maxScore);
+				setManualScore(nextScore);
+			}
 		} catch (error: any) {
 			const status = error?.response?.status;
 			const message = error?.response?.data?.message;

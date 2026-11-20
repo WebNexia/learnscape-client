@@ -2,13 +2,14 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography } from '@mui/mat
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { Edit } from '@mui/icons-material';
+import { AutoAwesome, Edit } from '@mui/icons-material';
+import AiQuizCheckDialog from '../components/layouts/quizSubmissions/AiQuizCheckDialog';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import theme from '../themes';
@@ -49,7 +50,11 @@ const AdminQuizSubmissions = () => {
 		loadedPages,
 		fetchMoreQuizSubmissions,
 		setQuizSubmissionsPageNumber,
+		updateQuizSubmissions,
 	} = useContext(AdminQuizSubmissionsContext);
+
+	const [aiSubmission, setAiSubmission] = useState<QuizSubmission | null>(null);
+	const [rowPatches, setRowPatches] = useState<Record<string, { isChecked: boolean; totalEarned: number }>>({});
 
 	const pageSize = 50;
 
@@ -286,7 +291,9 @@ const AdminQuizSubmissions = () => {
 						<TableBody>
 							{paginatedQuizSubmissions &&
 								paginatedQuizSubmissions?.map((submission: QuizSubmission) => {
-									const totalEarned = submission.totalEarned ?? 0;
+									const rowPatch = rowPatches[submission._id];
+									const totalEarned = rowPatch?.totalEarned ?? submission.totalEarned ?? 0;
+									const isChecked = rowPatch?.isChecked ?? submission.isChecked;
 
 									const isQuiz = submission.lessonType === LessonType.QUIZ;
 									const isGraded = !!submission.lessonIsGraded && isQuiz;
@@ -354,21 +361,30 @@ const AdminQuizSubmissions = () => {
 													);
 												})()}
 											</TableCell>
-											<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
+											<CustomTableCell value={isChecked ? 'Checked' : 'Unchecked'} />
 											<TableCell
 												sx={{
 													textAlign: 'center',
 												}}>
-												<CustomActionBtn
-													title='Check Quiz'
-													onClick={() => {
-														const base = isInstructor ? '/instructor/check-submission' : '/admin/check-submission';
-														const url = `${base}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`;
-														window.open(url, '_blank');
-														window.scrollTo({ top: 0, behavior: 'smooth' });
-													}}
-													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
+												<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+													{submission.hasOpenEnded && (
+														<CustomActionBtn
+															title='AI Check'
+															onClick={() => setAiSubmission({ ...submission, isChecked, totalEarned })}
+															icon={<AutoAwesome fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													)}
+													<CustomActionBtn
+														title='Check Quiz'
+														onClick={() => {
+															const base = isInstructor ? '/instructor/check-submission' : '/admin/check-submission';
+															const url = `${base}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${isChecked}`;
+															window.open(url, '_blank');
+															window.scrollTo({ top: 0, behavior: 'smooth' });
+														}}
+														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+												</Box>
 											</TableCell>
 										</TableRow>
 									);
@@ -384,6 +400,18 @@ const AdminQuizSubmissions = () => {
 
 					<CustomTablePagination count={submissionsNumberOfPages} page={quizSubmissionsCurrentPage} onChange={handlePageChange} />
 				</Box>
+				<AiQuizCheckDialog
+					open={Boolean(aiSubmission)}
+					submission={aiSubmission}
+					onClose={() => setAiSubmission(null)}
+					onMarked={(submissionId, totalEarned) => {
+						setRowPatches((current) => ({ ...current, [submissionId]: { isChecked: true, totalEarned } }));
+						const existing = quizSubmissions?.find((item) => item._id === submissionId) || aiSubmission;
+						if (existing) {
+							updateQuizSubmissions({ ...existing, isChecked: true, totalEarned });
+						}
+					}}
+				/>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

@@ -58,16 +58,18 @@ const PaymentDetailsDialog = ({ open, onClose, payment, onDeleted }: PaymentDeta
 				{ label: 'First Name', value: payment.firstName },
 				{ label: 'Last Name', value: payment.lastName },
 				{ label: 'Email', value: payment.email },
+				...(payment.phone ? [{ label: 'Phone', value: payment.phone }] : []),
 				{ label: 'Username', value: payment.username },
 			],
 		},
 		{
-			title: 'Course/Document/Consultation/Club Information',
+			title: 'Course/Document/Consultation/Club/Other Information',
 			details: [
 				{ label: 'Course', value: payment.courseTitle },
 				{ label: 'Document', value: payment.documentName },
 				{ label: 'Consultation', value: payment.consultationTitle },
 				{ label: 'Club', value: payment.clubTitle },
+				{ label: 'Other', value: payment.customKind === 'other' ? payment.customLabel : '' },
 			],
 		},
 		{

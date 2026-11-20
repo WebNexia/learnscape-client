@@ -20,6 +20,7 @@ export interface QuizSubmission {
 	totalPossible?: number;
 	lessonIsGraded?: boolean;
 	lessonType?: string;
+	hasOpenEnded?: boolean;
 	lessonQuestionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
 	lessonQuestions?: QuestionInterface[];
 

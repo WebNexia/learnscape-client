@@ -11,6 +11,8 @@ export interface QuestionPrompt {
 	lessonText?: string;
 	/** Chapter name for open-ended AI context */
 	chapterName?: string;
+	/** Course id, used to load CEFR levels for the prompt */
+	courseId?: string;
 }
 
 const useAiResponse = () => {
@@ -30,6 +32,7 @@ const useAiResponse = () => {
 			};
 			if (userPrompt.lessonText != null) body.lessonText = userPrompt.lessonText;
 			if (userPrompt.chapterName != null) body.chapterName = userPrompt.chapterName;
+			if (userPrompt.courseId) body.courseId = userPrompt.courseId;
 			const response = await axiosInstance.post('/ai/feedback', body);
 			const responseText = response.data?.data ?? '';
 			setAiResponse(responseText);

@@ -2,7 +2,8 @@ import { Box, Button, Checkbox, FormControlLabel, Tooltip, Typography, IconButto
 import CustomTextField from '../forms/customFields/CustomTextField';
 import ProcessingFeePercentField from '../forms/customFields/ProcessingFeePercentField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
-import { CourseIntroModal, CourseLandingPageSection, SingleCourse, CourseGroup } from '../../interfaces/course';
+import { CourseIntroModal, CourseLandingPageSection, SingleCourse, CourseGroup, CourseLevel } from '../../interfaces/course';
+import CourseLevelCheckboxes from '../forms/customFields/CourseLevelCheckboxes';
 import theme from '../../themes';
 import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
@@ -1114,6 +1115,7 @@ const CourseDetailsEditBox = ({
 						</Box>
 					</Box>
 
+					<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, alignSelf: 'stretch' }}>
 					<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
 						<Box sx={{ display: 'flex' }}>
 							<Box sx={{ display: 'flex', marginLeft: hasAdminAccess ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
@@ -1257,6 +1259,17 @@ const CourseDetailsEditBox = ({
 								/>
 							</Tooltip>
 						</Box>
+					</Box>
+					<Box sx={{ mt: 'auto', pt: '1.25rem', ml: hasAdminAccess ? (isMobileSize ? 0 : '4rem') : 0 }}>
+						<CourseLevelCheckboxes
+							value={(singleCourseBeforeSave?.levels || []) as CourseLevel[]}
+							isMobileSize={isMobileSize}
+							onChange={(levels) => {
+								setSingleCourseBeforeSave((prev) => (prev ? { ...prev, levels } : prev));
+								setHasUnsavedChanges(true);
+							}}
+						/>
+					</Box>
 					</Box>
 				</Box>
 			</Box>

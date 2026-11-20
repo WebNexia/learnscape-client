@@ -5,7 +5,8 @@ import { Tooltip } from '@mui/material';
 import { Box, FormControlLabel, Checkbox, Typography } from '@mui/material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { useContext, useState, useEffect } from 'react';
-import { Instructor, Price, SingleCourse } from '../../../interfaces/course';
+import { CourseLevel, Instructor, Price, SingleCourse } from '../../../interfaces/course';
+import CourseLevelCheckboxes from '../customFields/CourseLevelCheckboxes';
 import { useAuth } from '../../../hooks/useAuth';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
@@ -33,6 +34,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 	const [EUR, setEUR] = useState<Price | null>(null);
 	const [TRY, setTRY] = useState<Price | null>(null);
 	const [processingFeePercent, setProcessingFeePercent] = useState('');
+	const [levels, setLevels] = useState<CourseLevel[]>([]);
 
 	const [checked, setChecked] = useState<boolean>(false);
 	const [isExternal, setIsExternal] = useState<boolean>(false);
@@ -55,6 +57,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 			setEUR({ amount: '', currency: 'eur' });
 			setTRY({ amount: '', currency: 'try' });
 			setProcessingFeePercent('');
+			setLevels([]);
 		}
 	}, [isCourseCreateModalOpen]);
 
@@ -100,6 +103,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 				prices,
 				startingDate: isCohort ? startingDate : '',
 				courseAccessTiming: isCohort ? 'cohort' : 'evergreen',
+				levels,
 				orgId,
 				imageUrl: '',
 				durationWeeks: null,
@@ -131,6 +135,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 				durationWeeks: null,
 				durationHours: null,
 				format: '',
+				levels,
 				createdAt: response.data.createdAt,
 				updatedAt: response.data.updatedAt,
 				courseManagement: {
@@ -188,6 +193,10 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 					resizable
 				/>
 				<Typography sx={{ fontSize: '0.7rem', margin: '0 2rem', textAlign: 'right' }}>{description.length}/500 Characters</Typography>
+
+				<Box sx={{ margin: '0.5rem 2rem 0.25rem' }}>
+					<CourseLevelCheckboxes value={levels} onChange={setLevels} isMobileSize={isMobileSize} />
+				</Box>
 
 				{!isInstructor && (
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>

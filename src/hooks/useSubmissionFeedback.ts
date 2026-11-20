@@ -17,6 +17,9 @@ export interface SubmissionFeedbackUserQuestion {
 	draftTeacherAudioFeedbackUrl?: string | null;
 	pointsEarned?: number;
 	pointsPossible?: number;
+	/** Staff-only AI Check draft. Absent on learner responses. */
+	aiCheckFeedback?: string | null;
+	aiCheckScore?: number | null;
 	isAutoGraded?: boolean;
 	userId?: { username?: string; firebaseUserId?: string };
 }
@@ -27,6 +30,7 @@ export interface SubmissionFeedbackData {
 	lessonName: string;
 	courseName: string;
 	chapterName: string;
+	courseId: string;
 	teacherFeedback: string;
 	isFeedbackGiven: boolean;
 	isChecked: boolean;
@@ -56,6 +60,7 @@ export async function fetchSubmissionFeedback(
 		...item,
 		userAnswer: item.userAnswer != null ? decode(item.userAnswer) : item.userAnswer,
 		teacherFeedback: item.teacherFeedback != null ? decode(item.teacherFeedback) : item.teacherFeedback,
+		aiCheckFeedback: item.aiCheckFeedback != null ? decode(item.aiCheckFeedback) : item.aiCheckFeedback,
 	}));
 
 	return {
@@ -64,6 +69,7 @@ export async function fetchSubmissionFeedback(
 		lessonName: data?.lessonName ?? '',
 		courseName: data?.courseName ?? '',
 		chapterName: data?.chapterName ?? '',
+		courseId: data?.courseId ? String(data.courseId) : '',
 		teacherFeedback: data?.teacherFeedback ?? '',
 		isFeedbackGiven: Boolean(data?.isFeedbackGiven),
 		isChecked: Boolean(data?.isChecked),
