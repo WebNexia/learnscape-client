@@ -21,6 +21,9 @@ export interface Payment {
 	clubTitle?: string;
 	paymentType: string;
 	email: string;
+	phone?: string;
+	customKind?: string;
+	customLabel?: string;
 	transactionDetails?: TransactionDetails;
 	isRefunded?: boolean;
 	refundId?: string;

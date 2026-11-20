@@ -484,6 +484,14 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						{singleCourse?.durationHours || 'N/A'}
 					</Typography>
 				</Box>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '1rem' }}>
+						Level
+					</Typography>
+					<Typography variant='body2' sx={{ mt: isMobileSize ? '1rem' : '1.5rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						{singleCourse?.levels?.length ? singleCourse.levels.join(', ') : 'N/A'}
+					</Typography>
+				</Box>
 			</Box>
 
 			<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>

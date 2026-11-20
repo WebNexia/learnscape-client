@@ -12,6 +12,8 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomActionBtn from '../table/CustomActionBtn';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
 import DownloadIcon from '@mui/icons-material/Download';
+import LinkIcon from '@mui/icons-material/Link';
+import CustomPaymentLinkDialog from './CustomPaymentLinkDialog';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import axios from '@utils/axiosInstance';
 import { useFilterSearch } from '../../../hooks/useFilterSearch';
@@ -94,6 +96,7 @@ const AdminPaymentsTab = () => {
 	}, [paymentFilterTitles]);
 
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+	const [paymentLinkOpen, setPaymentLinkOpen] = useState(false);
 	const [isDownloading, setIsDownloading] = useState(false);
 
 	const pageSize = 50;
@@ -216,6 +219,11 @@ const AdminPaymentsTab = () => {
 				onResetSearch={resetSearch}
 				onResetFilter={resetFilter}
 				actionButtons={[
+					{
+						label: isMobileSize ? 'Payment link' : 'Create payment link',
+						onClick: () => setPaymentLinkOpen(true),
+						startIcon: <LinkIcon />,
+					},
 					{
 						label: isDownloading
 							? 'Downloading...'
@@ -368,7 +376,9 @@ const AdminPaymentsTab = () => {
 										{!isMobileSize && <CustomTableCell value={payment.firstName} />}
 										{!isMobileSize && <CustomTableCell value={payment.lastName} />}
 										{isMobileSize && <CustomTableCell value={payment.username} />}
-										<CustomTableCell value={payment.courseTitle} />
+										<CustomTableCell
+											value={payment.courseTitle || (payment.customKind !== 'document' ? payment.customLabel : undefined)}
+										/>
 										<CustomTableCell value={payment.documentName} />
 										{!isMobileSize && <CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />}
 										<CustomTableCell
@@ -414,6 +424,8 @@ const AdminPaymentsTab = () => {
 				)}
 				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsCurrentPage} onChange={handlePageChange} />
 			</Box>
+
+			<CustomPaymentLinkDialog open={paymentLinkOpen} onClose={() => setPaymentLinkOpen(false)} />
 
 			{selectedPayment && (
 				<PaymentDetailsDialog

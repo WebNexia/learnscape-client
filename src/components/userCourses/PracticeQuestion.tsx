@@ -1629,7 +1629,7 @@ const PracticeQuestion = ({
 									const promptWithSavedAnswer: QuestionPrompt = {
 										...questionPrompt,
 										userInput: currentAnswer,
-										...(isOpenEndedQuestion && { lessonText, chapterName }),
+										...(isOpenEndedQuestion && { lessonText, chapterName, courseId }),
 									};
 
 									try {
