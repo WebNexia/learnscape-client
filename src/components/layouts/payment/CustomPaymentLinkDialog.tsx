@@ -351,7 +351,7 @@ const CustomPaymentLinkDialog = ({ open, onClose }: CustomPaymentLinkDialogProps
 						Amount: {money(priceQuote.baseAmount)}
 					</Typography>
 					<Typography variant='body2' sx={{ fontSize: fieldFont }}>
-						Processing fee ({priceQuote.processingFeePercent}%): {money(priceQuote.processingFee)}
+						Processing fee: {money(priceQuote.processingFee)}
 					</Typography>
 					<Typography variant='body2' sx={{ fontSize: fieldFont }}>
 						Total: {money(priceQuote.total)}
