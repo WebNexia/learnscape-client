@@ -245,7 +245,7 @@ const AiQuizCheckDialog = ({ open, submission, onClose, onMarked }: AiQuizCheckD
 			disableDismiss={saving}
 			title={submission ? `AI Check — ${submission.lessonName}` : 'AI Check'}
 			maxWidth='md'>
-			<Box sx={{ px: isMobileSize ? '1rem' : '1.5rem', pb: '0.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+			<Box sx={{ px: isMobileSize ? '1rem' : '1.5rem', pb: '0.25rem', maxHeight: '70vh', overflowY: 'auto' }}>
 				{(loading || (!questionTypes.length && open)) && (
 					<Box sx={{ display: 'flex', justifyContent: 'center', py: '2rem' }}>
 						<CircularProgress size={28} />
@@ -266,35 +266,79 @@ const AiQuizCheckDialog = ({ open, submission, onClose, onMarked }: AiQuizCheckD
 							border: '1px solid rgba(0,0,0,0.08)',
 							borderRadius: '0.5rem',
 							p: isMobileSize ? '0.75rem' : '1rem',
-							mb: '1rem',
+							pb: isMobileSize ? '0.65rem' : '0.75rem',
+							mb: '0.75rem',
+							'&:last-of-type': { mb: 0 },
 							backgroundColor: '#fff',
 						}}>
-						<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 700, mb: '0.35rem' }}>
+						<Typography
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+								fontWeight: 700,
+								letterSpacing: '0.02em',
+								textTransform: 'uppercase',
+								color: theme.palette.primary.main,
+								mb: '0.4rem',
+							}}>
 							Question {index + 1}
 						</Typography>
 						<Box
-							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.75rem' }}
+							sx={{
+								fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+								fontWeight: 600,
+								lineHeight: 1.5,
+								color: theme.palette.text.primary,
+								mb: '0.85rem',
+								'& p': { margin: '0 0 0.35rem' },
+								'& p:last-child': { marginBottom: 0 },
+							}}
 							dangerouslySetInnerHTML={{ __html: item.questionHtml || '—' }}
 						/>
-						<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 700, mb: '0.25rem' }}>
+						<Typography
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+								fontWeight: 700,
+								letterSpacing: '0.02em',
+								textTransform: 'uppercase',
+								color: theme.palette.primary.main,
+								mb: '0.4rem',
+							}}>
 							Student's answer
 						</Typography>
-						<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.75rem', whiteSpace: 'pre-wrap' }}>
-							{item.studentAnswer || 'No answer'}
-						</Typography>
+						<Box
+							sx={{
+								backgroundColor: '#f1f5f9',
+								borderRadius: '0.4rem',
+								px: '0.75rem',
+								py: '0.6rem',
+								mb: '0.85rem',
+							}}>
+							<Typography
+								sx={{
+									fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+									fontWeight: 500,
+									lineHeight: 1.5,
+									color: theme.palette.text.primary,
+									whiteSpace: 'pre-wrap',
+								}}>
+								{item.studentAnswer || 'No answer'}
+							</Typography>
+						</Box>
 						<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', fontWeight: 700, mb: '0.25rem' }}>
 							Feedback {item.drafting ? '· Writing...' : ''}
 						</Typography>
 						<CustomTextField
 							multiline
+							rows={5}
 							resizable
 							value={item.feedback}
 							disabled={item.drafting || saving}
 							onChange={(event) => updateItem(item.userQuestionId, { feedback: event.target.value.slice(0, 1000) })}
 							placeholder='Feedback for the student (max 1000 characters)'
+							sx={{ marginBottom: 0 }}
 						/>
-						<Typography sx={{ fontSize: '0.7rem', textAlign: 'right', mt: '-0.25rem' }}>{item.feedback.length}/1000</Typography>
-						<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.75rem', mt: '0.5rem' }}>
+						<Typography sx={{ fontSize: '0.7rem', textAlign: 'right', mt: '0.2rem' }}>{item.feedback.length}/1000</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.75rem', mt: '0.35rem' }}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>Score</Typography>
 							<CustomTextField
 								type='number'
@@ -313,7 +357,7 @@ const AiQuizCheckDialog = ({ open, submission, onClose, onMarked }: AiQuizCheckD
 										updateItem(item.userQuestionId, { score: String(value) });
 									}
 								}}
-								sx={{ width: '4.5rem' }}
+								sx={{ width: '4.5rem', marginBottom: 0 }}
 								InputProps={{ inputProps: { min: 0, max: item.pointsPossible } }}
 							/>
 							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.palette.text.secondary }}>
@@ -337,6 +381,7 @@ const AiQuizCheckDialog = ({ open, submission, onClose, onMarked }: AiQuizCheckD
 				disableBtn={saving || loading || drafting || items.length === 0}
 				disableCancelBtn={saving}
 				isSubmitting={saving}
+				actionSx={{ marginBottom: isMobileSize ? '0.35rem' : '0.5rem', pt: '0.35rem' }}
 			/>
 		</CustomDialog>
 	);
